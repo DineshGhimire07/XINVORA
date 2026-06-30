@@ -1,0 +1,21 @@
+{
+  /**
+   * Prettier — XINVORA Code Formatting
+   *
+   * Consistent formatting prevents style debates in code review.
+   * These settings match conventions across Vercel, Linear, and
+   * most modern TypeScript/React codebases.
+   */
+  "semi": false,
+  "singleQuote": false,
+  "trailingComma": "es5",
+  "printWidth": 80,
+  "tabWidth": 2,
+  "useTabs": false,
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "plugins": ["prettier-plugin-tailwindcss"],
+  "tailwindConfig": "./tailwind.config.ts"
+}

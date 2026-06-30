@@ -1,4 +1,11 @@
 {
+  /**
+   * TypeScript configuration for XINVORA.
+   *
+   * Strict mode enabled — all type errors are fatal.
+   * Path aliases map to src/ subdirectories for clean, readable imports.
+   * Bundler module resolution is required for Next.js 15 App Router.
+   */
   "compilerOptions": {
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
@@ -13,13 +20,26 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": ["./src/*"]
+      // Root src alias — @/anything maps to src/anything
+      "@/*": ["./src/*"],
+      // Granular aliases for frequently imported directories
+      "@/components/*": ["./src/components/*"],
+      "@/features/*": ["./src/features/*"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/config/*": ["./src/config/*"],
+      "@/constants/*": ["./src/constants/*"],
+      "@/styles/*": ["./src/styles/*"],
+      "@/animations/*": ["./src/animations/*"],
+      "@/providers/*": ["./src/providers/*"],
+      "@/actions/*": ["./src/actions/*"],
+      "@/services/*": ["./src/services/*"],
+      "@/db": ["./src/db/index.ts"],
+      "@/db/*": ["./src/db/*"]
     }
   },
   "include": [
