@@ -8,6 +8,16 @@
 
 ## Releases & Phase Milestones
 
+### v0.7.8 — 2026-07-02
+*   **Phase 3B.7 Complete: Homepage Experience Review & Premium Refinement**
+    *   Unified all root section containers on identical horizontal grid lines using `<Container size="site">` (default `<Container>`) to ensure absolute layout alignment.
+    *   Redesigned the Hero Section to follow a premium 5 / 7 columns split layout (`cols={{ base: 1, md: 12 }}`) on tablet/desktop viewports and stack on mobile.
+    *   Constrained content reading widths of text blocks and inputs strictly to `~28-34rem` (`max-w-[32rem]`) to improve editorial readability.
+    *   Established an elegant, alternating background rhythm (`bg-surface-elevated` vs `bg-background`) between sections.
+    *   Refined the Trust Section cards to let principles breathe using borderless stacks and wider gaps (`gap={12}`).
+    *   Refined the Newsletter Section input form utilizing the existing `ghost` Input variant without mutating the design system `src/components/ui/input.tsx` file.
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
 ### v0.7.7 — 2026-07-02
 *   **Phase 3B.6 Complete: Homepage Newsletter**
     *   Surgically updated `NewsletterSection` inside `src/app/page.tsx` with a premium responsive email subscription form block under header name `Become part of the XINVORA community`.

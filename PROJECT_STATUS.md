@@ -14,11 +14,11 @@
 
 | Field | Value |
 |---|---|
-| **Project State** | Newsletter Section Complete — Ready for Homepage Polish |
-| **Current Phase** | Phase 3B.7 — Landing Page Content |
+| **Project State** | Homepage Refined & Complete — Ready for Marketing Pages |
+| **Current Phase** | Phase 3C — Marketing Pages |
 | **Phase Status** | Not Started |
 | **Last Updated** | 2026-07-02 |
-| **Next Objective** | Implement scroll-triggered animations and final checks |
+| **Next Objective** | Build brand campaign and story pages |
 | **Blocking Issues** | None |
 
 ---
@@ -57,8 +57,9 @@ This table tracks the count of core code assets across the repository. It is upd
 | Featured Products: four-column visual card list featuring generic editions | Phase 3B.4 | 2026-07-02 |
 | Trust Section: three-column brand philosophy values card layout | Phase 3B.5 | 2026-07-02 |
 | Newsletter Section: premium responsive form composing Input and Button primitives | Phase 3B.6 | 2026-07-02 |
+| Experience Refinement: homepage visual hierarchy, spacing, typography, and container width alignment | Phase 3B.7 | 2026-07-02 |
 
-**Phase 3B.6 complete.** The Newsletter section is fully integrated, version aligned at v0.7.7.
+**Phase 3B.7 complete.** The Homepage Experience Refinement is fully complete, version aligned at v0.7.8.
 
 ---
 
@@ -66,7 +67,7 @@ This table tracks the count of core code assets across the repository. It is upd
 
 | Item | Phase | Owner | Status |
 |---|---|---|---|
-| Homepage Content | Phase 3B.7 | Engineering Lead | Planning stage |
+| Marketing Pages | Phase 3C | Engineering Lead | Planning stage |
 
 ---
 
@@ -296,16 +297,33 @@ This table tracks the count of core code assets across the repository. It is upd
 
 ---
 
-### Phase 3B.7 — Landing Page Content
+### Phase 3B.7 — Homepage Experience Review & Premium Refinement
 
-- [ ] Apply scroll-triggered animations
-- [ ] Optimize page performance (Lighthouse Performance >= 90, SEO = 100)
+- [x] Align every root section container on identical horizontal grid lines using `<Container>` (site width)
+- [x] Build Hero 5/7 columns editorial layout splitting content and photography placeholder
+- [x] Enforce consistent `~28-34rem` reading width constraints on text copy and inputs
+- [x] Restructure visual rhythm by alternating elevated vs background backgrounds
+- [x] Refine trust pillars card spacing and layout gaps
+- [x] Refine newsletter using default Input variants without modifying the design system
+- [x] The homepage presents a cohesive premium editorial experience with consistent visual hierarchy, spacing, typography, and alignment across all sections
+- [x] Run Quality Gate validation checks
+- [x] Run `git add . && git commit -m "Phase 3B.7 Complete"`
+- [x] Update PROJECT_STATUS.md to mark Phase 3B.7 complete
+
+**Phase 3B.7 Status: COMPLETE**
+
+---
+
+### Phase 3C — Marketing Pages
+
+- [ ] Build Brand Campaign page layout
+- [ ] Build Brand Journal list page layout
+- [ ] Build individual Journal article layout
 - [ ] Run Quality Gate validation checks
-- [ ] Run `git add . && git commit -m "Phase 3B.7 Complete"`
-- [ ] Update repository snapshot counts
-- [ ] Update PROJECT_STATUS.md to mark Phase 3B.7 complete
+- [ ] Run `git add . && git commit -m "Phase 3C Complete"`
+- [ ] Update PROJECT_STATUS.md to mark Phase 3C complete
 
-**Phase 3B.7 Status: NOT STARTED**
+**Phase 3C Status: NOT STARTED**
 
 ---
 

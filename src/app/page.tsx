@@ -41,45 +41,55 @@ function HeroSection() {
     <Section
       id="hero"
       padding="2xl"
-      className="flex items-center justify-center min-h-[75vh] bg-surface-elevated border-b border-border"
+      className="flex items-center bg-surface-elevated border-b border-border min-h-[75vh]"
     >
-      <Container size="editorial">
-        <Stack gap={8} align="center" className="text-center max-w-content-lg mx-auto">
-          {/* Brand Emblem Logo */}
-          <Image
-            src="/assets/brand/logos/Warm_taupe.png"
-            alt="XINVORA Brand Emblem"
-            width={48}
-            height={48}
-            priority
-            className="select-none pointer-events-none mb-1 object-contain"
-          />
+      <Container>
+        <Grid cols={{ base: 1, md: 12 }} gap={12} className="items-center">
+          {/* Left Column: Content (constrained for readability) */}
+          <div className="md:col-span-5 flex flex-col items-start text-left max-w-[32rem] w-full">
+            <Stack gap={6} align="start" className="w-full">
+              {/* Brand Emblem Logo */}
+              <Image
+                src="/assets/brand/logos/Warm_taupe.png"
+                alt="XINVORA Brand Emblem"
+                width={48}
+                height={48}
+                priority
+                className="select-none pointer-events-none mb-1 object-contain"
+              />
 
-          {/* Eyebrow */}
-          <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
-            Crafted to Last
-          </span>
+              {/* Eyebrow */}
+              <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
+                Crafted to Last
+              </span>
 
-          {/* Heading title */}
-          <h1 className="text-display-xl md:text-display-2xl font-display text-text-primary text-balance leading-tight tracking-tight">
-            XINVORA
-          </h1>
+              {/* Heading title */}
+              <h1 className="text-display-xl lg:text-display-2xl font-display text-text-primary leading-tight tracking-tight">
+                XINVORA
+              </h1>
 
-          {/* Supporting paragraph */}
-          <p className="text-body-md md:text-body-lg text-text-secondary max-w-prose mx-auto text-pretty">
-            A curation of objects designed with absolute intention—bringing quiet refinement and lasting quality to modern living.
-          </p>
+              {/* Supporting paragraph */}
+              <p className="text-body-md lg:text-body-lg text-text-secondary leading-relaxed">
+                A curation of objects designed with absolute intention—bringing quiet refinement and lasting quality to modern living.
+              </p>
 
-          {/* Primary & Secondary CTA Buttons */}
-          <Stack direction="row" gap={4} justify="center" wrap="wrap" className="pt-2">
-            <Button variant="primary" size="lg">
-              Shop the Collection
-            </Button>
-            <Button variant="outline" size="lg">
-              Our Philosophy
-            </Button>
-          </Stack>
-        </Stack>
+              {/* Primary & Secondary CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-2">
+                <Button variant="primary" size="lg" className="w-full sm:w-auto">
+                  Shop the Collection
+                </Button>
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                  Our Philosophy
+                </Button>
+              </div>
+            </Stack>
+          </div>
+
+          {/* Right Column: Visual placeholder for future photography */}
+          <div className="md:col-span-7 w-full aspect-[4/3] bg-surface border border-border rounded-sm overflow-hidden flex items-center justify-center relative select-none">
+            {/* Kept entirely clean and empty to serve future approved editorial photography */}
+          </div>
+        </Grid>
       </Container>
     </Section>
   )
@@ -88,15 +98,15 @@ function HeroSection() {
 // ── 2. Brand Story Section ───────────────────────────────────────────────────
 function BrandStorySection() {
   return (
-    <Section id="brand-story" padding="xl" className="bg-background">
-      <Container size="editorial">
-        <Grid cols={{ base: 1, md: 2 }} gap={12} className="items-start">
+    <Section id="brand-story" padding="2xl" className="bg-background">
+      <Container>
+        <Grid cols={{ base: 1, md: 2 }} gap={16} className="items-start">
           {/* Left Column: Eyebrow + Statement */}
-          <Stack gap={4} className="max-w-prose">
+          <Stack gap={4} className="max-w-[32rem]">
             <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
               Our Philosophy
             </span>
-            <h2 className="text-heading-xl font-display text-text-primary text-balance leading-tight">
+            <h2 className="text-heading-xl font-display text-text-primary leading-tight">
               Quiet confidence. Intentional design. Lasting value.
             </h2>
           </Stack>
@@ -104,7 +114,7 @@ function BrandStorySection() {
           {/* Right Column: Editorial Details */}
           <Stack
             gap={6}
-            className="text-text-secondary text-body-md md:text-body-lg max-w-prose leading-relaxed pt-2 md:pt-8"
+            className="text-text-secondary text-body-md lg:text-body-lg max-w-[32rem] leading-relaxed pt-2 md:pt-8"
           >
             <p className="text-pretty">
               We believe in the beauty of restraint. XINVORA exists to prove that a digital experience can carry the same weight of quality as the objects it holds. In a world driven by trend-chasing and noise, we choose to design for longevity.
@@ -128,11 +138,11 @@ function FeaturedCategoriesSection() {
   ]
 
   return (
-    <Section id="featured-categories" padding="xl" className="bg-surface-elevated border-b border-border">
+    <Section id="featured-categories" padding="2xl" className="bg-surface-elevated border-b border-border">
       <Container>
         <Stack gap={12}>
           {/* Section Heading */}
-          <Stack gap={3} className="text-center max-w-content-md mx-auto">
+          <Stack gap={3} className="text-center max-w-[32rem] mx-auto">
             <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
               Curated Spaces
             </span>
@@ -142,7 +152,7 @@ function FeaturedCategoriesSection() {
           </Stack>
 
           {/* Grid Layout */}
-          <Grid cols={{ base: 1, md: 3 }} gap={6}>
+          <Grid cols={{ base: 1, md: 3 }} gap={8}>
             {collections.map((col, idx) => (
               <div
                 key={col.id}
@@ -185,11 +195,11 @@ function FeaturedProductsSection() {
   ]
 
   return (
-    <Section id="featured-products" padding="xl">
+    <Section id="featured-products" padding="2xl" className="bg-background">
       <Container>
         <Stack gap={12}>
           {/* Section Heading */}
-          <Stack gap={3} className="text-center max-w-content-md mx-auto">
+          <Stack gap={3} className="text-center max-w-[32rem] mx-auto">
             <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
               Editor&apos;s Selection
             </span>
@@ -203,7 +213,7 @@ function FeaturedProductsSection() {
             {items.map((item) => (
               <div key={item.id} className="group flex flex-col gap-4">
                 {/* Visual Surface Placeholder */}
-                <div className="bg-surface-elevated border border-border rounded-sm aspect-[3/4] transition-colors duration-200" />
+                <div className="bg-surface border border-border rounded-sm aspect-[3/4] transition-colors duration-200" />
 
                 {/* Metadata details */}
                 <Stack gap={2}>
@@ -249,11 +259,11 @@ function TrustSection() {
   ]
 
   return (
-    <Section id="trust" padding="xl" className="bg-background border-t border-border">
+    <Section id="trust" padding="2xl" className="bg-surface-elevated border-b border-border">
       <Container>
         <Stack gap={12}>
           {/* Section Heading */}
-          <Stack gap={3} className="text-center max-w-content-md mx-auto">
+          <Stack gap={3} className="text-center max-w-[32rem] mx-auto">
             <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
               Core Principles
             </span>
@@ -263,9 +273,9 @@ function TrustSection() {
           </Stack>
 
           {/* Pillars Grid */}
-          <Grid cols={{ base: 1, md: 3 }} gap={8}>
+          <Grid cols={{ base: 1, md: 3 }} gap={12}>
             {pillars.map((pillar) => (
-              <Stack key={pillar.id} gap={4} className="bg-surface border border-border p-8 rounded-sm">
+              <Stack key={pillar.id} gap={4} className="p-2 text-left">
                 <h3 className="text-heading-sm font-display text-text-primary">
                   {pillar.title}
                 </h3>
@@ -284,9 +294,9 @@ function TrustSection() {
 // ── 6. Newsletter Section ─────────────────────────────────────────────────────
 function NewsletterSection() {
   return (
-    <Section id="newsletter" padding="xl" className="bg-surface-elevated border-t border-border">
-      <Container size="sm">
-        <Stack gap={8} align="center" className="text-center max-w-md mx-auto">
+    <Section id="newsletter" padding="2xl" className="bg-background">
+      <Container>
+        <Stack gap={8} align="center" className="text-center max-w-[32rem] mx-auto">
           {/* Header copy */}
           <Stack gap={3}>
             <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
@@ -301,7 +311,7 @@ function NewsletterSection() {
           </Stack>
 
           {/* Subscription Form Presentation */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full items-start">
+          <div className="flex flex-col sm:flex-row gap-4 w-full items-start">
             <div className="flex-1 w-full text-left">
               <label htmlFor="email-input" className="sr-only">
                 Email address
@@ -310,6 +320,7 @@ function NewsletterSection() {
                 id="email-input"
                 type="email"
                 placeholder="Email address"
+                variant="ghost"
                 size="lg"
                 className="w-full"
                 required
