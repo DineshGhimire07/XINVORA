@@ -8,6 +8,14 @@
 
 ## Releases & Phase Milestones
 
+### v0.7.1 — 2026-07-02
+*   **Phase 3B.1 Complete: Hero Section**
+    *   Surgically updated `HeroSection` inside `src/app/page.tsx` with a premium, centered, spacious editorial layout.
+    *   Composed visual-only primary and secondary CTA buttons utilizing existing `<Button>` primitives.
+    *   Configured fluid typography breakpoints for visual responsive scaling across viewports.
+    *   Enforced pure Server Component logic (no client hooks, zero dynamic hydration weight).
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
 ### v0.7.0 — 2026-07-02
 *   **Phase 3A Complete: Homepage Foundation**
     *   Replaced the temporary foundation placeholder in `src/app/page.tsx` with the Homepage Layout structure.

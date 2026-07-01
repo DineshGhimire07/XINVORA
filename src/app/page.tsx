@@ -13,6 +13,8 @@ import { Container } from "@/components/shared/container"
 import { Grid } from "@/components/shared/grid"
 import { Stack } from "@/components/shared/stack"
 import { buildMetadata } from "@/lib/metadata"
+import { Button } from "@/components/ui/button"
+import Image from "next/image"
 
 export const metadata = buildMetadata({
   title: "Home",
@@ -35,15 +37,49 @@ export default function HomePage() {
 // ── 1. Hero Section ──────────────────────────────────────────────────────────
 function HeroSection() {
   return (
-    <Section id="hero" padding="2xl" className="flex items-center justify-center min-h-[60vh] bg-surface-elevated">
+    <Section
+      id="hero"
+      padding="2xl"
+      className="flex items-center justify-center min-h-[75vh] bg-surface-elevated border-b border-border"
+    >
       <Container size="editorial">
-        <Stack gap={6} align="center" className="text-center">
-          <h1 className="text-display-xl font-display text-text-primary text-balance">
+        <Stack gap={8} align="center" className="text-center max-w-content-lg mx-auto">
+          {/* Brand Emblem Logo */}
+          <div className="relative h-12 w-12 select-none pointer-events-none mb-1">
+            <Image
+              src="/assets/brand/logos/Warm_taupe.png"
+              alt="XINVORA Brand Emblem"
+              fill
+              sizes="48px"
+              priority
+              className="object-contain"
+            />
+          </div>
+
+          {/* Eyebrow */}
+          <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
+            Crafted to Last
+          </span>
+
+          {/* Heading title */}
+          <h1 className="text-display-xl md:text-display-2xl font-display text-text-primary text-balance leading-tight tracking-tight">
             XINVORA
           </h1>
-          <p className="text-body-lg text-text-secondary max-w-prose text-pretty">
-            Crafted for the way you live. Discover objects of lasting quality.
+
+          {/* Supporting paragraph */}
+          <p className="text-body-md md:text-body-lg text-text-secondary max-w-prose mx-auto text-pretty">
+            A curation of objects designed with absolute intention—bringing quiet refinement and lasting quality to modern living.
           </p>
+
+          {/* Primary & Secondary CTA Buttons */}
+          <Stack direction="row" gap={4} justify="center" wrap="wrap" className="pt-2">
+            <Button variant="primary" size="lg">
+              Shop the Collection
+            </Button>
+            <Button variant="outline" size="lg">
+              Our Philosophy
+            </Button>
+          </Stack>
         </Stack>
       </Container>
     </Section>
