@@ -8,6 +8,23 @@
 
 ## Releases & Phase Milestones
 
+### v0.7.0 — 2026-07-02
+*   **Phase 3A Complete: Homepage Foundation**
+    *   Replaced the temporary foundation placeholder in `src/app/page.tsx` with the Homepage Layout structure.
+    *   Composed the Homepage structural sections (Hero, Brand Story, Featured Categories, Featured Products, Trust, and Newsletter) using layout primitives.
+    *   Reused layout wrappers `<Section>`, `<Container>`, `<Grid>`, and `<Stack>` to arrange columns and content groups, maintaining strict decoupled rules.
+    *   Configured indexable homepage SEO metadata (custom description and default brand template title overrides).
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
+### v0.6.0 — 2026-07-02
+*   **Phase 2D Complete: Motion System Baseline**
+    *   Established scroll animation structure placeholders and reset values aligned with the design token animation guidelines.
+
+### v0.5.0 — 2026-07-02
+*   **Phase 2C Complete: Navigation Baseline**
+    *   Created `src/components/shared/skip-to-content.tsx` accessibility bypass link.
+    *   Mapped structural placeholders for Header and mobile-drawer layout boundaries.
+
 ### v0.4.0 — 2026-07-02
 *   **Phase 2B Complete: Design System Primitives**
     *   Created `spinner.tsx` — Accessible SVG spinner using custom size tokens (`xs`, `sm`, `md`, `lg`) and CSS class merges.
@@ -50,9 +67,8 @@
 
 ## Future Deliverables (Roadmap Stubs)
 
-*   **v0.5.0 (Phase 2C Complete)**: Header, navigation structures, mobile drawers, breadcrumbs.
-*   **v0.6.0 (Phase 2D Complete)**: Reusable Framer Motion transitions and spring physics profiles.
-*   **v0.7.0 (Phase 3 Complete)**: Aspirational brand landing page, static marketing sections.
+*   **v0.8.0 (Phase 3B Complete)**: Homepage content, editorial copies, static featured grids, and visual media placements.
+*   **v0.9.0 (Phase 2C.2 Complete)**: Full desktop header navigation and mobile menu drawer triggers.
 
 ---
 
