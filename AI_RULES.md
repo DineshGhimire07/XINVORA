@@ -12,7 +12,7 @@
 
 ## Table of Contents
 
-1. [Critical AI Execution Rules](#1-critical-ai-execution-rules)
+1. [Critical AI Execution Rules](#1-critical-ai-execution-rules) — RULE-AI-01, RULE-AI-02
 2. [Architecture Rules](#2-architecture-rules)
 3. [File and Folder Rules](#3-file-and-folder-rules)
 4. [Component Rules](#4-component-rules)
@@ -33,6 +33,9 @@
 
 ### RULE-AI-01: Never rewrite an entire file
 Never rewrite an entire working file unless the user explicitly requests a full rewrite in plain, unambiguous language. Always prefer highly targeted, surgical edits to modify code blocks. This prevents AI-generated regressions, formatting resets, and loss of custom logic.
+
+### RULE-AI-02: Never create unused code
+During implementation, do not create placeholder components, temporary utilities, future abstractions, or any code that is not immediately used by the current phase deliverable. Every file created must be actively referenced and functional at the moment of creation. This prevents speculative code from accumulating in the repository — unused files that sit dormant for months, become stale, and are eventually never removed. If a file cannot be wired up in the current phase, it does not belong in the current phase.
 
 ---
 
