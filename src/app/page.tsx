@@ -89,16 +89,32 @@ function HeroSection() {
 // ── 2. Brand Story Section ───────────────────────────────────────────────────
 function BrandStorySection() {
   return (
-    <Section id="brand-story" padding="xl">
-      <Container size="lg">
-        <Stack gap={4} className="max-w-content-md mx-auto text-center">
-          <h2 className="text-heading-lg text-text-primary">
-            Our Philosophy
-          </h2>
-          <p className="text-body-md text-text-secondary text-pretty">
-            We believe in things that transcend the moment in which they were purchased. No trends, no noise — just considered materials, meticulous craftsmanship, and quiet confidence.
-          </p>
-        </Stack>
+    <Section id="brand-story" padding="xl" className="bg-background">
+      <Container size="editorial">
+        <Grid cols={{ base: 1, md: 2 }} gap={12} className="items-start">
+          {/* Left Column: Eyebrow + Statement */}
+          <Stack gap={4} className="max-w-prose">
+            <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
+              Our Philosophy
+            </span>
+            <h2 className="text-heading-xl font-display text-text-primary text-balance leading-tight">
+              Quiet confidence. Intentional design. Lasting value.
+            </h2>
+          </Stack>
+
+          {/* Right Column: Editorial Details */}
+          <Stack
+            gap={6}
+            className="text-text-secondary text-body-md md:text-body-lg max-w-prose leading-relaxed pt-2 md:pt-8"
+          >
+            <p className="text-pretty">
+              We believe in the beauty of restraint. XINVORA exists to prove that a digital experience can carry the same weight of quality as the objects it holds. In a world driven by trend-chasing and noise, we choose to design for longevity.
+            </p>
+            <p className="text-pretty">
+              Every curation, design choice, and material is considered with absolute intention—bringing quiet refinement and timeless craft into your daily life.
+            </p>
+          </Stack>
+        </Grid>
       </Container>
     </Section>
   )

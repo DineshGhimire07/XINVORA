@@ -8,6 +8,14 @@
 
 ## Releases & Phase Milestones
 
+### v0.7.2 — 2026-07-02
+*   **Phase 3B.2 Complete: Homepage Brand Story**
+    *   Surgically updated `BrandStorySection` inside `src/app/page.tsx` with a premium two-column responsive grid layout.
+    *   Adapted core brand philosophy values (timeless style, design intentionality, restraint) from `VISION.md` into editorial copy.
+    *   Integrated semantic heading structure mapping an uppercase eyebrow and `<h2>` titles.
+    *   Enforced pure Server Component logic with zero hydration or client-side runtime JS weight.
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
 ### v0.7.1 — 2026-07-02
 *   **Phase 3B.1 Complete: Hero Section**
     *   Surgically updated `HeroSection` inside `src/app/page.tsx` with a premium, centered, spacious editorial layout.
