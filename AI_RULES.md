@@ -120,6 +120,9 @@ UI components (`components/ui/`) are pure presentation. They render markup and a
 ### RULE-COMP-08: Never create a component that is only used once and is trivially small
 If a component is a single `<div>` wrapper with a class name used only once, it does not need to be a component. Premature componentization adds cognitive overhead without benefit.
 
+### RULE-LAYOUT-01: Shared layout components must be content-agnostic
+Shared layout components must never contain business copy, marketing text, brand messaging, images, or page-specific assumptions. They provide structure only. Pages and feature wrappers provide content.
+
 ---
 
 ## 5. Styling and Design Token Rules
