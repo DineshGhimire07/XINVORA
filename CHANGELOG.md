@@ -8,6 +8,13 @@
 
 ## Releases & Phase Milestones
 
+### v0.7.6 — 2026-07-02
+*   **Phase 3B.5 Complete: Homepage Trust Section**
+    *   Surgically updated `TrustSection` inside `src/app/page.tsx` with a premium responsive three-column grid layout under section name `The Values That Guide Us`.
+    *   Eliminated operational commerce copy placeholders (shipping, checkouts, returns) in favor of brand philosophy values (thoughtful craftsmanship, organic/stoneware materials, restrained aesthetics).
+    *   Leveraged spacing, layout typography, and clean margins inside design-token containers for visual structure without speculative icons.
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
 ### v0.7.5 — 2026-07-02
 *   **Phase 3B.4 Complete: Homepage Featured Products**
     *   Surgically updated `FeaturedProductsSection` inside `src/app/page.tsx` with a premium four-column grid layout under section name `Selected Pieces`.

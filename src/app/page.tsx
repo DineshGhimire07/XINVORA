@@ -229,23 +229,52 @@ function FeaturedProductsSection() {
 
 // ── 5. Trust Section ──────────────────────────────────────────────────────────
 function TrustSection() {
+  const pillars = [
+    {
+      id: "trust-1",
+      title: "Thoughtful Craftsmanship",
+      description: "Every object is formed with patience and meticulous attention. We work alongside small ateliers to protect traditional skill and ensure structural integrity.",
+    },
+    {
+      id: "trust-2",
+      title: "Exceptional Materials",
+      description: "We select materials that mature beautifully with age. Organic linen, raw timbers, and stoneware are chosen for their tactile quality and durability.",
+    },
+    {
+      id: "trust-3",
+      title: "Restrained Aesthetic",
+      description: "By focusing on shape, texture, and proportion rather than passing trends, our pieces blend quietly into modern living spaces.",
+    },
+  ]
+
   return (
-    <Section id="trust" padding="lg" className="border-t border-border">
+    <Section id="trust" padding="xl" className="bg-background border-t border-border">
       <Container>
-        <Grid cols={{ base: 1, md: 3 }} gap={8}>
-          <Stack gap={3} align="center" className="text-center">
-            <h3 className="text-label-lg text-text-primary">Thoughtful Sourcing</h3>
-            <p className="text-body-sm text-text-secondary">Exceptional materials sourced with integrity and respect for detail.</p>
+        <Stack gap={12}>
+          {/* Section Heading */}
+          <Stack gap={3} className="text-center max-w-content-md mx-auto">
+            <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
+              Core Principles
+            </span>
+            <h2 className="text-heading-lg text-text-primary">
+              The Values That Guide Us
+            </h2>
           </Stack>
-          <Stack gap={3} align="center" className="text-center">
-            <h3 className="text-label-lg text-text-primary">Meticulous Craft</h3>
-            <p className="text-body-sm text-text-secondary">Objects built by partners who share our commitment to longevity.</p>
-          </Stack>
-          <Stack gap={3} align="center" className="text-center">
-            <h3 className="text-label-lg text-text-primary">Global Compliance</h3>
-            <p className="text-body-sm text-text-secondary">Delivering premium standard services to our global audience.</p>
-          </Stack>
-        </Grid>
+
+          {/* Pillars Grid */}
+          <Grid cols={{ base: 1, md: 3 }} gap={8}>
+            {pillars.map((pillar) => (
+              <Stack key={pillar.id} gap={4} className="bg-surface border border-border p-8 rounded-sm">
+                <h3 className="text-heading-sm font-display text-text-primary">
+                  {pillar.title}
+                </h3>
+                <p className="text-body-sm text-text-secondary leading-relaxed text-pretty">
+                  {pillar.description}
+                </p>
+              </Stack>
+            ))}
+          </Grid>
+        </Stack>
       </Container>
     </Section>
   )
