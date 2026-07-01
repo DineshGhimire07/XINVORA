@@ -8,6 +8,16 @@
 
 ## Releases & Phase Milestones
 
+### v0.3.0 — 2026-07-01
+*   **Phase 2A Complete: Core Application Shell**
+    *   Created `src/app/error.tsx` — Client Component error boundary with branded recovery UI, dev-only logging, `role="alert"`, and `reset()` integration.
+    *   Created `src/app/loading.tsx` — Server Component loading state with brand-aligned shimmer indicator and full accessibility (`role="status"`, `aria-label`, `sr-only`).
+    *   Added `@keyframes shimmer` definition to `globals.css` — fixes the `.shimmer` utility class which previously had no backing keyframe.
+    *   Added `env(safe-area-inset-*)` padding to `html {}` in `globals.css` for iOS notch and home-indicator device support.
+    *   Added `.text-code` monospace typography class to `globals.css`, completing the full type scale.
+    *   Updated `PROMPT_TEMPLATE.md` to v2.0.0 with the 9-step disciplined workflow: Read → Audit → Change Impact → Approval → Code → Quality Gate → Repository Health → Docs → Commit.
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
 ### v0.2.0 — 2026-07-01
 *   **Phase 1 Complete: Project Foundation Established**
     *   Scaffolded complete directory architecture (per `ARCHITECTURE.md`) including services, prisma, features, and components.

@@ -142,6 +142,11 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* Safe-area insets — required for iPhone notch and home-indicator devices */
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
   }
 
   body {
@@ -204,6 +209,12 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background-color: hsl(var(--color-text-tertiary));
+  }
+
+  /* Shimmer keyframes — used by .shimmer utility and animate-shimmer Tailwind class */
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
   }
 
   /* Typography base styles */
@@ -360,6 +371,15 @@
     font-family: var(--font-display), Georgia, serif;
     font-style: italic;
     font-weight: 300;
+  }
+
+  /* Code — inline and block monospace text (prices, SKUs, tracking IDs) */
+  .text-code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;    /* Slightly smaller — monospace reads larger optically */
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    font-weight: 400;
   }
 }
 
