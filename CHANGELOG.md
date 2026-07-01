@@ -8,6 +8,14 @@
 
 ## Releases & Phase Milestones
 
+### v0.7.3 — 2026-07-02
+*   **Phase 3B.3 Complete: Homepage Featured Categories**
+    *   Surgically updated `FeaturedCategoriesSection` inside `src/app/page.tsx` with a premium responsive three-column collections grid.
+    *   Substituted specific category labels with generic, decoupled collection stubs (`Collection I`, `Collection II`, `Collection III`).
+    *   Configured on-brand structural card surfaces with relative aspect ratio placeholders.
+    *   Enforced pure Server Component execution with zero client hooks or browser hydration code.
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
 ### v0.7.2 — 2026-07-02
 *   **Phase 3B.2 Complete: Homepage Brand Story**
     *   Surgically updated `BrandStorySection` inside `src/app/page.tsx` with a premium two-column responsive grid layout.

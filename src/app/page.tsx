@@ -122,25 +122,53 @@ function BrandStorySection() {
 
 // ── 3. Featured Categories Section ───────────────────────────────────────────
 function FeaturedCategoriesSection() {
+  const collections = [
+    { id: "coll-1", title: "Collection I", description: "Essential garments defined by clean tailoring and structural drapes." },
+    { id: "coll-2", title: "Collection II", description: "Considered objects and materials that refine the home." },
+    { id: "coll-3", title: "Collection III", description: "Meticulous accessories focused on utility and craft." },
+  ]
+
   return (
-    <Section id="featured-categories" padding="lg" className="bg-surface-elevated">
+    <Section id="featured-categories" padding="xl" className="bg-surface-elevated border-b border-border">
       <Container>
-        <Stack gap={10}>
-          <div className="text-center">
+        <Stack gap={12}>
+          {/* Section Heading */}
+          <Stack gap={3} className="text-center max-w-content-md mx-auto">
+            <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
+              Curated Spaces
+            </span>
             <h2 className="text-heading-lg text-text-primary">
-              Shop by Category
+              Featured Collections
             </h2>
-          </div>
+          </Stack>
+
+          {/* Grid Layout */}
           <Grid cols={{ base: 1, md: 3 }} gap={6}>
-            <div className="bg-surface border border-border p-8 rounded-sm h-64 flex items-end">
-              <h3 className="text-heading-md text-text-primary">Fashion</h3>
-            </div>
-            <div className="bg-surface border border-border p-8 rounded-sm h-64 flex items-end">
-              <h3 className="text-heading-md text-text-primary">Home</h3>
-            </div>
-            <div className="bg-surface border border-border p-8 rounded-sm h-64 flex items-end">
-              <h3 className="text-heading-md text-text-primary">Accessories</h3>
-            </div>
+            {collections.map((col, idx) => (
+              <div
+                key={col.id}
+                className="bg-surface border border-border rounded-sm aspect-[4/5] p-8 flex flex-col justify-end transition-colors duration-200"
+              >
+                <Stack gap={4}>
+                  <Stack gap={2}>
+                    <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
+                      {`0${idx + 1}`}
+                    </span>
+                    <h3 className="text-heading-md font-display text-text-primary">
+                      {col.title}
+                    </h3>
+                    <p className="text-body-sm text-text-secondary text-pretty">
+                      {col.description}
+                    </p>
+                  </Stack>
+                  <div className="pt-2">
+                    <span className="text-[11px] font-semibold tracking-wider uppercase underline underline-offset-4 text-text-primary select-none cursor-pointer">
+                      Explore
+                    </span>
+                  </div>
+                </Stack>
+              </div>
+            ))}
           </Grid>
         </Stack>
       </Container>
