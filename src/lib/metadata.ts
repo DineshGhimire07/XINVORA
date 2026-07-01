@@ -107,15 +107,16 @@ export function buildRootMetadata(): Metadata {
       index: true,
       follow: true,
     },
-    icons: {
-      icon: [
-        { url: "/favicons/favicon.ico", sizes: "any" },
-        { url: "/favicons/icon.svg", type: "image/svg+xml" },
-      ],
-      apple: [
-        { url: "/favicons/apple-touch-icon.png", sizes: "180x180" },
-      ],
-    },
-    manifest: "/favicons/site.webmanifest",
+    // TODO: Enable in Brand Assets phase once assets are supplied in public/favicons/
+    // icons: {
+    //   icon: [
+    //     { url: "/favicons/favicon.ico", sizes: "any" },
+    //     { url: "/favicons/icon.svg", type: "image/svg+xml" },
+    //   ],
+    //   apple: [
+    //     { url: "/favicons/apple-touch-icon.png", sizes: "180x180" },
+    //   ],
+    // },
+    // manifest: "/favicons/site.webmanifest",
   }
 }

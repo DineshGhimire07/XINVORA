@@ -53,8 +53,9 @@ This table tracks the count of core code assets across the repository. It is upd
 | Hero Section: premium layout typography & CTA button primitives | Phase 3B.1 | 2026-07-02 |
 | Brand Story: editorial split-layout detailing core philosophy | Phase 3B.2 | 2026-07-02 |
 | Featured Categories: three-column content-card collection grid layout | Phase 3B.3 | 2026-07-02 |
+| Maintenance: Resolved Image and Metadata Webmanifest console warnings | Maintenance | 2026-07-02 |
 
-**Phase 3B.3 complete.** The Featured Categories section is fully integrated, version aligned at v0.7.3.
+**Maintenance Complete.** Warnings resolved, version aligned at v0.7.4.
 
 ---
 

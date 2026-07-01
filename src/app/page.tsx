@@ -45,16 +45,14 @@ function HeroSection() {
       <Container size="editorial">
         <Stack gap={8} align="center" className="text-center max-w-content-lg mx-auto">
           {/* Brand Emblem Logo */}
-          <div className="relative h-12 w-12 select-none pointer-events-none mb-1">
-            <Image
-              src="/assets/brand/logos/Warm_taupe.png"
-              alt="XINVORA Brand Emblem"
-              fill
-              sizes="48px"
-              priority
-              className="object-contain"
-            />
-          </div>
+          <Image
+            src="/assets/brand/logos/Warm_taupe.png"
+            alt="XINVORA Brand Emblem"
+            width={48}
+            height={48}
+            priority
+            className="select-none pointer-events-none mb-1 object-contain"
+          />
 
           {/* Eyebrow */}
           <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">

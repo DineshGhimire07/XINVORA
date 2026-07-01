@@ -8,6 +8,12 @@
 
 ## Releases & Phase Milestones
 
+### v0.7.4 — 2026-07-02
+*   **Maintenance: Resolve Asset & Metadata Warnings**
+    *   Fixed Next.js `Image` warning by replacing `fill` with explicit `width={48}` and `height={48}` dimensions for the square brand emblem.
+    *   Disabled unused favicon and manifest paths in `src/lib/metadata.ts` to prevent 404 console errors during localhost load, deferring manifest configuration until Brand Assets are finalized.
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
 ### v0.7.3 — 2026-07-02
 *   **Phase 3B.3 Complete: Homepage Featured Categories**
     *   Surgically updated `FeaturedCategoriesSection` inside `src/app/page.tsx` with a premium responsive three-column collections grid.
