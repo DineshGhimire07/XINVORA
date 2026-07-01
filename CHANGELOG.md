@@ -8,6 +8,18 @@
 
 ## Releases & Phase Milestones
 
+### v0.4.0 — 2026-07-02
+*   **Phase 2B Complete: Design System Primitives**
+    *   Created `spinner.tsx` — Accessible SVG spinner using custom size tokens (`xs`, `sm`, `md`, `lg`) and CSS class merges.
+    *   Created `skeleton.tsx` — Layout container utilizing global CSS shimmer effect for content loading placeholders.
+    *   Created `badge.tsx` — Visual tag styling supporting state colors and typography sizes.
+    *   Created `separator.tsx` — Decoupled horizontal and vertical visual separators with custom aria settings.
+    *   Created `label.tsx` — Accessible visual metadata form labels matching project states.
+    *   Created `textarea.tsx` — Client Component form text block with support for multiline input and resizing constraints.
+    *   Created layout primitives: `stack.tsx` (Flexbox layouts), `grid.tsx` (Responsive columns), `container.tsx` (Width-constrained panels), and `section.tsx` (Vertical block padding).
+    *   Enforced architecture constraints: decoupled `Section` and `Container` layouts, deferred `typography.tsx` component and Button loading transitions per approved specs.
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
 ### v0.3.0 — 2026-07-01
 *   **Phase 2A Complete: Core Application Shell**
     *   Created `src/app/error.tsx` — Client Component error boundary with branded recovery UI, dev-only logging, `role="alert"`, and `reset()` integration.
@@ -38,8 +50,6 @@
 
 ## Future Deliverables (Roadmap Stubs)
 
-*   **v0.3.0 (Phase 2A Complete)**: Application core wrapper elements, loading layers, error handlers.
-*   **v0.4.0 (Phase 2B Complete)**: Design token styles, CSS configurations, atomic buttons/inputs.
 *   **v0.5.0 (Phase 2C Complete)**: Header, navigation structures, mobile drawers, breadcrumbs.
 *   **v0.6.0 (Phase 2D Complete)**: Reusable Framer Motion transitions and spring physics profiles.
 *   **v0.7.0 (Phase 3 Complete)**: Aspirational brand landing page, static marketing sections.

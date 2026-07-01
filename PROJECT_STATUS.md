@@ -14,11 +14,11 @@
 
 | Field | Value |
 |---|---|
-| **Project State** | Shell Established — Ready for Design System |
-| **Current Phase** | Phase 2B — Design System |
+| **Project State** | Design System Established — Ready for Navigation |
+| **Current Phase** | Phase 2C — Navigation |
 | **Phase Status** | Not Started |
-| **Last Updated** | 2026-07-01 |
-| **Next Objective** | Build CSS token system, 8 primitive UI components |
+| **Last Updated** | 2026-07-02 |
+| **Next Objective** | Build Header, Footer, and mobile navigation drawer components |
 | **Blocking Issues** | None |
 
 ---
@@ -29,7 +29,7 @@ This table tracks the count of core code assets across the repository. It is upd
 
 | Asset Type | Count |
 |---|---|
-| **Components** | 3 |
+| **Components** | 13 |
 | **Pages** | 1 |
 | **Hooks** | 4 |
 | **Providers** | 2 |
@@ -46,8 +46,9 @@ This table tracks the count of core code assets across the repository. It is upd
 | Project Foundation established, build & lint verification | Phase 1 (Foundation) | 2026-07-01 |
 | Application Shell: error boundary, loading state, CSS additions | Phase 2A | 2026-07-01 |
 | PROMPT_TEMPLATE.md updated to v2.0.0 with 9-step disciplined workflow | Phase 2A | 2026-07-01 |
+| Design System: 6 UI primitives, 4 Layout primitives, decoupling check | Phase 2B | 2026-07-02 |
 
-**Phase 2A complete.** Root shell, error boundary, loading state, and CSS foundation are all in place.
+**Phase 2B complete.** Complete UI primitives and layout wrapper blocks are established.
 
 ---
 
@@ -55,7 +56,7 @@ This table tracks the count of core code assets across the repository. It is upd
 
 | Item | Phase | Owner | Status |
 |---|---|---|---|
-| Design System | Phase 2B | Engineering Lead | Planning stage |
+| Navigation | Phase 2C | Engineering Lead | Planning stage |
 
 ---
 
@@ -115,36 +116,38 @@ This table tracks the count of core code assets across the repository. It is upd
 
 ### Phase 2B — Design System
 
-- [ ] Define all CSS Custom Property tokens in `styles/tokens.css`
-  - [ ] Brand color palette (light + dark mode)
-  - [ ] Neutral color palette (light + dark mode)
-  - [ ] Semantic colors (success, error, warning, info)
-  - [ ] Spacing scale
-  - [ ] Typography scale (size, weight, line-height)
-  - [ ] Border radius scale
-  - [ ] Shadow system
-  - [ ] Z-index scale
-  - [ ] Animation duration and easing tokens
-- [ ] Configure Tailwind to reference design tokens
-- [ ] Write `styles/globals.css`
-- [ ] Write `styles/typography.css`
-- [ ] Configure self-hosted fonts in `public/fonts/`
-- [ ] Build `components/ui/Button/`
-- [ ] Build `components/ui/Input/`
-- [ ] Build `components/ui/Badge/`
-- [ ] Build `components/ui/Card/`
-- [ ] Build `components/ui/Skeleton/`
-- [ ] Build `components/ui/Spinner/`
-- [ ] Build `components/ui/Separator/`
-- [ ] Build `components/ui/Tooltip/`
-- [ ] Verify all components render in all variants
-- [ ] Verify dark mode functions correctly
-- [ ] Run Quality Gate validation checks
-- [ ] Run `git add . && git commit -m "Phase 2B Complete"`
-- [ ] Update repository snapshot counts
-- [ ] Update PROJECT_STATUS.md to mark Phase 2B complete
+- [x] Define all CSS Custom Property tokens in `styles/tokens.css` — completed in Phase 1
+  - [x] Brand color palette (light + dark mode)
+  - [x] Neutral color palette (light + dark mode)
+  - [x] Semantic colors (success, error, warning, info)
+  - [x] Spacing scale
+  - [x] Typography scale (size, weight, line-height)
+  - [x] Border radius scale
+  - [x] Shadow system
+  - [x] Z-index scale
+  - [x] Animation duration and easing tokens
+- [x] Configure Tailwind to reference design tokens — completed in Phase 1
+- [x] Write `styles/globals.css` — completed in Phase 1 & 2A
+- [x] Write `styles/typography.css` — incorporated in globals.css
+- [x] Configure self-hosted fonts in `public/fonts/` — loaded via next/font in root layout
+- [x] Build `components/ui/Button/` — completed in Phase 1
+- [x] Build `components/ui/Input/` — completed in Phase 1
+- [x] Build `components/ui/Badge/` — completed in Phase 2B
+- [x] Build `components/ui/Card/` — completed in Phase 1
+- [x] Build `components/ui/Skeleton/` — completed in Phase 2B
+- [x] Build `components/ui/Spinner/` — completed in Phase 2B
+- [x] Build `components/ui/Separator/` — completed in Phase 2B
+- [x] Build `components/ui/Label/` — completed in Phase 2B
+- [x] Build `components/ui/Textarea/` — completed in Phase 2B
+- [x] Build Layout primitives (Stack, Grid, Container, Section) — completed in Phase 2B
+- [x] Verify all components render in all variants
+- [x] Verify dark mode functions correctly
+- [x] Run Quality Gate validation checks
+- [x] Run `git add . && git commit -m "Phase 2B Complete"`
+- [x] Update repository snapshot counts
+- [x] Update PROJECT_STATUS.md to mark Phase 2B complete
 
-**Phase 2B Status: NOT STARTED**
+**Phase 2B Status: COMPLETE**
 
 ---
 
