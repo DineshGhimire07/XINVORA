@@ -176,19 +176,48 @@ function FeaturedCategoriesSection() {
 
 // ── 4. Featured Products Section ──────────────────────────────────────────────
 function FeaturedProductsSection() {
+  const items = [
+    { id: "edit-1", name: "Edition 01", collection: "Collection I" },
+    { id: "edit-2", name: "Edition 02", collection: "Collection I" },
+    { id: "edit-3", name: "Edition 03", collection: "Collection II" },
+    { id: "edit-4", name: "Edition 04", collection: "Collection III" },
+  ]
+
   return (
     <Section id="featured-products" padding="xl">
       <Container>
-        <Stack gap={10}>
-          <div className="text-center">
+        <Stack gap={12}>
+          {/* Section Heading */}
+          <Stack gap={3} className="text-center max-w-content-md mx-auto">
+            <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
+              Editor&apos;s Selection
+            </span>
             <h2 className="text-heading-lg text-text-primary">
-              Featured Pieces
+              Selected Pieces
             </h2>
-          </div>
+          </Stack>
+
+          {/* Grid Layout */}
           <Grid cols={{ base: 1, sm: 2, lg: 4 }} gap={6}>
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-surface border border-border aspect-product p-6 rounded-sm flex flex-col justify-end">
-                <h3 className="text-label-lg text-text-primary">Object {i}</h3>
+            {items.map((item) => (
+              <div key={item.id} className="group flex flex-col gap-4">
+                {/* Visual Surface Placeholder */}
+                <div className="bg-surface-elevated border border-border rounded-sm aspect-[3/4] transition-colors duration-200" />
+
+                {/* Metadata details */}
+                <Stack gap={2}>
+                  <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
+                    {item.collection}
+                  </span>
+                  <h3 className="text-body-md font-medium text-text-primary">
+                    {item.name}
+                  </h3>
+                  <div className="pt-1">
+                    <span className="text-[11px] font-semibold tracking-wider uppercase underline underline-offset-4 text-text-primary select-none cursor-pointer">
+                      View Object
+                    </span>
+                  </div>
+                </Stack>
               </div>
             ))}
           </Grid>

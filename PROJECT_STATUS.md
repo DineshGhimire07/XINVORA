@@ -14,11 +14,11 @@
 
 | Field | Value |
 |---|---|
-| **Project State** | Category Section Complete — Ready for Homepage Content |
-| **Current Phase** | Phase 3B.4 — Landing Page Content |
+| **Project State** | Product Section Complete — Ready for Homepage Content |
+| **Current Phase** | Phase 3B.5 — Landing Page Content |
 | **Phase Status** | Not Started |
 | **Last Updated** | 2026-07-02 |
-| **Next Objective** | Build featured products static grids and trust details |
+| **Next Objective** | Build trust assurances details and newsletter stubs |
 | **Blocking Issues** | None |
 
 ---
@@ -54,8 +54,9 @@ This table tracks the count of core code assets across the repository. It is upd
 | Brand Story: editorial split-layout detailing core philosophy | Phase 3B.2 | 2026-07-02 |
 | Featured Categories: three-column content-card collection grid layout | Phase 3B.3 | 2026-07-02 |
 | Maintenance: Resolved Image and Metadata Webmanifest console warnings | Maintenance | 2026-07-02 |
+| Featured Products: four-column visual card list featuring generic editions | Phase 3B.4 | 2026-07-02 |
 
-**Maintenance Complete.** Warnings resolved, version aligned at v0.7.4.
+**Phase 3B.4 complete.** The Featured Products section is fully integrated, version aligned at v0.7.5.
 
 ---
 
@@ -63,7 +64,7 @@ This table tracks the count of core code assets across the repository. It is upd
 
 | Item | Phase | Owner | Status |
 |---|---|---|---|
-| Homepage Content | Phase 3B.4 | Engineering Lead | Planning stage |
+| Homepage Content | Phase 3B.5 | Engineering Lead | Planning stage |
 
 ---
 
@@ -251,19 +252,32 @@ This table tracks the count of core code assets across the repository. It is upd
 
 ---
 
-### Phase 3B.4 — Landing Page Content
+### Phase 3B.4 — Homepage Featured Products
 
-- [ ] Build Featured products static grids
+- [x] Build premium responsive four-column Selected Pieces grid inside page.tsx
+- [x] Integrate generic Edition 01-04 names and Collection labels
+- [x] Abstract all pricing to avoid premature currency and formatting assumptions
+- [x] Maintain pure Server Component logic (no hooks, zero dynamic hydration)
+- [x] Run Quality Gate validation checks
+- [x] Run `git add . && git commit -m "Phase 3B.4 Complete"`
+- [x] Update PROJECT_STATUS.md to mark Phase 3B.4 complete
+
+**Phase 3B.4 Status: COMPLETE**
+
+---
+
+### Phase 3B.5 — Landing Page Content
+
 - [ ] Build Trust assurances content details
 - [ ] Build Newsletter signup form layout
 - [ ] Apply scroll-triggered animations
 - [ ] Optimize page performance (Lighthouse Performance >= 90, SEO = 100)
 - [ ] Run Quality Gate validation checks
-- [ ] Run `git add . && git commit -m "Phase 3B.4 Complete"`
+- [ ] Run `git add . && git commit -m "Phase 3B.5 Complete"`
 - [ ] Update repository snapshot counts
-- [ ] Update PROJECT_STATUS.md to mark Phase 3B.4 complete
+- [ ] Update PROJECT_STATUS.md to mark Phase 3B.5 complete
 
-**Phase 3B.4 Status: NOT STARTED**
+**Phase 3B.5 Status: NOT STARTED**
 
 ---
 

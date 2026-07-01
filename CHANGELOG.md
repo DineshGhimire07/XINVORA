@@ -8,6 +8,15 @@
 
 ## Releases & Phase Milestones
 
+### v0.7.5 — 2026-07-02
+*   **Phase 3B.4 Complete: Homepage Featured Products**
+    *   Surgically updated `FeaturedProductsSection` inside `src/app/page.tsx` with a premium four-column grid layout under section name `Selected Pieces`.
+    *   Substituted specific product labels with generic, decoupled edition stubs (`Edition 01` to `Edition 04`) and collection references.
+    *   Abstracted pricing details completely to prevent currency and formatting assumptions ahead of Phase 4.
+    *   Configured on-brand structural card surfaces with relative aspect ratio placeholders (`aspect-[3/4]`) and clean backgrounds.
+    *   Escaped unescaped entities inside string tags to ensure ESLint compliance.
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
 ### v0.7.4 — 2026-07-02
 *   **Maintenance: Resolve Asset & Metadata Warnings**
     *   Fixed Next.js `Image` warning by replacing `fill` with explicit `width={48}` and `height={48}` dimensions for the square brand emblem.
