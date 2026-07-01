@@ -14,6 +14,7 @@ import { Grid } from "@/components/shared/grid"
 import { Stack } from "@/components/shared/stack"
 import { buildMetadata } from "@/lib/metadata"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import Image from "next/image"
 
 export const metadata = buildMetadata({
@@ -285,9 +286,39 @@ function NewsletterSection() {
   return (
     <Section id="newsletter" padding="xl" className="bg-surface-elevated border-t border-border">
       <Container size="sm">
-        <Stack gap={4} align="center" className="text-center">
-          <h2 className="text-heading-lg text-text-primary">Keep in Touch</h2>
-          <p className="text-body-md text-text-secondary">Subscribe to receive campaign releases, journal essays, and private updates.</p>
+        <Stack gap={8} align="center" className="text-center max-w-md mx-auto">
+          {/* Header copy */}
+          <Stack gap={3}>
+            <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
+              Editorial Updates
+            </span>
+            <h2 className="text-heading-lg text-text-primary">
+              Become part of the XINVORA community
+            </h2>
+            <p className="text-body-md text-text-secondary text-pretty">
+              Subscribe to receive campaign releases, journal essays, and private updates.
+            </p>
+          </Stack>
+
+          {/* Subscription Form Presentation */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full items-start">
+            <div className="flex-1 w-full text-left">
+              <label htmlFor="email-input" className="sr-only">
+                Email address
+              </label>
+              <Input
+                id="email-input"
+                type="email"
+                placeholder="Email address"
+                size="lg"
+                className="w-full"
+                required
+              />
+            </div>
+            <Button type="submit" variant="primary" size="lg" className="w-full sm:w-auto shrink-0">
+              Subscribe
+            </Button>
+          </div>
         </Stack>
       </Container>
     </Section>

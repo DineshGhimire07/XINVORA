@@ -8,6 +8,14 @@
 
 ## Releases & Phase Milestones
 
+### v0.7.7 — 2026-07-02
+*   **Phase 3B.6 Complete: Homepage Newsletter**
+    *   Surgically updated `NewsletterSection` inside `src/app/page.tsx` with a premium responsive email subscription form block under header name `Become part of the XINVORA community`.
+    *   Composed layout layout components directly using design system primitives: `<Input>` and primary filled `<Button>` (Subscribe).
+    *   Paired input with screen-reader-only labels (`sr-only`) to secure accessible landmark navigation.
+    *   Enforced pure Server Component execution (zero client-side JS runtime weight, no hooks, no submission validation endpoints).
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
 ### v0.7.6 — 2026-07-02
 *   **Phase 3B.5 Complete: Homepage Trust Section**
     *   Surgically updated `TrustSection` inside `src/app/page.tsx` with a premium responsive three-column grid layout under section name `The Values That Guide Us`.

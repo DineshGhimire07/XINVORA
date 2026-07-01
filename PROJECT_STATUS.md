@@ -14,11 +14,11 @@
 
 | Field | Value |
 |---|---|
-| **Project State** | Trust Section Complete — Ready for Homepage Content |
-| **Current Phase** | Phase 3B.6 — Landing Page Content |
+| **Project State** | Newsletter Section Complete — Ready for Homepage Polish |
+| **Current Phase** | Phase 3B.7 — Landing Page Content |
 | **Phase Status** | Not Started |
 | **Last Updated** | 2026-07-02 |
-| **Next Objective** | Build newsletter stubs and homepage animations |
+| **Next Objective** | Implement scroll-triggered animations and final checks |
 | **Blocking Issues** | None |
 
 ---
@@ -56,8 +56,9 @@ This table tracks the count of core code assets across the repository. It is upd
 | Maintenance: Resolved Image and Metadata Webmanifest console warnings | Maintenance | 2026-07-02 |
 | Featured Products: four-column visual card list featuring generic editions | Phase 3B.4 | 2026-07-02 |
 | Trust Section: three-column brand philosophy values card layout | Phase 3B.5 | 2026-07-02 |
+| Newsletter Section: premium responsive form composing Input and Button primitives | Phase 3B.6 | 2026-07-02 |
 
-**Phase 3B.5 complete.** The Trust section is fully integrated, version aligned at v0.7.6.
+**Phase 3B.6 complete.** The Newsletter section is fully integrated, version aligned at v0.7.7.
 
 ---
 
@@ -65,7 +66,7 @@ This table tracks the count of core code assets across the repository. It is upd
 
 | Item | Phase | Owner | Status |
 |---|---|---|---|
-| Homepage Content | Phase 3B.6 | Engineering Lead | Planning stage |
+| Homepage Content | Phase 3B.7 | Engineering Lead | Planning stage |
 
 ---
 
@@ -281,17 +282,30 @@ This table tracks the count of core code assets across the repository. It is upd
 
 ---
 
-### Phase 3B.6 — Landing Page Content
+### Phase 3B.6 — Homepage Newsletter
 
-- [ ] Build Newsletter signup form layout
+- [x] Build premium responsive subscription form layout inside page.tsx
+- [x] Integrate generic label matching email inputs for accessibility landmark pairing
+- [x] Compose UI primitives: Input and primary visual Button (Subscribe)
+- [x] Maintain pure Server Component logic (no hooks, zero dynamic hydration)
+- [x] Run Quality Gate validation checks
+- [x] Run `git add . && git commit -m "Phase 3B.6 Complete"`
+- [x] Update PROJECT_STATUS.md to mark Phase 3B.6 complete
+
+**Phase 3B.6 Status: COMPLETE**
+
+---
+
+### Phase 3B.7 — Landing Page Content
+
 - [ ] Apply scroll-triggered animations
 - [ ] Optimize page performance (Lighthouse Performance >= 90, SEO = 100)
 - [ ] Run Quality Gate validation checks
-- [ ] Run `git add . && git commit -m "Phase 3B.6 Complete"`
+- [ ] Run `git add . && git commit -m "Phase 3B.7 Complete"`
 - [ ] Update repository snapshot counts
-- [ ] Update PROJECT_STATUS.md to mark Phase 3B.6 complete
+- [ ] Update PROJECT_STATUS.md to mark Phase 3B.7 complete
 
-**Phase 3B.6 Status: NOT STARTED**
+**Phase 3B.7 Status: NOT STARTED**
 
 ---
 
