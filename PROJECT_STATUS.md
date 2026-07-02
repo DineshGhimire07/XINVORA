@@ -14,7 +14,7 @@
 
 | Field | Value |
 |---|---|
-| **Project State** | Brand Experience Foundation Complete — Ready for Shop |
+| **Project State** | Journal & Editorial Experience Foundation Complete — Ready for Shop |
 | **Current Phase** | Phase 4 — Shop (Product Listing) |
 | **Phase Status** | Not Started |
 | **Last Updated** | 2026-07-02 |
@@ -30,7 +30,7 @@ This table tracks the count of core code assets across the repository. It is upd
 | Asset Type | Count |
 |---|---|
 | **Components** | 15 |
-| **Pages** | 4 |
+| **Pages** | 6 |
 | **Hooks** | 4 |
 | **Providers** | 2 |
 | **API Routes** | 1 |
@@ -61,8 +61,9 @@ This table tracks the count of core code assets across the repository. It is upd
 | Collections browsing experience foundation | Phase 3C | 2026-07-02 |
 | Product detail experience foundation | Phase 3D | 2026-07-02 |
 | Brand experience foundation | Phase 3E | 2026-07-02 |
+| Journal & editorial experience foundation | Phase 3F | 2026-07-02 |
 
-**Phase 3E complete.** The Brand Experience Foundation page is fully complete, version aligned at v1.0.0.
+**Phase 3F complete.** The Journal & Editorial Experience Foundation pages are fully complete, version aligned at v1.1.0.
 
 ---
 
@@ -353,6 +354,19 @@ This table tracks the count of core code assets across the repository. It is upd
 - [x] Update PROJECT_STATUS.md to mark Phase 3E complete
 
 **Phase 3E Status: COMPLETE**
+
+---
+
+### Phase 3F — Journal & Editorial Experience Foundation
+
+- [x] Build Journal landing index route page (Editorial hero, featured story block, categories navigation, 3-column stories list grid)
+- [x] Build dynamic Journal article reading route page (Spacious long-form layout, pulled quotes, large media placeholders, related stories suggestions grid)
+- [x] Configure static pre-rendering parameters inside generateStaticParams
+- [x] Run Quality Gate validation checks
+- [x] Run `git add . && git commit -m "Phase 3F Complete"`
+- [x] Update PROJECT_STATUS.md to mark Phase 3F complete
+
+**Phase 3F Status: COMPLETE**
 
 ---
 

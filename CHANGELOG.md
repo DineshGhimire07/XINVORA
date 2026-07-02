@@ -8,6 +8,22 @@
 
 ## Releases & Phase Milestones
 
+### v1.1.0 — 2026-07-02
+*   **Phase 3F Complete: Journal & Editorial Experience Foundation**
+    *   Created `src/app/journal/page.tsx` static landing index list.
+    *   Created `src/app/journal/[slug]/page.tsx` dynamic article reading page template.
+    *   Pre-compiled all 6 dynamic journal routes using `generateStaticParams` for instant transitions.
+    *   Implemented featured story card block, horizontal categories navigation, and 3-column stories grid.
+    *   Added pulled quotes and large media landscape blocks for long-form reading comfort.
+    *   Added related story suggestions list and Dispatch signature footer.
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
+### v1.0.0 — 2026-07-02
+*   **Phase 3E Complete: Brand Experience Foundation**
+    *   Created `src/app/about/page.tsx` brand about page as a static pre-rendered Server Component.
+    *   Implemented editorial hero, story columns, principles grid, raw materials details, craftsmanship, sustainability, timeline, and closing quote block.
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
 ### v0.9.0 — 2026-07-02
 *   **Phase 3D Complete: Product Detail Experience Foundation**
     *   Created dynamic product detail route `src/app/products/[slug]/page.tsx` as a pure, zero-hydration Server Component.
