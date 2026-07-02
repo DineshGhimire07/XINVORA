@@ -8,6 +8,15 @@
 
 ## Releases & Phase Milestones
 
+### v1.2.0 — 2026-07-02
+*   **Phase 3G Complete: Utility Pages Foundation**
+    *   Created `src/app/contact/page.tsx` with email placeholders, coordinates, and mock input inquiries.
+    *   Created `src/app/faq/page.tsx` with grouped QA categories and sticky sidebar index navigation links.
+    *   Created `src/app/shipping/page.tsx`, `src/app/returns/page.tsx`, `src/app/privacy/page.tsx`, and `src/app/terms/page.tsx` featuring typography-first policies layouts.
+    *   Re-designed `src/app/not-found.tsx` to display an editorial 404 block with home redirection actions.
+    *   Created `src/app/search/page.tsx` displaying search empty notices and catalog coordinates keywords suggestions.
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
 ### v1.1.0 — 2026-07-02
 *   **Phase 3F Complete: Journal & Editorial Experience Foundation**
     *   Created `src/app/journal/page.tsx` static landing index list.

@@ -14,11 +14,11 @@
 
 | Field | Value |
 |---|---|
-| **Project State** | Journal & Editorial Experience Foundation Complete — Ready for Shop |
-| **Current Phase** | Phase 4 — Shop (Product Listing) |
+| **Project State** | Utility Pages Foundation Complete — Ready for Navigation & Footer |
+| **Current Phase** | Phase 3H — Navigation & Footer Completion |
 | **Phase Status** | Not Started |
 | **Last Updated** | 2026-07-02 |
-| **Next Objective** | Build dynamic product catalog routing with filters and cart store integration |
+| **Next Objective** | Complete mega menus, sticky navigation headers, complete footer references, and search overlays |
 | **Blocking Issues** | None |
 
 ---
@@ -30,7 +30,7 @@ This table tracks the count of core code assets across the repository. It is upd
 | Asset Type | Count |
 |---|---|
 | **Components** | 15 |
-| **Pages** | 6 |
+| **Pages** | 13 |
 | **Hooks** | 4 |
 | **Providers** | 2 |
 | **API Routes** | 1 |
@@ -62,8 +62,9 @@ This table tracks the count of core code assets across the repository. It is upd
 | Product detail experience foundation | Phase 3D | 2026-07-02 |
 | Brand experience foundation | Phase 3E | 2026-07-02 |
 | Journal & editorial experience foundation | Phase 3F | 2026-07-02 |
+| Utility pages foundation | Phase 3G | 2026-07-02 |
 
-**Phase 3F complete.** The Journal & Editorial Experience Foundation pages are fully complete, version aligned at v1.1.0.
+**Phase 3G complete.** The Utility Pages Foundation pages are fully complete, version aligned at v1.2.0.
 
 ---
 
@@ -367,6 +368,24 @@ This table tracks the count of core code assets across the repository. It is upd
 - [x] Update PROJECT_STATUS.md to mark Phase 3F complete
 
 **Phase 3F Status: COMPLETE**
+
+---
+
+### Phase 3G — Utility Pages Foundation
+
+- [x] Build Contact information utility page (`src/app/contact/page.tsx`)
+- [x] Build FAQ reference utility page (`src/app/faq/page.tsx`)
+- [x] Build Shipping parameters policy page (`src/app/shipping/page.tsx`)
+- [x] Build Returns and exchanges details page (`src/app/returns/page.tsx`)
+- [x] Build Privacy Policy details page (`src/app/privacy/page.tsx`)
+- [x] Build Terms and Conditions details page (`src/app/terms/page.tsx`)
+- [x] Build global 404 page handler (`src/app/not-found.tsx`)
+- [x] Build empty Search placeholder route page (`src/app/search/page.tsx`)
+- [x] Run Quality Gate validation checks
+- [x] Run `git add . && git commit -m "Phase 3G Complete"`
+- [x] Update PROJECT_STATUS.md to mark Phase 3G complete
+
+**Phase 3G Status: COMPLETE**
 
 ---
 
