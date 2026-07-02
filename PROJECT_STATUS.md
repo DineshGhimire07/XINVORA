@@ -14,11 +14,11 @@
 
 | Field | Value |
 |---|---|
-| **Project State** | Homepage Refined & Complete — Ready for Marketing Pages |
-| **Current Phase** | Phase 3C — Marketing Pages |
+| **Project State** | Collections Experience Foundation Complete — Ready for Shop |
+| **Current Phase** | Phase 4 — Shop (Product Listing) |
 | **Phase Status** | Not Started |
 | **Last Updated** | 2026-07-02 |
-| **Next Objective** | Build brand campaign and story pages |
+| **Next Objective** | Build dynamic product catalog routing with filters and cart store integration |
 | **Blocking Issues** | None |
 
 ---
@@ -29,8 +29,8 @@ This table tracks the count of core code assets across the repository. It is upd
 
 | Asset Type | Count |
 |---|---|
-| **Components** | 13 |
-| **Pages** | 1 |
+| **Components** | 15 |
+| **Pages** | 2 |
 | **Hooks** | 4 |
 | **Providers** | 2 |
 | **API Routes** | 1 |
@@ -58,8 +58,9 @@ This table tracks the count of core code assets across the repository. It is upd
 | Trust Section: three-column brand philosophy values card layout | Phase 3B.5 | 2026-07-02 |
 | Newsletter Section: premium responsive form composing Input and Button primitives | Phase 3B.6 | 2026-07-02 |
 | Experience Refinement: homepage visual hierarchy, spacing, typography, and container width alignment | Phase 3B.7 | 2026-07-02 |
+| Collections browsing experience foundation | Phase 3C | 2026-07-02 |
 
-**Phase 3B.7 complete.** The Homepage Experience Refinement is fully complete, version aligned at v0.7.8.
+**Phase 3C complete.** The Collections Experience Foundation page is fully complete, version aligned at v0.8.0.
 
 ---
 
@@ -314,16 +315,16 @@ This table tracks the count of core code assets across the repository. It is upd
 
 ---
 
-### Phase 3C — Marketing Pages
+### Phase 3C — Collections Experience Foundation
 
-- [ ] Build Brand Campaign page layout
-- [ ] Build Brand Journal list page layout
-- [ ] Build individual Journal article layout
-- [ ] Run Quality Gate validation checks
-- [ ] Run `git add . && git commit -m "Phase 3C Complete"`
-- [ ] Update PROJECT_STATUS.md to mark Phase 3C complete
+- [x] Build Collections Experience layout page (Hero, categories navigation, toolbar, product grid)
+- [x] Build Editorial Empty State layout block with query-param toggle
+- [x] Integrate standard Header and Footer layouts
+- [x] Run Quality Gate validation checks
+- [x] Run `git add . && git commit -m "Phase 3C Complete"`
+- [x] Update PROJECT_STATUS.md to mark Phase 3C complete
 
-**Phase 3C Status: NOT STARTED**
+**Phase 3C Status: COMPLETE**
 
 ---
 

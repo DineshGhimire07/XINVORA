@@ -8,6 +8,18 @@
 
 ## Releases & Phase Milestones
 
+### v0.8.0 — 2026-07-02
+*   **Phase 3C Complete: Collections Experience Foundation**
+    *   Created `src/app/collections/page.tsx` as a pure, zero-hydration Server Component.
+    *   Implemented Collection Hero block with `max-w-[32rem]` text container reading width.
+    *   Built responsive Category Navigation scrollbar flex bar.
+    *   Added static Catalogue Toolbar count (`12 Objects`) and sorting/filtering placeholders.
+    *   Created responsive Product Grid (Desktop: 4 columns, Tablet: 2 columns, Mobile: 1 column).
+    *   Configured Product Cards with clean metadata details, omitting commercial pricing, ratings, or stock hooks.
+    *   Added conditional Empty State blocks toggleable via URL parameter (`?empty=true`).
+    *   Mapped standard numeric Pagination layouts.
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
 ### v0.7.8 — 2026-07-02
 *   **Phase 3B.7 Complete: Homepage Experience Review & Premium Refinement**
     *   Unified all root section containers on identical horizontal grid lines using `<Container size="site">` (default `<Container>`) to ensure absolute layout alignment.
