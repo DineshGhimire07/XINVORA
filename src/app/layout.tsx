@@ -16,6 +16,7 @@ import { Cormorant_Garamond, Manrope } from "next/font/google"
 import { Providers } from "@/providers/providers"
 import { buildRootMetadata } from "@/lib/metadata"
 import { Header } from "@/components/shared/Header/Header"
+import { Footer } from "@/components/shared/Footer/Footer"
 import "@/app/globals.css"
 
 // ── Font Loading ──────────────────────────────────────────────────────────────
@@ -83,11 +84,7 @@ export default function RootLayout({
             {children}
           </main>
 
-          {/*
-           * Phase 2 additions:
-           * <Footer />
-           * <BackToTop />
-           */}
+          <Footer />
         </Providers>
       </body>
     </html>

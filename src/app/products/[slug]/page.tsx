@@ -11,6 +11,7 @@ import { Container } from "@/components/shared/container"
 import { Stack } from "@/components/shared/stack"
 import { Button } from "@/components/ui/button"
 import { buildMetadata } from "@/lib/metadata"
+import { Breadcrumb } from "@/components/shared/Breadcrumb/Breadcrumb"
 import Link from "next/link"
 
 interface ProductDetails {
@@ -237,33 +238,13 @@ export default async function ProductDetailPage({
     <main className="flex-1 bg-background pt-20 md:pt-28 pb-16">
       <Container>
         {/* 1. Breadcrumbs */}
-        <nav aria-label="Breadcrumb navigation" className="py-4 select-none">
-          <ul className="flex items-center gap-2 text-[10px] font-semibold tracking-widest text-text-secondary uppercase">
-            <li>
-              <Link href="/" className="hover:text-text-primary transition-colors">
-                Home
-              </Link>
-            </li>
-            <li>/</li>
-            <li>
-              <Link href="/collections" className="hover:text-text-primary transition-colors">
-                Collections
-              </Link>
-            </li>
-            <li>/</li>
-            <li>
-              <span className="text-text-secondary select-none">
-                {product.collection}
-              </span>
-            </li>
-            <li>/</li>
-            <li>
-              <span className="text-text-primary select-none font-bold">
-                {product.name}
-              </span>
-            </li>
-          </ul>
-        </nav>
+        <Breadcrumb 
+          items={[
+            { label: "Collections", href: "/collections" },
+            { label: product.collection },
+            { label: product.name }
+          ]} 
+        />
 
         {/* 2. Product Hero: Split Editorial Layout */}
         <Section id="product-hero" padding="none" className="py-6 bg-background">

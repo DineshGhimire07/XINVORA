@@ -14,11 +14,11 @@
 
 | Field | Value |
 |---|---|
-| **Project State** | Utility Pages Foundation Complete — Ready for Navigation & Footer |
-| **Current Phase** | Phase 3H — Navigation & Footer Completion |
+| **Project State** | Global Navigation & Footer Experience Complete — Ready for visual Pass |
+| **Current Phase** | Phase 3I — Motion & Premium Polish |
 | **Phase Status** | Not Started |
 | **Last Updated** | 2026-07-02 |
-| **Next Objective** | Complete mega menus, sticky navigation headers, complete footer references, and search overlays |
+| **Next Objective** | Visual luxury pass: refine typography, spacing, scroll animations, micro-interactions, responsive audit, and accessibility audit |
 | **Blocking Issues** | None |
 
 ---
@@ -29,7 +29,7 @@ This table tracks the count of core code assets across the repository. It is upd
 
 | Asset Type | Count |
 |---|---|
-| **Components** | 15 |
+| **Components** | 17 |
 | **Pages** | 13 |
 | **Hooks** | 4 |
 | **Providers** | 2 |
@@ -63,8 +63,9 @@ This table tracks the count of core code assets across the repository. It is upd
 | Brand experience foundation | Phase 3E | 2026-07-02 |
 | Journal & editorial experience foundation | Phase 3F | 2026-07-02 |
 | Utility pages foundation | Phase 3G | 2026-07-02 |
+| Global navigation & footer experience completed | Phase 3H | 2026-07-02 |
 
-**Phase 3G complete.** The Utility Pages Foundation pages are fully complete, version aligned at v1.2.0.
+**Phase 3H complete.** The Global Navigation & Footer Experience is fully complete, version aligned at v1.3.0.
 
 ---
 
@@ -386,6 +387,20 @@ This table tracks the count of core code assets across the repository. It is upd
 - [x] Update PROJECT_STATUS.md to mark Phase 3G complete
 
 **Phase 3G Status: COMPLETE**
+
+---
+
+### Phase 3H — Navigation & Footer Completion
+
+- [x] Build global Footer component (`src/components/shared/Footer/Footer.tsx`) and mount inside root document layout shell
+- [x] Build reusable Breadcrumb component (`src/components/shared/Breadcrumb/Breadcrumb.tsx`) and refactor dynamic product/journal pages
+- [x] Configure sticky position behavior for Header and wire search button icon to route to explore search page
+- [x] Add Heart wishlist mockup icon to header account lists triggers
+- [x] Run Quality Gate validation checks
+- [x] Run `git add . && git commit -m "Phase 3H Complete"`
+- [x] Update PROJECT_STATUS.md to mark Phase 3H complete
+
+**Phase 3H Status: COMPLETE**
 
 ---
 

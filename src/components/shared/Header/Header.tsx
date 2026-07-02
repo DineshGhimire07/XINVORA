@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Search, User, ShoppingBag, ChevronDown, Menu, X } from "lucide-react"
+import { Search, User, ShoppingBag, ChevronDown, Menu, X, Heart } from "lucide-react"
 import { Container } from "@/components/shared/container"
 
 /**
@@ -15,7 +15,7 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
   return (
-    <header className="absolute top-0 left-0 w-full z-sticky bg-transparent border-b border-border/10">
+    <header className="sticky top-0 w-full z-sticky bg-background/80 backdrop-blur-md border-b border-border/10">
       <Container className="h-16 md:h-20 flex items-center justify-between">
         
         {/* Left Side: Desktop Navigation Links */}
@@ -51,6 +51,12 @@ export function Header() {
           >
             About
           </Link>
+          <Link 
+            href="/contact" 
+            className="text-[11px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors duration-200"
+          >
+            Contact
+          </Link>
         </nav>
 
         {/* Mobile menu trigger */}
@@ -75,13 +81,22 @@ export function Header() {
 
         {/* Right Side: Utility Icons */}
         <div className="flex items-center gap-4 md:gap-6">
-          <button 
+          <Link 
+            href="/search"
             className="flex items-center justify-center p-2 text-text-primary hover:text-accent transition-colors duration-200"
             aria-label="Search items"
           >
             <Search className="w-4.5 h-4.5" />
-          </button>
+          </Link>
           
+          <Link 
+            href="/wishlist" 
+            className="flex items-center justify-center p-2 text-text-primary hover:text-accent transition-colors duration-200"
+            aria-label="Your wishlist with 0 items"
+          >
+            <Heart className="w-4.5 h-4.5" />
+          </Link>
+
           <Link 
             href="/login" 
             className="flex items-center justify-center p-2 text-text-primary hover:text-accent transition-colors duration-200"
@@ -150,6 +165,13 @@ export function Header() {
               className="text-[13px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors"
             >
               About
+            </Link>
+            <Link 
+              href="/contact" 
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-[13px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors"
+            >
+              Contact
             </Link>
           </nav>
         </div>

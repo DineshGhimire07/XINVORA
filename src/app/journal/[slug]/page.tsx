@@ -9,6 +9,7 @@ import { Section } from "@/components/shared/section"
 import { Container } from "@/components/shared/container"
 import { Stack } from "@/components/shared/stack"
 import { buildMetadata } from "@/lib/metadata"
+import { Breadcrumb } from "@/components/shared/Breadcrumb/Breadcrumb"
 import Link from "next/link"
 import * as React from "react"
 import { JOURNAL_DATA } from "../page"
@@ -119,27 +120,12 @@ export default async function JournalArticlePage({
       <Container>
         
         {/* Breadcrumbs */}
-        <nav aria-label="Breadcrumb navigation" className="py-4 select-none">
-          <ul className="flex items-center gap-2 text-[10px] font-semibold tracking-widest text-text-secondary uppercase">
-            <li>
-              <Link href="/" className="hover:text-text-primary transition-colors">
-                Home
-              </Link>
-            </li>
-            <li>/</li>
-            <li>
-              <Link href="/journal" className="hover:text-text-primary transition-colors">
-                Journal
-              </Link>
-            </li>
-            <li>/</li>
-            <li>
-              <span className="text-text-primary select-none font-bold">
-                {articleMeta.title}
-              </span>
-            </li>
-          </ul>
-        </nav>
+        <Breadcrumb 
+          items={[
+            { label: "Journal", href: "/journal" },
+            { label: articleMeta.title }
+          ]} 
+        />
 
         {/* 1. Article Hero */}
         <Section id="article-hero" padding="md" className="bg-background text-left">
