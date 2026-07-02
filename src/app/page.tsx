@@ -40,41 +40,55 @@ function HeroSection() {
   return (
     <Section
       id="hero"
-      padding="2xl"
-      className="flex items-center bg-surface-elevated border-b border-border min-h-[75vh]"
+      padding="none"
+      className="flex items-stretch bg-surface-elevated border-b border-border min-h-[85vh]"
     >
-      <Container>
-        <Grid cols={{ base: 1, md: 12 }} gap={12} className="items-center">
-          {/* Left Column: Content (constrained for readability) */}
-          <div className="md:col-span-5 flex flex-col items-start text-left max-w-[32rem] w-full">
-            <Stack gap={6} align="start" className="w-full">
-              {/* Brand Emblem Logo */}
+      <Container className="py-34 md:py-50">
+        {/*
+         * Hero layout: 5 / 7 editorial split
+         *
+         * We use a direct div with Tailwind grid classes here (rather than
+         * the Grid primitive) because the Grid component's useMemo requires
+         * a client boundary, and this hero must remain a pure Server Component.
+         * Direct class strings are also reliably detected by the Tailwind v4
+         * content scanner at build time.
+         */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-0 md:gap-16 lg:gap-24 items-center">
+
+          {/* ── Left Column: Editorial Content (5/12 on desktop) ── */}
+          <div className="md:col-span-5 flex flex-col justify-center py-16 md:py-20">
+            <div className="flex flex-col gap-10 max-w-[28rem]">
+
+              {/* Brand emblem — small, restrained */}
               <Image
                 src="/assets/brand/logos/Warm_taupe.png"
                 alt="XINVORA Brand Emblem"
-                width={48}
-                height={48}
+                width={40}
+                height={40}
                 priority
-                className="select-none pointer-events-none mb-1 object-contain"
+                className="select-none pointer-events-none object-contain"
               />
 
-              {/* Eyebrow */}
-              <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
-                Crafted to Last
-              </span>
+              {/* Editorial block: eyebrow + heading + description */}
+              <div className="flex flex-col gap-6">
+                {/* Eyebrow */}
+                <span className="text-overline text-accent tracking-overline uppercase select-none">
+                  Crafted to Last
+                </span>
 
-              {/* Heading title */}
-              <h1 className="text-display-xl lg:text-display-2xl font-display text-text-primary leading-tight tracking-tight">
-                XINVORA
-              </h1>
+                {/* H1 — the visual anchor of the entire page */}
+                <h1 className="text-display-xl lg:text-display-2xl font-display text-text-primary leading-tighter tracking-tightest text-balance">
+                  XINVORA
+                </h1>
 
-              {/* Supporting paragraph */}
-              <p className="text-body-md lg:text-body-lg text-text-secondary leading-relaxed">
-                A curation of objects designed with absolute intention—bringing quiet refinement and lasting quality to modern living.
-              </p>
+                {/* Supporting paragraph — constrained width, generous leading */}
+                <p className="text-body-md lg:text-body-lg text-text-secondary leading-relaxed max-w-[26rem] text-pretty">
+                  A curation of objects designed with absolute intention—bringing quiet refinement and lasting quality to modern living.
+                </p>
+              </div>
 
-              {/* Primary & Secondary CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-2">
+              {/* CTA Row — primary dominates, secondary recedes */}
+              <div className="flex flex-col sm:flex-row items-start gap-3 pt-2">
                 <Button variant="primary" size="lg" className="w-full sm:w-auto">
                   Shop the Collection
                 </Button>
@@ -82,14 +96,21 @@ function HeroSection() {
                   Our Philosophy
                 </Button>
               </div>
-            </Stack>
+
+            </div>
           </div>
 
-          {/* Right Column: Visual placeholder for future photography */}
-          <div className="md:col-span-7 w-full aspect-[4/3] bg-surface border border-border rounded-sm overflow-hidden flex items-center justify-center relative select-none">
-            {/* Kept entirely clean and empty to serve future approved editorial photography */}
+          {/* ── Right Column: Editorial Visual Area (7/12 on desktop) ── */}
+          {/*
+           * This column is reserved for future approved editorial photography.
+           * By keeping aspect-[4/3] across all screen sizes, the placeholder
+           * preserves exact proportions naturally and never collapses.
+           */}
+          <div className="md:col-span-7 w-full aspect-[4/3] bg-surface border border-border rounded-sm overflow-hidden select-none">
+            {/* Intentionally empty — awaiting approved editorial photography */}
           </div>
-        </Grid>
+
+        </div>
       </Container>
     </Section>
   )
