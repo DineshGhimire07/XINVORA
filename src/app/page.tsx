@@ -41,76 +41,73 @@ function HeroSection() {
     <Section
       id="hero"
       padding="none"
-      className="flex items-stretch bg-surface-elevated border-b border-border min-h-[85vh]"
+      className="relative min-h-screen flex items-center bg-background border-b border-border overflow-hidden"
     >
-      <Container className="py-34 md:py-50">
-        {/*
-         * Hero layout: 5 / 7 editorial split
-         *
-         * We use a direct div with Tailwind grid classes here (rather than
-         * the Grid primitive) because the Grid component's useMemo requires
-         * a client boundary, and this hero must remain a pure Server Component.
-         * Direct class strings are also reliably detected by the Tailwind v4
-         * content scanner at build time.
-         */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-0 md:gap-16 lg:gap-24 items-center">
+      {/* Immersive background image (Next.js Image for optimization) */}
+      <Image
+        src="/assets/brand/hero/hero-bg.jpg"
+        alt="XINVORA Hero Background"
+        fill
+        priority
+        className="object-cover object-center select-none pointer-events-none z-0"
+      />
 
-          {/* ── Left Column: Editorial Content (5/12 on desktop) ── */}
-          <div className="md:col-span-5 flex flex-col justify-center py-16 md:py-20">
-            <div className="flex flex-col gap-10 max-w-[28rem]">
+      {/* Subtle overlay gradient to protect text contrast in light and dark modes */}
+      <div className="absolute inset-0 bg-black/[0.03] dark:bg-black/20 z-0 pointer-events-none" />
 
-              {/* Brand emblem — small, restrained */}
-              <Image
-                src="/assets/brand/logos/Warm_taupe.png"
-                alt="XINVORA Brand Emblem"
-                width={40}
-                height={40}
-                priority
-                className="select-none pointer-events-none object-contain"
-              />
+      <Container className="relative z-raised flex flex-col items-center justify-center text-center h-full py-32 md:py-40">
+        <div className="flex flex-col items-center max-w-[40rem] gap-8">
+          
+          {/* Eyebrow */}
+          <span className="text-[11px] font-semibold tracking-[0.25em] text-text-primary uppercase select-none">
+            Crafted to Last
+          </span>
 
-              {/* Editorial block: eyebrow + heading + description */}
-              <div className="flex flex-col gap-6">
-                {/* Eyebrow */}
-                <span className="text-overline text-accent tracking-overline uppercase select-none">
-                  Crafted to Last
-                </span>
+          {/* Title with optical center adjustments */}
+          <h1 className="text-[4rem] sm:text-[6rem] md:text-[8rem] font-display text-text-primary tracking-[0.35em] pl-[0.35em] uppercase font-light leading-none">
+            XINVORA
+          </h1>
 
-                {/* H1 — the visual anchor of the entire page */}
-                <h1 className="text-display-xl lg:text-display-2xl font-display text-text-primary leading-tighter tracking-tightest text-balance">
-                  XINVORA
-                </h1>
+          {/* Horizontal Line Divider */}
+          <div className="w-16 h-px bg-text-primary/30 my-2" />
 
-                {/* Supporting paragraph — constrained width, generous leading */}
-                <p className="text-body-md lg:text-body-lg text-text-secondary leading-relaxed max-w-[26rem] text-pretty">
-                  A curation of objects designed with absolute intention—bringing quiet refinement and lasting quality to modern living.
-                </p>
-              </div>
+          {/* Description Subtitle */}
+          <p className="text-body-md lg:text-body-lg text-text-primary leading-relaxed max-w-[28rem] text-pretty">
+            Timeless pieces.
+            <br />
+            Designed for modern living.
+          </p>
 
-              {/* CTA Row — primary dominates, secondary recedes */}
-              <div className="flex flex-col sm:flex-row items-start gap-3 pt-2">
-                <Button variant="primary" size="lg" className="w-full sm:w-auto">
-                  Shop the Collection
-                </Button>
-                <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                  Our Philosophy
-                </Button>
-              </div>
-
-            </div>
-          </div>
-
-          {/* ── Right Column: Editorial Visual Area (7/12 on desktop) ── */}
-          {/*
-           * This column is reserved for future approved editorial photography.
-           * By keeping aspect-[4/3] across all screen sizes, the placeholder
-           * preserves exact proportions naturally and never collapses.
-           */}
-          <div className="md:col-span-7 w-full aspect-[4/3] bg-surface border border-border rounded-sm overflow-hidden select-none">
-            {/* Intentionally empty — awaiting approved editorial photography */}
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 items-center pt-4">
+            <Button variant="primary" size="lg" className="w-[14rem] tracking-wider uppercase font-medium">
+              Explore Collection
+            </Button>
+            <Button variant="outline" size="lg" className="w-[14rem] tracking-wider uppercase font-medium border-text-primary/30 hover:border-text-primary bg-background/10 backdrop-blur-xs">
+              Our Philosophy
+            </Button>
           </div>
 
         </div>
+
+        {/* Bottom Left Badge & Scroll indicator */}
+        <div className="absolute bottom-8 left-4 sm:left-6 md:left-8 lg:left-12 flex flex-col items-start gap-3 select-none text-left">
+          <span className="text-[10px] font-bold tracking-[0.2em] text-text-secondary uppercase">
+            New Collection — SS&apos;26
+          </span>
+          <div className="animate-bounce">
+            <svg 
+              className="w-4 h-4 text-text-secondary" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+          </div>
+        </div>
+
       </Container>
     </Section>
   )

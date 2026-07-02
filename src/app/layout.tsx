@@ -15,6 +15,7 @@ import type { Metadata, Viewport } from "next"
 import { Cormorant_Garamond, Manrope } from "next/font/google"
 import { Providers } from "@/providers/providers"
 import { buildRootMetadata } from "@/lib/metadata"
+import { Header } from "@/components/shared/Header/Header"
 import "@/app/globals.css"
 
 // ── Font Loading ──────────────────────────────────────────────────────────────
@@ -76,11 +77,7 @@ export default function RootLayout({
         `}
       >
         <Providers>
-          {/*
-           * Phase 2 additions slot in here:
-           * <Navbar />
-           * <ScrollProgress />
-           */}
+          <Header />
 
           <main id="main-content" className="flex min-h-[100dvh] flex-col">
             {children}
