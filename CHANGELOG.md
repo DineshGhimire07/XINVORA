@@ -8,6 +8,18 @@
 
 ## Releases & Phase Milestones
 
+### v0.9.0 — 2026-07-02
+*   **Phase 3D Complete: Product Detail Experience Foundation**
+    *   Created dynamic product detail route `src/app/products/[slug]/page.tsx` as a pure, zero-hydration Server Component.
+    *   Pre-rendered all 12 unique product slugs using `generateStaticParams` for instant static transitions.
+    *   Implemented editorial split layout (7/12 visual gallery placeholder and 5/12 info panel) on desktop.
+    *   Built variant button selectors for sizes and colors with default active selection highlights.
+    *   Created stacked primary actions (`Add to Bag` and `Save for Later`) with design-system variant styling.
+    *   Added detailed typography sections for composition, care instructions, and shipping guidelines.
+    *   Created 4-column related products grid reusing the Phase 3C cards.
+    *   Added recently viewed horizontal references navigation footer.
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
 ### v0.8.0 — 2026-07-02
 *   **Phase 3C Complete: Collections Experience Foundation**
     *   Created `src/app/collections/page.tsx` as a pure, zero-hydration Server Component.

@@ -14,7 +14,7 @@
 
 | Field | Value |
 |---|---|
-| **Project State** | Collections Experience Foundation Complete — Ready for Shop |
+| **Project State** | Product Detail Experience Foundation Complete — Ready for Shop |
 | **Current Phase** | Phase 4 — Shop (Product Listing) |
 | **Phase Status** | Not Started |
 | **Last Updated** | 2026-07-02 |
@@ -30,7 +30,7 @@ This table tracks the count of core code assets across the repository. It is upd
 | Asset Type | Count |
 |---|---|
 | **Components** | 15 |
-| **Pages** | 2 |
+| **Pages** | 3 |
 | **Hooks** | 4 |
 | **Providers** | 2 |
 | **API Routes** | 1 |
@@ -59,8 +59,9 @@ This table tracks the count of core code assets across the repository. It is upd
 | Newsletter Section: premium responsive form composing Input and Button primitives | Phase 3B.6 | 2026-07-02 |
 | Experience Refinement: homepage visual hierarchy, spacing, typography, and container width alignment | Phase 3B.7 | 2026-07-02 |
 | Collections browsing experience foundation | Phase 3C | 2026-07-02 |
+| Product detail experience foundation | Phase 3D | 2026-07-02 |
 
-**Phase 3C complete.** The Collections Experience Foundation page is fully complete, version aligned at v0.8.0.
+**Phase 3D complete.** The Product Detail Experience Foundation page is fully complete, version aligned at v0.9.0.
 
 ---
 
@@ -325,6 +326,19 @@ This table tracks the count of core code assets across the repository. It is upd
 - [x] Update PROJECT_STATUS.md to mark Phase 3C complete
 
 **Phase 3C Status: COMPLETE**
+
+---
+
+### Phase 3D — Product Detail Experience Foundation
+
+- [x] Build Product Detail Experience dynamic route page (Breadcrumbs, editorial split, variant button selectors, details blocks)
+- [x] Integrate horizontal recently viewed references footer
+- [x] Pre-render static paths inside generateStaticParams
+- [x] Run Quality Gate validation checks
+- [x] Run `git add . && git commit -m "Phase 3D Complete"`
+- [x] Update PROJECT_STATUS.md to mark Phase 3D complete
+
+**Phase 3D Status: COMPLETE**
 
 ---
 
