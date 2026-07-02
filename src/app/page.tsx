@@ -81,10 +81,10 @@ function HeroSection() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 items-center pt-4">
-            <Button variant="primary" size="lg" className="w-[14rem] tracking-wider uppercase font-medium">
+            <Button variant="primary" size="lg" className="w-[14rem] tracking-widest uppercase text-[11px] font-semibold">
               Explore Collection
             </Button>
-            <Button variant="outline" size="lg" className="w-[14rem] tracking-wider uppercase font-medium border-text-primary/30 hover:border-text-primary bg-background/10 backdrop-blur-xs">
+            <Button variant="outline" size="lg" className="w-[14rem] tracking-widest uppercase text-[11px] font-semibold">
               Our Philosophy
             </Button>
           </div>
@@ -349,7 +349,7 @@ function NewsletterSection() {
                 required
               />
             </div>
-            <Button type="submit" variant="primary" size="lg" className="w-full sm:w-auto shrink-0">
+            <Button type="submit" variant="primary" size="lg" className="w-full sm:w-auto shrink-0 tracking-widest uppercase text-[11px] font-semibold">
               Subscribe
             </Button>
           </div>

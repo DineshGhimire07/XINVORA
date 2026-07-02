@@ -344,10 +344,10 @@ export default async function ProductDetailPage({
 
                 {/* Actions */}
                 <div className="flex flex-col gap-3 w-full pt-4">
-                  <Button variant="primary" size="lg" className="w-full tracking-wider uppercase font-semibold">
+                  <Button variant="primary" size="lg" className="w-full tracking-widest uppercase text-[11px] font-semibold">
                     Add to Bag
                   </Button>
-                  <Button variant="outline" size="lg" className="w-full tracking-wider uppercase font-semibold border-border/50 bg-background/10">
+                  <Button variant="outline" size="lg" className="w-full tracking-widest uppercase text-[11px] font-semibold">
                     Save for Later
                   </Button>
                 </div>

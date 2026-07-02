@@ -6,14 +6,20 @@
  * CVA-based button with all variants.
  * All styling comes from design tokens — no hardcoded colors.
  *
- * Variants: primary | secondary | outline | ghost | link
- * Sizes:    sm | md | lg | icon
- * States:   default | loading | disabled
+ * Design intent:
+ *   Primary   → warm accent fill (taupe/sand) — brand CTA
+ *   Secondary → surface with refined border
+ *   Outline   → transparent, ink border — for use on light/hero backgrounds
+ *   Ghost     → no chrome, icon contexts
+ *   Link      → text link with underline reveal
+ *   Accent    → accent foreground, used on dark sections
+ *
+ * Sizes:    xs | sm | md | lg | xl | icon | icon-sm | icon-lg
+ * States:   default | hover | active | loading | disabled
  *
  * Usage:
- *   <Button variant="primary" size="md" isLoading={submitting}>
- *     Add to Cart
- *   </Button>
+ *   <Button variant="primary" size="md">Explore Collection</Button>
+ *   <Button variant="outline" size="lg" asChild><Link href="/about">Our Philosophy</Link></Button>
  */
 
 import * as React from "react"
@@ -26,72 +32,88 @@ import { cn } from "@/lib/utils"
 const buttonVariants = cva(
   // Base styles — apply to every variant
   [
+    // Layout
     "inline-flex items-center justify-center gap-2",
+    // Typography
     "font-sans font-medium tracking-wide",
-    "rounded-sm",
-    "border border-transparent",
-    "cursor-pointer select-none",
-    "transition-all duration-200",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2",
-    "disabled:pointer-events-none disabled:opacity-40",
     "whitespace-nowrap",
+    // Shape
+    "rounded-sm",
+    // Interaction
+    "cursor-pointer select-none",
+    // Transitions — premium 300ms ease-out for all properties
+    "transition-all duration-300 ease-out",
+    // Focus — accessible, on-brand
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2",
+    // Disabled
+    "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
+    // Prevent layout shift on border changes
+    "border",
   ],
   {
     variants: {
       variant: {
-        // ── Primary — ink black background, white text
+        // ── Primary — warm accent brand fill
+        // This is the main CTA. Warm taupe on cream/ivory backgrounds looks far
+        // more premium than a black block — aligned with COS / ARKET aesthetic.
         primary: [
-          "bg-ink text-white",
-          "hover:bg-accent hover:text-text-primary",
-          "active:scale-[0.98]",
+          "bg-accent border-accent text-white",
+          "hover:bg-accent-hover hover:border-accent-hover",
+          "active:scale-[0.98] active:brightness-95",
         ],
 
-        // ── Secondary — surface with border
+        // ── Secondary — clean surface with border
         secondary: [
-          "bg-surface text-text-primary",
-          "border-border",
+          "bg-surface text-text-primary border-border",
           "hover:bg-surface-elevated hover:border-border-strong",
           "active:scale-[0.98]",
         ],
 
-        // ── Outline — transparent, ink border
+        // ── Outline — translucent with ink border
+        // Ideal for hero sections over backgrounds — reads clearly on light and dark
         outline: [
-          "bg-transparent text-text-primary",
-          "border-border",
-          "hover:border-accent hover:text-accent",
+          "bg-transparent text-text-primary border-text-primary/30",
+          "hover:border-text-primary hover:bg-text-primary/[0.04]",
           "active:scale-[0.98]",
         ],
 
-        // ── Ghost — no background or border, for minimal contexts
+        // ── Outline Inverse — for use on dark/ink backgrounds
+        "outline-inverse": [
+          "bg-transparent text-white border-white/40",
+          "hover:border-white hover:bg-white/[0.08]",
+          "active:scale-[0.98]",
+        ],
+
+        // ── Ghost — no chrome, for minimal icon/text contexts
         ghost: [
-          "bg-transparent text-text-primary",
-          "hover:bg-surface-elevated",
+          "bg-transparent text-text-primary border-transparent",
+          "hover:bg-surface-elevated hover:border-border",
           "active:scale-[0.98]",
         ],
 
-        // ── Link — appears as a text link with underline on hover
+        // ── Destructive — error/delete actions
+        destructive: [
+          "bg-error text-white border-error",
+          "hover:brightness-90",
+          "active:scale-[0.98]",
+        ],
+
+        // ── Link — text link with underline reveal on hover
         link: [
-          "bg-transparent text-text-primary underline-offset-4",
+          "bg-transparent text-text-primary border-transparent underline-offset-4",
           "hover:underline hover:text-accent",
           "p-0 h-auto rounded-none",
-        ],
-
-        // ── Accent — warm taupe filled
-        accent: [
-          "bg-accent text-accent-foreground",
-          "hover:bg-accent-hover",
-          "active:scale-[0.98]",
         ],
       },
 
       size: {
-        xs: "h-7 px-3 text-label-sm gap-1",
-        sm: "h-9 px-4 text-label-sm",
-        md: "h-11 px-6 text-label-md",
-        lg: "h-13 px-8 text-label-lg",
-        xl: "h-15 px-10 text-body-md",
-        icon: "h-10 w-10 p-0",
-        "icon-sm": "h-8 w-8 p-0",
+        xs:        "h-7  px-3  text-[11px] tracking-widest gap-1",
+        sm:        "h-9  px-4  text-label-sm",
+        md:        "h-11 px-6  text-label-md",
+        lg:        "h-13 px-8  text-label-lg",
+        xl:        "h-15 px-10 text-body-md",
+        icon:      "h-10 w-10 p-0",
+        "icon-sm": "h-8  w-8  p-0",
         "icon-lg": "h-12 w-12 p-0",
       },
     },
