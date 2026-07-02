@@ -41,8 +41,8 @@ const buttonVariants = cva(
       variant: {
         // ── Primary — ink black background, white text
         primary: [
-          "bg-text-primary text-text-inverse",
-          "hover:bg-accent hover:text-accent-foreground",
+          "bg-ink text-white",
+          "hover:bg-accent hover:text-white",
           "active:scale-[0.98]",
         ],
 
