@@ -13,6 +13,7 @@ import { Container } from "@/components/shared/container"
 import { Grid } from "@/components/shared/grid"
 import { Stack } from "@/components/shared/stack"
 import { buildMetadata } from "@/lib/metadata"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Image from "next/image"
@@ -206,10 +207,10 @@ function FeaturedCategoriesSection() {
 // ── 4. Featured Products Section ──────────────────────────────────────────────
 function FeaturedProductsSection() {
   const items = [
-    { id: "edit-1", name: "Edition 01", collection: "Collection I" },
-    { id: "edit-2", name: "Edition 02", collection: "Collection I" },
-    { id: "edit-3", name: "Edition 03", collection: "Collection II" },
-    { id: "edit-4", name: "Edition 04", collection: "Collection III" },
+    { id: "edit-1", name: "Linen Draped Coat", collection: "Collection I", slug: "linen-draped-coat" },
+    { id: "edit-2", name: "Tailored Cropped Jacket", collection: "Collection I", slug: "tailored-cropped-jacket" },
+    { id: "edit-3", name: "Stoneware Vessel", collection: "Collection II", slug: "stoneware-vessel" },
+    { id: "edit-4", name: "Oak Lounge Chair", collection: "Collection III", slug: "oak-lounge-chair" },
   ]
 
   return (
@@ -229,7 +230,11 @@ function FeaturedProductsSection() {
           {/* Grid Layout */}
           <Grid cols={{ base: 1, sm: 2, lg: 4 }} gap={6}>
             {items.map((item) => (
-              <div key={item.id} className="group flex flex-col gap-4">
+              <Link 
+                key={item.id} 
+                href={`/products/${item.slug}`}
+                className="group flex flex-col gap-4 text-left"
+              >
                 {/* Visual Surface Placeholder */}
                 <div className="bg-surface border border-border rounded-sm aspect-[3/4] transition-colors duration-200" />
 
@@ -238,16 +243,16 @@ function FeaturedProductsSection() {
                   <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
                     {item.collection}
                   </span>
-                  <h3 className="text-body-md font-medium text-text-primary">
+                  <h3 className="text-body-md font-medium text-text-primary group-hover:text-accent transition-colors duration-200">
                     {item.name}
                   </h3>
                   <div className="pt-1">
-                    <span className="text-[11px] font-semibold tracking-wider uppercase underline underline-offset-4 text-text-primary select-none cursor-pointer">
+                    <span className="text-[11px] font-semibold tracking-wider uppercase underline underline-offset-4 text-text-primary transition-colors duration-200">
                       View Object
                     </span>
                   </div>
                 </Stack>
-              </div>
+              </Link>
             ))}
           </Grid>
         </Stack>

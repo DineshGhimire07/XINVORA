@@ -152,12 +152,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             {loadingText || children}
           </>
-        ) : (
+        ) : leftIcon || rightIcon ? (
           <>
             {leftIcon && <span aria-hidden="true">{leftIcon}</span>}
             {children}
             {rightIcon && <span aria-hidden="true">{rightIcon}</span>}
           </>
+        ) : (
+          children
         )}
       </Comp>
     )

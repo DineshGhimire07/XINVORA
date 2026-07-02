@@ -146,33 +146,44 @@ export default async function CollectionsPage({
                 Mobile: 1 Column
               */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-16">
-                {PRODUCTS.map((product) => (
-                  <div key={product.id} className="group flex flex-col gap-4">
-                    {/* Visual Card Image Placeholder */}
-                    <div className="relative w-full aspect-product bg-surface border border-border rounded-sm overflow-hidden select-none">
-                      {/* Subtle inner grid outline representing future visual layout border */}
-                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/[0.02]" />
-                    </div>
+                {PRODUCTS.map((product) => {
+                  const slug = product.name
+                    .toLowerCase()
+                    .replace(/ /g, "-")
+                    .replace(/&/g, "and")
 
-                    {/* Product metadata */}
-                    <Stack gap={2} className="text-left">
-                      <span className="text-[10px] font-semibold tracking-[0.2em] text-accent uppercase select-none">
-                        {product.collection}
-                      </span>
-                      <h3 className="text-body-md font-medium text-text-primary group-hover:text-accent transition-colors duration-200">
-                        {product.name}
-                      </h3>
-                      <span className="text-[12px] text-text-secondary select-none">
-                        {product.material}
-                      </span>
-                      <div className="pt-2">
-                        <span className="text-[11px] font-semibold tracking-widest uppercase border-b border-text-primary/30 pb-0.5 hover:border-text-primary text-text-primary select-none cursor-pointer transition-colors duration-200">
-                          View Object &rarr;
-                        </span>
+                  return (
+                    <Link 
+                      key={product.id} 
+                      href={`/products/${slug}`}
+                      className="group flex flex-col gap-4 text-left"
+                    >
+                      {/* Visual Card Image Placeholder */}
+                      <div className="relative w-full aspect-product bg-surface border border-border rounded-sm overflow-hidden select-none">
+                        {/* Subtle inner grid outline representing future visual layout border */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/[0.02]" />
                       </div>
-                    </Stack>
-                  </div>
-                ))}
+
+                      {/* Product metadata */}
+                      <Stack gap={2} className="text-left">
+                        <span className="text-[10px] font-semibold tracking-[0.2em] text-accent uppercase select-none">
+                          {product.collection}
+                        </span>
+                        <h3 className="text-body-md font-medium text-text-primary group-hover:text-accent transition-colors duration-200">
+                          {product.name}
+                        </h3>
+                        <span className="text-[12px] text-text-secondary select-none">
+                          {product.material}
+                        </span>
+                        <div className="pt-2">
+                          <span className="text-[11px] font-semibold tracking-widest uppercase border-b border-text-primary/30 pb-0.5 hover:border-text-primary text-text-primary transition-colors duration-200">
+                            View Object &rarr;
+                          </span>
+                        </div>
+                      </Stack>
+                    </Link>
+                  )
+                })}
               </div>
             </Container>
           </Section>
