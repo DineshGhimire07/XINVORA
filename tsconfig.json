@@ -29,7 +29,6 @@
       "@/features/*": ["./src/features/*"],
       "@/hooks/*": ["./src/hooks/*"],
       "@/lib/*": ["./src/lib/*"],
-      "@/utils/*": ["./src/utils/*"],
       "@/types/*": ["./src/types/*"],
       "@/config/*": ["./src/config/*"],
       "@/constants/*": ["./src/constants/*"],

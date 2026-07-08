@@ -1,12 +1,4 @@
 {
-  /**
-   * Shadcn/UI configuration for XINVORA.
-   *
-   * This file configures where shadcn places generated components
-   * and which style system to use. We use the "new-york" style
-   * (sharper, less rounded — matches our premium aesthetic) and
-   * CSS variables for theming (aligned with our token system).
-   */
   "$schema": "https://ui.shadcn.com/schema.json",
   "style": "new-york",
   "rsc": true,

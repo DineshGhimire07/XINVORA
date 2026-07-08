@@ -84,6 +84,10 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     },
     ref
   ) => {
+    const id = React.useId()
+    const errorId = `textarea-error-${id}`
+    const successId = `textarea-success-${id}`
+    const hintId = `textarea-hint-${id}`
     const computedState = error ? "error" : success ? "success" : state
 
     return (
@@ -96,13 +100,13 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           aria-invalid={!!error}
           aria-describedby={
-            error ? "textarea-error" : hint ? "textarea-hint" : undefined
+            error ? errorId : success ? successId : hint ? hintId : undefined
           }
           {...props}
         />
         {error && (
           <p
-            id="textarea-error"
+            id={errorId}
             className="text-caption text-error"
             role="alert"
             aria-live="polite"
@@ -111,10 +115,10 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           </p>
         )}
         {success && !error && (
-          <p className="text-caption text-success">{success}</p>
+          <p id={successId} className="text-caption text-success">{success}</p>
         )}
         {hint && !error && !success && (
-          <p id="textarea-hint" className="text-caption text-text-tertiary">
+          <p id={hintId} className="text-caption text-text-tertiary">
             {hint}
           </p>
         )}

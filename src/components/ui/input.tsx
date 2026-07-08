@@ -80,6 +80,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
+    const id = React.useId()
+    const errorId = `input-error-${id}`
+    const successId = `input-success-${id}`
+    const hintId = `input-hint-${id}`
     const computedState = error ? "error" : success ? "success" : state
 
     return (
@@ -93,13 +97,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           aria-invalid={!!error}
           aria-describedby={
-            error ? "input-error" : hint ? "input-hint" : undefined
+            error ? errorId : success ? successId : hint ? hintId : undefined
           }
           {...props}
         />
         {error && (
           <p
-            id="input-error"
+            id={errorId}
             className="text-caption text-error"
             role="alert"
             aria-live="polite"
@@ -108,10 +112,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           </p>
         )}
         {success && !error && (
-          <p className="text-caption text-success">{success}</p>
+          <p id={successId} className="text-caption text-success">{success}</p>
         )}
         {hint && !error && !success && (
-          <p id="input-hint" className="text-caption text-text-tertiary">
+          <p id={hintId} className="text-caption text-text-tertiary">
             {hint}
           </p>
         )}

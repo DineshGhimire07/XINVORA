@@ -52,6 +52,8 @@ const config: Config = {
         surface: "hsl(var(--color-surface))",
         "surface-elevated": "hsl(var(--color-surface-elevated))",
         "surface-overlay": "hsl(var(--color-surface-overlay))",
+        "surface-warm": "hsl(var(--color-surface-warm))",
+        "surface-secondary": "hsl(var(--color-surface-secondary))",
 
         // Text hierarchy
         "text-primary": "hsl(var(--color-text-primary))",
@@ -73,6 +75,7 @@ const config: Config = {
           DEFAULT: "hsl(var(--color-border))",
           strong: "hsl(var(--color-border-strong))",
           subtle: "hsl(var(--color-border-subtle))",
+          primary: "hsl(var(--color-border-primary))",
         },
 
         // Semantic states
@@ -132,6 +135,8 @@ const config: Config = {
       fontFamily: {
         // Display / Editorial — large headings, brand moments
         display: ["var(--font-display)", "Georgia", "serif"],
+        // Playfair Display — elegant serif
+        playfair: ["var(--font-playfair)", "Georgia", "serif"],
         // Body / UI — all body copy, labels, UI text
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         // Monospace — code, tracking numbers, SKUs

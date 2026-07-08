@@ -1,3 +1,15 @@
+## [v0.14.0] - Phase 5B Customer Shopping Experience (Wishlist & Cart)
+
+### Added
+- Cart Query Layer (`getCart`, `getHeaderCommerceState`)
+- Wishlist Query Layer (`getWishlist`)
+- CartService (`addToCart`, `updateQuantity`, `removeFromCart`, `clearCart`, `mergeGuestCart`)
+- WishlistService (`addToWishlist`, `removeFromWishlist`, `moveWishlistItemToCart`, `clearWishlist`)
+- Guest Cart tracking via `cart_session` HttpOnly cookie
+- Unified header commerce badges (Cart Badge, Wishlist Badge)
+- Cart Page (`/cart`)
+- Wishlist Page (`/wishlist`)
+- Shopping journey validations (`AddToCart`, `AddToWishlist`, etc)
 # CHANGELOG.md — XINVORA Project Changelog
 
 > **This is a living document tracking progress milestones, releases, and phase completions.**
@@ -6,7 +18,93 @@
 
 ---
 
-## Releases & Phase Milestones
+## Releases
+
+### v0.16.0 — 2026-07-03
+*   **Phase 5E Complete: Customer Account & Dashboard**
+    *   Created authenticated Route Group prefix `/account` and layout wrapper.
+    *   Developed dynamic Welcome Hub overview, summary tables of 2 recent orders, wishlist preview, saved default addresses, and unread notifications count.
+    *   Designed Profile settings component allowing names, phone, date of birth, and language updates while keeping emails immutable.
+    *   Implemented order history with pagination, status sorting, and text query filtering.
+    *   Built comprehensive Order Detail read-only views with visual stepper progression timeline and proportional splits.
+    *   Created address CRUD book with default shipping/billing validators.
+    *   Integrated dynamic wishlist actions enabling items movement to shopping bag and removals.
+    *   Added security forms enabling Argon2 change password flows.
+    *   Developed database-driven notification logs with unread counters, mark as read, and delete triggers.
+    *   Quality Gate: `tsc --noEmit` ✅ `npm run build` ✅ — zero errors.
+
+### v0.13.0 — 2026-07-02
+*   **Phase 5A Complete: Identity & Authentication Foundation**
+    *   Integrated Auth.js (NextAuth v5) using a Credentials provider and Argon2id hashing.
+    *   Enforced a strict password policy (min 10 chars, upper, lower, number, special).
+    *   Centralized validation schemas in `src/validations/auth.ts`.
+    *   Reorganized `src/app` into logical Route Groups: `(shop)`, `(auth)`, `(account)`, `(admin)`.
+    *   Built granular service architecture: `UserService`, `AuthenticationService`, and `SessionService`.
+    *   Secured authentication APIs with constant-time generic error responses to prevent email enumeration.
+    *   Developed minimalist `login` and `register` pages leveraging `useActionState` and Server Actions.
+    *   Configured Edge-compatible middleware for strict route protection.
+    *   Quality Gate: `lint` ✅ `tsc --noEmit` ✅ `build` ✅ — zero errors, zero warnings.
+
+### v0.12.0 — 2026-07-02
+*   **Phase 4G: Frontend Data Integration**
+    *   Live integration of `getHomepageCatalog()` on Homepage.
+    *   Live integration of `findProducts()` and `findRootCategories()` on PLP (`/collections`).
+    *   Implemented Collection Detail Page (`/collections/[slug]`).
+    *   Implemented dynamic Product Detail Page (`/products/[slug]`) fetching variants and related items.
+    *   Connected Search Input to `searchProducts(query)` Server Component logic.
+    *   Resolved all TypeScript and ESLint warnings for a fully type-safe frontend-to-database integration.
+
+### v0.10.0 — 2026-07-02
+*   **Phase 4E Complete: Service Layer & Server Actions (Write Layer)**
+    *   Implemented application's write architecture flow.
+    *   Enforced architectural boundary: UI -> Server Action -> Service -> Drizzle (DB).
+    *   Established shared server action utilities for validation and standard try/catch error mapping.
+    *   Created Product, Category, and Collection write service stubs defining input interfaces and transaction boundaries for Phase 6.
+    *   Created a fully validated Inventory Service with stock adjustment, status derivation, and transaction boundaries.
+    *   Implemented a fully active Newsletter Service and Server Action with Zod input validations.
+    *   Replaced static newsletter UI forms on homepage and footer with interactive React 19 Client components using `useActionState`.
+    *   Quality Gate: 100% clean TypeScript compiler and ESLint validation checks.
+
+### v0.9.0 — 2026-07-02
+*   **Phase 4D Complete: Repository Layer**
+    *   Implemented clean, function-based Repository Layer to abstract all Drizzle reads.
+    *   Created `types.ts` for unified public domain return types.
+    *   Created `ProductRepository` supporting product searches, pagination, related products, and collection/category fetches.
+    *   Created `CategoryRepository` with an efficient in-memory tree assembler.
+    *   Created `CollectionRepository` for editorial landing pages and homepage segments.
+    *   Created `BrandRepository`, `VariantRepository`, and `InventoryRepository` supporting active stock level checks.
+    *   Configured Drizzle Relations (`relations.ts`) globally for clean nested fetches with zero N+1 queries.
+    *   Quality Gate: 100% clean type check (`tsc --noEmit`), ESLint lint check, and static page production build.
+
+### v1.5.0 — 2026-07-02
+*   **Phase 4C.1 Complete: Commerce Domain Modeling**
+    *   Designed the complete commerce domain model before touching Drizzle ORM.
+    *   Identified 20 core entities across Catalog, Commerce, Account, and Content bounded contexts.
+    *   Elevated Color, Size, and Tag to first-class entities for robust catalog faceting.
+    *   Introduced `PriceBook` and `PriceBookEntry` to decouple pricing from products, enabling multi-currency/region expansion natively.
+    *   Replaced generic JSONB arrays with dedicated `ProductImage` and `VariantImage` tables.
+    *   Documented relationships, immutability constraints (Order snapshots), and indexing strategies.
+    *   Quality Gate: Domain Design Document artifact approved — no code modified.
+
+### v1.4.0 — 2026-07-02
+*   **Phase 4B Complete: Pre-Commerce Setup**
+    *   Evaluated and selected **Drizzle ORM** over Prisma to maintain $0 budget and avoid Vercel Edge overhead. Documented in ADR-002.
+    *   Installed `drizzle-orm`, `drizzle-kit`, and `@neondatabase/serverless`.
+    *   Configured `src/db/client.ts` to initialize the Neon serverless SQL driver.
+    *   Created `app/global-error.tsx` to safely catch root layout boundaries.
+    *   Added `"server-only"` isolation guards to database files.
+    *   Created `src/types/actions.ts` to standardize `ActionResult<T>` for all upcoming Server Actions.
+    *   Removed unused `gsap` dependency and fixed dead TypeScript path aliases.
+    *   Quality Gate: `npm run build` ✅
+
+### v1.3.0 — 2026-07-02
+*   **Phase 4A Complete: Commerce Architecture Foundation**
+    *   Audited complete repository structure and configuration.
+    *   Assessed commerce readiness and pre-commerce blockers.
+    *   Defined layered architecture and data flow patterns.
+    *   Designed 16 core entity schemas (Product, Variant, Order, etc.).
+    *   Formalized Phase 4 roadmap (4A-4G) and deferred external services to feature implementation phases to minimize development overhead.
+    *   Quality Gate: Documentation update only — no code modified.
 
 ### v1.2.0 — 2026-07-02
 *   **Phase 3G Complete: Utility Pages Foundation**

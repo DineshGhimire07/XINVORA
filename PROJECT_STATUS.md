@@ -14,11 +14,10 @@
 
 | Field | Value |
 |---|---|
-| **Project State** | Global Navigation & Footer Experience Complete — Ready for visual Pass |
-| **Current Phase** | Phase 3I — Motion & Premium Polish |
-| **Phase Status** | Not Started |
-| **Last Updated** | 2026-07-02 |
-| **Next Objective** | Visual luxury pass: refine typography, spacing, scroll animations, micro-interactions, responsive audit, and accessibility audit |
+| **Project State** | # Project Status: XINVORA **Current Version:** 0.16.0 **Current Phase:** Phase 5E Complete (Customer Account & Dashboard) **Next Phase:** Phase 5D.2 (Payment Gateways Integration) |
+| **Phase Status** | Complete |
+| **Last Updated** | 2026-07-03 |
+| **Next Objective** | Integrate payment providers (Khalti & eSewa) |
 | **Blocking Issues** | None |
 
 ---
@@ -34,7 +33,7 @@ This table tracks the count of core code assets across the repository. It is upd
 | **Hooks** | 4 |
 | **Providers** | 2 |
 | **API Routes** | 1 |
-| **Database Tables** | 0 |
+| **Database Tables** | 28 |
 
 ---
 
@@ -64,8 +63,15 @@ This table tracks the count of core code assets across the repository. It is upd
 | Journal & editorial experience foundation | Phase 3F | 2026-07-02 |
 | Utility pages foundation | Phase 3G | 2026-07-02 |
 | Global navigation & footer experience completed | Phase 3H | 2026-07-02 |
+| Phase 4A Commerce Architecture Blueprint approved | Phase 4A | 2026-07-02 |
+| Phase 4B Pre-Commerce ORM & Connection Setup | Phase 4B | 2026-07-02 |
+| Phase 4C.1 Domain Design & Architecture | Phase 4C.1 | 2026-07-02 |
+| Phase 4C.2 Drizzle Schema Implementation | Phase 4C.2 | 2026-07-02 |
+| Phase 4C.3 Schema Audit & Integrity Fixes | Phase 4C.3 | 2026-07-02 |
+| Phase 4D Repository Layer Design & Queries | Phase 4D | 2026-07-02 |
+| Phase 4E Service Layer & Server Actions (Write Layer) | Phase 4E | 2026-07-02 |
 
-**Phase 3H complete.** The Global Navigation & Footer Experience is fully complete, version aligned at v1.3.0.
+**Phase 4A complete.** The Architecture Blueprint has been established.
 
 ---
 
@@ -73,7 +79,13 @@ This table tracks the count of core code assets across the repository. It is upd
 
 | Item | Phase | Owner | Status |
 |---|---|---|---|
-| Marketing Pages | Phase 3C | Engineering Lead | Planning stage |
+| Architecture Blueprint |- **Phase 4D (Read Query Layer):** Complete
+- **Phase 4E (Service Layer):** Complete
+- **Phase 4F (Catalog Engine):** Complete
+- **Phase 4G (Frontend Data Integration):** Completehase 4C | Lead Architect | Complete |
+| Repository Layer | Phase 4D | Lead Architect | Complete |
+| Server Actions | Phase 4E | Lead Architect | Complete |
+| Search & Filtering | Phase 4F | Lead Architect | Not Started |
 
 ---
 
@@ -404,26 +416,104 @@ This table tracks the count of core code assets across the repository. It is upd
 
 ---
 
-### Phase 4 — Shop (Product Listing)
+### Phase 4A — Architecture
 
-- [ ] Build `app/(shop)/shop/page.tsx`
-- [ ] Build `app/(shop)/shop/[category]/page.tsx`
-- [ ] Build `features/shop/components/ProductCard/`
-- [ ] Build `features/shop/components/ProductGrid/`
-- [ ] Build `features/shop/components/FilterPanel/`
-- [ ] Build `features/shop/components/SortDropdown/`
-- [ ] Build `features/shop/hooks/useProductFilters.ts`
-- [ ] Define `features/shop/types.ts`
-- [ ] Populate with realistic static product data
-- [ ] Implement URL-based filtering
-- [ ] Implement skeleton loading states
-- [ ] Verify mobile responsiveness
-- [ ] Run Quality Gate validation checks
-- [ ] Run `git add . && git commit -m "Phase 4 Complete"`
-- [ ] Update repository snapshot counts
-- [ ] Update PROJECT_STATUS.md to mark Phase 4 complete
+- [x] Audit repository structure
+- [x] Assess commerce readiness
+- [x] Define layered architecture
+- [x] Design data model (16 entities)
+- [x] Define data flow (reads vs writes)
+- [x] Plan state management strategy
+- [x] Update documentation (PROJECT_STATUS, DECISIONS, CHANGELOG)
 
-**Phase 4 Status: NOT STARTED**
+**Phase 4A Status: COMPLETE**
+
+---
+
+### Phase 4B — Database, ORM & Environment Setup
+
+- [x] Evaluate Prisma vs. Drizzle and record decision (ADR-002)
+- [x] Install selected ORM + database driver
+- [x] Connect to PostgreSQL instance
+- [x] Configure `src/db/client.ts`
+- [x] Create `app/global-error.tsx`
+- [x] Remove `gsap` from dependencies (if unused)
+- [x] Fix `@/utils/*` tsconfig alias
+- [x] Add `"server-only"` guards to db and services files
+- [x] Create `src/types/actions.ts` (`ActionResult<T>`)
+
+**Phase 4B Status: COMPLETE**
+
+---
+
+### Phase 4C.1 — Commerce Domain Modeling
+
+- [x] Identify every business entity (20 entities)
+- [x] Document relationships and responsibilities
+- [x] Propose constraint and indexing strategy
+- [x] Design shared Enums
+- [x] Define Implementation Order (Levels 0-4)
+- [x] Create Domain Design Document
+
+**Phase 4C.1 Status: COMPLETE**
+
+---
+
+### Phase 4C.2 — Drizzle Schema Implementation
+
+- [x] Define Level 0 Schemas
+- [x] Define Level 1 Schemas
+- [x] Define Level 2 Schemas
+- [x] Define Level 3 Schemas
+- [x] Define Level 4 Schemas
+- [x] Export all schemas in `db/schema/index.ts`
+- [x] Generate Drizzle migration files
+- [x] Write database seed script
+
+**Phase 4C.2 Status: COMPLETE**
+
+---
+
+### Phase 4D — Repositories (Query Functions)
+
+- [x] Build read queries in `src/db/queries/` (Product, Category, Collection, Brand, Variant, Inventory)
+- [x] Define shared repository types in `src/db/queries/types.ts`
+- [x] Enforce zero Drizzle/SQL leak queries with exact business-oriented APIs
+- [x] Conduct fresh PGLite in-memory database migration & relational query verification checks
+- [x] Compile application cleanly with 0 TypeScript/ESLint warnings
+
+**Phase 4D Status: COMPLETE**
+
+---
+
+### Phase 4E — Server Actions (Write Layer)
+
+- [x] Create `src/actions/newsletter.ts`
+- [x] Create core service layer structures in `src/services/`
+- [x] Implement initial write services for Products, Categories, Collections, and Inventory
+- [x] Integrate reusable client-side interactive form handlers with React 19 useActionState
+- [x] Wire up and verify interactive homepage and footer newsletter forms
+- [x] Compile application cleanly with 0 TypeScript/ESLint warnings
+
+**Phase 4E Status: COMPLETE**
+
+---
+
+### Phase 4F — Search & Filtering
+
+- [ ] Build URL-based filters and search
+- [ ] Build FilterPanel and SortDropdown
+
+**Phase 4F Status: NOT STARTED**
+
+---
+
+### Phase 4G — Caching & Performance
+
+- [ ] Apply Next.js caching tags
+- [ ] Implement suspense boundaries and skeletons
+
+**Phase 4G Status: NOT STARTED**
 
 ---
 
@@ -461,33 +551,40 @@ This table tracks the count of core code assets across the repository. It is upd
 - [ ] Implement optimistic UI for quantity changes
 - [ ] Verify cart persistence on page refresh
 - [ ] Build `features/cart/utils.ts`
-- [ ] Run Quality Gate validation checks
-- [ ] Run `git add . && git commit -m "Phase 6 Complete"`
-- [ ] Update repository snapshot counts
-- [ ] Update PROJECT_STATUS.md to mark Phase 6 complete
+- [x] Build `features/cart/store.ts` (Zustand with localStorage persistence)
+- [x] Build `features/cart/components/CartDrawer/`
+- [x] Build `features/cart/components/CartItem/`
+- [x] Build `features/cart/components/CartSummary/`
+- [x] Build `app/(shop)/cart/page.tsx`
+- [x] Wire AddToCartButton to Zustand store
+- [x] Add cart count to Header
+- [x] Implement optimistic UI for quantity changes
+- [x] Verify cart persistence on page refresh
+- [x] Build `features/cart/utils.ts`
+- [x] Run Quality Gate validation checks
+- [x] Run `git add . && git commit -m "Phase 6 Complete"`
+- [x] Update repository snapshot counts
+- [x] Update PROJECT_STATUS.md to mark Phase 5B complete (v0.14.0)
 
-**Phase 6 Status: NOT STARTED**
+**Phase 5B Status: COMPLETE**
 
 ---
 
-### Phase 7 — Authentication
+### Phase 5A — Identity & Authentication Foundation
 
-- [ ] Configure Auth framework routes
-- [ ] Configure provider configurations stubs
-- [ ] Build `features/auth/components/LoginForm/`
-- [ ] Build `features/auth/components/RegisterForm/`
-- [ ] Build `features/auth/components/AuthModal/`
-- [ ] Build login and register pages
-- [ ] Implement middleware for protected routes
-- [ ] Add session-aware UI to Header
-- [ ] Implement `providers/AuthProvider.tsx`
-- [ ] Add User DB model
-- [ ] Run Quality Gate validation checks
-- [ ] Run `git add . && git commit -m "Phase 7 Complete"`
-- [ ] Update repository snapshot counts
-- [ ] Update PROJECT_STATUS.md to mark Phase 7 complete
+- [x] Configure Auth.js (NextAuth v5) integration routes
+- [x] Configure Credentials provider with Argon2id password hashing
+- [x] Create strict `src/validations/auth.ts` schema layer
+- [x] Build isolated `UserService` and `AuthenticationService`
+- [x] Implement robust server actions (`loginAction`, `registerAction`, `logoutAction`)
+- [x] Build `app/(auth)/login` and `app/(auth)/register` minimal functional pages
+- [x] Implement Route Groups (`(auth)`, `(shop)`, `(account)`, `(admin)`)
+- [x] Implement Next.js middleware for protected routes
+- [x] Add `SessionService` for explicit auth enforcement
+- [x] Prepare scaffolding for rate-limiting and audit logging
+- [x] Run Quality Gate validation checks
 
-**Phase 7 Status: NOT STARTED**
+**Phase 5A Status: COMPLETE**
 
 ---
 

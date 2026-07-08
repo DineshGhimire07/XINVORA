@@ -12,11 +12,17 @@
  */
 
 import type { Metadata, Viewport } from "next"
-import { Cormorant_Garamond, Manrope } from "next/font/google"
+import { Cormorant_Garamond, Manrope, Playfair_Display } from "next/font/google"
+import type { ReactNode } from "react"
 import { Providers } from "@/providers/providers"
 import { buildRootMetadata } from "@/lib/metadata"
 import { Header } from "@/components/shared/Header/Header"
 import { Footer } from "@/components/shared/Footer/Footer"
+import { SessionService } from "@/services/session.service"
+import { getHeaderCommerceState } from "@/db/queries/cart"
+import { cn } from "@/lib/utils"
+import { SkipToContent } from "@/components/shared/skip-to-content"
+import { headers } from "next/headers"
 import "@/app/globals.css"
 
 // ── Font Loading ──────────────────────────────────────────────────────────────
@@ -40,6 +46,15 @@ const manrope = Manrope({
   preload: true,
 })
 
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
+  variable: "--font-playfair",
+  display: "swap",
+  preload: true,
+})
+
 // ── Metadata ──────────────────────────────────────────────────────────────────
 export const metadata: Metadata = buildRootMetadata()
 
@@ -55,11 +70,21 @@ export const viewport: Viewport = {
 }
 
 // ── Root Layout ───────────────────────────────────────────────────────────────
-export default function RootLayout({
+import { findHierarchicalCollections } from "@/db/queries/collections"
+
+export default async function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: ReactNode
 }) {
+  const { userId, sessionId } = await SessionService.getCommerceIdentity()
+  const commerceState = await getHeaderCommerceState(userId, sessionId)
+  const collections = await findHierarchicalCollections()
+
+  const headerList = await headers()
+  const pathname = headerList.get("x-pathname") || ""
+  const isAdmin = pathname.startsWith("/admin")
+
   return (
     <html
       lang="en"
@@ -68,23 +93,27 @@ export default function RootLayout({
       // injects the "dark" class attribute dynamically on the client.
     >
       <body
-        className={`
-          ${cormorantGaramond.variable}
-          ${manrope.variable}
-          font-sans
-          bg-background
-          text-text-primary
-          antialiased
-        `}
+        suppressHydrationWarning
+        className={cn(
+          cormorantGaramond.variable,
+          manrope.variable,
+          playfair.variable,
+          "font-sans bg-background text-text-primary antialiased"
+        )}
       >
         <Providers>
-          <Header />
+          <SkipToContent />
+          <Header 
+            cartCount={commerceState.cartCount} 
+            wishlistCount={commerceState.wishlistCount} 
+            collections={collections}
+          />
 
           <main id="main-content" className="flex min-h-[100dvh] flex-col">
             {children}
           </main>
 
-          <Footer />
+          {!isAdmin && <Footer />}
         </Providers>
       </body>
     </html>

@@ -20,6 +20,16 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs))
 }
 
+export function formatCurrency(amount: number): string {
+  // Amount is stored in paisa/cents. Convert to whole NPR.
+  const npr = amount / 100
+  return new Intl.NumberFormat("en-NP", {
+    style: "currency",
+    currency: "NPR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(npr)
+}
 /**
  * Format a number as a price string.
  * Defaults to USD. Replace with locale-aware formatting in production.

@@ -15,6 +15,8 @@
 
 import type { ReactNode } from "react"
 import { ThemeProvider } from "./theme-provider"
+import { SessionProvider } from "next-auth/react"
+import { AnalyticsProvider } from "@/features/analytics/ingestion/tracking-provider"
 
 interface ProvidersProps {
   children: ReactNode
@@ -22,21 +24,12 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <ThemeProvider>
-      {/*
-       * Future providers slot in here:
-       *
-       * <AuthProvider>
-       *   <CartProvider>
-       *     <WishlistProvider>
-       *       {children}
-       *     </WishlistProvider>
-       *   </CartProvider>
-       * </AuthProvider>
-       *
-       * For now, only ThemeProvider is active.
-       */}
-      {children}
-    </ThemeProvider>
+    <SessionProvider>
+      <ThemeProvider>
+        <AnalyticsProvider>
+          {children}
+        </AnalyticsProvider>
+      </ThemeProvider>
+    </SessionProvider>
   )
 }

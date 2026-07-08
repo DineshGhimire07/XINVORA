@@ -35,7 +35,7 @@ const buttonVariants = cva(
     // Layout
     "inline-flex items-center justify-center gap-2",
     // Typography
-    "font-sans font-medium tracking-wide",
+    "font-sans font-bold tracking-widest uppercase text-[11px]",
     "whitespace-nowrap",
     // Shape
     "rounded-sm",
@@ -107,11 +107,11 @@ const buttonVariants = cva(
       },
 
       size: {
-        xs:        "h-7  px-3  text-[11px] tracking-widest gap-1",
-        sm:        "h-9  px-4  text-label-sm",
-        md:        "h-11 px-6  text-label-md",
-        lg:        "h-13 px-8  text-label-lg",
-        xl:        "h-15 px-10 text-body-md",
+        xs:        "h-7  px-3  gap-1",
+        sm:        "h-9  px-4",
+        md:        "h-11 px-6",
+        lg:        "h-13 px-8",
+        xl:        "h-15 px-10",
         icon:      "h-10 w-10 p-0",
         "icon-sm": "h-8  w-8  p-0",
         "icon-lg": "h-12 w-12 p-0",

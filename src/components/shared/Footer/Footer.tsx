@@ -8,13 +8,20 @@
 import { Container } from "@/components/shared/container"
 import { Grid } from "@/components/shared/grid"
 import { Stack } from "@/components/shared/stack"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { FOOTER_NAV } from "@/constants/navigation"
 import Link from "next/link"
 import * as React from "react"
+import { NewsletterForm } from "@/features/newsletter/components/NewsletterForm"
+import { AdminSettingsService } from "@/services/admin/settings.service"
 
-export function Footer() {
+export async function Footer() {
+  const generalSettings = await AdminSettingsService.getSetting("general")
+  const contactSettings = await AdminSettingsService.getSetting("store_contact")
+  
+  const storeName = generalSettings?.storeName || "XINVORA"
+  const tagline = generalSettings?.storeTagline || "Designed with intention. Made to endure. We create premium, quiet luxury apparel and furniture objects built for daily life."
+  const socialLinks = contactSettings?.socialLinks
+
   return (
     <footer className="border-t border-border/60 bg-background pt-16 pb-12 select-none" role="contentinfo">
       <Container>
@@ -29,11 +36,21 @@ export function Footer() {
                 href="/" 
                 className="text-heading-lg font-display text-text-primary tracking-widest uppercase hover:opacity-85 transition-opacity"
               >
-                XINVORA
+                {storeName}
               </Link>
               <p className="text-body-sm text-text-secondary leading-relaxed">
-                Designed with intention. Made to endure. We create premium, quiet luxury apparel and furniture objects built for daily life.
+                {tagline}
               </p>
+              {contactSettings?.supportEmail && (
+                <a href={`mailto:${contactSettings.supportEmail}`} className="text-sm font-semibold text-text-primary hover:underline">
+                  {contactSettings.supportEmail}
+                </a>
+              )}
+              {contactSettings?.phone && (
+                <a href={`tel:${contactSettings.phone}`} className="text-sm font-semibold text-text-secondary hover:text-text-primary">
+                  {contactSettings.phone}
+                </a>
+              )}
             </Stack>
           </div>
 
@@ -73,23 +90,7 @@ export function Footer() {
               </div>
               
               {/* Presentation Form fields */}
-              <div className="flex flex-col gap-2 w-full">
-                <Input 
-                  type="email" 
-                  placeholder="Email Address" 
-                  size="sm"
-                  className="h-9 px-3 bg-surface border border-border text-body-xs rounded-sm cursor-not-allowed focus:outline-none"
-                  disabled 
-                />
-                <Button 
-                  variant="primary" 
-                  size="sm"
-                  className="w-full uppercase text-[10px] font-bold tracking-widest h-9"
-                  disabled
-                >
-                  Subscribe
-                </Button>
-              </div>
+              <NewsletterForm layout="inline" placeholder="Email Address" />
             </Stack>
           </div>
 
@@ -100,45 +101,73 @@ export function Footer() {
           
           {/* Copyright notice */}
           <p className="text-[11px] font-semibold text-text-secondary uppercase tracking-wider select-none">
-            &copy; 2026 XINVORA. Designed with intention.
+            &copy; {new Date().getFullYear()} {storeName}.
           </p>
 
           {/* Social links */}
-          <ul className="flex items-center gap-6 text-[11px] font-bold text-text-secondary uppercase tracking-widest select-none">
-            <li>
-              <a 
-                href="https://instagram.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="hover:text-text-primary transition-colors duration-150"
-              >
-                Instagram
-              </a>
-            </li>
-            <li>
-              <a 
-                href="https://pinterest.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="hover:text-text-primary transition-colors duration-150"
-              >
-                Pinterest
-              </a>
-            </li>
-            <li>
-              <a 
-                href="https://linkedin.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="hover:text-text-primary transition-colors duration-150"
-              >
-                LinkedIn
-              </a>
-            </li>
+          <ul className="flex flex-wrap items-center gap-6 text-[11px] font-bold text-text-secondary uppercase tracking-widest select-none">
+            {socialLinks?.instagram && (
+              <li>
+                <a 
+                  href={socialLinks.instagram} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="hover:text-text-primary transition-colors duration-150"
+                >
+                  Instagram
+                </a>
+              </li>
+            )}
+            {socialLinks?.facebook && (
+              <li>
+                <a 
+                  href={socialLinks.facebook} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="hover:text-text-primary transition-colors duration-150"
+                >
+                  Facebook
+                </a>
+              </li>
+            )}
+            {socialLinks?.youtube && (
+              <li>
+                <a 
+                  href={socialLinks.youtube} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="hover:text-text-primary transition-colors duration-150"
+                >
+                  YouTube
+                </a>
+              </li>
+            )}
+            {socialLinks?.linkedin && (
+              <li>
+                <a 
+                  href={socialLinks.linkedin} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="hover:text-text-primary transition-colors duration-150"
+                >
+                  LinkedIn
+                </a>
+              </li>
+            )}
+            {socialLinks?.tiktok && (
+              <li>
+                <a 
+                  href={socialLinks.tiktok} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="hover:text-text-primary transition-colors duration-150"
+                >
+                  TikTok
+                </a>
+              </li>
+            )}
           </ul>
-
         </div>
-
       </Container>
     </footer>
   )

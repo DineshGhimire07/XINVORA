@@ -14,10 +14,10 @@ import * as React from "react"
 
 export default function NotFoundPage() {
   return (
-    <main className="flex-1 bg-background flex flex-col justify-center min-h-[70vh] pt-20">
+    <main className="flex-1 bg-background flex flex-col justify-start min-h-[50vh] pt-12 md:pt-20">
       <Container>
-        <Section id="not-found-block" padding="xl" className="bg-background">
-          <Stack gap={8} align="center" className="text-center max-w-[28rem] mx-auto select-none">
+        <Section id="not-found-block" padding="lg" className="bg-background">
+          <Stack gap={8} align="center" className="text-center max-w-[28rem] mx-auto select-none pt-8 md:pt-12">
             <span className="text-[10px] font-bold tracking-[0.3em] text-accent uppercase">
               Error 404
             </span>

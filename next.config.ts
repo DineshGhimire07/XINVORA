@@ -19,6 +19,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       // Placeholder for future image CDN (Cloudinary, Sanity, etc.)
       // { protocol: "https", hostname: "cdn.xinvora.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "placehold.co" },
     ],
     // Curated device sizes aligned to our responsive breakpoints
     deviceSizes: [375, 640, 768, 1024, 1280, 1440, 1920],
@@ -70,6 +72,9 @@ const nextConfig: NextConfig = {
   experimental: {
     // optimizePackageImports speeds up cold starts for large icon/component libs
     optimizePackageImports: ["lucide-react", "framer-motion"],
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
   },
 };
 

@@ -2,178 +2,369 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Search, User, ShoppingBag, ChevronDown, Menu, X, Heart } from "lucide-react"
-import { Container } from "@/components/shared/container"
+import { usePathname } from "next/navigation"
+import { Search, User, ShoppingBag, Heart, Menu, X, ChevronDown, ChevronRight } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-/**
- * components/shared/Header/Header.tsx — XINVORA Main Header Navigation
- *
- * Implements the global navigation header.
- * Designed to feel transparent, premium, and perfectly aligned with the brand's visual identity.
- */
-export function Header() {
+interface HeaderProps {
+  cartCount?: number
+  wishlistCount?: number
+  collections?: { id: string; name: string; slug: string }[]
+}
+
+const shopMegaMenu = {
+  MEN: [
+    { name: "Shirts", href: "/search?category=shirts&gender=men" },
+    { name: "T-Shirts", href: "/search?category=t-shirts&gender=men" },
+    { name: "Polos", href: "/search?category=polos&gender=men" },
+    { name: "Sweatshirts", href: "/search?category=sweatshirts&gender=men" },
+    { name: "Hoodies", href: "/search?category=hoodies&gender=men" },
+    { name: "Jackets", href: "/search?category=jackets&gender=men" },
+    { name: "Outerwear", href: "/search?category=outerwear&gender=men" },
+    { name: "Pants", href: "/search?category=pants&gender=men" },
+    { name: "Jeans", href: "/search?category=jeans&gender=men" },
+    { name: "Shorts", href: "/search?category=shorts&gender=men" },
+    { name: "Accessories", href: "/search?category=accessories&gender=men" },
+  ],
+  WOMEN: [
+    { name: "Dresses", href: "/search?category=dresses&gender=women" },
+    { name: "Tops", href: "/search?category=tops&gender=women" },
+    { name: "Shirts", href: "/search?category=shirts&gender=women" },
+    { name: "Sweaters", href: "/search?category=sweaters&gender=women" },
+    { name: "Outerwear", href: "/search?category=outerwear&gender=women" },
+    { name: "Pants", href: "/search?category=pants&gender=women" },
+    { name: "Skirts", href: "/search?category=skirts&gender=women" },
+    { name: "Bags", href: "/search?category=bags&gender=women" },
+    { name: "Accessories", href: "/search?category=accessories&gender=women" },
+  ],
+  "HOME LIVING": [
+    { name: "Decor", href: "/collections/home-decor" },
+    { name: "Kitchen", href: "/collections/kitchen-essentials" },
+    { name: "Dining", href: "/collections/dining" },
+    { name: "Lighting", href: "/collections/lighting" },
+    { name: "Bathroom", href: "/collections/bathroom" },
+    { name: "Storage", href: "/collections/storage" },
+    { name: "Office", href: "/collections/office-setup" },
+    { name: "Wall Art", href: "/collections/wall-decor" },
+    { name: "Candles", href: "/search?category=candles" },
+    { name: "Textiles", href: "/search?category=textiles" },
+    { name: "Furniture", href: "/search?category=furniture" },
+  ],
+  FEATURED: [
+    { name: "New Arrivals", href: "/search?sort=newest" },
+    { name: "Best Sellers", href: "/search?sort=best-sellers" },
+    { name: "Editor's Picks", href: "/search?featured=true" },
+    { name: "Summer Collection", href: "/collections/summer" },
+    { name: "Gift Guide", href: "/collections/gifts" },
+  ],
+}
+
+const collectionsList = [
+  { name: "Summer Collection", slug: "summer" },
+  { name: "Autumn Collection", slug: "autumn" },
+  { name: "Minimal Living", slug: "minimal-living" },
+  { name: "Modern Workspace", slug: "modern-workspace" },
+  { name: "Scandinavian Home", slug: "scandinavian-home" },
+  { name: "Travel Essentials", slug: "travel-essentials" },
+  { name: "New Arrivals", slug: "new-arrivals" },
+  { name: "Limited Edition", slug: "limited-edition" },
+]
+
+const journalList = [
+  { name: "Editorials", href: "/journal?tag=editorials" },
+  { name: "Design Stories", href: "/journal?tag=design-stories" },
+  { name: "Care Guides", href: "/journal?tag=care-guides" },
+  { name: "Behind the Collection", href: "/journal?tag=behind-the-collection" },
+  { name: "Lifestyle", href: "/journal?tag=lifestyle" },
+]
+
+export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: HeaderProps) {
+  const pathname = usePathname()
+  const [isScrolled, setIsScrolled] = React.useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
+  const [activeAccordion, setActiveAccordion] = React.useState<string | null>(null)
+  const drawerRef = React.useRef<HTMLDivElement>(null)
+
+  // Body scroll lock on mobile menu toggle
+  React.useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [mobileMenuOpen])
+
+  // Focus trap on mobile menu open
+  React.useEffect(() => {
+    if (!mobileMenuOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return
+
+      const container = drawerRef.current
+      if (!container) return
+
+      const focusables = container.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input, textarea, select, [tabindex]:not([tabindex="-1"])'
+      )
+      if (focusables.length === 0) return
+
+      const first = focusables[0]
+      const last = focusables[focusables.length - 1]
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          last.focus()
+          e.preventDefault()
+        }
+      } else {
+        if (document.activeElement === last) {
+          first.focus()
+          e.preventDefault()
+        }
+      }
+    }
+
+    // Auto-focus the close button inside the drawer on open
+    const container = drawerRef.current
+    if (container) {
+      const closeBtn = container.querySelector<HTMLElement>('button[aria-label="Close menu"]')
+      closeBtn?.focus()
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [mobileMenuOpen])
+
+  // Track scroll position to transition header from transparent to solid white
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  const isHomepage = pathname === "/"
+
+  // Merge static menu items with database collections dynamically
+  const mergedCollections = React.useMemo(() => {
+    const list = [...collectionsList]
+    for (const c of collections) {
+      if (!list.some((item) => item.slug === c.slug)) {
+        list.push({ name: c.name, slug: c.slug })
+      }
+    }
+    return list
+  }, [collections])
 
   return (
-    <header className="sticky top-0 w-full z-sticky bg-background/80 backdrop-blur-md border-b border-border/10">
-      <Container className="h-16 md:h-20 flex items-center justify-between">
+    <header
+      className={cn(
+        "fixed top-0 left-0 w-full z-50 transition-all duration-300 ease-out h-[72px] md:h-20 flex items-center border-b",
+        isScrolled || !isHomepage
+          ? "bg-white text-text-primary border-neutral-100"
+          : "bg-transparent text-white border-transparent"
+      )}
+    >
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center px-6 sm:px-12 md:px-16 lg:px-20 w-full h-full relative">
         
-        {/* Left Side: Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8">
-          <Link 
-            href="/shop" 
-            className="group inline-flex items-center gap-1 text-[11px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors duration-200"
+        {/* LEFT NAV */}
+        <nav className="hidden md:flex items-center gap-10 h-full">
+          {/* SHOP LINK */}
+          <Link
+            href="/search"
+            className="text-[13px] font-medium tracking-[0.18em] uppercase hover:opacity-60 transition-opacity duration-200 py-1 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-text-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200"
           >
             Shop
-            <ChevronDown className="w-3 h-3 text-text-secondary group-hover:text-accent transition-colors duration-200" />
           </Link>
-          <Link 
-            href="/new-arrivals" 
-            className="text-[11px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors duration-200"
-          >
-            New Arrivals
-          </Link>
-          <Link 
-            href="/collections" 
-            className="text-[11px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors duration-200"
+
+          {/* COLLECTIONS LINK */}
+          <Link
+            href="/collections"
+            className="text-[13px] font-medium tracking-[0.18em] uppercase hover:opacity-60 transition-opacity duration-200 py-1 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-text-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200"
           >
             Collections
           </Link>
-          <Link 
-            href="/journal" 
-            className="text-[11px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors duration-200"
+
+          {/* LIVING LINK */}
+          <Link
+            href="/collections/home-decor"
+            className="text-[13px] font-medium tracking-[0.18em] uppercase hover:opacity-60 transition-opacity duration-200 py-1 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-text-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200"
+          >
+            Living
+          </Link>
+
+          {/* JOURNAL LINK */}
+          <Link
+            href="/journal"
+            className="text-[13px] font-medium tracking-[0.18em] uppercase hover:opacity-60 transition-opacity duration-200 py-1 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-text-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200"
           >
             Journal
           </Link>
-          <Link 
-            href="/about" 
-            className="text-[11px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors duration-200"
-          >
-            About
-          </Link>
-          <Link 
-            href="/contact" 
-            className="text-[11px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors duration-200"
-          >
-            Contact
-          </Link>
         </nav>
 
-        {/* Mobile menu trigger */}
-        <button 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden flex items-center justify-center p-2 text-text-primary hover:text-accent transition-colors duration-200"
-          aria-label="Toggle navigation menu"
+        {/* MOBILE MENU TRIGGER */}
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className="md:hidden flex items-center justify-start py-2 text-current hover:opacity-60 transition-opacity"
+          aria-label="Open navigation menu"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-5.5 h-5.5 stroke-[1.25]" />
         </button>
 
-        {/* Center: Minimalist "X" Logo */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-          <Link 
-            href="/" 
-            className="text-display-md font-display font-light text-text-primary select-none tracking-normal hover:opacity-85 transition-opacity"
+        {/* CENTER LOGO */}
+        <div className="justify-self-center">
+          <Link
+            href="/"
+            className="text-[1.25rem] sm:text-[1.5rem] md:text-[1.65rem] font-display font-light tracking-[0.25em] uppercase text-current hover:opacity-85 transition-opacity"
             aria-label="XINVORA Home"
           >
-            X
+            XINVORA
           </Link>
         </div>
 
-        {/* Right Side: Utility Icons */}
-        <div className="flex items-center gap-4 md:gap-6">
-          <Link 
+        {/* RIGHT UTILITIES */}
+        <div className="justify-self-stretch md:justify-self-end flex items-center justify-between md:justify-start w-full md:w-auto text-current pl-1 sm:pl-2 md:pl-0">
+          <Link
             href="/search"
-            className="flex items-center justify-center p-2 text-text-primary hover:text-accent transition-colors duration-200"
+            className="hidden md:flex p-1 hover:opacity-60 transition-opacity duration-200 mr-1 sm:mr-3 md:mr-7"
             aria-label="Search items"
           >
-            <Search className="w-4.5 h-4.5" />
-          </Link>
-          
-          <Link 
-            href="/wishlist" 
-            className="flex items-center justify-center p-2 text-text-primary hover:text-accent transition-colors duration-200"
-            aria-label="Your wishlist with 0 items"
-          >
-            <Heart className="w-4.5 h-4.5" />
+            <Search className="w-4.5 h-4.5 stroke-[1.25]" />
           </Link>
 
-          <Link 
-            href="/login" 
-            className="flex items-center justify-center p-2 text-text-primary hover:text-accent transition-colors duration-200"
-            aria-label="Your account"
+          <Link
+            href="/wishlist"
+            className="p-1 hover:opacity-60 transition-opacity duration-200 relative"
+            aria-label="Your wishlist"
           >
-            <User className="w-4.5 h-4.5" />
+            <Heart className="w-4.5 h-4.5 stroke-[1.25]" />
+            {wishlistCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-text-primary rounded-full" />
+            )}
           </Link>
 
-          <Link 
-            href="/cart" 
-            className="flex items-center gap-1.5 p-2 text-text-primary hover:text-accent transition-colors duration-200"
-            aria-label="Shopping bag with 0 items"
-          >
-            <ShoppingBag className="w-4.5 h-4.5" />
-            <span className="text-[11px] font-semibold tracking-wider select-none">0</span>
-          </Link>
+          {/* Cart and Account group */}
+          <div className="flex items-center gap-1 md:gap-7 md:ml-7">
+            <Link
+              href="/cart"
+              className="p-1 hover:opacity-60 transition-opacity duration-200 relative flex items-center"
+              aria-label="Your shopping cart"
+            >
+              <ShoppingBag className="w-4.5 h-4.5 stroke-[1.25]" />
+              {cartCount > 0 && (
+                <span className="ml-1 text-[10px] font-medium tracking-wide">
+                  ({cartCount})
+                </span>
+              )}
+            </Link>
+
+            <Link
+              href="/account"
+              className="p-1 hover:opacity-60 transition-opacity duration-200"
+              aria-label="Your account"
+            >
+              <User className="w-4.5 h-4.5 stroke-[1.25]" />
+            </Link>
+          </div>
         </div>
 
-      </Container>
+      </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* MOBILE DRAWER */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-modal bg-background flex flex-col md:hidden animate-fade-in">
-          <div className="h-16 flex items-center justify-between px-6 border-b border-border">
-            <span className="text-display-sm font-display text-text-primary">X</span>
-            <button 
+        <div ref={drawerRef} className="fixed inset-0 z-[100] bg-surface text-text-primary flex flex-col animate-fade-in md:hidden">
+          <div className="h-[72px] flex items-center justify-between px-6 border-b border-border">
+            <span className="text-display-sm font-display tracking-[0.2em] uppercase">XINVORA</span>
+            <button
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2 text-text-primary hover:text-accent transition-colors"
+              className="p-2 hover:opacity-60 transition-opacity"
               aria-label="Close menu"
             >
-              <X className="w-6 h-6" />
+              <X className="w-6 h-6 stroke-[1.25]" />
             </button>
           </div>
-          <nav className="flex-1 flex flex-col items-center justify-center gap-8 py-12">
-            <Link 
-              href="/shop" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-[13px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors"
-            >
-              Shop
-            </Link>
-            <Link 
-              href="/new-arrivals" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-[13px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors"
-            >
-              New Arrivals
-            </Link>
-            <Link 
-              href="/collections" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-[13px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors"
-            >
-              Collections
-            </Link>
-            <Link 
-              href="/journal" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-[13px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors"
-            >
-              Journal
-            </Link>
-            <Link 
-              href="/about" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-[13px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors"
-            >
-              About
-            </Link>
-            <Link 
-              href="/contact" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-[13px] font-semibold tracking-widest text-text-primary uppercase select-none hover:text-accent transition-colors"
-            >
-              Contact
-            </Link>
-          </nav>
+
+          <div className="flex-1 overflow-y-auto px-6 py-8">
+            <nav className="flex flex-col gap-6">
+              <Link
+                href="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg font-medium tracking-wide uppercase py-1 border-b border-border/40"
+              >
+                Home
+              </Link>
+
+              <Link
+                href="/search"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg font-medium tracking-wide uppercase border-b border-border/40 pb-3"
+              >
+                Shop
+              </Link>
+
+              <Link
+                href="/collections"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg font-medium tracking-wide uppercase border-b border-border/40 pb-3"
+              >
+                Collections
+              </Link>
+
+              <Link
+                href="/collections/home-decor"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg font-medium tracking-wide uppercase border-b border-border/40 pb-3"
+              >
+                Living
+              </Link>
+
+              <Link
+                href="/journal"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg font-medium tracking-wide uppercase border-b border-border/40 pb-3"
+              >
+                Journal
+              </Link>
+            </nav>
+
+            <div className="mt-12 pt-8 border-t border-border flex flex-col gap-4 text-text-secondary">
+              <Link
+                href="/search"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 text-body-sm uppercase tracking-wider"
+              >
+                <Search className="w-4 h-4" /> Search
+              </Link>
+              <Link
+                href="/wishlist"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 text-body-sm uppercase tracking-wider"
+              >
+                <Heart className="w-4 h-4" /> Wishlist
+              </Link>
+              <Link
+                href="/account"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 text-body-sm uppercase tracking-wider"
+              >
+                <User className="w-4 h-4" /> Account
+              </Link>
+              <Link
+                href="/cart"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 text-body-sm uppercase tracking-wider"
+              >
+                <ShoppingBag className="w-4 h-4" /> Cart ({cartCount})
+              </Link>
+            </div>
+          </div>
         </div>
       )}
     </header>

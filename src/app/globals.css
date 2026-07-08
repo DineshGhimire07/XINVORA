@@ -16,9 +16,8 @@
  */
 
 /* ── Google Fonts ────────────────────────────────────────────────────────── */
-/* Cormorant Garamond: Editorial display serif — large headlines only         */
-/* Manrope: Premium geometric sans — body copy and UI                         */
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Manrope:wght@200;300;400;500;600;700;800&display=swap");
+/* Fonts are loaded via next/font in layout.tsx (self-hosted, subset, no FOUT) */
+/* Do NOT add @import url(...) here — it would duplicate loading and block render */
 
 @import "tailwindcss";
 @config "../../tailwind.config.ts";
@@ -31,6 +30,8 @@
     --color-surface: 0 0% 100%;             /* #FFFFFF — Pure White */
     --color-surface-elevated: 34 30% 97%;   /* #FAF8F5 — Warm elevated */
     --color-surface-overlay: 0 0% 10%;      /* Used with opacity for overlays */
+    --color-surface-warm: 30 28% 87%;       /* #E6DED3 — Warm plaster/linen */
+    --color-surface-secondary: 32 15% 94%;   /* #F2EFEA — Secondary background */
 
     /* ── Text ────────────────────────────────────────────────────────────── */
     --color-text-primary: 0 0% 10%;         /* #1A1A1A — Near black */
@@ -49,6 +50,7 @@
     --color-border: 32 20% 91%;             /* #ECE8E2 */
     --color-border-strong: 30 14% 83%;      /* #D4CFC9 */
     --color-border-subtle: 34 26% 95%;      /* #F5F2EE */
+    --color-border-primary: 32 20% 91%;     /* #ECE8E2 — Primary border */
 
     /* ── Semantic States ─────────────────────────────────────────────────── */
     --color-success: 140 26% 39%;
@@ -99,6 +101,8 @@
     --color-surface: 0 0% 10%;
     --color-surface-elevated: 0 0% 13%;
     --color-surface-overlay: 0 0% 0%;
+    --color-surface-warm: 0 0% 15%;
+    --color-surface-secondary: 0 0% 12%;
 
     --color-text-primary: 36 33% 96%;
     --color-text-secondary: 0 0% 65%;
@@ -114,6 +118,7 @@
     --color-border: 0 0% 18%;
     --color-border-strong: 0 0% 25%;
     --color-border-subtle: 0 0% 14%;
+    --color-border-primary: 0 0% 18%;
 
     --shadow-color: 0 0% 0%;
   }

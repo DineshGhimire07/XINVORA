@@ -1,5 +1,6 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { gapMap } from "./primitives"
 
 const colMap = {
   1: "grid-cols-1",
@@ -91,26 +92,7 @@ const xxlColMap = {
   12: "2xl:grid-cols-12",
 } as const
 
-const gapMap = {
-  0: "gap-0",
-  0.5: "gap-0.5",
-  1: "gap-1",
-  2: "gap-2",
-  3: "gap-3",
-  4: "gap-4",
-  5: "gap-5",
-  6: "gap-6",
-  8: "gap-8",
-  10: "gap-10",
-  12: "gap-12",
-  16: "gap-16",
-  20: "gap-20",
-  24: "gap-24",
-  32: "gap-32",
-  40: "gap-40",
-  48: "gap-48",
-  64: "gap-64",
-} as const
+
 
 type GridCols = keyof typeof colMap
 
@@ -151,7 +133,7 @@ export function Grid({
   gap = 0,
   ...props
 }: GridProps) {
-  const colClasses = React.useMemo(() => {
+  const colClasses = (() => {
     if (typeof cols === "number") {
       return colMap[cols] || "grid-cols-1"
     }
@@ -165,7 +147,7 @@ export function Grid({
     if (cols["2xl"]) classes.push(xxlColMap[cols["2xl"]])
 
     return classes.join(" ") || "grid-cols-1"
-  }, [cols])
+  })()
 
   return (
     <Component

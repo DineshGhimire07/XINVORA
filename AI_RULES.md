@@ -62,6 +62,9 @@ A component is a Server Component by default. The `'use client'` directive is ad
 ### RULE-ARCH-07: Never create circular dependencies
 Every module must have a clear, single direction of dependency. Features depend on `lib/`, `services/`, `hooks/`, `types/`. Features never depend on other features unless explicitly architected that way.
 
+### RULE-ARCH-08: Never call Drizzle directly from a Server Action or Server Component
+All write operations must flow from a Server Action to a Service, which then calls Drizzle. All read operations must flow from a Server Component to a Query (Repository), which then calls Drizzle. No page or action may import Drizzle or execute queries directly. This keeps the database logic completely decoupled from the application and UI layers.
+
 ---
 
 ## 3. File and Folder Rules

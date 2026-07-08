@@ -11,5 +11,7 @@
  * the consuming files across the codebase.
  */
 
+import "server-only"
+
 export { db } from "./client"
 export type { Database } from "./client"
