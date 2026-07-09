@@ -121,37 +121,7 @@ export function ProductVariantSelector({
         {displayPrice}
       </div>
 
-      {/* Colors — circular swatches */}
-      {colors.length > 0 && (
-        <div className="flex flex-col gap-2.5">
-          <span className="text-[10px] font-bold tracking-widest text-text-secondary uppercase select-none">
-            Colour
-          </span>
-          <div className="flex items-center gap-2.5" role="group" aria-label="Select Colour">
-            {colors.map((color) => {
-              const isSelected = color.id === selectedColorId
-              const hasHex = color.hexCode && color.hexCode !== ""
-              return (
-                <button
-                  key={color.id}
-                  onClick={() => setSelectedColorId(color.id)}
-                  aria-pressed={isSelected}
-                  aria-label={color.name}
-                  title={color.name}
-                  className={`w-7 h-7 rounded-full border-2 transition-all duration-200 select-none ${
-                    isSelected
-                      ? "border-text-primary ring-2 ring-offset-2 ring-text-primary/30"
-                      : "border-transparent hover:border-text-primary/40"
-                  }`}
-                  style={{
-                    backgroundColor: hasHex ? color.hexCode : "#c8b8a2",
-                  }}
-                />
-              )
-            })}
-          </div>
-        </div>
-      )}
+
 
       {/* Sizes — circular buttons with Size Guide link */}
       {sizes.length > 0 && (
