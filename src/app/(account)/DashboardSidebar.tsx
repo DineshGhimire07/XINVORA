@@ -1,10 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useTransition } from "react"
+import { LogOut } from "lucide-react"
+import { logoutAction } from "@/actions/auth.actions"
 
 export function DashboardSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
 
   const links = [
     { href: "/account", label: "Dashboard Overview" },
@@ -16,6 +21,13 @@ export function DashboardSidebar() {
     { href: "/account/notifications", label: "Notification Center" },
     { href: "/account/settings", label: "Preferences" },
   ]
+
+  const handleLogout = () => {
+    startTransition(async () => {
+      await logoutAction()
+      router.push("/")
+    })
+  }
 
   return (
     <nav className="border border-border-primary/20 bg-surface-secondary/10 p-6 space-y-2 sticky top-32">
@@ -41,6 +53,18 @@ export function DashboardSidebar() {
           )
         })}
       </ul>
+
+      {/* Sign Out */}
+      <div className="pt-4 mt-4 border-t border-border-primary/20">
+        <button
+          onClick={handleLogout}
+          disabled={isPending}
+          className="flex items-center gap-2 py-2 text-[11px] uppercase tracking-widest text-text-secondary hover:text-red-500 transition-colors duration-200 disabled:opacity-50 w-full"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          {isPending ? "Signing out..." : "Sign Out"}
+        </button>
+      </div>
     </nav>
   )
 }

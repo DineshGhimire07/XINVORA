@@ -23,6 +23,7 @@ import { getHeaderCommerceState } from "@/db/queries/cart"
 import { cn } from "@/lib/utils"
 import { SkipToContent } from "@/components/shared/skip-to-content"
 import { headers } from "next/headers"
+import NextTopLoader from "nextjs-toploader"
 import "@/app/globals.css"
 
 // ── Font Loading ──────────────────────────────────────────────────────────────
@@ -103,6 +104,14 @@ export default async function RootLayout({
         )}
       >
         <Providers>
+          <NextTopLoader
+            color="#A48B78"
+            height={2}
+            showSpinner={false}
+            easing="ease"
+            speed={200}
+            shadow={false}
+          />
           <SkipToContent />
           {!isPreview && (
             <Header 
