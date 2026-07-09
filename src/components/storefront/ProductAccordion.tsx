@@ -33,7 +33,7 @@ export function ProductAccordion({ description, details, careGuide }: ProductAcc
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id as TabType)}
-              className={`text-[10px] md:text-[12px] font-bold tracking-[0.15em] uppercase cursor-pointer transition-all duration-300 pb-2 border-b-2 -mb-[10px] whitespace-nowrap ${
+              className={`text-[12px] md:text-[14px] font-bold tracking-[0.15em] uppercase cursor-pointer transition-all duration-300 pb-2 border-b-2 -mb-[10px] whitespace-nowrap ${
                 isActive
                   ? "text-text-primary border-text-primary"
                   : "text-text-secondary border-transparent hover:text-text-primary"
