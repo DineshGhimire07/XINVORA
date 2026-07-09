@@ -84,6 +84,7 @@ export default async function RootLayout({
   const headerList = await headers()
   const pathname = headerList.get("x-pathname") || ""
   const isAdmin = pathname.startsWith("/admin")
+  const isPreview = pathname === "/preview"
 
   return (
     <html
@@ -103,17 +104,19 @@ export default async function RootLayout({
       >
         <Providers>
           <SkipToContent />
-          <Header 
-            cartCount={commerceState.cartCount} 
-            wishlistCount={commerceState.wishlistCount} 
-            collections={collections}
-          />
+          {!isPreview && (
+            <Header 
+              cartCount={commerceState.cartCount} 
+              wishlistCount={commerceState.wishlistCount} 
+              collections={collections}
+            />
+          )}
 
           <main id="main-content" className="flex min-h-[100dvh] flex-col">
             {children}
           </main>
 
-          {!isAdmin && <Footer />}
+          {!isAdmin && !isPreview && <Footer />}
         </Providers>
       </body>
     </html>

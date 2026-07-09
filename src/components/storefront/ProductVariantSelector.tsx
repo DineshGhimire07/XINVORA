@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { AddToCartButton } from "@/features/cart/components/AddToCartButton"
 import { Button } from "@/components/ui/button"
 import { Heart, X } from "lucide-react"
-import { addToWishlistAction } from "@/actions/wishlist.actions"
+import { toggleWishlistAction } from "@/actions/wishlist.actions"
 import { addToCartAction } from "@/actions/cart.actions"
 
 interface Variant {
@@ -25,6 +25,8 @@ interface ProductVariantSelectorProps {
   sizes: { id: string; name: string; abbreviation: string | null }[]
   productName: string
   sizeGuide?: string | null
+  shortDescription?: string | null
+  initialWishlistVariantIds?: string[]
 }
 
 // ── Size Guide Modal ────────────────────────────────────────────────────────
@@ -59,23 +61,29 @@ function SizeGuideModal({ sizeGuide, onClose }: { sizeGuide: string; onClose: ()
   )
 }
 
-// ── Wishlist Heart Button (side-by-side with Add to Bag) ────────────────────
-function WishlistIconForm({ variantId, disabled }: { variantId: string; disabled: boolean }) {
-  const [state, action] = useActionState<any, FormData>(addToWishlistAction, null)
-  const { pending } = useFormStatus?.() ?? { pending: false }
-
+function WishlistButton({
+  variantId,
+  disabled,
+  isWishlisted,
+  onToggle,
+  isPending,
+}: {
+  variantId: string
+  disabled: boolean
+  isWishlisted: boolean
+  onToggle: () => void
+  isPending: boolean
+}) {
   return (
-    <form action={action}>
-      <input type="hidden" name="variantId" value={variantId} />
-      <button
-        type="submit"
-        disabled={disabled || pending}
-        aria-label="Add to Wishlist"
-        className="w-12 h-12 flex-shrink-0 border border-border hover:border-text-primary flex items-center justify-center text-text-primary hover:bg-surface-secondary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <Heart className="w-5 h-5" />
-      </button>
-    </form>
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={disabled || isPending}
+      aria-label={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+      className="w-12 h-12 flex-shrink-0 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed text-text-primary"
+    >
+      <Heart className={`w-5 h-5 transition-colors ${isWishlisted ? "fill-accent text-accent" : ""}`} />
+    </button>
   )
 }
 
@@ -86,10 +94,15 @@ export function ProductVariantSelector({
   sizes,
   productName,
   sizeGuide,
+  shortDescription,
+  initialWishlistVariantIds = [],
 }: ProductVariantSelectorProps) {
   const [selectedColorId, setSelectedColorId] = useState<string | null>(colors[0]?.id || null)
   const [selectedSizeId, setSelectedSizeId] = useState<string | null>(sizes[0]?.id || null)
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false)
+  const [wishlistIds, setWishlistIds] = useState<string[]>(initialWishlistVariantIds)
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   const activeVariant = useMemo(() => {
     return variants.find((v) => {
@@ -106,6 +119,44 @@ export function ProductVariantSelector({
     return "Contact for Price"
   }, [activeVariant])
 
+  const handleWishlistToggle = () => {
+    if (!activeVariant) return
+    const vId = activeVariant.id
+    const currentlyWishlisted = wishlistIds.includes(vId)
+
+    // Optimistic toggle
+    if (currentlyWishlisted) {
+      setWishlistIds((prev) => prev.filter((id) => id !== vId))
+    } else {
+      setWishlistIds((prev) => [...prev, vId])
+    }
+
+    startTransition(async () => {
+      const res = await toggleWishlistAction(vId)
+      if (!res.success) {
+        // Revert on error
+        if (currentlyWishlisted) {
+          setWishlistIds((prev) => [...prev, vId])
+        } else {
+          setWishlistIds((prev) => prev.filter((id) => id !== vId))
+        }
+
+        // Redirect to login if user is not authenticated
+        if (res.error?.code === "UNAUTHORIZED" || res.error?.message?.toLowerCase().includes("auth")) {
+          router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`)
+        }
+      } else if (res.data) {
+        // Sync with verified database response
+        const isNowWishlisted = res.data.wishlisted
+        if (isNowWishlisted) {
+          setWishlistIds((prev) => prev.includes(vId) ? prev : [...prev, vId])
+        } else {
+          setWishlistIds((prev) => prev.filter((id) => id !== vId))
+        }
+      }
+    })
+  }
+
   const inStock = activeVariant?.inventory ? activeVariant.inventory.quantity > 0 : true
 
   return (
@@ -120,6 +171,13 @@ export function ProductVariantSelector({
       <div className="text-[1.5rem] font-sans font-light text-text-primary tracking-wide select-none -mt-4 border-b border-border/10 pb-3">
         {displayPrice}
       </div>
+
+      {/* Short Description */}
+      {shortDescription && (
+        <p className="text-[16px] leading-[1.7] text-neutral-700 max-w-[600px] line-clamp-3 select-text font-light text-pretty -mt-2">
+          {shortDescription}
+        </p>
+      )}
 
 
 
@@ -183,7 +241,13 @@ export function ProductVariantSelector({
           </div>
 
           {activeVariant ? (
-            <WishlistIconForm variantId={activeVariant.id} disabled={!activeVariant} />
+            <WishlistButton
+              variantId={activeVariant.id}
+              disabled={false}
+              isWishlisted={wishlistIds.includes(activeVariant.id)}
+              isPending={isPending}
+              onToggle={handleWishlistToggle}
+            />
           ) : (
             <button
               type="button"

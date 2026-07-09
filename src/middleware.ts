@@ -1,6 +1,7 @@
 import NextAuth from "next-auth"
 import { authConfig } from "./auth.config"
 import { NextResponse } from "next/server"
+import { PREVIEW_CONFIG } from "./config/preview"
 
 const { auth } = NextAuth(authConfig)
 
@@ -10,12 +11,27 @@ export default auth((req) => {
   const user = req.auth?.user
 
   const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth")
+  const isApiRoute = nextUrl.pathname.startsWith("/api")
+  const isPreviewPage = nextUrl.pathname === "/preview"
   const isAuthRoute = nextUrl.pathname.startsWith("/login") || nextUrl.pathname.startsWith("/register")
   const isAdminRoute = nextUrl.pathname.startsWith("/admin")
   const isAccountRoute = nextUrl.pathname.startsWith("/account")
 
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set("x-pathname", nextUrl.pathname)
+
+  // ── Pre-Launch Preview Gate ──────────────────────────────────────────────
+  // When enabled, all routes (except /preview and /api) require the preview
+  // cookie to be present. Set NEXT_PUBLIC_PREVIEW_MODE=false to disable.
+  if (PREVIEW_CONFIG.enabled && !isPreviewPage && !isApiRoute) {
+    const previewCookie = req.cookies.get(PREVIEW_CONFIG.cookieName)
+    const hasAccess = previewCookie?.value === PREVIEW_CONFIG.accessKey
+
+    if (!hasAccess) {
+      const previewUrl = new URL("/preview", nextUrl)
+      return NextResponse.redirect(previewUrl)
+    }
+  }
 
   // Always allow API auth routes
   if (isApiAuthRoute) {
@@ -54,5 +70,6 @@ export default auth((req) => {
 
 // Optionally, don't invoke Middleware on some paths
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)", "/api/auth(.*)"],
 }
+

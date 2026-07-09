@@ -250,3 +250,46 @@ export async function toggleWishlistByProductIdAction(productId: string): Promis
     }
   }
 }
+
+/**
+ * Toggles a product variant in the wishlist by its variantId.
+ */
+export async function toggleWishlistAction(variantId: string): Promise<ActionResult<{ wishlisted: boolean }>> {
+  try {
+    const session = await SessionService.requireAuth()
+    const { db } = await import("@/db/client")
+    const { wishlistItems } = await import("@/db/schema")
+    const { eq } = await import("drizzle-orm")
+    const { WishlistService } = await import("@/services/wishlist.service")
+
+    const wishlist = await WishlistService.resolveWishlist(session.id)
+    const existingItem = wishlist.items.find(i => i.variant.id === variantId)
+
+    let wishlisted = false
+    if (existingItem) {
+      await db.delete(wishlistItems).where(eq(wishlistItems.id, existingItem.id))
+      wishlisted = false
+    } else {
+      await db.insert(wishlistItems).values({
+        wishlistId: wishlist.id,
+        variantId,
+      })
+      wishlisted = true
+    }
+
+    revalidatePath("/wishlist")
+    revalidatePath("/account/wishlist")
+
+    return { success: true, data: { wishlisted } }
+  } catch (error: any) {
+    console.error("[toggleWishlistAction Error]:", error)
+    return {
+      success: false,
+      error: {
+        code: "WISHLIST_TOGGLE_ERROR",
+        message: error.message || "Failed to toggle wishlist.",
+      },
+    }
+  }
+}
+

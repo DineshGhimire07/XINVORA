@@ -13,7 +13,13 @@ import { buildMetadata } from "@/lib/metadata"
 import { ProductGallery } from "@/components/storefront/ProductGallery"
 import { ProductVariantSelector } from "@/components/storefront/ProductVariantSelector"
 import { ProductAccordion } from "@/components/storefront/ProductAccordion"
+import { ProductTrustGrid } from "@/components/storefront/ProductTrustGrid"
+import { ProductInstagramCard } from "@/components/storefront/ProductInstagramCard"
+import { ProductTryOnGuide } from "@/components/storefront/ProductTryOnGuide"
+import { ProductEditorialPair } from "@/components/storefront/ProductEditorialPair"
 import { WishlistToggleIcon } from "@/components/shop/WishlistToggleIcon"
+import { SessionService } from "@/services/session.service"
+import { getWishlist } from "@/db/queries/wishlist"
 import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
@@ -47,6 +53,15 @@ export default async function ProductDetailPage({
 
   if (!product) {
     notFound()
+  }
+
+  const session = await SessionService.optionalAuth()
+  let wishlistVariantIds: string[] = []
+  if (session) {
+    const wishlist = await getWishlist(session.id)
+    if (wishlist) {
+      wishlistVariantIds = wishlist.items.map((item) => item.variant.id)
+    }
   }
 
   // Load parent category if exists
@@ -123,12 +138,16 @@ export default async function ProductDetailPage({
         <Section id="product-hero" padding="none" className="py-6 bg-background">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-16 lg:gap-20 items-start">
             
-            {/* ── Left Column: Product Gallery ── */}
+            {/* ── Left Column: Product Gallery + Editorial Pair ── */}
             <div className="md:col-span-7 flex flex-col gap-4">
               <ProductGallery 
                 images={product.productImages} 
                 productName={product.name} 
                 badge={product.badge}
+              />
+              <ProductEditorialPair
+                images={product.productImages}
+                productName={product.name}
               />
             </div>
 
@@ -158,30 +177,42 @@ export default async function ProductDetailPage({
                   </div>
                 </div>
 
-                {/* Editorial Description */}
-                <p className="text-body-md text-text-primary leading-relaxed font-light text-pretty">
-                  {product.description || "A meticulously crafted object for modern living."}
-                </p>
-
-                {/* Variant Selectors and Add To Cart */}
+                {/* Variant Selectors, Price, Short Description, and Add To Cart */}
                 <ProductVariantSelector 
                   variants={variantsWithPrices}
                   colors={colors}
                   sizes={sizes}
                   productName={product.name}
                   sizeGuide={product.sizeGuide}
+                  shortDescription={product.shortDescription}
+                  initialWishlistVariantIds={wishlistVariantIds}
                 />
 
-                {/* Collapsible Accordion Block */}
-                <ProductAccordion 
-                  description={product.description}
-                  details={product.details}
-                  careGuide={product.careGuide}
+                {/* ── Trust Feature Grid: 24px below Buy Now ── */}
+                <div className="-mt-3">
+                  <ProductTrustGrid />
+                </div>
+
+                {/* ── Virtual Try-On Guide: only shown when prompt exists ── */}
+                <ProductTryOnGuide
+                  virtualTryonPrompt={product.virtualTryonPrompt}
+                  productName={product.name}
                 />
+
+                {/* ── Instagram Card: only shown when URL exists ── */}
+                <ProductInstagramCard instagramReelUrl={product.instagramReelUrl} />
+
+                {/* Collapsible Accordion Block */}
+                <div className="mt-2">
+                  <ProductAccordion 
+                    description={product.description}
+                    details={product.details}
+                    careGuide={product.careGuide}
+                  />
+                </div>
 
               </Stack>
             </div>
-
           </div>
         </Section>
 

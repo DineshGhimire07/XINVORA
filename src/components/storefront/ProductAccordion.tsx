@@ -14,7 +14,7 @@ export function ProductAccordion({ description, details, careGuide }: ProductAcc
   const [activeTab, setActiveTab] = React.useState<TabType>("description")
 
   const tabs = [
-    { id: "description", label: "Info", content: description || "A meticulously crafted piece designed for the modern wardrobe." },
+    { id: "description", label: "Description", content: description || "A meticulously crafted piece designed for the modern wardrobe." },
     { id: "details", label: "Details", content: details || "Crafted with premium materials chosen for longevity and texture. Designed for modern living with structural integrity and aesthetic perfection." },
     { id: "shipping", label: "Shipping", content: "Complimentary carbon-neutral worldwide shipping on all orders. Returns accepted within 14 days of receipt in original unworn condition with all tags attached." },
     { id: "care", label: "Care", content: careGuide || "Handle with considered care. Dry clean or hand wash in cold water. Do not tumble dry. Store in a cool, dry place away from direct sunlight." }
@@ -24,8 +24,8 @@ export function ProductAccordion({ description, details, careGuide }: ProductAcc
 
   return (
     <div className="flex flex-col w-full border-t border-b border-border/30 py-5 mt-2">
-      {/* Horizontal Tabs Header — Proportional flex-row to ensure all elements stay on a single line */}
-      <div className="flex flex-row items-center gap-x-4 sm:gap-x-6 md:gap-x-8 pb-2 select-none border-b border-border/10 w-full overflow-x-hidden">
+      {/* Horizontal Tabs Header — Distributed layout, overflow hidden to prevent scroll bars */}
+      <div className="flex flex-row items-center justify-between pb-2 select-none border-b border-border/10 w-full overflow-hidden">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id
           return (
@@ -45,11 +45,23 @@ export function ProductAccordion({ description, details, careGuide }: ProductAcc
         })}
       </div>
 
-      {/* Tab Content Area */}
-      <div className="pt-5 min-h-[80px] transition-all duration-300">
-        <div className="text-[13px] text-text-secondary leading-relaxed max-w-[38rem] text-pretty animate-fade-in">
-          {activeTabObj?.content}
-        </div>
+      {/* Tab Content Area — CSS Grid layout to prevent height jumps */}
+      <div className="pt-5 grid grid-cols-1 grid-rows-1">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id
+          return (
+            <div
+              key={tab.id}
+              className={`col-start-1 row-start-1 text-[13px] text-text-secondary leading-relaxed max-w-[38rem] text-pretty transition-all duration-200 ease-out ${
+                isActive
+                  ? "opacity-100 translate-y-0 pointer-events-auto z-10"
+                  : "opacity-0 translate-y-1 pointer-events-none z-0"
+              }`}
+            >
+              {tab.content}
+            </div>
+          )
+        })}
       </div>
     </div>
   )

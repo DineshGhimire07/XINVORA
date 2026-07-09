@@ -12,6 +12,8 @@ export default function ProductEditor({ product, categories, brands, mediaItems,
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedImages, setSelectedImages] = useState<string[]>(product?.images || [])
+  const [tryonPrompt, setTryonPrompt] = useState<string>(product?.virtualTryonPrompt || "")
+  const [shortDesc, setShortDesc] = useState<string>(product?.shortDescription || "")
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -86,6 +88,27 @@ export default function ProductEditor({ product, categories, brands, mediaItems,
           </div>
 
           <div className="flex flex-col gap-2">
+            <label htmlFor="shortDescription" className="text-[10px] uppercase tracking-widest font-bold text-text-secondary flex justify-between items-center">
+              <span>Short Description *</span>
+              <span className={`text-[9px] font-mono ${shortDesc.length < 30 || shortDesc.length > 250 ? 'text-red-500 font-bold' : 'text-text-secondary/75'}`}>
+                {shortDesc.length} / 250
+              </span>
+            </label>
+            <textarea 
+              id="shortDescription"
+              name="shortDescription"
+              required
+              value={shortDesc}
+              onChange={(e) => setShortDesc(e.target.value)}
+              placeholder="Write a concise summary that appears near the product title, price, and purchase options."
+              className="px-4 py-2 bg-surface-secondary/50 border border-border/40 text-text-primary text-body-sm focus:outline-none focus:border-text-primary transition-colors h-[90px] resize-none"
+            />
+            <p className="text-[9px] text-text-secondary/60 leading-normal">
+              Displayed above the fold on the Product Detail Page. This should be a quick summary, not the complete product description. (Min 30, Max 250 chars)
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2">
             <label htmlFor="description" className="text-[10px] uppercase tracking-widest font-bold text-text-secondary">
               Description
             </label>
@@ -151,6 +174,58 @@ export default function ProductEditor({ product, categories, brands, mediaItems,
               placeholder="XS: Bust 82cm, Waist 64cm&#10;S: Bust 86cm, Waist 68cm&#10;M: Bust 90cm, Waist 72cm"
               className="px-4 py-2 bg-surface-secondary/50 border border-border/40 text-text-primary text-body-sm focus:outline-none focus:border-text-primary transition-colors"
             />
+          </div>
+
+          <div className="flex flex-col gap-2 border-t border-border/40 pt-6 mt-2">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-text-secondary mb-2">
+              Social Media
+            </label>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="instagramReelUrl" className="text-[10px] uppercase tracking-widest font-bold text-text-secondary">
+                Instagram Reel URL <span className="normal-case font-normal opacity-60">(Optional — enables "Seen on Instagram" card on PDP when set)</span>
+              </label>
+              <input
+                id="instagramReelUrl"
+                name="instagramReelUrl"
+                type="url"
+                defaultValue={product?.instagramReelUrl || ""}
+                placeholder="https://instagram.com/reel/..."
+                className="px-4 py-2 bg-surface-secondary/50 border border-border/40 text-text-primary text-body-sm focus:outline-none focus:border-text-primary transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* ── Virtual Try-On ─────────────────────────────────────── */}
+          <div className="flex flex-col gap-2 border-t border-border/40 pt-6 mt-2">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-text-secondary mb-1">
+              Virtual Try-On
+            </label>
+            <p className="text-[11px] text-text-secondary/70 mb-2">
+              Leave blank to hide this section on the product page. This prompt is shown to customers to paste into their own AI tool.
+            </p>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="virtualTryonPrompt" className="text-[10px] uppercase tracking-widest font-bold text-text-secondary">
+                AI Try-On Prompt <span className="normal-case font-normal opacity-60">(Optional)</span>
+              </label>
+              <textarea
+                id="virtualTryonPrompt"
+                name="virtualTryonPrompt"
+                rows={5}
+                value={tryonPrompt}
+                onChange={(e) => setTryonPrompt(e.target.value)}
+                placeholder="e.g. I am uploading two images: a photo of myself and a photo of this dress. Please generate a realistic image of me wearing this exact dress..."
+                className="px-4 py-2 bg-surface-secondary/50 border border-border/40 text-text-primary text-body-sm focus:outline-none focus:border-text-primary transition-colors resize-y"
+              />
+              <button
+                type="button"
+                onClick={() => setTryonPrompt(
+                  `I am uploading two images: a photo of myself and a photo of a ${product?.name || "dress/garment"}. Please generate a realistic image of me wearing this exact piece, keeping my face, body, and pose natural, and matching the garment's color, pattern, and fit as shown in the reference image.`
+                )}
+                className="self-start text-[10px] uppercase tracking-widest font-bold text-text-secondary border border-border/40 px-3 py-1.5 hover:border-text-primary hover:text-text-primary transition-colors"
+              >
+                Suggest a default prompt
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2 border-t border-border/40 pt-6 mt-2">

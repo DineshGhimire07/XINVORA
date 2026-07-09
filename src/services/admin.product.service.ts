@@ -37,6 +37,9 @@ export interface CreateProductInput {
   materialIds?: string[]
   seoTitle?: string | null
   seoDescription?: string | null
+  instagramReelUrl?: string | null
+  virtualTryonPrompt?: string | null
+  shortDescription?: string | null
   sizeStocks?: Record<string, number>
 }
 
@@ -52,7 +55,11 @@ export class AdminProductService {
       }
 
       const { basePrice, stockQuantity, images, collectionIds, materialIds, sizeStocks, ...productData } = data
-      const product = await insertProduct(productData, tx)
+      const finalShortDesc = productData.shortDescription || (productData.description ? productData.description.slice(0, 200) : "Concise summary of this product details.")
+      const product = await insertProduct({
+        ...productData,
+        shortDescription: finalShortDesc
+      }, tx)
 
       // Handle images
       if (images && images.length > 0) {

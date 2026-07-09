@@ -17,6 +17,12 @@ export const products = pgTable("products", {
   careGuide: text("care_guide"),
   /** Per-product Size Guide text shown in the Size Guide modal on PDP */
   sizeGuide: text("size_guide"),
+  /** Optional Instagram Reel URL — when set, shows the "Seen on Instagram" card on PDP */
+  instagramReelUrl: varchar("instagram_reel_url", { length: 500 }),
+  /** Optional AI try-on prompt — when set, shows the Virtual Try-On guide on PDP */
+  virtualTryonPrompt: text("virtual_tryon_prompt"),
+  /** Short Description displayed above the fold in the purchase section */
+  shortDescription: text("short_description"),
   categoryId: uuid("category_id").references(() => categories.id, { onDelete: "restrict" }).notNull(),
   brandId: uuid("brand_id").references(() => brands.id, { onDelete: "set null" }),
   status: productStatusEnum("status").default("DRAFT").notNull(),
