@@ -132,12 +132,12 @@ export default async function ProductDetailPage({
               />
             </div>
 
-            {/* ── Right Column: Product Information Panel ── */}
+             {/* ── Right Column: Product Information Panel ── */}
             <div className="md:col-span-5 flex flex-col items-start text-left pt-2">
-              <Stack gap={8} className="w-full">
+              <Stack gap={5} className="w-full">
                 
                 {/* Headers */}
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2.5">
                   {/* Category / Subcategory Label in small caps */}
                   <span className="text-[10px] font-bold tracking-[0.2em] text-accent uppercase select-none">
                     {parentCategory 
@@ -151,15 +151,12 @@ export default async function ProductDetailPage({
                   <span className="text-body-sm text-text-secondary select-none">
                     {primaryMaterial}
                   </span>
-                  <div className="pt-2">
+                  <div className="pt-1">
                     <span className="inline-flex items-center text-[10px] font-bold tracking-widest text-text-primary uppercase border border-border rounded-xs px-2.5 py-1 bg-surface-elevated select-none">
                       {availabilityText}
                     </span>
                   </div>
                 </div>
-
-                {/* Separator */}
-                <hr className="w-full border-border/40" />
 
                 {/* Editorial Description */}
                 <p className="text-body-md text-text-primary leading-relaxed font-light text-pretty">

@@ -169,41 +169,43 @@ export function ProductVariantSelector({
         </span>
       )}
 
-      {/* Actions — ADD TO BAG + Wishlist side by side */}
-      <div className="flex items-stretch gap-3 w-full pt-2">
-        <div className="flex-1">
+      {/* Actions — ADD TO BAG, WISHLIST, and BUY NOW grouped with tighter vertical gap */}
+      <div className="flex flex-col gap-2.5 w-full pt-2">
+        <div className="flex items-stretch gap-3 w-full">
+          <div className="flex-1">
+            {activeVariant ? (
+              <AddToCartButton variantId={activeVariant.id} inStock={inStock} />
+            ) : (
+              <Button variant="primary" size="lg" className="w-full" disabled>
+                Unavailable
+              </Button>
+            )}
+          </div>
+
           {activeVariant ? (
-            <AddToCartButton variantId={activeVariant.id} inStock={inStock} />
+            <WishlistIconForm variantId={activeVariant.id} disabled={!activeVariant} />
           ) : (
-            <Button variant="primary" size="lg" className="w-full" disabled>
-              Unavailable
-            </Button>
+            <button
+              type="button"
+              disabled
+              className="w-12 h-12 flex-shrink-0 border border-border flex items-center justify-center text-text-secondary opacity-40"
+              aria-label="Add to Wishlist"
+            >
+              <Heart className="w-5 h-5" />
+            </button>
           )}
         </div>
 
-        {activeVariant ? (
-          <WishlistIconForm variantId={activeVariant.id} disabled={!activeVariant} />
-        ) : (
-          <button
-            type="button"
-            disabled
-            className="w-12 h-12 flex-shrink-0 border border-border flex items-center justify-center text-text-secondary opacity-40"
-            aria-label="Add to Wishlist"
-          >
-            <Heart className="w-5 h-5" />
-          </button>
-        )}
-      </div>
-
-      {/* Buy Now Button — Full-width */}
-      <div className="w-full">
-        {activeVariant ? (
-          <BuyNowButton variantId={activeVariant.id} inStock={inStock} />
-        ) : (
-          <Button variant="outline" size="lg" className="w-full" disabled>
-            Buy Now
-          </Button>
-        )}
+        {/* Buy Now Button — Full-width */}
+        <div className="w-full">
+          {activeVariant ? (
+            <BuyNowButton variantId={activeVariant.id} inStock={inStock} />
+          ) : (
+            <Button variant="outline" size="lg" className="w-full" disabled>
+              Buy Now
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   )
