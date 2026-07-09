@@ -7,11 +7,10 @@ import type { ActionResult } from "../types/actions"
 import { z } from "zod"
 
 const PasswordChangeSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string().min(8, "New password must be at least 8 characters"),
-  confirmPassword: z.string().min(8, "Confirm password is required"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string().min(8, "Please confirm your new password"),
 }).refine(data => data.newPassword === data.confirmPassword, {
-  message: "New passwords do not match",
+  message: "Passwords do not match",
   path: ["confirmPassword"],
 })
 
@@ -22,7 +21,7 @@ export async function changePasswordAction(
     const session = await SessionService.requireAuth()
     const validated = PasswordChangeSchema.parse(formData)
 
-    await SecurityService.changePassword(session.id, validated.currentPassword, validated.newPassword)
+    await SecurityService.changePassword(session.id, validated.newPassword)
 
     revalidatePath("/account/security")
 
@@ -36,7 +35,7 @@ export async function changePasswordAction(
       success: false,
       error: {
         code: "PASSWORD_CHANGE_ERROR",
-        message: error.message || "Failed to update password settings.",
+        message: error.message || "Failed to update password.",
       },
     }
   }

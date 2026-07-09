@@ -5,10 +5,8 @@ import { changePasswordAction } from "@/actions/security.actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Stack } from "@/components/shared/stack"
 
 export function PasswordForm() {
-  const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -22,20 +20,15 @@ export function PasswordForm() {
     setSuccess(false)
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords do not match.")
+      setError("Passwords do not match.")
       setLoading(false)
       return
     }
 
-    const result = await changePasswordAction({
-      currentPassword,
-      newPassword,
-      confirmPassword,
-    })
+    const result = await changePasswordAction({ newPassword, confirmPassword })
 
     if (result.success) {
       setSuccess(true)
-      setCurrentPassword("")
       setNewPassword("")
       setConfirmPassword("")
     } else {
@@ -63,23 +56,14 @@ export function PasswordForm() {
           )}
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Current Password</label>
-            <Input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-              className="rounded-none"
-            />
-          </div>
-
-          <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">New Password</label>
             <Input
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Minimum 8 characters"
               required
+              minLength={8}
               className="rounded-none"
             />
           </div>
@@ -90,7 +74,9 @@ export function PasswordForm() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter new password"
               required
+              minLength={8}
               className="rounded-none"
             />
           </div>
