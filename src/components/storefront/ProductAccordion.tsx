@@ -23,9 +23,9 @@ export function ProductAccordion({ description, details, careGuide }: ProductAcc
   const activeTabObj = tabs.find(tab => tab.id === activeTab)
 
   return (
-    <div className="flex flex-col w-full border-t border-b border-border/30 py-4 mt-2">
-      {/* Horizontal Tabs Header */}
-      <div className="flex items-center gap-4 border-b border-border/20 pb-2.5 overflow-x-auto scrollbar-none select-none">
+    <div className="flex flex-col w-full border-t border-b border-border/30 py-5 mt-2">
+      {/* Horizontal Tabs Header — Forced single row with horizontal scrolling on phone */}
+      <div className="flex flex-row flex-nowrap items-center gap-x-6 pb-2 select-none border-b border-border/10 overflow-x-auto scrollbar-none w-full">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id
           return (
@@ -33,7 +33,7 @@ export function ProductAccordion({ description, details, careGuide }: ProductAcc
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id as TabType)}
-              className={`text-[9px] font-bold tracking-[0.18em] uppercase whitespace-nowrap cursor-pointer transition-all duration-200 pb-1 -mb-[11px] border-b-2 ${
+              className={`text-[12px] font-bold tracking-[0.2em] uppercase cursor-pointer transition-all duration-300 pb-2 border-b-2 -mb-[9px] whitespace-nowrap ${
                 isActive
                   ? "text-text-primary border-text-primary"
                   : "text-text-secondary border-transparent hover:text-text-primary"
@@ -46,8 +46,8 @@ export function ProductAccordion({ description, details, careGuide }: ProductAcc
       </div>
 
       {/* Tab Content Area */}
-      <div className="pt-4 min-h-[70px] transition-all duration-300">
-        <div className="text-[12px] text-text-secondary leading-relaxed max-w-[38rem] text-pretty animate-fade-in">
+      <div className="pt-5 min-h-[80px] transition-all duration-300">
+        <div className="text-[13px] text-text-secondary leading-relaxed max-w-[38rem] text-pretty animate-fade-in">
           {activeTabObj?.content}
         </div>
       </div>
