@@ -233,35 +233,32 @@ export default async function ProductDetailPage({
                 </Link>
               </div>
 
-              {/* Grid Layout (5 columns on desktop) */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-12">
                 {relatedProducts.map((rel: any) => (
                   <div key={rel.id} className="group flex flex-col gap-4 text-left relative">
-                    {/* Visual Card Image container */}
-                    <div className="relative aspect-[3/4] w-full overflow-hidden bg-transparent flex items-center justify-center border border-border/10">
-                      
-                      {/* Wishlist Toggle Heart Icon top-right */}
+                    {/* Visual Card Image container (Clickable Link to PDP) */}
+                    <Link 
+                      href={`/products/${rel.slug}`}
+                      className="relative w-full aspect-[3/4] overflow-hidden bg-surface-secondary flex items-center justify-center select-none"
+                    >
+                      {rel.productImages?.length ? (
+                        <Image
+                          src={rel.productImages[0].url}
+                          alt={rel.productImages[0].altText || rel.name}
+                          fill
+                          sizes="(max-width: 768px) 50vw, 20vw"
+                          className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="text-[10px] text-text-secondary uppercase select-none">
+                          No Image
+                        </div>
+                      )}
+                    </Link>
+
+                    {/* Wishlist Toggle Heart Icon top-right */}
+                    <div className="absolute top-4 right-4 z-20">
                       <WishlistToggleIcon productId={rel.id} />
-                      
-                      <div className="flex w-full h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory touch-pan-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                        {rel.productImages?.length ? (
-                          rel.productImages.map((img: any, i: number) => (
-                            <div key={i} className="relative w-full h-full shrink-0 snap-start">
-                              <Image
-                                src={img.url}
-                                alt={img.altText || rel.name}
-                                fill
-                                sizes="(max-width: 768px) 50vw, 20vw"
-                                className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
-                              />
-                            </div>
-                          ))
-                        ) : (
-                          <div className="w-full h-full bg-surface-secondary/20 flex items-center justify-center text-[10px] text-text-secondary uppercase select-none">
-                            No Image
-                          </div>
-                        )}
-                      </div>
                     </div>
 
                     {/* Metadata details */}
