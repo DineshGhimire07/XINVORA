@@ -3,6 +3,7 @@
 import { useActionState } from "react"
 import { addToCartAction } from "@/actions/cart.actions"
 import { Button } from "@/components/ui/button"
+import { ShoppingBag } from "lucide-react"
 
 interface AddToCartButtonProps {
   variantId: string
@@ -19,12 +20,20 @@ export function AddToCartButton({ variantId, inStock }: AddToCartButtonProps) {
       
       <Button 
         type="submit" 
-        variant="primary" 
         size="lg" 
-        className="w-full" 
+        className="w-full bg-text-primary border-text-primary text-surface hover:bg-text-primary/90 hover:border-text-primary/90 active:scale-[0.98] transition-all duration-300" 
         disabled={!inStock || isPending}
       >
-        {isPending ? "Adding..." : inStock ? "Add to Bag" : "Out of Stock"}
+        {isPending ? (
+          "Adding..."
+        ) : inStock ? (
+          <span className="flex items-center justify-center gap-2">
+            <ShoppingBag className="w-4 h-4" />
+            Add to Bag
+          </span>
+        ) : (
+          "Out of Stock"
+        )}
       </Button>
 
       {state && !state.success && state.error && (

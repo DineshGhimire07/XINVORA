@@ -1,12 +1,14 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useTransition } from "react"
 import { useActionState } from "react"
 import { useFormStatus } from "react-dom"
+import { useRouter } from "next/navigation"
 import { AddToCartButton } from "@/features/cart/components/AddToCartButton"
 import { Button } from "@/components/ui/button"
 import { Heart, X } from "lucide-react"
 import { addToWishlistAction } from "@/actions/wishlist.actions"
+import { addToCartAction } from "@/actions/cart.actions"
 
 interface Variant {
   id: string
@@ -222,6 +224,52 @@ export function ProductVariantSelector({
           </button>
         )}
       </div>
+
+      {/* Buy Now Button — Full-width */}
+      <div className="w-full">
+        {activeVariant ? (
+          <BuyNowButton variantId={activeVariant.id} inStock={inStock} />
+        ) : (
+          <Button variant="outline" size="lg" className="w-full" disabled>
+            Buy Now
+          </Button>
+        )}
+      </div>
     </div>
+  )
+}
+
+function BuyNowButton({ variantId, inStock }: { variantId: string; inStock: boolean }) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+
+  const handleBuyNow = async (e: React.FormEvent) => {
+    e.preventDefault()
+    startTransition(async () => {
+      const formData = new FormData()
+      formData.append("variantId", variantId)
+      formData.append("quantity", "1")
+      
+      const res = await addToCartAction(null, formData)
+      if (res.success) {
+        router.push("/checkout")
+      } else {
+        alert(res.error?.message || "Failed to initiate buy now")
+      }
+    })
+  }
+
+  return (
+    <form onSubmit={handleBuyNow} className="w-full">
+      <Button
+        type="submit"
+        variant="primary"
+        size="lg"
+        disabled={!inStock || isPending}
+        className="w-full"
+      >
+        {isPending ? "Processing..." : "Buy Now"}
+      </Button>
+    </form>
   )
 }
