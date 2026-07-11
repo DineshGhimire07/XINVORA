@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, updateTag } from "next/cache"
 import { AdminCollectionService } from "@/services/admin.collection.service"
 import { SessionService } from "@/services/session.service"
 import { z } from "zod"
@@ -33,6 +33,7 @@ export async function createCollectionAction(formData: FormData) {
 
     await AdminCollectionService.createCollection(data, session.id)
 
+    updateTag("collections")
     revalidatePath("/admin/collections")
     return { success: true }
   } catch (error: any) {
@@ -58,6 +59,7 @@ export async function updateCollectionAction(id: string, formData: FormData) {
 
     await AdminCollectionService.updateCollection(id, data, session.id)
 
+    updateTag("collections")
     revalidatePath("/admin/collections")
     revalidatePath(`/admin/collections/${id}`)
     return { success: true }
@@ -70,6 +72,7 @@ export async function archiveCollectionAction(id: string) {
   try {
     const session = await SessionService.requireAdmin()
     await AdminCollectionService.deleteCollection(id, session.id)
+    updateTag("collections")
     revalidatePath("/admin/collections")
     return { success: true }
   } catch (error: any) {

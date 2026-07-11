@@ -1,16 +1,38 @@
-import { eq, and } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { db } from "@/db/client"
 import { wishlists, wishlistItems } from "@/db/schema"
 import { DomainError } from "./errors"
 import { getWishlist } from "@/db/queries/wishlist"
 import { CartService } from "./cart.service"
 import type { AddToWishlistInput, RemoveFromWishlistInput, MoveWishlistItemToCartInput } from "@/validations/wishlist"
+import type { WishlistResult } from "@/db/queries/types"
 
 export class WishlistService {
   /**
+   * Resolves the wishlist ID for a user, creating the wishlist record if it doesn't exist.
+   * Lightweight: fetches only the `id` column — no items, no joins.
+   */
+  private static async resolveWishlistId(userId: string): Promise<string> {
+    const existing = await db
+      .select({ id: wishlists.id })
+      .from(wishlists)
+      .where(eq(wishlists.userId, userId))
+      .limit(1)
+
+    if (existing.length > 0) return existing[0].id
+
+    const [newList] = await db
+      .insert(wishlists)
+      .values({ userId })
+      .returning({ id: wishlists.id })
+
+    return newList.id
+  }
+
+  /**
    * Retrieves or creates a wishlist for the user.
    */
-  static async resolveWishlist(userId: string) {
+  static async resolveWishlist(userId: string): Promise<WishlistResult> {
     const existingList = await getWishlist(userId)
     if (existingList) return existingList
 
@@ -23,17 +45,16 @@ export class WishlistService {
 
   /**
    * Adds a variant to the wishlist. Ignores duplicates silently.
+   * Uses onConflictDoNothing() — the DB unique index on (wishlistId, variantId)
+   * enforces uniqueness, so no application-level existence check is needed.
    */
   static async addToWishlist(input: AddToWishlistInput, userId: string) {
-    const wishlist = await this.resolveWishlist(userId)
+    const wishlistId = await this.resolveWishlistId(userId)
 
-    const exists = wishlist.items.some(i => i.variant.id === input.variantId)
-    if (!exists) {
-      await db.insert(wishlistItems).values({
-        wishlistId: wishlist.id,
-        variantId: input.variantId,
-      })
-    }
+    await db
+      .insert(wishlistItems)
+      .values({ wishlistId, variantId: input.variantId })
+      .onConflictDoNothing()
 
     return { success: true }
   }

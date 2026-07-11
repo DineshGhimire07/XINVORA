@@ -38,6 +38,8 @@ export async function findCategoryBySlug(slug: string): Promise<CategoryNode | n
   return result ?? null
 }
 
+import { unstable_cache } from "next/cache"
+
 /**
  * Fetch the complete category tree for building nested navigation menus.
  *
@@ -45,33 +47,40 @@ export async function findCategoryBySlug(slug: string): Promise<CategoryNode | n
  * hierarchy in application memory. This is more efficient than recursive
  * SQL (CTEs) for typical fashion taxonomies which rarely exceed 200 nodes.
  *
- * Performance note: this result should be cached at the Server Component
- * level via Next.js `unstable_cache` or `revalidateTag` when the CMS is
- * wired up in Phase 4E.
+ * Cached with tag-based invalidation ("categories") + 1-hour time fallback.
+ * Admin mutations call revalidateTag("categories") to bust this immediately.
  */
 export async function findCategoryTree(): Promise<CategoryNode[]> {
-  const all = await db.query.categories.findMany({
-    where: eq(categories.isActive, true),
-    orderBy: (c, { asc }) => [asc(c.name)],
-  })
-
-  const nodeMap = new Map<string, CategoryNode>()
-  const roots: CategoryNode[] = []
-
-  for (const cat of all) {
-    nodeMap.set(cat.id, { ...cat, children: [] })
-  }
-
-  for (const cat of all) {
-    // Non-null assertion justified: we just inserted every `cat.id` in the loop above
-    const node = nodeMap.get(cat.id)!
-    if (cat.parentId && nodeMap.has(cat.parentId)) {
-      // Non-null assertion justified: parentId existence verified by nodeMap.has()
-      nodeMap.get(cat.parentId)!.children!.push(node)
-    } else {
-      roots.push(node)
-    }
-  }
-
-  return roots
+  return _findCategoryTreeCached()
 }
+
+const _findCategoryTreeCached = unstable_cache(
+  async (): Promise<CategoryNode[]> => {
+    const all = await db.query.categories.findMany({
+      where: eq(categories.isActive, true),
+      orderBy: (c, { asc }) => [asc(c.name)],
+    })
+
+    const nodeMap = new Map<string, CategoryNode>()
+    const roots: CategoryNode[] = []
+
+    for (const cat of all) {
+      nodeMap.set(cat.id, { ...cat, children: [] })
+    }
+
+    for (const cat of all) {
+      // Non-null assertion justified: we just inserted every `cat.id` in the loop above
+      const node = nodeMap.get(cat.id)!
+      if (cat.parentId && nodeMap.has(cat.parentId)) {
+        // Non-null assertion justified: parentId existence verified by nodeMap.has()
+        nodeMap.get(cat.parentId)!.children!.push(node)
+      } else {
+        roots.push(node)
+      }
+    }
+
+    return roots
+  },
+  ["category-tree"],
+  { tags: ["categories"], revalidate: 3600 }
+)

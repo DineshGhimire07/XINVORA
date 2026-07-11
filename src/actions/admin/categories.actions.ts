@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, updateTag } from "next/cache"
 import { AdminCategoryService } from "@/services/admin.category.service"
 import { SessionService } from "@/services/session.service"
 import { z } from "zod"
@@ -25,6 +25,7 @@ export async function createCategoryAction(formData: FormData) {
 
     await AdminCategoryService.createCategory(data, session.id)
 
+    updateTag("categories")
     revalidatePath("/admin/categories")
     return { success: true }
   } catch (error: any) {
@@ -46,6 +47,7 @@ export async function updateCategoryAction(id: string, formData: FormData) {
 
     await AdminCategoryService.updateCategory(id, data, session.id)
 
+    updateTag("categories")
     revalidatePath("/admin/categories")
     revalidatePath(`/admin/categories/${id}`)
     return { success: true }
@@ -58,6 +60,7 @@ export async function archiveCategoryAction(id: string) {
   try {
     const session = await SessionService.requireAdmin()
     await AdminCategoryService.deleteCategory(id, session.id)
+    updateTag("categories")
     revalidatePath("/admin/categories")
     return { success: true }
   } catch (error: any) {

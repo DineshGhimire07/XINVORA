@@ -88,17 +88,55 @@ export class CartService {
   }
 
   /**
+   * Lightweight variant of resolveCart — returns only the cart ID.
+   * Use this in write paths that don't need the full relational cart object.
+   */
+  private static async resolveCartId(userId: string | null, sessionId: string | null): Promise<string> {
+    if (!userId && !sessionId) {
+      throw new DomainError("UNAUTHORIZED", "Cannot resolve cart without user or session")
+    }
+
+    const whereClause = userId
+      ? and(eq(carts.userId, userId))
+      : and(eq(carts.sessionId, sessionId!))
+
+    const [existing] = await db
+      .select({ id: carts.id })
+      .from(carts)
+      .where(whereClause)
+      .limit(1)
+
+    if (existing) return existing.id
+
+    const [newCart] = await db.insert(carts).values({
+      userId: userId || null,
+      sessionId: userId ? null : sessionId,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+    }).returning({ id: carts.id })
+
+    return newCart.id
+  }
+
+  /**
    * Adds an item to the cart, verifying inventory limits.
    * If the item already exists, its quantity is incremented.
    */
   static async addToCart(input: AddToCartInput, userId: string | null, sessionId: string | null) {
-    const cart = await this.resolveCart(userId, sessionId)
+    // Resolve the cart ID with a lightweight query (no items/joins)
+    const cartId = await this.resolveCartId(userId, sessionId)
 
     const variantData = await this.validateProductAndVariantStatus(input.variantId, true)
     if (!variantData) return { success: false }
 
     const availableInventory = variantData.inventory ?? 0
-    const existingItem = cart.items.find(i => i.variant.id === input.variantId)
+
+    // Targeted lookup — only fetch the columns we actually need
+    const [existingItem] = await db
+      .select({ id: cartItems.id, quantity: cartItems.quantity })
+      .from(cartItems)
+      .where(and(eq(cartItems.cartId, cartId), eq(cartItems.variantId, input.variantId)))
+      .limit(1)
+
     const newQuantity = (existingItem?.quantity ?? 0) + input.quantity
 
     if (newQuantity > availableInventory) {
@@ -114,7 +152,7 @@ export class CartService {
         .where(eq(cartItems.id, existingItem.id))
     } else {
       await db.insert(cartItems).values({
-        cartId: cart.id,
+        cartId,
         variantId: input.variantId,
         quantity: input.quantity,
         priceSnapshot: 0, // Ignored on read, live prices used

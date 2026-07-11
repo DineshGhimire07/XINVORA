@@ -22,18 +22,28 @@ export async function findActiveCollections() {
   })
 }
 
+import { unstable_cache } from "next/cache"
+
 export async function findHierarchicalCollections() {
-  const allCollections = await findActiveCollections()
-  
-  // Build a tree
-  const rootCollections = allCollections.filter(c => !c.parentId)
-  const childCollections = allCollections.filter(c => c.parentId)
-  
-  return rootCollections.map(root => ({
-    ...root,
-    children: childCollections.filter(c => c.parentId === root.id)
-  }))
+  return _findHierarchicalCollectionsCached()
 }
+
+const _findHierarchicalCollectionsCached = unstable_cache(
+  async () => {
+    const allCollections = await findActiveCollections()
+
+    // Build a tree
+    const rootCollections = allCollections.filter(c => !c.parentId)
+    const childCollections = allCollections.filter(c => c.parentId)
+
+    return rootCollections.map(root => ({
+      ...root,
+      children: childCollections.filter(c => c.parentId === root.id),
+    }))
+  },
+  ["hierarchical-collections"],
+  { tags: ["collections"], revalidate: 3600 }
+)
 
 /**
  * Fetch a single collection by slug for the collection landing page.
