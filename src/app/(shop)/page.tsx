@@ -211,33 +211,64 @@ function FeaturedProductsSection({ products }: { products: ProductSummary[] }) {
             ) : (
               products.map((item: any) => (
                 <div key={item.id} className="group flex flex-col gap-4 text-left relative">
-                  {/* Visual Surface / Image (Clickable Link to PDP) */}
-                  <Link 
-                    href={`/products/${item.slug}`}
-                    className="relative w-full aspect-[3/4] overflow-hidden bg-surface-secondary flex items-center justify-center select-none"
-                  >
-                    {/* Optional Badge */}
-                    {item.badge && (
-                      <span className="absolute top-4 left-4 z-10 px-2 py-1 text-[9px] font-bold tracking-widest uppercase bg-background text-text-primary">
-                        {item.badge}
-                      </span>
-                    )}
+                  {/* Image Container with Relative Wrapper (Contains PDP link + Wishlist Toggle Icon outside the link) */}
+                  <div className="relative w-full aspect-[3/4] overflow-hidden bg-surface-secondary select-none">
+                    <Link 
+                      href={`/products/${item.slug}`}
+                      className="block w-full h-full"
+                    >
+                      {/* Optional Badge */}
+                      {item.badge && (
+                        <span className="absolute top-4 left-4 z-10 px-2 py-1 text-[9px] font-bold tracking-widest uppercase bg-background text-text-primary">
+                          {item.badge}
+                        </span>
+                      )}
 
-                    {item.productImages?.length ? (
-                      <Image 
-                        src={item.productImages[0].url} 
-                        alt={item.productImages[0].altText || item.name} 
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="text-[10px] text-text-secondary uppercase select-none">No Image</div>
-                    )}
-                  </Link>
+                      {item.productImages?.length ? (
+                        <>
+                          {/* Desktop View: Single image with zoom on hover */}
+                          <div className="hidden md:block w-full h-full relative">
+                            <Image 
+                              src={item.productImages[0].url} 
+                              alt={item.productImages[0].altText || item.name} 
+                              fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                              className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                            />
+                          </div>
 
-                  {/* Wishlist Heart Icon (Functional) - placed outside/above the Link */}
-                  <div className="absolute top-4 right-4 z-20">
+                          {/* Mobile View: Swipeable horizontal gallery with touch-auto */}
+                          <div 
+                            className="flex md:hidden w-full h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory touch-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                          >
+                            {item.productImages.map((img: any, idx: number) => (
+                              <div key={img.url || idx} className="relative w-full h-full shrink-0 snap-center">
+                                <Image 
+                                  src={img.url} 
+                                  alt={img.altText || `${item.name} ${idx + 1}`} 
+                                  fill
+                                  sizes="(max-width: 640px) 100vw, 50vw"
+                                  className="object-cover object-top"
+                                />
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Mobile Slide Indicator dots (only show if multiple images) */}
+                          {item.productImages.length > 1 && (
+                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex md:hidden gap-1.5 z-10 pointer-events-none">
+                              {item.productImages.map((_, idx: number) => (
+                                <div key={idx} className="w-1.5 h-1.5 rounded-full bg-white/60 shadow-sm" />
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[10px] text-text-secondary uppercase select-none">No Image</div>
+                      )}
+                    </Link>
+
+                    {/* Wishlist Heart Icon (Functional) - placed outside the Link, positioned relative to image wrapper bottom-right */}
                     <WishlistToggleIcon productId={item.id} />
                   </div>
 

@@ -235,29 +235,60 @@ export default async function ProductDetailPage({
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-12">
                 {relatedProducts.map((rel: any) => (
-                  <div key={rel.id} className="group flex flex-col gap-4 text-left relative">
-                    {/* Visual Card Image container (Clickable Link to PDP) */}
-                    <Link 
-                      href={`/products/${rel.slug}`}
-                      className="relative w-full aspect-[3/4] overflow-hidden bg-surface-secondary flex items-center justify-center select-none"
-                    >
-                      {rel.productImages?.length ? (
-                        <Image
-                          src={rel.productImages[0].url}
-                          alt={rel.productImages[0].altText || rel.name}
-                          fill
-                          sizes="(max-width: 768px) 50vw, 20vw"
-                          className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="text-[10px] text-text-secondary uppercase select-none">
-                          No Image
-                        </div>
-                      )}
-                    </Link>
+                  <div key={rel.id} className="group flex flex-col gap-4 text-left">
+                    {/* Image Container with Relative Wrapper (Contains PDP link + Wishlist Toggle Icon outside the link) */}
+                    <div className="relative w-full aspect-[3/4] overflow-hidden bg-surface-secondary select-none">
+                      <Link 
+                        href={`/products/${rel.slug}`}
+                        className="block w-full h-full"
+                      >
+                        {rel.productImages?.length ? (
+                          <>
+                            {/* Desktop View: Single image with zoom on hover */}
+                            <div className="hidden md:block w-full h-full relative">
+                              <Image
+                                src={rel.productImages[0].url}
+                                alt={rel.productImages[0].altText || rel.name}
+                                fill
+                                sizes="(max-width: 768px) 50vw, 20vw"
+                                className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
+                              />
+                            </div>
 
-                    {/* Wishlist Toggle Heart Icon top-right */}
-                    <div className="absolute top-4 right-4 z-20">
+                            {/* Mobile View: Swipeable horizontal gallery with touch-auto */}
+                            <div 
+                              className="flex md:hidden w-full h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory touch-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                            >
+                              {rel.productImages.map((img: any, idx: number) => (
+                                <div key={img.url || idx} className="relative w-full h-full shrink-0 snap-center">
+                                  <Image
+                                    src={img.url}
+                                    alt={img.altText || `${rel.name} ${idx + 1}`}
+                                    fill
+                                    sizes="(max-width: 768px) 50vw, 20vw"
+                                    className="object-cover object-top"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Mobile Slide Indicator dots (only show if multiple images) */}
+                            {rel.productImages.length > 1 && (
+                              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex md:hidden gap-1.5 z-10 pointer-events-none">
+                                {rel.productImages.map((_: any, idx: number) => (
+                                  <div key={idx} className="w-1.5 h-1.5 rounded-full bg-white/60 shadow-sm" />
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="text-[10px] text-text-secondary uppercase select-none">
+                            No Image
+                          </div>
+                        )}
+                      </Link>
+
+                      {/* Wishlist Toggle Heart Icon positioned relative to image wrapper bottom-right */}
                       <WishlistToggleIcon productId={rel.id} />
                     </div>
 

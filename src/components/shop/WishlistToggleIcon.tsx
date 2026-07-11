@@ -39,10 +39,10 @@ export function WishlistToggleIcon({ productId, initialIsWishlisted = false }: W
     <button
       onClick={handleWishlist}
       disabled={isPending}
-      className="absolute top-4 right-4 z-50 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm text-text-primary hover:bg-white hover:scale-110 transition-all disabled:opacity-70 disabled:hover:scale-100 pointer-events-auto"
+      className="absolute bottom-4 right-4 z-50 flex items-center justify-center text-text-primary hover:scale-110 transition-all disabled:opacity-70 disabled:hover:scale-100 pointer-events-auto"
       aria-label="Add to Wishlist"
     >
-      <Heart className={`w-4 h-4 transition-colors ${isWishlisted ? "fill-accent text-accent" : ""}`} />
+      <Heart className={`w-5 h-5 transition-colors ${isWishlisted ? "fill-accent text-accent" : ""}`} />
     </button>
   )
 }

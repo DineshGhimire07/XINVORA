@@ -56,29 +56,59 @@ export function ProductCard({ product, itemColors, itemSizes, priority = false, 
       {/* Visual Card Image container */}
       <div className="relative w-full aspect-[3/4] bg-surface-secondary overflow-hidden select-none">
         {images.length > 0 ? (
-          <div className="w-full h-full relative">
-            <Image 
-              src={images[0].url} 
-              alt={images[0].altText || product.name} 
-              fill
-              sizes="(max-width: 768px) 50vw, 25vw"
-              priority={priority}
-              className={`object-cover object-top transition-all duration-700 ease-out md:group-hover:scale-105 ${
-                images[1] ? "opacity-100 md:group-hover:opacity-0" : ""
-              }`}
-            />
-            {images[1] && (
+          <>
+            {/* Desktop Hover State (Hidden on touch devices, shown on hover on desktop) */}
+            <div className="hidden md:block w-full h-full relative">
               <Image 
-                src={images[1].url} 
-                alt={images[1].altText || `${product.name} lifestyle`} 
+                src={images[0].url} 
+                alt={images[0].altText || product.name} 
                 fill
                 sizes="(max-width: 768px) 50vw, 25vw"
-                className="object-cover object-top absolute inset-0 opacity-0 md:group-hover:opacity-100 transition-all duration-700 ease-out scale-100 md:group-hover:scale-105"
+                priority={priority}
+                className={`object-cover object-top transition-all duration-700 ease-out group-hover:scale-105 ${
+                  images[1] ? "opacity-100 group-hover:opacity-0" : ""
+                }`}
               />
+              {images[1] && (
+                <Image 
+                  src={images[1].url} 
+                  alt={images[1].altText || `${product.name} lifestyle`} 
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover object-top absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out scale-100 group-hover:scale-105"
+                />
+              )}
+            </div>
+
+            {/* Mobile Scrollable Carousel (Visible on mobile, hidden on desktop, touch-auto to prevent scroll locking) */}
+            <div 
+              className="flex md:hidden w-full h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory touch-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            >
+              {images.map((img, i) => (
+                <div key={i} className="relative w-full h-full shrink-0 snap-center">
+                  <Image
+                    src={img.url}
+                    alt={img.altText || `${product.name} ${i + 1}`}
+                    fill
+                    sizes="50vw"
+                    priority={priority && i === 0}
+                    className="object-cover object-top"
+                  />
+                </div>
+              ))}
+            </div>
+            
+            {/* Slide Indicator for mobile (only show if multiple images) */}
+            {images.length > 1 && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex md:hidden gap-1.5 z-10 pointer-events-none">
+                {images.map((_, i) => (
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/60 shadow-sm" />
+                ))}
+              </div>
             )}
-          </div>
+          </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-[10px] text-text-secondary uppercase">
+          <div className="w-full h-full flex items-center justify-center text-[10px] text-text-secondary uppercase select-none">
             No Image
           </div>
         )}
@@ -100,10 +130,10 @@ export function ProductCard({ product, itemColors, itemSizes, priority = false, 
         <button
           onClick={handleWishlist}
           disabled={isPending}
-          className="absolute bottom-3 right-3 z-20 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm text-text-primary hover:bg-white hover:scale-110 transition-all disabled:opacity-70 disabled:hover:scale-100"
+          className="absolute bottom-4 right-4 z-20 flex items-center justify-center text-text-primary hover:scale-110 transition-all disabled:opacity-70 disabled:hover:scale-100"
           aria-label="Add to Wishlist"
         >
-          <Heart className={`w-4 h-4 transition-colors ${isWishlisted ? "fill-accent text-accent" : ""}`} />
+          <Heart className={`w-5 h-5 transition-colors ${isWishlisted ? "fill-accent text-accent" : ""}`} />
         </button>
       </div>
 

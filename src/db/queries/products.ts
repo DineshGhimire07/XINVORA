@@ -267,7 +267,6 @@ export async function findProducts(
         },
         productImages: {
           orderBy: (img, { asc }) => [asc(img.position)],
-          limit: 2,
           columns: { url: true, altText: true, position: true },
         },
       },
@@ -286,7 +285,6 @@ export async function findProducts(
         },
         productImages: {
           orderBy: (img, { asc }) => [asc(img.position)],
-          limit: 2,
           columns: { url: true, altText: true, position: true },
         },
       },
@@ -380,8 +378,7 @@ export async function findRelatedProducts(
     with: {
       category: { columns: { id: true, slug: true, name: true } },
       productImages: {
-        where: (img, { eq }) => eq(img.position, 0),
-        limit: 1,
+        orderBy: (img, { asc }) => [asc(img.position)],
         columns: { url: true, altText: true, position: true },
       },
     },
