@@ -62,6 +62,39 @@ export class CheckoutRepository {
   }
 
   /**
+   * Reserves inventory for multiple items CONCURRENTLY instead of sequentially.
+   *
+   * Implementation note: We use Promise.all over individual reserveInventory
+   * calls (one DB round trip per item) rather than a single UPDATE...FROM(VALUES)
+   * batch query. This is because InventoryService.reserveStock contains
+   * conditional logic (checking stock level before decrementing) that is not
+   * trivially expressible as a single Drizzle ORM statement.
+   *
+   * Net effect: N items = 1 parallel "wave" of N round trips instead of
+   * N sequential round trips — transaction hold time drops from O(N) to O(1)
+   * round trips in terms of latency.
+   *
+   * If you later need a true single-query batch (e.g. for very large carts or
+   * stricter DB connection pool limits), the approach would be a raw SQL:
+   *   UPDATE inventory SET stock = inventory.stock - v.qty
+   *   FROM (VALUES ($1::uuid,$2::int), ...) AS v(variant_id, qty)
+   *   WHERE inventory.variant_id = v.variant_id AND inventory.stock >= v.qty
+   *   RETURNING inventory.variant_id
+   * and then compare returned variant IDs to the input set to find failures.
+   */
+  static async reserveInventoryBatch(
+    tx: any,
+    items: { variantId: string; quantity: number }[]
+  ): Promise<{ variantId: string; success: boolean }[]> {
+    return Promise.all(
+      items.map(async (item) => ({
+        variantId: item.variantId,
+        success: await CheckoutRepository.reserveInventory(tx, item.variantId, item.quantity),
+      }))
+    )
+  }
+
+  /**
    * Increments the usage count of a coupon.
    */
   static async incrementCouponUses(tx: any, couponId: string) {
