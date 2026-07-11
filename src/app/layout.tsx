@@ -72,22 +72,31 @@ export const viewport: Viewport = {
 
 // ── Root Layout ───────────────────────────────────────────────────────────────
 import { findHierarchicalCollections } from "@/db/queries/collections"
+import { type TimingEntry, timedPromise, printTimingSummary } from "@/lib/perf"
 
 export default async function RootLayout({
   children,
 }: {
   children: ReactNode
 }) {
+  const totalStart = performance.now()
+  const timings: TimingEntry[] = []
+
+  const identityStart = performance.now()
   const { userId, sessionId } = await SessionService.getCommerceIdentity()
+  timings.push({ name: 'getCommerceIdentity', ms: performance.now() - identityStart })
+
   const [commerceState, collections] = await Promise.all([
-    getHeaderCommerceState(userId, sessionId),
-    findHierarchicalCollections(),
+    timedPromise('getHeaderCommerceState', timings, getHeaderCommerceState(userId, sessionId)),
+    timedPromise('findHierarchicalCollections', timings, findHierarchicalCollections()),
   ])
 
   const headerList = await headers()
   const pathname = headerList.get("x-pathname") || ""
   const isAdmin = pathname.startsWith("/admin")
   const isPreview = pathname === "/preview"
+
+  printTimingSummary('RootLayout', timings, performance.now() - totalStart)
 
   return (
     <html

@@ -7,6 +7,7 @@ import { getCart } from "@/db/queries/cart"
 import { ShippingService } from "./shipping.service"
 import type { AddToCartInput, UpdateCartQuantityInput, RemoveFromCartInput } from "@/validations/cart"
 import { PricingService } from "./pricing.service"
+import { type TimingEntry, printTimingSummary } from "@/lib/perf"
 
 export class CartService {
   /**
@@ -122,20 +123,29 @@ export class CartService {
    * If the item already exists, its quantity is incremented.
    */
   static async addToCart(input: AddToCartInput, userId: string | null, sessionId: string | null) {
-    // Resolve the cart ID with a lightweight query (no items/joins)
-    const cartId = await this.resolveCartId(userId, sessionId)
+    const totalStart = performance.now()
+    const timings: TimingEntry[] = []
 
+    // Resolve the cart ID with a lightweight query (no items/joins)
+    const resolveStart = performance.now()
+    const cartId = await this.resolveCartId(userId, sessionId)
+    timings.push({ name: 'resolveCartId', ms: performance.now() - resolveStart })
+
+    const validateStart = performance.now()
     const variantData = await this.validateProductAndVariantStatus(input.variantId, true)
+    timings.push({ name: 'validateProductAndVariantStatus', ms: performance.now() - validateStart })
     if (!variantData) return { success: false }
 
     const availableInventory = variantData.inventory ?? 0
 
     // Targeted lookup — only fetch the columns we actually need
+    const existingStart = performance.now()
     const [existingItem] = await db
       .select({ id: cartItems.id, quantity: cartItems.quantity })
       .from(cartItems)
       .where(and(eq(cartItems.cartId, cartId), eq(cartItems.variantId, input.variantId)))
       .limit(1)
+    timings.push({ name: 'existingCartItemQuery', ms: performance.now() - existingStart })
 
     const newQuantity = (existingItem?.quantity ?? 0) + input.quantity
 
@@ -146,6 +156,7 @@ export class CartService {
       throw new DomainError("VALIDATION_FAILED", "Maximum quantity limit reached")
     }
 
+    const writeStart = performance.now()
     if (existingItem) {
       await db.update(cartItems)
         .set({ quantity: newQuantity, updatedAt: new Date() })
@@ -158,6 +169,9 @@ export class CartService {
         priceSnapshot: 0, // Ignored on read, live prices used
       })
     }
+    timings.push({ name: 'insertOrUpdateQuery', ms: performance.now() - writeStart })
+
+    printTimingSummary('CartService.addToCart', timings, performance.now() - totalStart)
 
     return { success: true }
   }

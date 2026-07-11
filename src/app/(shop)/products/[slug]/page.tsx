@@ -28,6 +28,7 @@ import type { Metadata } from "next"
 import { db } from "@/db/client"
 import { priceBookEntries, priceBooks, categories } from "@/db/schema"
 import { and, eq, inArray } from "drizzle-orm"
+import { type TimingEntry, timedPromise, printTimingSummary } from "@/lib/perf"
 
 export async function generateMetadata({
   params,
@@ -49,11 +50,13 @@ export default async function ProductDetailPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
+  const totalStart = performance.now()
+  const timings: TimingEntry[] = []
 
   // Phase 1: Fetch product and session concurrently — session doesn't depend on the product
   const [product, session] = await Promise.all([
-    findProductBySlug(slug),
-    SessionService.optionalAuth(),
+    timedPromise('findProductBySlug', timings, findProductBySlug(slug)),
+    timedPromise('optionalAuth', timings, SessionService.optionalAuth()),
   ])
 
   if (!product) {
@@ -66,17 +69,17 @@ export default async function ProductDetailPage({
 
   const [wishlistResult, parentCategory, relatedResponse, variantPrices] = await Promise.all([
     // Wishlist: only needed if user is logged in
-    session ? getWishlist(session.id) : Promise.resolve(null),
+    timedPromise('wishlist', timings, session ? getWishlist(session.id) : Promise.resolve(null)),
     // Parent category breadcrumb
-    product.category?.parentId
+    timedPromise('parentCategory', timings, product.category?.parentId
       ? db.query.categories.findFirst({ where: eq(categories.id, product.category.parentId) })
-      : Promise.resolve(null),
+      : Promise.resolve(null)),
     // Related products
-    product.category?.slug
+    timedPromise('relatedProducts', timings, product.category?.slug
       ? findProducts({ categorySlug: product.category.slug, limit: 6 })
-      : Promise.resolve({ items: [] }),
+      : Promise.resolve({ items: [], nextCursor: null, prevCursor: null, hasMore: false })),
     // Variant prices
-    variantIds.length > 0
+    timedPromise('variantPrices', timings, variantIds.length > 0
       ? db
           .select({
             variantId: priceBookEntries.variantId,
@@ -85,7 +88,7 @@ export default async function ProductDetailPage({
           .from(priceBookEntries)
           .innerJoin(priceBooks, and(eq(priceBookEntries.priceBookId, priceBooks.id), eq(priceBooks.isDefault, true)))
           .where(inArray(priceBookEntries.variantId, variantIds))
-      : Promise.resolve([]),
+      : Promise.resolve([])),
   ])
 
   const wishlistVariantIds = wishlistResult?.items.map((item) => item.variant.id) ?? []
@@ -124,6 +127,8 @@ export default async function ProductDetailPage({
   // Material list extracted dynamically from productMaterials relations
   const materialsList = product.productMaterials?.map((pm: any) => pm.material?.name).filter(Boolean) || []
   const primaryMaterial = materialsList.length > 0 ? materialsList.join(", ") : "Premium Materials"
+
+  printTimingSummary('ProductDetailPage', timings, performance.now() - totalStart)
 
   return (
     <main className="flex-1 bg-background pt-20 md:pt-28 pb-16">

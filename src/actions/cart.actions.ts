@@ -7,6 +7,7 @@ import { SessionService } from "@/services/session.service"
 import { validateInput, handleServiceCall } from "@/services/shared/action-utils"
 import { addToCartSchema, updateCartQuantitySchema, removeFromCartSchema } from "@/validations/cart"
 import type { ActionResult } from "@/types/actions"
+import { type TimingEntry, printTimingSummary } from "@/lib/perf"
 
 /**
  * Gets or creates the guest cart session ID from cookies.
@@ -44,20 +45,31 @@ export async function addToCartAction(
   prevState: ActionResult<unknown> | null,
   formData: FormData
 ): Promise<ActionResult<unknown>> {
+  const totalStart = performance.now()
+  const timings: TimingEntry[] = []
+
   const data = Object.fromEntries(formData.entries())
   
   const validation = validateInput(addToCartSchema, data)
   if (!validation.success) return validation
 
+  const identityStart = performance.now()
   const { userId, sessionId } = await resolveCommerceIdentity()
+  timings.push({ name: 'resolveCommerceIdentity', ms: performance.now() - identityStart })
 
+  const serviceStart = performance.now()
   const result = await handleServiceCall(() => 
     CartService.addToCart(validation.data, userId, sessionId)
   )
+  timings.push({ name: 'CartService.addToCart', ms: performance.now() - serviceStart })
 
   if (result.success) {
+    const revalidateStart = performance.now()
     revalidatePath("/", "layout")
+    timings.push({ name: 'revalidatePath', ms: performance.now() - revalidateStart })
   }
+
+  printTimingSummary('addToCartAction', timings, performance.now() - totalStart)
 
   return result
 }
