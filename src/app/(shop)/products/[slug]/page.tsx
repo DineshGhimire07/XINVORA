@@ -49,54 +49,49 @@ export default async function ProductDetailPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const product = await findProductBySlug(slug)
+
+  // Phase 1: Fetch product and session concurrently — session doesn't depend on the product
+  const [product, session] = await Promise.all([
+    findProductBySlug(slug),
+    SessionService.optionalAuth(),
+  ])
 
   if (!product) {
     notFound()
   }
 
-  const session = await SessionService.optionalAuth()
-  let wishlistVariantIds: string[] = []
-  if (session) {
-    const wishlist = await getWishlist(session.id)
-    if (wishlist) {
-      wishlistVariantIds = wishlist.items.map((item) => item.variant.id)
-    }
-  }
+  // Phase 2: Resolve all secondary data concurrently now that product ID is known
+  const activeVariants = product.variants.filter(v => v.isActive)
+  const variantIds = activeVariants.map((v) => v.id)
 
-  // Load parent category if exists
-  let parentCategory = null
-  if (product.category?.parentId) {
-    parentCategory = await db.query.categories.findFirst({
-      where: eq(categories.id, product.category.parentId)
-    })
-  }
+  const [wishlistResult, parentCategory, relatedResponse, variantPrices] = await Promise.all([
+    // Wishlist: only needed if user is logged in
+    session ? getWishlist(session.id) : Promise.resolve(null),
+    // Parent category breadcrumb
+    product.category?.parentId
+      ? db.query.categories.findFirst({ where: eq(categories.id, product.category.parentId) })
+      : Promise.resolve(null),
+    // Related products
+    product.category?.slug
+      ? findProducts({ categorySlug: product.category.slug, limit: 6 })
+      : Promise.resolve({ items: [] }),
+    // Variant prices
+    variantIds.length > 0
+      ? db
+          .select({
+            variantId: priceBookEntries.variantId,
+            price: priceBookEntries.price,
+          })
+          .from(priceBookEntries)
+          .innerJoin(priceBooks, and(eq(priceBookEntries.priceBookId, priceBooks.id), eq(priceBooks.isDefault, true)))
+          .where(inArray(priceBookEntries.variantId, variantIds))
+      : Promise.resolve([]),
+  ])
 
-  // Load related products based on the current product's category slug
-  const relatedResponse = product.category?.slug
-    ? await findProducts({ categorySlug: product.category.slug, limit: 6 })
-    : { items: [] }
-
+  const wishlistVariantIds = wishlistResult?.items.map((item) => item.variant.id) ?? []
   const relatedProducts = relatedResponse.items
     .filter((p) => p.id !== product.id)
     .slice(0, 5)
-
-  // Resolve active variants, colors, and sizes
-  const activeVariants = product.variants.filter(v => v.isActive)
-
-  // Query prices for these active variants
-  const variantIds = activeVariants.map((v) => v.id)
-  let variantPrices: any[] = []
-  if (variantIds.length > 0) {
-    variantPrices = await db
-      .select({
-        variantId: priceBookEntries.variantId,
-        price: priceBookEntries.price,
-      })
-      .from(priceBookEntries)
-      .innerJoin(priceBooks, and(eq(priceBookEntries.priceBookId, priceBooks.id), eq(priceBooks.isDefault, true)))
-      .where(inArray(priceBookEntries.variantId, variantIds))
-  }
 
   const variantsWithPrices = activeVariants.map((v) => {
     const p = variantPrices.find((vp) => vp.variantId === v.id)

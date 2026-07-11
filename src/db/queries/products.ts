@@ -203,26 +203,16 @@ export async function findProducts(
     }
   }
 
-  // ── 5. Execute Count (Optional) ───────────────────────────────────────────
+  // ── 5 & 6. Sorting, Fetch & Count (Parallelized) ─────────────────────────
 
   let totalCount: number | undefined = undefined
-  if (withCount) {
-    const countRes = await db
-      .select({ val: count() })
-      .from(products)
-      .where(and(...conditions))
-    totalCount = countRes[0]?.val ?? 0
-  }
-
-  // ── 6. Sorting & Fetch ────────────────────────────────────────────────────
-
   let orderBy: SQL[] = [desc(products.createdAt)]
   let orderedProductIds: string[] | null = null
 
   if (sort === "price_asc" || sort === "price_desc") {
     const orderDir = sort === "price_asc" ? asc(sql`lowest_price`) : desc(sql`lowest_price`)
-    // Query product IDs matching the conditions, group by product to find lowest price, and sort
-    const idRows = await db
+    // Query product IDs matching the conditions concurrently with the total count
+    const idRowsPromise = db
       .select({ 
         productId: products.id,
         lowestPrice: min(priceBookEntries.price).as("lowest_price")
@@ -235,7 +225,19 @@ export async function findProducts(
       .groupBy(products.id)
       .orderBy(orderDir)
       .limit(limit + 1)
-      
+
+    const countPromise = withCount
+      ? db
+          .select({ val: count() })
+          .from(products)
+          .where(and(...conditions))
+      : Promise.resolve(null)
+
+    const [idRows, countRes] = await Promise.all([idRowsPromise, countPromise])
+
+    if (countRes) {
+      totalCount = countRes[0]?.val ?? 0
+    }
     orderedProductIds = idRows.map(r => r.productId)
     if (orderedProductIds.length === 0) return emptyResult(withCount)
   } else {
@@ -259,6 +261,7 @@ export async function findProducts(
 
   let rows: any[] = []
   if (orderedProductIds) {
+    // For price-sort, fetch details for the resolved IDs
     rows = await db.query.products.findMany({
       where: inArray(products.id, orderedProductIds),
       with: {
@@ -275,7 +278,15 @@ export async function findProducts(
     // Sort rows to match orderedProductIds exactly
     rows.sort((a, b) => orderedProductIds!.indexOf(a.id) - orderedProductIds!.indexOf(b.id))
   } else {
-    rows = await db.query.products.findMany({
+    // For standard sort, fetch rows and count concurrently
+    const countPromise = withCount
+      ? db
+          .select({ val: count() })
+          .from(products)
+          .where(and(...conditions))
+      : Promise.resolve(null)
+
+    const rowsPromise = db.query.products.findMany({
       where: and(...conditions),
       limit: limit + 1,
       orderBy,
@@ -290,6 +301,12 @@ export async function findProducts(
       },
       columns: { id: true, slug: true, name: true, status: true, categoryId: true },
     })
+
+    const [countRes, fetchedRows] = await Promise.all([countPromise, rowsPromise])
+    if (countRes) {
+      totalCount = countRes[0]?.val ?? 0
+    }
+    rows = fetchedRows
   }
 
   const hasMore = rows.length > limit

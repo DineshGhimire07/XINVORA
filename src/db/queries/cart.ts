@@ -120,46 +120,45 @@ export async function getHeaderCommerceState(
     wishlistCount: 0,
   }
 
-  if (userId || sessionId) {
-    const cartFilters = []
-    if (userId) {
-      cartFilters.push(eq(carts.userId, userId))
-    } else if (sessionId) {
-      cartFilters.push(eq(carts.sessionId, sessionId))
-    }
+  // Phase 1: Resolve cart and wishlist records concurrently
+  const [cartList, wlList] = await Promise.all([
+    (userId || sessionId)
+      ? db
+          .select({ id: carts.id })
+          .from(carts)
+          .where(userId ? eq(carts.userId, userId) : eq(carts.sessionId, sessionId!))
+          .limit(1)
+      : Promise.resolve([]),
+    userId
+      ? db
+          .select({ id: wishlists.id })
+          .from(wishlists)
+          .where(eq(wishlists.userId, userId))
+          .limit(1)
+      : Promise.resolve([]),
+  ])
 
-    const cartList = await db
-      .select({ id: carts.id })
-      .from(carts)
-      .where(cartFilters.length === 1 ? cartFilters[0] : undefined)
-      .limit(1)
+  const cartId = cartList[0]?.id
+  const wishlistId = wlList[0]?.id
 
-    if (cartList.length > 0) {
-      const [countResult] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(cartItems)
-        .where(eq(cartItems.cartId, cartList[0].id))
-      
-      result.cartCount = Number(countResult.count)
-    }
-  }
+  // Phase 2: Count cart and wishlist items concurrently
+  const [cartCountResult, wishlistCountResult] = await Promise.all([
+    cartId
+      ? db
+          .select({ count: sql<number>`count(*)` })
+          .from(cartItems)
+          .where(eq(cartItems.cartId, cartId))
+      : Promise.resolve([]),
+    wishlistId
+      ? db
+          .select({ count: sql<number>`count(*)` })
+          .from(wishlistItems)
+          .where(eq(wishlistItems.wishlistId, wishlistId))
+      : Promise.resolve([]),
+  ])
 
-  if (userId) {
-    const wlList = await db
-      .select({ id: wishlists.id })
-      .from(wishlists)
-      .where(eq(wishlists.userId, userId))
-      .limit(1)
-
-    if (wlList.length > 0) {
-      const [countResult] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(wishlistItems)
-        .where(eq(wishlistItems.wishlistId, wlList[0].id))
-      
-      result.wishlistCount = Number(countResult.count)
-    }
-  }
+  result.cartCount = Number(cartCountResult[0]?.count ?? 0)
+  result.wishlistCount = Number(wishlistCountResult[0]?.count ?? 0)
 
   return result
 }

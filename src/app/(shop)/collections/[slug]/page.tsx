@@ -69,19 +69,16 @@ export default async function CollectionDetailPage(props: {
 
   // Batch query all variants for the current listing to get colors and sizes
   const productIds = products.map((p) => p.id)
-  let productVariants: any[] = []
-  if (productIds.length > 0) {
-    productVariants = await db.query.variants.findMany({
-      where: (v) => inArray(v.productId, productIds),
-      with: {
-        color: true,
-        size: true,
-      },
-    })
-  }
-
-  // Fetch filter options
-  const [allColors, allSizes, allMaterials] = await Promise.all([
+  const [productVariants, allColors, allSizes, allMaterials] = await Promise.all([
+    productIds.length > 0
+      ? db.query.variants.findMany({
+          where: (v) => inArray(v.productId, productIds),
+          with: {
+            color: true,
+            size: true,
+          },
+        })
+      : Promise.resolve([]),
     db.select().from(colors),
     db.select().from(sizes),
     db.select().from(materials),

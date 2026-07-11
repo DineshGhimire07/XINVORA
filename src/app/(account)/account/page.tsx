@@ -17,20 +17,16 @@ export const metadata = {
 
 export default async function DashboardPage() {
   const session = await SessionService.requireAuth()
-  const profile = await ProfileService.getProfile(session.id)
-  
-  // Recent 2 orders
-  const ordersResult = await OrderService.getUserOrders(session.id, { limit: 2 })
-  
-  // Wishlist preview
-  const wishlist = await getWishlist(session.id)
+
+  const [profile, ordersResult, wishlist, savedAddresses, notifications] = await Promise.all([
+    ProfileService.getProfile(session.id),
+    OrderService.getUserOrders(session.id, { limit: 2 }),
+    getWishlist(session.id),
+    AddressService.getUserAddresses(session.id),
+    NotificationService.getNotifications(session.id),
+  ])
+
   const wishlistCount = wishlist?.items.length ?? 0
-  
-  // Saved addresses
-  const savedAddresses = await AddressService.getUserAddresses(session.id)
-  
-  // Recent notifications
-  const notifications = await NotificationService.getNotifications(session.id)
   const unreadNotificationsCount = notifications.filter((n: any) => !n.isRead).length
 
   return (

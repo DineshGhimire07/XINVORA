@@ -95,19 +95,18 @@ export async function findAdminInventoryPaginated(
   const sortCol = options.sortBy === "stockQuantity" ? inventory.quantity : inventory.updatedAt
   const orderDirection = options.sortOrder === "asc" ? asc(sortCol) : desc(sortCol)
 
-  const items = await baseQuery
-    .orderBy(orderDirection)
-    .limit(limit)
-    .offset(offset)
-
-  // Get total count (simple subquery for joined count)
-  const countQuery = db
-    .select({ count: sql<number>`count(*)` })
-    .from(inventory)
-    .innerJoin(variants, and(eq(inventory.variantId, variants.id), isNull(variants.deletedAt)))
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
-    
-  const countResult = await countQuery
+  // Get items and total count concurrently
+  const [items, countResult] = await Promise.all([
+    baseQuery
+      .orderBy(orderDirection)
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(inventory)
+      .innerJoin(variants, and(eq(inventory.variantId, variants.id), isNull(variants.deletedAt)))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+  ])
   const total = Number(countResult[0]?.count ?? 0)
 
   return {

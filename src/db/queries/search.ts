@@ -76,41 +76,40 @@ export async function searchProducts(
     ),
   ]
 
-  // ── Step 3: Count query (lightweight) ─────────────────────────────────────
-  const countResult = await db
-    .select({ count: sql<number>`COUNT(*)` })
-    .from(products)
-    .where(and(...whereConditions))
+  // ── Step 3 & 4: Fetch results and count concurrently ──────────────────────
+  const [countResult, rows] = await Promise.all([
+    db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(products)
+      .where(and(...whereConditions)),
+    db.query.products.findMany({
+      where: and(...whereConditions),
+      limit: effectiveLimit + 1,
+      orderBy: [
+        sql`CASE WHEN LOWER(${products.name}) LIKE ${`%${safeQuery.toLowerCase()}%`} THEN 0 ELSE 1 END`,
+        sql`${products.createdAt} DESC`,
+      ],
+      columns: {
+        id: true,
+        slug: true,
+        name: true,
+        categoryId: true,
+        status: true,
+      },
+      with: {
+        category: {
+          columns: { id: true, slug: true, name: true },
+        },
+        productImages: {
+          where: (img, { eq }) => eq(img.position, 0),
+          limit: 1,
+          columns: { url: true, altText: true, position: true },
+        },
+      },
+    })
+  ])
 
   const totalCount = Number(countResult[0]?.count ?? 0)
-
-  // ── Step 4: Fetch results ─────────────────────────────────────────────────
-  const rows = await db.query.products.findMany({
-    where: and(...whereConditions),
-    limit: effectiveLimit + 1,
-    // Name-exact matches ranked first, then recency
-    orderBy: [
-      sql`CASE WHEN LOWER(${products.name}) LIKE ${`%${safeQuery.toLowerCase()}%`} THEN 0 ELSE 1 END`,
-      sql`${products.createdAt} DESC`,
-    ],
-    columns: {
-      id: true,
-      slug: true,
-      name: true,
-      categoryId: true,
-      status: true,
-    },
-    with: {
-      category: {
-        columns: { id: true, slug: true, name: true },
-      },
-      productImages: {
-        where: (img, { eq }) => eq(img.position, 0),
-        limit: 1,
-        columns: { url: true, altText: true, position: true },
-      },
-    },
-  })
 
   const hasMore = rows.length > effectiveLimit
   const results = (hasMore ? rows.slice(0, effectiveLimit) : rows) as unknown as SearchResult[]

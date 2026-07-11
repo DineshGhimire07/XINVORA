@@ -79,8 +79,10 @@ export default async function RootLayout({
   children: ReactNode
 }) {
   const { userId, sessionId } = await SessionService.getCommerceIdentity()
-  const commerceState = await getHeaderCommerceState(userId, sessionId)
-  const collections = await findHierarchicalCollections()
+  const [commerceState, collections] = await Promise.all([
+    getHeaderCommerceState(userId, sessionId),
+    findHierarchicalCollections(),
+  ])
 
   const headerList = await headers()
   const pathname = headerList.get("x-pathname") || ""

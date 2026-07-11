@@ -76,16 +76,16 @@ export async function findUserOrdersPaginated(
   const sortCol = options.sortBy === "total" ? orders.total : orders.createdAt
   const orderDirection = options.sortOrder === "asc" ? sortCol : desc(sortCol)
 
-  const items = await baseQuery
-    .orderBy(orderDirection)
-    .limit(limit)
-    .offset(offset)
-
-  // Get total count
-  const countResult = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(orders)
-    .where(and(...conditions))
+  const [items, countResult] = await Promise.all([
+    baseQuery
+      .orderBy(orderDirection)
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(orders)
+      .where(and(...conditions))
+  ])
   const total = Number(countResult[0]?.count ?? 0)
 
   return {
@@ -134,16 +134,16 @@ export async function findAdminOrdersPaginated(
   const sortCol = options.sortBy === "total" ? orders.total : orders.createdAt
   const orderDirection = options.sortOrder === "asc" ? sortCol : desc(sortCol)
 
-  const items = await baseQuery
-    .orderBy(orderDirection)
-    .limit(limit)
-    .offset(offset)
-
-  // Get total count
-  const countResult = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(orders)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+  const [items, countResult] = await Promise.all([
+    baseQuery
+      .orderBy(orderDirection)
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(orders)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+  ])
   const total = Number(countResult[0]?.count ?? 0)
 
   return {
