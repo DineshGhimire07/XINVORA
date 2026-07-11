@@ -257,7 +257,7 @@ function FeaturedProductsSection({ products }: { products: ProductSummary[] }) {
                           {/* Mobile Slide Indicator dots (only show if multiple images) */}
                           {item.productImages.length > 1 && (
                             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex md:hidden gap-1.5 z-10 pointer-events-none">
-                              {item.productImages.map((_, idx: number) => (
+                              {item.productImages.map((_: any, idx: number) => (
                                 <div key={idx} className="w-1.5 h-1.5 rounded-full bg-white/60 shadow-sm" />
                               ))}
                             </div>
