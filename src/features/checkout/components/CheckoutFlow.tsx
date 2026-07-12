@@ -97,7 +97,7 @@ export function CheckoutFlow({
           >
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
               <div className="lg:col-span-8">
-                <div className="bg-surface rounded-2xl p-6 lg:p-8 shadow-sm border border-border">
+                <div className="bg-surface rounded-lg p-6 lg:p-8 shadow-sm border border-border">
                   <NepalDeliveryForm
                     provinces={provinces}
                     savedAddress={savedAddress}

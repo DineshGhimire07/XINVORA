@@ -19,8 +19,9 @@ export function OrderSummary({ cart, shippingCost, discountAmount, total, childr
   
   return (
     <Card className="rounded-none border-border-primary/40 shadow-sm bg-white">
-      <CardHeader className="border-b border-border-primary/20">
-        <CardTitle className="text-lg font-light tracking-wide uppercase">Order Summary</CardTitle>
+      <CardHeader className="border-b border-border-primary/20 space-y-1">
+        <p className="text-[10px] font-bold tracking-[0.2em] text-accent uppercase">Your Cart</p>
+        <CardTitle className="text-2xl font-display font-light tracking-wide">Order Summary</CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
         <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2">
@@ -39,12 +40,12 @@ export function OrderSummary({ cart, shippingCost, discountAmount, total, childr
               </div>
               <div className="flex-1 flex flex-col justify-center">
                 <h4 className="font-medium text-sm">{item.variant.product.name}</h4>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-text-secondary mt-1">
                   {item.variant.color?.name && `${item.variant.color.name}`}
                   {item.variant.color?.name && item.variant.size?.name && " / "}
                   {item.variant.size?.name && `${item.variant.size.name}`}
                 </p>
-                <p className="text-sm text-gray-500 mt-1">Qty: {item.quantity}</p>
+                <p className="text-sm text-text-secondary mt-1">Qty: {item.quantity}</p>
               </div>
               <div className="text-sm font-medium pt-1">
                 NPR {Math.round((item.price * item.quantity) / 100).toLocaleString()}
@@ -55,21 +56,21 @@ export function OrderSummary({ cart, shippingCost, discountAmount, total, childr
 
         <div className="mt-8 space-y-3 border-t border-border-primary/20 pt-6">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Subtotal</span>
+            <span className="text-text-secondary">Subtotal</span>
             <span>NPR {Math.round(subtotal / 100).toLocaleString()}</span>
           </div>
           {discountAmount !== undefined && discountAmount > 0 && (
-            <div className="flex justify-between text-sm text-green-600">
+            <div className="flex justify-between text-sm text-success">
               <span>Discount</span>
               <span>- NPR {Math.round(discountAmount / 100).toLocaleString()}</span>
             </div>
           )}
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Shipping</span>
+            <span className="text-text-secondary">Shipping</span>
             {shippingCost !== undefined ? (
               <span>NPR {Math.round(shippingCost / 100).toLocaleString()}</span>
             ) : (
-              <span className="text-gray-500 text-xs italic">Calculated at next step</span>
+              <span className="text-text-secondary text-xs italic">Calculated at next step</span>
             )}
           </div>
           <div className="flex justify-between font-medium text-lg border-t border-border-primary/20 pt-4 mt-2">

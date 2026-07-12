@@ -44,32 +44,27 @@ function FormField({
       {hint && !error && <p className="text-xs text-text-tertiary">{hint}</p>}
       {error && (
         <div className="flex items-center gap-1.5">
-          <AlertCircle className="w-3 h-3 text-red-500 shrink-0" />
-          <p className="text-xs text-red-500">{error}</p>
+          <AlertCircle className="w-3 h-3 text-error shrink-0" />
+          <p className="text-xs text-error">{error}</p>
         </div>
       )}
     </div>
   )
 }
 
-// ─── Section Header ───────────────────────────────────────────────────────────
 function SectionHeader({ number, title, subtitle }: { number: number; title: string; subtitle?: string }) {
   return (
-    <div className="flex items-start gap-4 mb-6">
-      <div className="w-8 h-8 rounded-full bg-text-primary text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
-        {number}
-      </div>
-      <div>
-        <h2 className="text-base font-semibold text-text-primary tracking-tight">{title}</h2>
-        {subtitle && <p className="text-sm text-text-tertiary mt-0.5">{subtitle}</p>}
-      </div>
+    <div className="mb-6 space-y-1">
+      <p className="text-[10px] font-bold tracking-[0.2em] text-accent uppercase">Step {number}</p>
+      <h2 className="text-2xl font-display font-light tracking-wide text-text-primary">{title}</h2>
+      {subtitle && <p className="text-sm text-text-tertiary">{subtitle}</p>}
     </div>
   )
 }
 
 // ─── Input ────────────────────────────────────────────────────────────────────
 const inputClass = cn(
-  "w-full h-12 px-4 rounded-lg border border-border bg-white dark:bg-[#1a1a1a]",
+  "w-full h-12 px-4 rounded-lg border border-border bg-surface",
   "text-sm text-text-primary placeholder:text-text-tertiary",
   "transition-all duration-200 outline-none",
   "focus:border-accent focus:ring-2 focus:ring-accent/20",
@@ -285,7 +280,7 @@ export function NepalDeliveryForm({
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-[#111] rounded-2xl border border-border shadow-sm overflow-hidden"
+          className="bg-surface rounded-lg border border-border shadow-sm overflow-hidden"
         >
           <div className="px-6 py-5">
             <SectionHeader number={1} title="Recipient Information" />
@@ -298,7 +293,7 @@ export function NepalDeliveryForm({
                   {...register("fullName")}
                   placeholder="Dinesh Ghimire"
                   autoComplete="name"
-                  className={cn(inputClass, errors.fullName && "border-red-400 focus:border-red-400 focus:ring-red-100")}
+                  className={cn(inputClass, errors.fullName && "border-error focus:border-error focus:ring-error/20")}
                 />
               </FormField>
 
@@ -323,7 +318,7 @@ export function NepalDeliveryForm({
                     className={cn(
                       inputClass,
                       "rounded-l-none",
-                      errors.phone && "border-red-400 focus:border-red-400 focus:ring-red-100"
+                      errors.phone && "border-error focus:border-error focus:ring-error/20"
                     )}
                   />
                 </div>
@@ -337,7 +332,7 @@ export function NepalDeliveryForm({
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-white dark:bg-[#111] rounded-2xl border border-border shadow-sm overflow-hidden"
+          className="bg-surface rounded-lg border border-border shadow-sm overflow-hidden"
         >
           <div className="px-6 py-5">
             <SectionHeader
@@ -440,7 +435,7 @@ export function NepalDeliveryForm({
                   id="tole"
                   {...register("tole")}
                   placeholder="e.g. Golpark, Traffic Chowk, Deepnagar"
-                  className={cn(inputClass, errors.tole && "border-red-400")}
+                  className={cn(inputClass, errors.tole && "border-error focus:border-error focus:ring-error/20")}
                 />
               </FormField>
 
@@ -450,7 +445,7 @@ export function NepalDeliveryForm({
                   id="street"
                   {...register("street")}
                   placeholder="House Number, Building Name, Street"
-                  className={cn(inputClass, errors.street && "border-red-400")}
+                  className={cn(inputClass, errors.street && "border-error focus:border-error focus:ring-error/20")}
                 />
               </FormField>
 
@@ -460,7 +455,7 @@ export function NepalDeliveryForm({
                   id="landmark"
                   {...register("landmark")}
                   placeholder="Near Bhatbhateni, Opposite Laxmi Bank…"
-                  className={cn(inputClass, errors.landmark && "border-red-400")}
+                  className={cn(inputClass, errors.landmark && "border-error focus:border-error focus:ring-error/20")}
                 />
               </FormField>
 
@@ -486,7 +481,7 @@ export function NepalDeliveryForm({
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-[#111] rounded-2xl border border-border shadow-sm overflow-hidden"
+          className="bg-surface rounded-lg border border-border shadow-sm overflow-hidden"
         >
           <div className="px-6 py-5">
             <SectionHeader
@@ -544,7 +539,7 @@ export function NepalDeliveryForm({
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="flex items-start gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/30 dark:border-red-800 dark:text-red-400"
+              className="flex items-start gap-3 px-4 py-3 rounded-lg bg-error-muted border border-error/20 text-error"
             >
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <p className="text-sm">{serverError}</p>
@@ -558,7 +553,7 @@ export function NepalDeliveryForm({
           disabled={isSubmitting}
           id="place-order-btn"
           className={cn(
-            "w-full h-14 rounded-xl font-semibold text-sm uppercase tracking-widest",
+            "w-full h-14 rounded-lg font-semibold text-sm uppercase tracking-widest",
             "bg-text-primary text-white",
             "hover:bg-ink transition-all duration-200",
             "flex items-center justify-center gap-2",

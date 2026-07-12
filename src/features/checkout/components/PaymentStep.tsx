@@ -70,12 +70,15 @@ export function PaymentStep({ addressData, totals, paymentQrs, onBack }: any) {
           Back to Address
         </button>
         
-        <div className="bg-surface rounded-2xl p-6 shadow-sm border border-border">
-          <h2 className="text-xl font-semibold mb-6">Payment Method</h2>
+        <div className="bg-surface rounded-lg p-6 shadow-sm border border-border">
+          <div className="mb-6 space-y-1">
+            <p className="text-[10px] font-bold tracking-[0.2em] text-accent uppercase">Step 2</p>
+            <h2 className="text-2xl font-display font-light tracking-wide">Payment Method</h2>
+          </div>
           <div className="space-y-4">
             {/* COD Option */}
             <label className={cn(
-              "flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all",
+              "flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all",
               method === "COD" ? "border-accent bg-accent/5" : "border-border hover:border-accent/30"
             )}>
               <input 
@@ -87,7 +90,7 @@ export function PaymentStep({ addressData, totals, paymentQrs, onBack }: any) {
               />
               <div className="flex-1">
                 <div className="flex items-center gap-2 font-medium text-text-primary">
-                  <Banknote className="w-5 h-5 text-green-600" />
+                  <Banknote className="w-5 h-5 text-success" />
                   Cash on Delivery
                 </div>
                 <p className="text-sm text-text-secondary mt-1">Pay with cash when your order arrives.</p>
@@ -96,7 +99,7 @@ export function PaymentStep({ addressData, totals, paymentQrs, onBack }: any) {
 
             {/* eSewa Option */}
             <label className={cn(
-              "flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all",
+              "flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all",
               method === "ESEWA" ? "border-accent bg-accent/5" : "border-border hover:border-accent/30"
             )}>
               <input 
@@ -108,7 +111,7 @@ export function PaymentStep({ addressData, totals, paymentQrs, onBack }: any) {
               />
               <div className="flex-1">
                 <div className="flex items-center gap-2 font-medium text-text-primary">
-                  <CreditCard className="w-5 h-5 text-[#61ce70]" />
+                  <CreditCard className="w-5 h-5 text-success" />
                   eSewa (Manual Verification)
                 </div>
                 <p className="text-sm text-text-secondary mt-1">Scan the QR code and upload a screenshot of your successful payment.</p>
@@ -147,7 +150,7 @@ export function PaymentStep({ addressData, totals, paymentQrs, onBack }: any) {
           >
             <div className="mt-6 pt-6 border-t border-border-primary/20">
               {error && (
-                <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100">
+                <div className="mb-4 p-3 rounded-lg bg-error-muted text-error text-sm border border-error/20">
                   {error}
                 </div>
               )}
@@ -156,7 +159,7 @@ export function PaymentStep({ addressData, totals, paymentQrs, onBack }: any) {
                 onClick={handleSubmit}
                 disabled={isSubmitting || (method === "ESEWA" && !file)}
                 className={cn(
-                  "w-full h-14 rounded-xl font-semibold text-sm tracking-wide transition-all duration-300",
+                  "w-full h-14 rounded-lg font-semibold text-sm tracking-wide transition-all duration-300",
                   "bg-accent hover:bg-accent/90 text-white shadow-[0_4px_14px_0_rgba(0,0,0,0.1)]",
                   (isSubmitting || (method === "ESEWA" && !file)) && "opacity-50 cursor-not-allowed"
                 )}
