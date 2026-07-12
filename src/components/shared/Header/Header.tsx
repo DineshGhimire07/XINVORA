@@ -88,12 +88,12 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
     let cancelled = false
 
     const fetchSummary = () => {
-      fetch("/api/cart/summary")
+      fetch("/api/commerce/header-state")
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
-          if (!cancelled && data) {
-            setLiveCartCount(data.cartCount ?? 0)
-            setLiveWishlistCount(data.wishlistCount ?? 0)
+          if (!cancelled && data?.cart) {
+            setLiveCartCount(data.cart.cartCount ?? 0)
+            setLiveWishlistCount(data.cart.wishlistCount ?? 0)
           }
         })
         .catch(() => {

@@ -107,11 +107,12 @@ export function ProductVariantSelector({
   useEffect(() => {
     let cancelled = false
 
-    fetch("/api/wishlist/status")
+    fetch("/api/commerce/header-state")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (!cancelled && data?.wishlistedVariantIds) {
-          setWishlistIds(data.wishlistedVariantIds)
+        if (!cancelled && data?.wishlist?.items) {
+          const ids = data.wishlist.items.map((item: any) => item.variant?.id).filter(Boolean)
+          setWishlistIds(ids)
         }
       })
       .catch(() => {

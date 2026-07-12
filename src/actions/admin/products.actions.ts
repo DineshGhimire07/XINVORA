@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import { AdminProductService } from "@/services/admin.product.service"
 import { SessionService } from "@/services/session.service"
 import { z } from "zod"
@@ -88,6 +88,7 @@ export async function createProductAction(formData: FormData) {
     )
 
     revalidatePath("/admin/products")
+    revalidateTag("products", {})
     return { success: true }
   } catch (error: any) {
     return { success: false, error: extractDbError(error) }
@@ -147,6 +148,7 @@ export async function updateProductAction(id: string, formData: FormData) {
 
     revalidatePath("/admin/products")
     revalidatePath(`/admin/products/${id}`)
+    revalidateTag("products", {})
     return { success: true }
   } catch (error: any) {
     return { success: false, error: extractDbError(error) }
@@ -158,6 +160,7 @@ export async function archiveProductAction(id: string) {
     const session = await SessionService.requireAdmin()
     await AdminProductService.deleteProduct(id, session.id)
     revalidatePath("/admin/products")
+    revalidateTag("products", {})
     return { success: true }
   } catch (error: any) {
     return { success: false, error: extractDbError(error) }
@@ -171,6 +174,7 @@ export async function hardDeleteProductAction(id: string) {
     revalidatePath("/admin/products")
     revalidatePath("/")
     revalidatePath("/collections")
+    revalidateTag("products", {})
     return { success: true }
   } catch (error: any) {
     return { success: false, error: extractDbError(error) }

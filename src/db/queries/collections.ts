@@ -15,11 +15,21 @@ import { collections } from "../schema"
 import type { CollectionWithProducts } from "./types"
 import { findProductsByCollectionId, findProducts } from "./products"
 
-export async function findActiveCollections() {
+async function _findActiveCollectionsInternal() {
   return db.query.collections.findMany({
     where: eq(collections.isActive, true),
     orderBy: [desc(collections.sortOrder), desc(collections.publishedAt)],
   })
+}
+
+const _findActiveCollectionsCached = unstable_cache(
+  async () => _findActiveCollectionsInternal(),
+  ["active-collections"],
+  { tags: ["collections"], revalidate: 1800 }
+)
+
+export async function findActiveCollections() {
+  return _findActiveCollectionsCached()
 }
 
 import { unstable_cache } from "next/cache"
@@ -42,14 +52,14 @@ const _findHierarchicalCollectionsCached = unstable_cache(
     }))
   },
   ["hierarchical-collections"],
-  { tags: ["collections"], revalidate: 3600 }
+  { tags: ["collections"], revalidate: 1800 }
 )
 
 /**
  * Fetch a single collection by slug for the collection landing page.
  * Includes the first page of its associated products.
  */
-export async function findCollectionBySlug(
+async function _findCollectionBySlugInternal(
   slug: string,
   productLimit = 24
 ): Promise<CollectionWithProducts | null> {
@@ -66,16 +76,31 @@ export async function findCollectionBySlug(
   return { ...collection, products }
 }
 
+const _findCollectionBySlugCached = unstable_cache(
+  async (slug: string, productLimit: number) => {
+    return _findCollectionBySlugInternal(slug, productLimit)
+  },
+  ["collection-by-slug"],
+  { tags: ["collections"], revalidate: 1800 }
+)
+
+export async function findCollectionBySlug(
+  slug: string,
+  productLimit = 24
+): Promise<CollectionWithProducts | null> {
+  return _findCollectionBySlugCached(slug, productLimit)
+}
+
 import { cache } from "react"
 
-const cachedCollectionDetail = cache(
+const _findCollectionDetailCached = unstable_cache(
   async (
     slug: string,
-    sort?: string,
-    color?: string,
-    size?: string,
-    material?: string,
-    limit?: number
+    sort: string,
+    color: string,
+    size: string,
+    material: string,
+    limit: number
   ) => {
     const collection = await db.query.collections.findFirst({
       where: and(eq(collections.slug, slug), eq(collections.isActive, true)),
@@ -113,6 +138,28 @@ const cachedCollectionDetail = cache(
       parent,
       productsResult,
     }
+  },
+  ["collection-detail"],
+  { tags: ["collections"], revalidate: 1800 }
+)
+
+const cachedCollectionDetail = cache(
+  async (
+    slug: string,
+    sort?: string,
+    color?: string,
+    size?: string,
+    material?: string,
+    limit?: number
+  ) => {
+    return _findCollectionDetailCached(
+      slug,
+      sort || "",
+      color || "",
+      size || "",
+      material || "",
+      limit || 24
+    )
   }
 )
 
@@ -136,14 +183,18 @@ export async function findCollectionDetailBySlug(
   )
 }
 
-/**
- * Fetch collections suitable for the homepage hero/editorial sections.
- * Returns the most recently published active collections.
- */
+const _findHomepageCollectionsCached = unstable_cache(
+  async (limit: number) => {
+    return db.query.collections.findMany({
+      where: and(eq(collections.isActive, true)),
+      limit,
+      orderBy: [desc(collections.publishedAt)],
+    })
+  },
+  ["homepage-collections"],
+  { tags: ["collections"], revalidate: 1800 }
+)
+
 export async function findHomepageCollections(limit = 4) {
-  return db.query.collections.findMany({
-    where: and(eq(collections.isActive, true)),
-    limit,
-    orderBy: [desc(collections.publishedAt)],
-  })
+  return _findHomepageCollectionsCached(limit)
 }

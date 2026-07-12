@@ -32,12 +32,9 @@ import type {
   CatalogFilterParams,
   PaginatedResult,
 } from "./types"
+import { unstable_cache } from "next/cache"
 
-/**
- * Fetch a single product's full detail by its URL slug.
- * Used by the Product Detail Page (PDP).
- */
-export async function findProductBySlug(slug: string): Promise<ProductFull | null> {
+async function _findProductBySlugInternal(slug: string): Promise<ProductFull | null> {
   const decodedSlug = decodeURIComponent(slug)
   const result = await db.query.products.findFirst({
     where: and(eq(products.slug, decodedSlug), eq(products.status, "PUBLISHED")),
@@ -68,12 +65,22 @@ export async function findProductBySlug(slug: string): Promise<ProductFull | nul
   return (result as ProductFull) ?? null
 }
 
+const _findProductBySlugCached = unstable_cache(
+  async (slug: string) => _findProductBySlugInternal(slug),
+  ["product-by-slug"],
+  { tags: ["products"], revalidate: 1800 }
+)
+
+export async function findProductBySlug(slug: string): Promise<ProductFull | null> {
+  return _findProductBySlugCached(slug)
+}
+
 /**
  * The Unified Catalog Engine.
  * Fetches a paginated list of products with complex filtering and sorting.
  * Ensures zero N+1 queries by using Drizzle's relational queries and subqueries for filters.
  */
-export async function findProducts(
+async function _findProductsInternal(
   params: CatalogFilterParams = {}
 ): Promise<PaginatedResult<ProductSummaryWithPrice>> {
   const {
@@ -350,6 +357,21 @@ export async function findProducts(
   }
 }
 
+const _findProductsCached = unstable_cache(
+  async (paramsStr: string) => {
+    const params = JSON.parse(paramsStr) as CatalogFilterParams
+    return _findProductsInternal(params)
+  },
+  ["products-catalog"],
+  { tags: ["products"], revalidate: 1800 }
+)
+
+export async function findProducts(
+  params: CatalogFilterParams = {}
+): Promise<PaginatedResult<ProductSummaryWithPrice>> {
+  return _findProductsCached(JSON.stringify(params))
+}
+
 function emptyResult(withCount: boolean): PaginatedResult<ProductSummaryWithPrice> {
   return {
     items: [],
@@ -376,10 +398,7 @@ export async function findLatestProducts(limit = 8): Promise<ProductSummary[]> {
   return items
 }
 
-/**
- * Fetch products in the same category as a given product.
- */
-export async function findRelatedProducts(
+async function _findRelatedProductsInternal(
   categoryId: string,
   excludeProductId: string,
   limit = 4
@@ -407,10 +426,23 @@ export async function findRelatedProducts(
     .slice(0, limit) as unknown as ProductSummary[]
 }
 
-/**
- * Fetch all published products in a given collection.
- */
-export async function findProductsByCollectionId(
+const _findRelatedProductsCached = unstable_cache(
+  async (categoryId: string, excludeProductId: string, limit: number) => {
+    return _findRelatedProductsInternal(categoryId, excludeProductId, limit)
+  },
+  ["related-products"],
+  { tags: ["products"], revalidate: 1800 }
+)
+
+export async function findRelatedProducts(
+  categoryId: string,
+  excludeProductId: string,
+  limit = 4
+): Promise<ProductSummary[]> {
+  return _findRelatedProductsCached(categoryId, excludeProductId, limit)
+}
+
+async function _findProductsByCollectionIdInternal(
   collectionId: string,
   params: CatalogFilterParams = {}
 ): Promise<PaginatedResult<ProductSummary>> {
@@ -422,6 +454,22 @@ export async function findProductsByCollectionId(
   if (!collection) return emptyResult(params.withCount ?? false)
   
   return findProducts({ ...params, collectionSlug: collection.slug })
+}
+
+const _findProductsByCollectionIdCached = unstable_cache(
+  async (collectionId: string, paramsStr: string) => {
+    const params = JSON.parse(paramsStr) as CatalogFilterParams
+    return _findProductsByCollectionIdInternal(collectionId, params)
+  },
+  ["products-by-collection-id"],
+  { tags: ["products"], revalidate: 1800 }
+)
+
+export async function findProductsByCollectionId(
+  collectionId: string,
+  params: CatalogFilterParams = {}
+): Promise<PaginatedResult<ProductSummary>> {
+  return _findProductsByCollectionIdCached(collectionId, JSON.stringify(params))
 }
 
 /**
