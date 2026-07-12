@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Heart } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { toggleWishlistByProductIdAction } from "@/actions/wishlist.actions"
 
 export interface ProductCardProps {
@@ -22,6 +23,7 @@ export interface ProductCardProps {
 }
 
 export function ProductCard({ product, itemColors, itemSizes, priority = false, initialIsWishlisted = false, isFirstInGrid = false }: ProductCardProps) {
+  const router = useRouter()
   const [isWishlisted, setIsWishlisted] = React.useState(initialIsWishlisted)
   const [isPending, startTransition] = React.useTransition()
   // We want at least the first image, up to all images
@@ -51,6 +53,9 @@ export function ProductCard({ product, itemColors, itemSizes, priority = false, 
   return (
     <Link 
       href={`/products/${product.slug}`}
+      prefetch={false}
+      onMouseEnter={() => router.prefetch(`/products/${product.slug}`)}
+      onFocus={() => router.prefetch(`/products/${product.slug}`)}
       className="group flex flex-col gap-2.5 text-left w-full relative"
     >
       {/* Visual Card Image container */}
