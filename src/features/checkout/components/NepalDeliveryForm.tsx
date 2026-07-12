@@ -80,20 +80,33 @@ const inputClass = cn(
 interface NepalDeliveryFormProps {
   provinces: NepalProvince[]
   savedAddress?: any
+  initialDistricts?: NepalDistrict[]
+  initialMunicipalities?: NepalMunicipality[]
   paymentQrs?: any
   onSuccess?: (data: NepalDeliveryFormValues) => void
   initialData?: NepalDeliveryFormValues | null
 }
 
-export function NepalDeliveryForm({ provinces, savedAddress, paymentQrs, onSuccess, initialData }: NepalDeliveryFormProps) {
+export function NepalDeliveryForm({
+  provinces,
+  savedAddress,
+  initialDistricts = [],
+  initialMunicipalities = [],
+  paymentQrs,
+  onSuccess,
+  initialData,
+}: NepalDeliveryFormProps) {
   const router = useRouter()
-  const [districts, setDistricts] = useState<NepalDistrict[]>([])
-  const [municipalities, setMunicipalities] = useState<NepalMunicipality[]>([])
+  const [districts, setDistricts] = useState<NepalDistrict[]>(initialDistricts)
+  const [municipalities, setMunicipalities] = useState<NepalMunicipality[]>(initialMunicipalities)
   const [loadingDistricts, setLoadingDistricts] = useState(false)
   const [loadingMunicipalities, setLoadingMunicipalities] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const idempotencyKeyRef = React.useRef<string | null>(null)
+
+  // Use refs to track if the values are seeded from mount so we don't trigger cascade wipes
+  const isInitialMountRef = React.useRef(true)
   
   if (!idempotencyKeyRef.current) {
     idempotencyKeyRef.current = typeof crypto !== "undefined" && crypto.randomUUID
@@ -101,13 +114,14 @@ export function NepalDeliveryForm({ provinces, savedAddress, paymentQrs, onSucce
       : Math.random().toString(36).substring(2) + Date.now().toString(36)
   }
 
-  // Display names for preview
-  const [provinceName, setProvinceName] = useState("")
-  const [districtName, setDistrictName] = useState("")
-  const [municipalityName, setMunicipalityName] = useState("")
+  // Display names for preview (initial values based on savedAddress names if available)
+  const [provinceName, setProvinceName] = useState(savedAddress?.province?.name || "")
+  const [districtName, setDistrictName] = useState(savedAddress?.district?.name || "")
+  const [municipalityName, setMunicipalityName] = useState(savedAddress?.municipality?.name || "")
 
-  // Ward count from selected municipality
-  const [totalWards, setTotalWards] = useState(9)
+  // Ward count from selected municipality (pre-seed if initialMunicipalities has it)
+  const matchedMuni = initialMunicipalities.find((m) => m.id === savedAddress?.municipalityId)
+  const [totalWards, setTotalWards] = useState(matchedMuni?.totalWards || 9)
 
   const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null)
 
@@ -123,21 +137,21 @@ export function NepalDeliveryForm({ provinces, savedAddress, paymentQrs, onSucce
     defaultValues: {
       fullName: savedAddress?.fullName || "",
       phone: savedAddress?.phone || "",
-      provinceId: "",
-      districtId: "",
-      municipalityId: "",
-      wardNumber: undefined,
+      provinceId: savedAddress?.provinceId || "",
+      districtId: savedAddress?.districtId || "",
+      municipalityId: savedAddress?.municipalityId || "",
+      wardNumber: savedAddress?.wardNumber || undefined,
       tole: savedAddress?.tole || "",
       street: savedAddress?.street || "",
       landmark: savedAddress?.landmark || "",
       deliveryNote: "",
-      latitude: undefined,
-      longitude: undefined,
+      latitude: savedAddress?.latitude || undefined,
+      longitude: savedAddress?.longitude || undefined,
       saveAddress: false,
       paymentMethod: "COD",
-      provinceName: "",
-      districtName: "",
-      municipalityName: "",
+      provinceName: savedAddress?.province?.name || "",
+      districtName: savedAddress?.district?.name || "",
+      municipalityName: savedAddress?.municipality?.name || "",
     },
   })
 
@@ -146,8 +160,18 @@ export function NepalDeliveryForm({ provinces, savedAddress, paymentQrs, onSucce
   const selectedDistrictId = watch("districtId")
   const selectedMunicipalityId = watch("municipalityId")
 
+  // On initial render finish, turn off the mount guard ref
+  useEffect(() => {
+    isInitialMountRef.current = false
+  }, [])
+
   // Fetch districts when province changes
   useEffect(() => {
+    // Mount safety check: If it's initial mount and we already have districts, skip resetting/fetching
+    if (isInitialMountRef.current && districts.length > 0) {
+      return
+    }
+
     if (!selectedProvinceId) {
       setDistricts([])
       setMunicipalities([])
@@ -175,6 +199,11 @@ export function NepalDeliveryForm({ provinces, savedAddress, paymentQrs, onSucce
 
   // Fetch municipalities when district changes
   useEffect(() => {
+    // Mount safety check: If it's initial mount and we already have municipalities, skip resetting/fetching
+    if (isInitialMountRef.current && municipalities.length > 0) {
+      return
+    }
+
     if (!selectedDistrictId) {
       setMunicipalities([])
       setValue("municipalityId", "")
@@ -200,7 +229,10 @@ export function NepalDeliveryForm({ provinces, savedAddress, paymentQrs, onSucce
     const muni = municipalities.find((m) => m.id === selectedMunicipalityId)
     if (muni) {
       setTotalWards(muni.totalWards)
-      setValue("wardNumber", undefined as any)
+      // Only clear wardNumber if NOT on initial mount
+      if (!isInitialMountRef.current && watchedValues.wardNumber !== savedAddress?.wardNumber) {
+        setValue("wardNumber", undefined as any)
+      }
       setValue("municipalityName", muni.name)
       setValue("municipalityType", muni.type)
       setMunicipalityName(muni.name)

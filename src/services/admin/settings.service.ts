@@ -1,7 +1,7 @@
 import { db } from "@/db"
 import { appSettings, settingsHistory } from "@/db/schema/settings"
 import { eq } from "drizzle-orm"
-import { unstable_cache } from "next/cache"
+import { unstable_cache, revalidateTag } from "next/cache"
 import type { AppSettings } from "@/types/settings"
 
 // ── Per-key cache functions created at module level (not inside the method) ──
@@ -23,7 +23,7 @@ function getSettingCachedFn<K extends keyof AppSettings>(key: K) {
           return (result?.value as AppSettings[K]) || null
         },
         [`setting-${key}`],
-        { tags: [`settings-${key}`, "settings"], revalidate: 3600 }
+        { tags: [`settings-${key}`, "settings"], revalidate: 2592000 }
       )
     )
   }
@@ -40,7 +40,7 @@ const _getAllSettingsCached = unstable_cache(
     return settingsMap
   },
   ["all-settings"],
-  { tags: ["settings"], revalidate: 3600 }
+  { tags: ["settings"], revalidate: 2592000 }
 )
 
 export class AdminSettingsService {
@@ -106,6 +106,10 @@ export class AdminSettingsService {
         })
       }
     })
+
+    // Bust the cache for this setting key and the generic settings tag
+    revalidateTag(`settings-${key}`, {})
+    revalidateTag("settings", {})
   }
 
   /**

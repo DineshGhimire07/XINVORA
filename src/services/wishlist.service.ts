@@ -60,6 +60,35 @@ export class WishlistService {
   }
 
   /**
+   * Lightweight toggle flow for a variant. Ensures wishlist exists, checks existence
+   * of the variant in wishlistItems with a simple query, and inserts or deletes it.
+   */
+  static async toggleWishlistLightweight(variantId: string, userId: string): Promise<{ wishlisted: boolean }> {
+    const wishlistId = await this.resolveWishlistId(userId)
+
+    // Check if item exists in wishlistItems using a simple SELECT
+    const [existing] = await db
+      .select({ id: wishlistItems.id })
+      .from(wishlistItems)
+      .where(
+        eq(wishlistItems.wishlistId, wishlistId) &&
+        eq(wishlistItems.variantId, variantId)
+      )
+      .limit(1)
+
+    if (existing) {
+      await db.delete(wishlistItems).where(eq(wishlistItems.id, existing.id))
+      return { wishlisted: false }
+    } else {
+      await db.insert(wishlistItems).values({
+        wishlistId,
+        variantId,
+      })
+      return { wishlisted: true }
+    }
+  }
+
+  /**
    * Removes an item from the wishlist.
    */
   static async removeFromWishlist(input: RemoveFromWishlistInput, userId: string) {

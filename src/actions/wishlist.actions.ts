@@ -6,6 +6,7 @@ import { SessionService } from "../services/session.service"
 import { CartService } from "../services/cart.service"
 import type { ActionResult } from "../types/actions"
 import { addToWishlistSchema, removeFromWishlistSchema } from "../validations/wishlist"
+import { type TimingEntry, printTimingSummary } from "@/lib/perf"
 
 export async function saveForLaterAction(
   prevState: any,
@@ -203,40 +204,37 @@ export async function moveAllWishlistItemsToCartAction(): Promise<ActionResult<v
  * Toggles a product in the wishlist by its productId (wishlists the first variant).
  */
 export async function toggleWishlistByProductIdAction(productId: string): Promise<ActionResult<{ wishlisted: boolean }>> {
+  const totalStart = performance.now()
+  const timings: TimingEntry[] = []
   try {
+    const sessionStart = performance.now()
     const session = await SessionService.requireAuth()
+    timings.push({ name: 'requireAuth', ms: performance.now() - sessionStart })
     
     // Find first variant for this product
     const { db } = await import("@/db/client")
-    const { variants, wishlistItems, wishlists } = await import("@/db/schema")
+    const { variants } = await import("@/db/schema")
     const { eq, and } = await import("drizzle-orm")
     const { WishlistService } = await import("@/services/wishlist.service")
 
+    const dbStart = performance.now()
     const firstVariant = await db.query.variants.findFirst({
       where: and(eq(variants.productId, productId), eq(variants.isActive, true)),
     })
+    timings.push({ name: 'findFirstVariant', ms: performance.now() - dbStart })
 
     if (!firstVariant) {
       throw new Error("No active variants found for this product.")
     }
 
-    const wishlist = await WishlistService.resolveWishlist(session.id)
-    const existingItem = wishlist.items.find(i => i.variant.id === firstVariant.id)
-
-    let wishlisted = false
-    if (existingItem) {
-      await db.delete(wishlistItems).where(eq(wishlistItems.id, existingItem.id))
-      wishlisted = false
-    } else {
-      await db.insert(wishlistItems).values({
-        wishlistId: wishlist.id,
-        variantId: firstVariant.id,
-      })
-      wishlisted = true
-    }
+    const toggleStart = performance.now()
+    const { wishlisted } = await WishlistService.toggleWishlistLightweight(firstVariant.id, session.id)
+    timings.push({ name: 'toggleWishlistLightweight', ms: performance.now() - toggleStart })
 
     revalidatePath("/wishlist")
     revalidatePath("/account/wishlist")
+
+    printTimingSummary('toggleWishlistByProductIdAction', timings, performance.now() - totalStart)
 
     return { success: true, data: { wishlisted } }
   } catch (error: any) {
@@ -255,30 +253,23 @@ export async function toggleWishlistByProductIdAction(productId: string): Promis
  * Toggles a product variant in the wishlist by its variantId.
  */
 export async function toggleWishlistAction(variantId: string): Promise<ActionResult<{ wishlisted: boolean }>> {
+  const totalStart = performance.now()
+  const timings: TimingEntry[] = []
   try {
+    const sessionStart = performance.now()
     const session = await SessionService.requireAuth()
-    const { db } = await import("@/db/client")
-    const { wishlistItems } = await import("@/db/schema")
-    const { eq } = await import("drizzle-orm")
+    timings.push({ name: 'requireAuth', ms: performance.now() - sessionStart })
+
     const { WishlistService } = await import("@/services/wishlist.service")
 
-    const wishlist = await WishlistService.resolveWishlist(session.id)
-    const existingItem = wishlist.items.find(i => i.variant.id === variantId)
-
-    let wishlisted = false
-    if (existingItem) {
-      await db.delete(wishlistItems).where(eq(wishlistItems.id, existingItem.id))
-      wishlisted = false
-    } else {
-      await db.insert(wishlistItems).values({
-        wishlistId: wishlist.id,
-        variantId,
-      })
-      wishlisted = true
-    }
+    const toggleStart = performance.now()
+    const { wishlisted } = await WishlistService.toggleWishlistLightweight(variantId, session.id)
+    timings.push({ name: 'toggleWishlistLightweight', ms: performance.now() - toggleStart })
 
     revalidatePath("/wishlist")
     revalidatePath("/account/wishlist")
+
+    printTimingSummary('toggleWishlistAction', timings, performance.now() - totalStart)
 
     return { success: true, data: { wishlisted } }
   } catch (error: any) {

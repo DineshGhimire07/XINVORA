@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import { SessionService } from "@/services/session.service"
 import { getCart } from "@/db/queries/cart"
-import { getProvinces } from "@/db/queries/nepal"
+import { getProvinces, getDistrictsByProvince, getMunicipalitiesByDistrict } from "@/db/queries/nepal"
 import { redirect } from "next/navigation"
 import { Container } from "@/components/shared/container"
 import { Section } from "@/components/shared/section"
@@ -25,26 +25,42 @@ async function CheckoutFlowWithData({
   sessionId: string
   totals: any
 }) {
-  // Tier B fetches — run in parallel, streamed via Suspense
-  const { AdminSettingsService } = await import("@/services/admin/settings.service")
-
-  const [provinces, savedAddresses, paymentQrs] = await Promise.all([
+  // Tier B fetches — provinces + saved address in parallel (no paymentQrs — deferred to step 2)
+  const [provinces, savedAddress] = await Promise.all([
     getProvinces(),
-    db
-      .select()
-      .from(addresses)
-      .where(eq(addresses.userId, sessionId))
-      .orderBy(desc(addresses.createdAt))
-      .limit(1),
-    AdminSettingsService.getSetting("payment_qrs"),
+    db.query.addresses.findFirst({
+      where: eq(addresses.userId, sessionId),
+      orderBy: desc(addresses.createdAt),
+      with: {
+        province: true,
+        district: true,
+        municipality: true,
+      },
+    }),
   ])
+
+  // Part 2: Pre-fetch districts/municipalities for saved address so the cascade
+  // renders immediately without a client-side fetch waterfall
+  let initialDistricts: any[] = []
+  let initialMunicipalities: any[] = []
+
+  if (savedAddress?.provinceId && savedAddress?.districtId) {
+    // Both are independent once we have the IDs — run in parallel
+    ;[initialDistricts, initialMunicipalities] = await Promise.all([
+      getDistrictsByProvince(savedAddress.provinceId),
+      getMunicipalitiesByDistrict(savedAddress.districtId),
+    ])
+  } else if (savedAddress?.provinceId) {
+    initialDistricts = await getDistrictsByProvince(savedAddress.provinceId)
+  }
 
   return (
     <CheckoutFlow
       provinces={provinces}
-      savedAddress={savedAddresses[0] || null}
+      savedAddress={savedAddress}
       totals={totals}
-      paymentQrs={paymentQrs}
+      initialDistricts={initialDistricts}
+      initialMunicipalities={initialMunicipalities}
     />
   )
 }
@@ -129,7 +145,7 @@ export default async function CheckoutPage() {
           <h1 className="text-3xl font-light tracking-tight text-text-primary">Checkout</h1>
         </div>
 
-        {/* Tier B data (provinces, saved address, payment QRs) streams in via Suspense */}
+        {/* Tier B data (provinces, saved address + its geo cascade) streams in via Suspense */}
         <Suspense fallback={<CheckoutSkeleton />}>
           <CheckoutFlowWithData
             sessionId={session.id}

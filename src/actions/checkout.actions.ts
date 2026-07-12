@@ -81,3 +81,24 @@ export async function submitCheckoutAction(
     }
   }
 }
+
+export async function getPaymentQrsAction(): Promise<ActionResult<any>> {
+  try {
+    const { AdminSettingsService } = await import("@/services/admin/settings.service")
+    const paymentQrs = await AdminSettingsService.getSetting("payment_qrs")
+    return {
+      success: true,
+      data: paymentQrs,
+    }
+  } catch (error: any) {
+    console.error("[getPaymentQrsAction Error]:", error)
+    return {
+      success: false,
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch payment QR codes.",
+      },
+    }
+  }
+}
+

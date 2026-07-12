@@ -157,19 +157,21 @@ export class CartService {
     }
 
     const writeStart = performance.now()
-    if (existingItem) {
-      await db.update(cartItems)
-        .set({ quantity: newQuantity, updatedAt: new Date() })
-        .where(eq(cartItems.id, existingItem.id))
-    } else {
-      await db.insert(cartItems).values({
+    await db.insert(cartItems)
+      .values({
         cartId,
         variantId: input.variantId,
         quantity: input.quantity,
         priceSnapshot: 0, // Ignored on read, live prices used
       })
-    }
-    timings.push({ name: 'insertOrUpdateQuery', ms: performance.now() - writeStart })
+      .onConflictDoUpdate({
+        target: [cartItems.cartId, cartItems.variantId],
+        set: {
+          quantity: sql`${cartItems.quantity} + ${input.quantity}`,
+          updatedAt: new Date(),
+        }
+      })
+    timings.push({ name: 'upsertCartItemQuery', ms: performance.now() - writeStart })
 
     printTimingSummary('CartService.addToCart', timings, performance.now() - totalStart)
 

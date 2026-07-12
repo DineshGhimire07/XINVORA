@@ -2,6 +2,17 @@ import "server-only"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
+import { cache } from "react"
+import { type TimingEntry, printTimingSummary } from "@/lib/perf"
+
+// Request-scoped memoization of the Auth.js auth() database/session call
+const getCachedSession = cache(async () => {
+  const start = performance.now()
+  const session = await auth()
+  const duration = performance.now() - start
+  console.log(`[SessionService] Database auth() lookup completed in ${duration.toFixed(2)}ms`)
+  return session
+})
 
 /**
  * Session Service
@@ -19,7 +30,7 @@ export class SessionService {
    * Does not throw or redirect if unauthenticated.
    */
   public static async optionalAuth() {
-    const session = await auth()
+    const session = await getCachedSession()
     return session?.user || null
   }
 
