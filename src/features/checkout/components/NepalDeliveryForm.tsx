@@ -10,8 +10,6 @@ import { AlertCircle, ChevronRight, Loader2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { NepalDeliverySchema, type NepalDeliveryFormValues } from "@/validations/checkout"
-import { submitCheckoutAction } from "@/actions/checkout.actions"
-import { uploadCustomerLocalFileAction } from "@/actions/customer.media.actions"
 import { SearchableSelect } from "./SearchableSelect"
 import { GeolocationCapture } from "./GeolocationCapture"
 import { PaymentMethodSelector } from "./PaymentMethodSelector"
@@ -52,11 +50,10 @@ function FormField({
   )
 }
 
-function SectionHeader({ number, title, subtitle }: { number: number; title: string; subtitle?: string }) {
+function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="mb-6 space-y-1">
-      <p className="text-[10px] font-bold tracking-[0.2em] text-accent uppercase">Step {number}</p>
-      <h2 className="text-2xl font-display font-light tracking-wide text-text-primary">{title}</h2>
+    <div className="mb-6 space-y-1 pb-4 border-b border-border/50">
+      <h2 className="text-xl font-display font-medium tracking-wide text-text-primary">{title}</h2>
       {subtitle && <p className="text-sm text-text-tertiary">{subtitle}</p>}
     </div>
   )
@@ -77,7 +74,6 @@ interface NepalDeliveryFormProps {
   savedAddress?: any
   initialDistricts?: NepalDistrict[]
   initialMunicipalities?: NepalMunicipality[]
-  paymentQrs?: any
   onSuccess?: (data: NepalDeliveryFormValues) => void
   initialData?: NepalDeliveryFormValues | null
 }
@@ -87,7 +83,6 @@ export function NepalDeliveryForm({
   savedAddress,
   initialDistricts = [],
   initialMunicipalities = [],
-  paymentQrs,
   onSuccess,
   initialData,
 }: NepalDeliveryFormProps) {
@@ -118,8 +113,6 @@ export function NepalDeliveryForm({
   const matchedMuni = initialMunicipalities.find((m) => m.id === savedAddress?.municipalityId)
   const [totalWards, setTotalWards] = useState(matchedMuni?.totalWards || 9)
 
-  const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null)
-
   const {
     register,
     handleSubmit,
@@ -143,7 +136,6 @@ export function NepalDeliveryForm({
       latitude: savedAddress?.latitude || undefined,
       longitude: savedAddress?.longitude || undefined,
       saveAddress: false,
-      paymentMethod: "COD",
       provinceName: savedAddress?.province?.name || "",
       districtName: savedAddress?.district?.name || "",
       municipalityName: savedAddress?.municipality?.name || "",
@@ -277,15 +269,9 @@ export function NepalDeliveryForm({
       <div className="space-y-6">
 
         {/* ─── Section 1: Recipient ─────────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-surface rounded-lg border border-border shadow-sm overflow-hidden"
-        >
-          <div className="px-6 py-5">
-            <SectionHeader number={1} title="Recipient Information" />
-
-            <div className="space-y-5">
+        <div className="space-y-5">
+          <SectionHeader title="Recipient Information" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Full Name */}
               <FormField label="Full Name" required error={errors.fullName?.message}>
                 <input
@@ -323,25 +309,17 @@ export function NepalDeliveryForm({
                   />
                 </div>
               </FormField>
-            </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* ─── Section 2: Address ───────────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="bg-surface rounded-lg border border-border shadow-sm overflow-hidden"
-        >
-          <div className="px-6 py-5">
-            <SectionHeader
-              number={2}
-              title="Delivery Address"
-              subtitle="Select your province, district, and municipality"
-            />
+        <div className="space-y-5 pt-4">
+          <SectionHeader
+            title="Delivery Address"
+            subtitle="Select your province, district, and municipality"
+          />
 
-            <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Province */}
               <FormField label="Province" required error={errors.provinceId?.message}>
                 <Controller
@@ -448,6 +426,9 @@ export function NepalDeliveryForm({
                   className={cn(inputClass, errors.street && "border-error focus:border-error focus:ring-error/20")}
                 />
               </FormField>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-5">
 
               {/* Landmark */}
               <FormField label="Landmark" error={errors.landmark?.message}>
@@ -473,32 +454,21 @@ export function NepalDeliveryForm({
                 />
               </FormField>
             </div>
-          </div>
-        </motion.div>
+        </div>
 
         {/* ─── Section 3: Location ──────────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-surface rounded-lg border border-border shadow-sm overflow-hidden"
-        >
-          <div className="px-6 py-5">
-            <SectionHeader
-              number={3}
-              title="Location"
-              subtitle="Help our delivery partner locate your address more accurately."
-            />
-            <GeolocationCapture
-              onCapture={handleGeoCapture}
-              onClear={handleGeoClear}
-              latitude={watchedValues.latitude}
-              longitude={watchedValues.longitude}
-            />
-          </div>
-        </motion.div>
-
-
+        <div className="space-y-5 pt-4">
+          <SectionHeader
+            title="Location"
+            subtitle="Help our delivery partner locate your address more accurately."
+          />
+          <GeolocationCapture
+            onCapture={handleGeoCapture}
+            onClear={handleGeoClear}
+            latitude={watchedValues.latitude}
+            longitude={watchedValues.longitude}
+          />
+        </div>
 
         {/* ─── Save Address ─────────────────────────────────────────────────── */}
         <div className="px-1">
@@ -553,18 +523,16 @@ export function NepalDeliveryForm({
           disabled={isSubmitting}
           id="place-order-btn"
           className={cn(
-            "w-full h-14 rounded-lg font-semibold text-sm uppercase tracking-widest",
-            "bg-text-primary text-white",
-            "hover:bg-ink transition-all duration-200",
+            "w-full h-14 rounded-lg font-semibold text-sm tracking-wide transition-all duration-300",
+            "bg-accent hover:bg-accent/90 text-white shadow-[0_4px_14px_0_rgba(0,0,0,0.1)]",
             "flex items-center justify-center gap-2",
-            "shadow-lg hover:shadow-xl active:scale-[0.98]",
-            "disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
+            "disabled:opacity-50 disabled:cursor-not-allowed"
           )}
         >
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Placing Order…</span>
+              <span>Proceeding…</span>
             </>
           ) : (
             <>

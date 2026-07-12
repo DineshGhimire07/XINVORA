@@ -24,7 +24,7 @@ export function OrderSummary({ cart, shippingCost, discountAmount, total, childr
         <CardTitle className="text-2xl font-display font-light tracking-wide">Order Summary</CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="space-y-6 max-h-[400px] overflow-y-auto pr-2">
+        <div className="space-y-6 pr-2">
           {cart.items.map((item) => (
             <div key={item.id} className="flex gap-4">
               <div className="relative w-20 h-24 bg-surface-secondary">

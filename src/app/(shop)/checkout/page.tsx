@@ -68,31 +68,31 @@ async function CheckoutFlowWithData({
 // ── Loading skeleton shown while Tier B data streams ─────────────────────────
 function CheckoutSkeleton() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-pulse">
-      <div className="lg:col-span-8">
-        <div className="bg-surface rounded-2xl p-6 lg:p-8 shadow-sm border border-border space-y-6">
-          <div className="h-6 bg-surface-secondary rounded w-48" />
-          <div className="space-y-4">
-            <div className="h-12 bg-surface-secondary rounded" />
-            <div className="h-12 bg-surface-secondary rounded" />
-            <div className="grid grid-cols-2 gap-4">
+    <div className="flex flex-col-reverse lg:flex-row min-h-screen w-full">
+      <div className="flex-1 bg-surface pt-32 pb-24 px-6 lg:px-12 xl:px-24">
+        <div className="max-w-2xl mx-auto lg:ml-auto lg:mr-16 w-full animate-pulse space-y-10">
+          <div className="space-y-2">
+            <div className="h-4 bg-surface-secondary rounded w-24" />
+            <div className="h-8 bg-surface-secondary rounded w-48" />
+          </div>
+          <div className="bg-surface rounded-lg border border-border space-y-6 p-6">
+            <div className="h-6 bg-surface-secondary rounded w-48" />
+            <div className="space-y-4">
               <div className="h-12 bg-surface-secondary rounded" />
               <div className="h-12 bg-surface-secondary rounded" />
             </div>
-            <div className="h-12 bg-surface-secondary rounded" />
-            <div className="h-12 bg-surface-secondary rounded" />
           </div>
         </div>
       </div>
-      <div className="lg:col-span-4 hidden lg:block">
-        <div className="bg-surface rounded-2xl p-6 shadow-sm border border-border space-y-4">
-          <div className="h-5 bg-surface-secondary rounded w-32" />
-          <div className="space-y-3">
-            <div className="h-16 bg-surface-secondary rounded" />
-            <div className="h-16 bg-surface-secondary rounded" />
+      <div className="w-full lg:w-[45%] xl:w-[40%] bg-surface-secondary/40 pt-32 pb-24 px-6 lg:px-12 xl:px-24 lg:border-l border-border/50">
+        <div className="max-w-md mx-auto lg:mr-auto lg:ml-12 w-full animate-pulse">
+          <div className="bg-surface rounded-lg p-6 border border-border space-y-4">
+            <div className="h-5 bg-surface-secondary rounded w-32" />
+            <div className="space-y-3">
+              <div className="h-16 bg-surface-secondary rounded" />
+              <div className="h-16 bg-surface-secondary rounded" />
+            </div>
           </div>
-          <div className="h-px bg-border" />
-          <div className="h-5 bg-surface-secondary rounded w-24 ml-auto" />
         </div>
       </div>
     </div>
@@ -135,24 +135,14 @@ export default async function CheckoutPage() {
   }
 
   return (
-    <Section padding="lg" className="min-h-screen bg-surface-secondary/40">
-      <Container size="lg">
-        {/* Header — renders immediately */}
-        <div className="mb-10">
-          <p className="text-xs font-semibold uppercase tracking-widest text-text-tertiary mb-2">
-            XINVORA
-          </p>
-          <h1 className="text-3xl font-light tracking-tight text-text-primary">Checkout</h1>
-        </div>
-
-        {/* Tier B data (provinces, saved address + its geo cascade) streams in via Suspense */}
-        <Suspense fallback={<CheckoutSkeleton />}>
-          <CheckoutFlowWithData
-            sessionId={session.id}
-            totals={initialTotals}
-          />
-        </Suspense>
-      </Container>
-    </Section>
+    <main className="min-h-screen bg-surface">
+      {/* Tier B data (provinces, saved address + its geo cascade) streams in via Suspense */}
+      <Suspense fallback={<CheckoutSkeleton />}>
+        <CheckoutFlowWithData
+          sessionId={session.id}
+          totals={initialTotals}
+        />
+      </Suspense>
+    </main>
   )
 }

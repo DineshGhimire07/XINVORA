@@ -38,9 +38,12 @@ export function CheckoutFlow({
   const [paymentQrs, setPaymentQrs] = useState<any>(null)
   const [loadingQrs, setLoadingQrs] = useState(false)
 
-  // Start pre-fetching paymentQrs as early as possible (on mount) so it's ready by Step 2
+  // Fetch paymentQrs only when the user reaches Step 2 to save initial page load resources
   useEffect(() => {
+    if (step !== 2 || paymentQrs) return;
+
     let active = true
+    setLoadingQrs(true)
     async function fetchQrs() {
       try {
         const res = await getPaymentQrsAction()
@@ -48,33 +51,19 @@ export function CheckoutFlow({
           setPaymentQrs(res.data)
         }
       } catch (err) {
-        console.error("Error fetching payment QRs in background:", err)
+        console.error("Error fetching payment QRs:", err)
+      } finally {
+        if (active) setLoadingQrs(false)
       }
     }
     fetchQrs()
     return () => {
       active = false
     }
-  }, [])
+  }, [step, paymentQrs])
 
   const handleAddressSuccess = async (data: NepalDeliveryFormValues) => {
     setAddressData(data)
-    
-    // Safety check: if background fetch failed/slow, fetch again and wait before changing step
-    if (!paymentQrs) {
-      setLoadingQrs(true)
-      try {
-        const res = await getPaymentQrsAction()
-        if (res.success) {
-          setPaymentQrs(res.data)
-        }
-      } catch (err) {
-        console.error("Manual fallback QR fetch failed:", err)
-      } finally {
-        setLoadingQrs(false)
-      }
-    }
-    
     setStep(2)
   }
 
@@ -85,62 +74,74 @@ export function CheckoutFlow({
   }, [step])
 
   return (
-    <div className="w-full relative min-h-[600px]">
-      <AnimatePresence mode="wait">
-        {step === 1 && (
-          <motion.div
-            key="step1"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-              <div className="lg:col-span-8">
-                <div className="bg-surface rounded-lg p-6 lg:p-8 shadow-sm border border-border">
-                  <NepalDeliveryForm
-                    provinces={provinces}
-                    savedAddress={savedAddress}
-                    initialDistricts={initialDistricts}
-                    initialMunicipalities={initialMunicipalities}
-                    onSuccess={handleAddressSuccess}
-                    initialData={addressData}
-                  />
-                </div>
-              </div>
-              <div className="lg:col-span-4 hidden lg:block">
-                <div className="sticky top-24">
-                  <OrderSummary cart={totals.cart} />
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
+    <div className="flex flex-col-reverse lg:flex-row min-h-screen w-full">
+      <div className="flex-1 bg-surface pt-32 pb-24 px-6 lg:px-12 xl:px-24">
+        <div className="max-w-2xl mx-auto lg:ml-auto lg:mr-16 w-full">
+          {/* Header */}
+          <div className="mb-10 lg:mb-12">
+            <p className="text-[10px] font-bold tracking-[0.2em] text-accent uppercase mb-2">
+              XINVORA
+            </p>
+            <h1 className="text-3xl lg:text-4xl font-display font-light tracking-wide text-text-primary">Checkout</h1>
+          </div>
 
-        {step === 2 && addressData && (
-          <motion.div
-            key="step2"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.3 }}
-          >
-            {loadingQrs ? (
-              <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
-                <span className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm text-text-secondary">Loading payment details...</span>
-              </div>
-            ) : (
-              <PaymentStep
-                addressData={addressData}
-                totals={totals}
-                paymentQrs={paymentQrs}
-                onBack={goBack}
-              />
+          <AnimatePresence mode="wait">
+            {step === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <NepalDeliveryForm
+                  provinces={provinces}
+                  savedAddress={savedAddress}
+                  initialDistricts={initialDistricts}
+                  initialMunicipalities={initialMunicipalities}
+                  onSuccess={handleAddressSuccess}
+                  initialData={addressData}
+                />
+              </motion.div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+            {step === 2 && addressData && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                {loadingQrs ? (
+                  <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
+                    <span className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm text-text-secondary">Loading payment details...</span>
+                  </div>
+                ) : (
+                  <PaymentStep
+                    addressData={addressData}
+                    totals={totals}
+                    paymentQrs={paymentQrs}
+                    onBack={goBack}
+                  />
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      <div className="w-full lg:w-[45%] xl:w-[40%] bg-surface-secondary/40 pt-32 pb-24 px-6 lg:px-12 xl:px-24 lg:border-l border-border/50">
+        <div className="max-w-md mx-auto lg:mr-auto lg:ml-12 w-full sticky top-32">
+          <OrderSummary 
+            cart={totals.cart} 
+            shippingCost={totals.shippingCost} 
+            discountAmount={totals.discountAmount}
+            total={totals.total} 
+          />
+        </div>
+      </div>
     </div>
   )
 }
