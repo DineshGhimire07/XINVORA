@@ -66,7 +66,6 @@ export async function addToCartAction(
   if (result.success) {
     invalidateCartCache(userId, sessionId)
     revalidatePath("/cart")
-    revalidatePath("/", "layout")
   }
 
   printTimingSummary('addToCartAction', timings, performance.now() - totalStart)
@@ -92,7 +91,6 @@ export async function updateCartQuantityAction(
   if (result.success) {
     invalidateCartCache(userId, sessionId)
     revalidatePath("/cart")
-    revalidatePath("/", "layout")
   }
 
   return result
@@ -116,7 +114,6 @@ export async function removeFromCartAction(
   if (result.success) {
     invalidateCartCache(userId, sessionId)
     revalidatePath("/cart")
-    revalidatePath("/", "layout")
   }
 
   return result
@@ -134,7 +131,6 @@ export async function clearCartAction(
   if (result.success) {
     invalidateCartCache(userId, sessionId)
     revalidatePath("/cart")
-    revalidatePath("/", "layout")
   }
 
   return result
