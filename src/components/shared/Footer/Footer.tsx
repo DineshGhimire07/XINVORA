@@ -68,6 +68,7 @@ export async function Footer() {
                     <li key={item.id}>
                       <Link 
                         href={item.href} 
+                        prefetch={false}
                         className="hover:text-text-primary transition-colors duration-150"
                       >
                         {item.label}
