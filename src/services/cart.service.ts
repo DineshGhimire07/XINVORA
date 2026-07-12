@@ -126,14 +126,14 @@ export class CartService {
     const totalStart = performance.now()
     const timings: TimingEntry[] = []
 
-    // Resolve the cart ID with a lightweight query (no items/joins)
-    const resolveStart = performance.now()
-    const cartId = await this.resolveCartId(userId, sessionId)
-    timings.push({ name: 'resolveCartId', ms: performance.now() - resolveStart })
+    // resolveCartId and validateProductAndVariantStatus are independent — run in parallel
+    const parallelStart = performance.now()
+    const [cartId, variantData] = await Promise.all([
+      this.resolveCartId(userId, sessionId),
+      this.validateProductAndVariantStatus(input.variantId, true),
+    ])
+    timings.push({ name: 'resolveCartId+validate (parallel)', ms: performance.now() - parallelStart })
 
-    const validateStart = performance.now()
-    const variantData = await this.validateProductAndVariantStatus(input.variantId, true)
-    timings.push({ name: 'validateProductAndVariantStatus', ms: performance.now() - validateStart })
     if (!variantData) return { success: false }
 
     const availableInventory = variantData.inventory ?? 0

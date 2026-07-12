@@ -88,11 +88,15 @@ export default async function CheckoutPage() {
   const session = await SessionService.optionalAuth()
   if (!session) redirect("/auth/login?callbackUrl=/checkout")
 
-  const cart = await getCart(session.id, null)
+  // Parallelize getCart + maintenance check — both only need session.id, not each other
+  const { AdminSettingsService } = await import("@/services/admin/settings.service")
+  const [cart, maintenance] = await Promise.all([
+    getCart(session.id, null),
+    AdminSettingsService.getSetting("maintenance"),
+  ])
+
   if (!cart || cart.items.length === 0) redirect("/cart")
 
-  const { AdminSettingsService } = await import("@/services/admin/settings.service")
-  const maintenance = await AdminSettingsService.getSetting("maintenance")
   if (maintenance?.mode === "store_closed") {
     return (
       <Container className="py-24 max-w-2xl text-center space-y-6">
@@ -104,7 +108,7 @@ export default async function CheckoutPage() {
     )
   }
 
-  // Tier A: Calculate totals (blocking — needed before rendering the flow)
+  // Tier A: Calculate totals (blocking — pass preloaded cart to avoid redundant getCart fetch)
   const { CheckoutService } = await import("@/services/checkout.service")
   const initialTotals = await CheckoutService.calculateTotals(session.id, {
     shippingMethodId: "standard",
