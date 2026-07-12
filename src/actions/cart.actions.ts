@@ -1,6 +1,5 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { CartService } from "@/services/cart.service"
 import { SessionService } from "@/services/session.service"
@@ -63,11 +62,7 @@ export async function addToCartAction(
   )
   timings.push({ name: 'CartService.addToCart', ms: performance.now() - serviceStart })
 
-  if (result.success) {
-    const revalidateStart = performance.now()
-    revalidatePath("/cart")
-    timings.push({ name: 'revalidatePath', ms: performance.now() - revalidateStart })
-  }
+
 
   printTimingSummary('addToCartAction', timings, performance.now() - totalStart)
 
@@ -89,9 +84,7 @@ export async function updateCartQuantityAction(
     CartService.updateQuantity(validation.data, userId, sessionId)
   )
 
-  if (result.success) {
-    revalidatePath("/cart")
-  }
+
 
   return result
 }
@@ -111,9 +104,7 @@ export async function removeFromCartAction(
     CartService.removeFromCart(validation.data, userId, sessionId)
   )
 
-  if (result.success) {
-    revalidatePath("/cart")
-  }
+
 
   return result
 }
@@ -128,9 +119,7 @@ export async function clearCartAction(
     CartService.clearCart(userId, sessionId)
   )
 
-  if (result.success) {
-    revalidatePath("/cart")
-  }
+
 
   return result
 }
