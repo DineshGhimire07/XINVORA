@@ -6,10 +6,8 @@ import { Footer } from "@/components/shared/Footer/Footer"
 import { HeaderStateProvider } from "@/providers/header-state-provider"
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
-  const [maintenance, announcement] = await Promise.all([
-    AdminSettingsService.getSetting("maintenance"),
-    AdminSettingsService.getSetting("announcement"),
-  ])
+  const settings = await AdminSettingsService.getAllSettings()
+  const maintenance = settings.maintenance
 
   if (maintenance && maintenance.mode === "offline") {
     return <MaintenancePage settings={maintenance} />
