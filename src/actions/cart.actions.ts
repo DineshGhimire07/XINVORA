@@ -63,8 +63,7 @@ export async function addToCartAction(
   )
   timings.push({ name: 'CartService.addToCart', ms: performance.now() - serviceStart })
   if (result.success) {
-    revalidatePath("/cart")
-    revalidatePath("/checkout")
+    // Rely on automatic router invalidation on client navigation + active Data Cache
   }
 
   printTimingSummary('addToCartAction', timings, performance.now() - totalStart)
@@ -88,8 +87,7 @@ export async function updateCartQuantityAction(
   )
 
   if (result.success) {
-    revalidatePath("/cart")
-    revalidatePath("/checkout")
+    // Rely on automatic router invalidation
   }
 
   return result
@@ -111,8 +109,7 @@ export async function removeFromCartAction(
   )
 
   if (result.success) {
-    revalidatePath("/cart")
-    revalidatePath("/checkout")
+    // Rely on automatic router invalidation
   }
 
   return result
@@ -128,8 +125,7 @@ export async function clearCartAction(
     CartService.clearCart(userId, sessionId)
   )
   if (result.success) {
-    revalidatePath("/cart")
-    revalidatePath("/checkout")
+    // Rely on automatic router invalidation
   }
 
   return result

@@ -213,7 +213,6 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
           {/* SHOP LINK */}
           <Link
             href="/search"
-            prefetch={false}
             className="text-[13px] font-medium tracking-[0.18em] uppercase hover:opacity-60 transition-opacity duration-200 py-1 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-text-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200"
           >
             Shop
@@ -222,7 +221,6 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
           {/* COLLECTIONS LINK */}
           <Link
             href="/collections"
-            prefetch={false}
             className="text-[13px] font-medium tracking-[0.18em] uppercase hover:opacity-60 transition-opacity duration-200 py-1 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-text-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200"
           >
             Collections
@@ -231,7 +229,6 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
           {/* LIVING LINK */}
           <Link
             href="/collections/home-decor"
-            prefetch={false}
             className="text-[13px] font-medium tracking-[0.18em] uppercase hover:opacity-60 transition-opacity duration-200 py-1 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-text-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200"
           >
             Living
@@ -240,7 +237,6 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
           {/* JOURNAL LINK */}
           <Link
             href="/journal"
-            prefetch={false}
             className="text-[13px] font-medium tracking-[0.18em] uppercase hover:opacity-60 transition-opacity duration-200 py-1 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-text-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200"
           >
             Journal
@@ -271,7 +267,6 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
         <div className="justify-self-stretch md:justify-self-end flex items-center justify-between md:justify-start w-full md:w-auto text-current pl-1 sm:pl-2 md:pl-0">
           <Link
             href="/search"
-            prefetch={false}
             className="hidden md:flex p-1 hover:opacity-60 transition-opacity duration-200 mr-1 sm:mr-3 md:mr-7"
             aria-label="Search items"
           >
@@ -280,7 +275,6 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
 
           <Link
             href="/wishlist"
-            prefetch={false}
             className="p-1 hover:opacity-60 transition-opacity duration-200 relative"
             aria-label="Your wishlist"
           >
@@ -294,7 +288,6 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
           <div className="flex items-center gap-1 md:gap-7 md:ml-7">
             <Link
               href="/cart"
-              prefetch={false}
               className="p-1 hover:opacity-60 transition-opacity duration-200 relative flex items-center"
               aria-label="Your shopping cart"
             >
@@ -308,7 +301,6 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
 
             <Link
               href="/account"
-              prefetch={false}
               className="p-1 hover:opacity-60 transition-opacity duration-200"
               aria-label="Your account"
             >

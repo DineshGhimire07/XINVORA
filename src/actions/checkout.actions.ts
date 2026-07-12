@@ -63,8 +63,7 @@ export async function submitCheckoutAction(
     // Call unified createOrder
     const order = await CheckoutService.createOrder(session.id, submission)
 
-    revalidatePath("/cart")
-    revalidatePath("/checkout")
+    // Rely on automatic client routing invalidation after action completion
 
     return {
       success: true,
