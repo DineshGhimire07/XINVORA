@@ -108,7 +108,7 @@ export default async function CheckoutPage() {
   const { CheckoutService } = await import("@/services/checkout.service")
   const initialTotals = await CheckoutService.calculateTotals(session.id, {
     shippingMethodId: "standard",
-  } as any).catch(() => null)
+  } as any, cart).catch(() => null)
 
   if (!initialTotals) {
     redirect("/cart")

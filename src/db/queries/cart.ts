@@ -2,11 +2,12 @@ import { eq, and, desc, sql, inArray, isNull } from "drizzle-orm"
 import { db } from "../client"
 import { carts, cartItems, variants, products, productImages, colors, sizes, variantImages, priceBookEntries } from "../schema"
 import type { CartResult, CartItemResult, HeaderCommerceState } from "./types"
+import { cache } from "react"
 
-export async function getCart(
+export const getCart = cache(async (
   userId: string | null,
   sessionId: string | null
-): Promise<CartResult | null> {
+): Promise<CartResult | null> => {
   if (!userId && !sessionId) return null
 
   const cartFilters = []
@@ -107,7 +108,7 @@ export async function getCart(
     ...cart,
     items: resolvedItems,
   }
-}
+})
 
 import { wishlists, wishlistItems } from "../schema"
 

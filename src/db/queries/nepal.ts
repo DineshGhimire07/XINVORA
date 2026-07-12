@@ -1,6 +1,7 @@
 import { db } from "@/db/client"
 import { nepalProvinces, nepalDistricts, nepalMunicipalities } from "@/db/schema"
 import { eq, asc } from "drizzle-orm"
+import { unstable_cache } from "next/cache"
 
 export type NepalProvince = {
   id: string
@@ -23,17 +24,21 @@ export type NepalMunicipality = {
   totalWards: number
 }
 
-export async function getProvinces(): Promise<NepalProvince[]> {
-  return db
-    .select({
-      id: nepalProvinces.id,
-      name: nepalProvinces.name,
-      code: nepalProvinces.code,
-      sortOrder: nepalProvinces.sortOrder,
-    })
-    .from(nepalProvinces)
-    .orderBy(asc(nepalProvinces.sortOrder))
-}
+export const getProvinces = unstable_cache(
+  async (): Promise<NepalProvince[]> => {
+    return db
+      .select({
+        id: nepalProvinces.id,
+        name: nepalProvinces.name,
+        code: nepalProvinces.code,
+        sortOrder: nepalProvinces.sortOrder,
+      })
+      .from(nepalProvinces)
+      .orderBy(asc(nepalProvinces.sortOrder))
+  },
+  ["nepal-provinces"],
+  { revalidate: 86400, tags: ["nepal-provinces", "nepal"] }
+)
 
 export async function getDistrictsByProvince(provinceId: string): Promise<NepalDistrict[]> {
   return db
