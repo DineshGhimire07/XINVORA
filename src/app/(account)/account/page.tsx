@@ -2,7 +2,7 @@ import { SessionService } from "@/services/session.service"
 import { ProfileService } from "@/services/profile.service"
 import { OrderService } from "@/services/order.service"
 import { AddressService } from "@/services/address.service"
-import { getWishlist } from "@/db/queries/wishlist"
+import { getWishlistVariantIds } from "@/db/queries/wishlist"
 import { NotificationService } from "@/services/notification.service"
 import { Grid } from "@/components/shared/grid"
 import { Stack } from "@/components/shared/stack"
@@ -18,15 +18,15 @@ export const metadata = {
 export default async function DashboardPage() {
   const session = await SessionService.requireAuth()
 
-  const [profile, ordersResult, wishlist, savedAddresses, notifications] = await Promise.all([
+  const [profile, ordersResult, wishlistIds, savedAddresses, notifications] = await Promise.all([
     ProfileService.getOrCreateProfile(session.id),
     OrderService.getUserOrders(session.id, { limit: 2 }),
-    getWishlist(session.id),
+    getWishlistVariantIds(session.id),
     AddressService.getUserAddresses(session.id),
     NotificationService.getNotifications(session.id),
   ])
 
-  const wishlistCount = wishlist?.items.length ?? 0
+  const wishlistCount = wishlistIds.length
   const unreadNotificationsCount = notifications.filter((n: any) => !n.isRead).length
 
   return (

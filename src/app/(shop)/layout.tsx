@@ -3,6 +3,7 @@ import { AdminSettingsService } from "@/services/admin/settings.service"
 import { MaintenancePage } from "@/components/shop/MaintenancePage"
 import { HeaderServer } from "@/components/shared/Header/HeaderServer"
 import { Footer } from "@/components/shared/Footer/Footer"
+import { HeaderStateProvider } from "@/providers/header-state-provider"
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
   const [maintenance, announcement] = await Promise.all([
@@ -15,12 +16,12 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <>
+    <HeaderStateProvider>
       <HeaderServer />
       {children}
       <Suspense fallback={null}>
         <Footer />
       </Suspense>
-    </>
+    </HeaderStateProvider>
   )
 }
