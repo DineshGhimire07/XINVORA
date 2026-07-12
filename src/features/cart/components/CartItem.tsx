@@ -28,13 +28,13 @@ export function CartItem({ item }: CartItemProps) {
       gap={4}
       className={`py-6 border-b border-border items-center transition-opacity ${isPending ? "opacity-50" : "opacity-100"}`}
     >
-      <div className="col-span-1 md:col-span-1 aspect-[3/4] relative bg-surface">
+      <div className="col-span-1 md:col-span-1 aspect-[3/4] relative bg-surface rounded-lg overflow-hidden isolate">
         {primaryImage && (
           <Image
             src={primaryImage.url}
             alt={primaryImage.altText || item.variant.product.name}
             fill
-            className="object-cover"
+            className="object-cover object-top"
             sizes="(max-width: 768px) 25vw, 15vw"
           />
         )}

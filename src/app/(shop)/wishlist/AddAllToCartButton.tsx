@@ -10,8 +10,12 @@ export function AddAllToCartButton() {
 
   const handleAddAll = () => {
     startTransition(async () => {
-      await moveAllWishlistItemsToCartAction()
-      router.push("/cart")
+      const result = await moveAllWishlistItemsToCartAction()
+      if (result?.success) {
+        router.push("/cart")
+      } else {
+        alert(result?.error?.message || "Some items are out of stock and could not be added to cart.")
+      }
     })
   }
 

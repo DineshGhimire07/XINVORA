@@ -17,7 +17,7 @@ function SubmitButton({ isWishlisted }: { isWishlisted: boolean }) {
     <button
       type="submit"
       disabled={pending}
-      className={`p-2 transition-colors disabled:opacity-50 ${isWishlisted ? 'text-red-500' : 'text-text-primary hover:text-red-500'}`}
+      className={`p-2 transition-colors disabled:opacity-50 ${isWishlisted ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}
       aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
     >
       <svg width="24" height="24" viewBox="0 0 24 24" fill={isWishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5">

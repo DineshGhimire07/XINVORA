@@ -27,14 +27,14 @@ export function OrderSummary({ cart, shippingCost, discountAmount, total, childr
         <div className="space-y-6 pr-2">
           {cart.items.map((item) => (
             <div key={item.id} className="flex gap-4">
-              <div className="relative w-20 h-24 bg-surface-secondary">
+              <div className="relative w-20 h-24 bg-surface-secondary rounded-lg overflow-hidden isolate">
                 {item.variant.images?.[0] ? (
                   <Image 
                     src={item.variant.images[0].url} 
                     alt={item.variant.images[0].altText || item.variant.product.name}
                     fill
                     sizes="80px"
-                    className="object-cover"
+                    className="object-cover object-top"
                   />
                 ) : null}
               </div>
