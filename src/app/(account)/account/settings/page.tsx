@@ -9,7 +9,7 @@ export const metadata = {
 
 export default async function SettingsPage() {
   const session = await SessionService.requireAuth()
-  const profile = await ProfileService.getProfile(session.id)
+  const profile = await ProfileService.getOrCreateProfile(session.id)
 
   return (
     <div className="space-y-6">

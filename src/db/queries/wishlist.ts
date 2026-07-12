@@ -93,3 +93,20 @@ export async function getWishlist(
     items: resolvedItems,
   }
 }
+
+export async function getWishlistVariantIds(userId: string): Promise<string[]> {
+  const wlList = await db
+    .select({ id: wishlists.id })
+    .from(wishlists)
+    .where(eq(wishlists.userId, userId))
+    .limit(1)
+
+  if (wlList.length === 0) return []
+
+  const items = await db
+    .select({ variantId: wishlistItems.variantId })
+    .from(wishlistItems)
+    .where(eq(wishlistItems.wishlistId, wlList[0].id))
+
+  return items.map((item) => item.variantId)
+}

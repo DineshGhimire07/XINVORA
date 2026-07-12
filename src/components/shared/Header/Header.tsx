@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Search, User, ShoppingBag, Heart, Menu, X, ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useHeaderState } from "@/providers/header-state-provider"
 
 interface HeaderProps {
   cartCount?: number
@@ -81,39 +82,10 @@ const journalList = [
 export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: HeaderProps) {
   const pathname = usePathname()
   const [isScrolled, setIsScrolled] = React.useState(false)
-  const [liveCartCount, setLiveCartCount] = React.useState(cartCount)
-  const [liveWishlistCount, setLiveWishlistCount] = React.useState(wishlistCount)
+  const { state } = useHeaderState()
 
-  React.useEffect(() => {
-    let cancelled = false
-
-    const fetchSummary = () => {
-      fetch("/api/commerce/header-state")
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (!cancelled && data?.cart) {
-            setLiveCartCount(data.cart.cartCount ?? 0)
-            setLiveWishlistCount(data.cart.wishlistCount ?? 0)
-          }
-        })
-        .catch(() => {
-          // Silently ignore — badge just stays at its current value
-        })
-    }
-
-    // Fetch once on initial site load to populate the counts
-    fetchSummary()
-
-    // Listen for mutations or window focus to update counts dynamically
-    window.addEventListener("cart-updated", fetchSummary)
-    window.addEventListener("focus", fetchSummary)
-
-    return () => {
-      cancelled = true
-      window.removeEventListener("cart-updated", fetchSummary)
-      window.removeEventListener("focus", fetchSummary)
-    }
-  }, [])
+  const liveCartCount = state.cart ? state.cart.cartCount : cartCount
+  const liveWishlistCount = state.cart ? state.cart.wishlistCount : wishlistCount
 
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
   const [activeAccordion, setActiveAccordion] = React.useState<string | null>(null)

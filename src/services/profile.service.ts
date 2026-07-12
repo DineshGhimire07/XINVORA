@@ -5,9 +5,49 @@ import { users } from "../db/schema"
 
 export class ProfileService {
   /**
-   * Resolves the profile details of the user. Creates profile if not found.
+   * Resolves the profile details of the user. Does NOT create profile if not found.
    */
   static async getProfile(userId: string) {
+    // 1. Fetch user base details
+    const [user] = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        role: users.role,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+
+    if (!user) {
+      throw new Error("User not found")
+    }
+
+    // 2. Fetch profile
+    const profile = await ProfileRepository.findByUserId(null, userId)
+
+    return {
+      userId: user.id,
+      email: user.email,
+      firstName: user.firstName ?? "",
+      lastName: user.lastName ?? "",
+      phone: profile?.phone ?? "",
+      dateOfBirth: profile?.dateOfBirth ?? "",
+      profileImage: profile?.profileImage ?? "",
+      newsletterPreference: profile?.newsletterPreference ?? false,
+      languagePreference: profile?.languagePreference ?? "en",
+      timezone: profile?.timezone ?? "UTC",
+      createdAt: user.createdAt,
+    }
+  }
+
+  /**
+   * Resolves the profile details of the user. Creates profile if not found.
+   */
+  static async getOrCreateProfile(userId: string) {
     // 1. Fetch user base details
     const [user] = await db
       .select({

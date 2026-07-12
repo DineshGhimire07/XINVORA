@@ -17,6 +17,7 @@ import type { ReactNode } from "react"
 import { ThemeProvider } from "./theme-provider"
 import { SessionProvider } from "next-auth/react"
 import { AnalyticsProvider } from "@/features/analytics/ingestion/tracking-provider"
+import { HeaderStateProvider } from "./header-state-provider"
 
 interface ProvidersProps {
   children: ReactNode
@@ -26,9 +27,11 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <SessionProvider>
       <ThemeProvider>
-        <AnalyticsProvider>
-          {children}
-        </AnalyticsProvider>
+        <HeaderStateProvider>
+          <AnalyticsProvider>
+            {children}
+          </AnalyticsProvider>
+        </HeaderStateProvider>
       </ThemeProvider>
     </SessionProvider>
   )

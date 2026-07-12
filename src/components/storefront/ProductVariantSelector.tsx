@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Heart, X } from "lucide-react"
 import { toggleWishlistAction } from "@/actions/wishlist.actions"
 import { addToCartAction } from "@/actions/cart.actions"
+import { useHeaderState } from "@/providers/header-state-provider"
 
 interface Variant {
   id: string
@@ -104,25 +105,13 @@ export function ProductVariantSelector({
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
+  const { wishlistIds: sharedWishlistIds } = useHeaderState()
+
   useEffect(() => {
-    let cancelled = false
-
-    fetch("/api/commerce/header-state")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!cancelled && data?.wishlist?.items) {
-          const ids = data.wishlist.items.map((item: any) => item.variant?.id).filter(Boolean)
-          setWishlistIds(ids)
-        }
-      })
-      .catch(() => {
-        // Silently ignore — heart icons just stay unfilled until next successful check
-      })
-
-    return () => {
-      cancelled = true
+    if (sharedWishlistIds.length > 0) {
+      setWishlistIds(sharedWishlistIds)
     }
-  }, [])
+  }, [sharedWishlistIds])
 
   const activeVariant = useMemo(() => {
     return variants.find((v) => {

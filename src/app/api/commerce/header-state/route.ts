@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { SessionService } from "@/services/session.service"
 import { getHeaderCommerceState } from "@/db/queries/cart"
-import { getWishlist } from "@/db/queries/wishlist"
+import { getWishlistVariantIds } from "@/db/queries/wishlist"
 import { ProfileService } from "@/services/profile.service"
 import { unstable_cache } from "next/cache"
 
@@ -10,13 +10,21 @@ const getHeaderStateCached = unstable_cache(
     const resolvedUserId = userId === "none" ? null : userId
     const resolvedSessionId = sessionId === "none" ? null : sessionId
 
-    const [cart, wishlist, account] = await Promise.all([
+    const [cart, wishlistIds, account] = await Promise.all([
       getHeaderCommerceState(resolvedUserId, resolvedSessionId),
-      resolvedUserId ? getWishlist(resolvedUserId) : Promise.resolve(null),
-      resolvedUserId ? ProfileService.getProfile(resolvedUserId) : Promise.resolve(null),
+      resolvedUserId ? getWishlistVariantIds(resolvedUserId) : Promise.resolve([]),
+      resolvedUserId ? ProfileService.getProfile(resolvedUserId).catch(() => null) : Promise.resolve(null),
     ])
 
-    return { cart, wishlist, account }
+    return {
+      cart,
+      wishlist: {
+        items: wishlistIds.map((id) => ({
+          variant: { id }
+        }))
+      },
+      account
+    }
   },
   ["commerce-header-state"],
   { revalidate: 3 }

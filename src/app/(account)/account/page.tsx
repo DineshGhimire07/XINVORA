@@ -19,7 +19,7 @@ export default async function DashboardPage() {
   const session = await SessionService.requireAuth()
 
   const [profile, ordersResult, wishlist, savedAddresses, notifications] = await Promise.all([
-    ProfileService.getProfile(session.id),
+    ProfileService.getOrCreateProfile(session.id),
     OrderService.getUserOrders(session.id, { limit: 2 }),
     getWishlist(session.id),
     AddressService.getUserAddresses(session.id),
