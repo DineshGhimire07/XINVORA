@@ -65,7 +65,7 @@ export async function addToCartAction(
 
   if (result.success) {
     const revalidateStart = performance.now()
-    revalidatePath("/", "layout")
+    revalidatePath("/cart")
     timings.push({ name: 'revalidatePath', ms: performance.now() - revalidateStart })
   }
 
@@ -90,7 +90,7 @@ export async function updateCartQuantityAction(
   )
 
   if (result.success) {
-    revalidatePath("/", "layout")
+    revalidatePath("/cart")
   }
 
   return result
@@ -112,7 +112,7 @@ export async function removeFromCartAction(
   )
 
   if (result.success) {
-    revalidatePath("/", "layout")
+    revalidatePath("/cart")
   }
 
   return result
@@ -129,7 +129,7 @@ export async function clearCartAction(
   )
 
   if (result.success) {
-    revalidatePath("/", "layout")
+    revalidatePath("/cart")
   }
 
   return result

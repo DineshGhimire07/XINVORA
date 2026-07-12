@@ -1,0 +1,677 @@
+.
+├── AGENTS.md
+├── AI_RULES.md
+├── ARCHITECTURE.md
+├── BRAND_GUIDELINES.md
+├── CHANGELOG.md
+├── CLAUDE.md
+├── components.json
+├── DECISIONS.md
+├── DEVELOPMENT_WORKFLOW.md
+├── drizzle.config.ts
+├── eslint.config.mjs
+├── migrate-settings.js
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── postcss.config.mjs
+├── prisma
+├── PROJECT_STATUS.md
+├── project-tree.txt
+├── PROMPT_TEMPLATE.md
+├── public
+│   ├── assets
+│   │   ├── brand
+│   │   │   ├── favicon
+│   │   │   ├── guidelines
+│   │   │   ├── hero
+│   │   │   │   └── hero-bg.png
+│   │   │   ├── logos
+│   │   │   │   ├── logo_black.png
+│   │   │   │   ├── Logo_Wordmark.png
+│   │   │   │   ├── Warm_taupe.png
+│   │   │   │   └── Wordmark.png
+│   │   │   └── social
+│   │   └── images
+│   │       └── ChatGPT Image Jul 4, 2026, 04_25_19 AM.png
+│   ├── favicons
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── icons
+│   ├── next.svg
+│   ├── uploads
+│   │   ├── 1783142387556_ChatGPT_Image_Jul_4__2026__10_49_25_AM.png
+│   │   ├── 1783142939974_ChatGPT_Image_Jul_4__2026__10_49_25_AM.png
+│   │   ├── 1783143269063_ChatGPT_Image_Jul_4__2026__10_49_25_AM.png
+│   │   ├── 1783143541985_ChatGPT_Image_Jul_4__2026__10_49_25_AM.png
+│   │   ├── 1783143805961_Gemini_Generated_Image_d01vdmd01vdmd01v.png
+│   │   ├── 1783143998822_ChatGPT_Image_Jul_4__2026__11_31_22_AM.png
+│   │   ├── 1783144865277_ChatGPT_Image_Jul_4__2026__11_45_42_AM.png
+│   │   ├── 1783145061823_ChatGPT_Image_Jul_4__2026__11_49_07_AM.png
+│   │   ├── 1783284114217_ChatGPT_Image_Jul_6__2026__02_26_33_AM.png
+│   │   ├── 1783284544330_0d5b474b-b411-4ac8-9d71-be4904e2ff46.png
+│   │   ├── 1783284749957_00d69b7c-4ef5-4f3d-ba1f-2958fa8dbd1b.png
+│   │   ├── 1783284941440_0ef17e48-19b4-43f4-a537-e784fbbff204.png
+│   │   ├── 1783285069085_5b58c932-be28-4756-8dc7-0d0cbdc770d8.png
+│   │   ├── 1783325183154_IMG_1838.PNG
+│   │   ├── 1783506332286_0ef17e48-19b4-43f4-a537-e784fbbff204.png
+│   │   ├── 1783506428927_0ef17e48-19b4-43f4-a537-e784fbbff204.png
+│   │   ├── 1783506499344_Screenshot_2026-07-02_at_15.59.56.png
+│   │   ├── 1783506521634_Screenshot_2026-07-08_at_13.17.12.png
+│   │   ├── 1783623292682_Aurora_Gradient_Mesh_Maxi_Dres.png
+│   │   ├── 1783623294876_Aurora_Gradient_Mesh_Maxi_Dress__Product_Image.png
+│   │   ├── 1783623296376_Aurora_Gradient_Mesh_Maxi_Dress_Fabric.png
+│   │   ├── 1783623297508_Aurora_Gradient_Mesh_Maxi_Dress.png
+│   │   ├── 1783623315083_Aurora_Gradient_Mesh_Maxi_Dress__Product_Image.png
+│   │   ├── 1783623325134_Aurora_Gradient_Mesh_Maxi_Dress_Fabric.png
+│   │   ├── 1783625054384_Aurora_Gradient_Mesh_Maxi_Dress.png
+│   │   ├── 1783627885109_Lifestyle_2.png
+│   │   ├── 1783627886156_Lifestyle.png
+│   │   ├── 1783628351141_Aurora_Gradient_Mesh_Maxi_Dres.png
+│   │   ├── 1fc42b2e94f4c63c.png
+│   │   ├── cd96e51d8d0c8d64.png
+│   │   ├── editorial_sling.jpg
+│   │   ├── eyelet_shorts_v2.png
+│   │   ├── eyelet_shorts.png
+│   │   ├── halter_top_v2.png
+│   │   ├── halter_top.png
+│   │   ├── lace_cami_top_v2.png
+│   │   ├── lace_cami_top.png
+│   │   ├── overnight_duffel.jpg
+│   │   ├── payment-proofs
+│   │   │   ├── 1783405152588_5b58c932-be28-4756-8dc7-0d0cbdc770d8.png
+│   │   │   ├── 1783405153411_5b58c932-be28-4756-8dc7-0d0cbdc770d8.png
+│   │   │   ├── 1783405161756_5b58c932-be28-4756-8dc7-0d0cbdc770d8.png
+│   │   │   └── 1783417739851_IMG_9318.PNG
+│   │   ├── pleated_linen_gown_v2.png
+│   │   ├── pleated_linen_gown_v3.png
+│   │   ├── pleated_linen_gown.png
+│   │   ├── tie_shoulder_dress_v2.png
+│   │   ├── tie_shoulder_dress.png
+│   │   └── trapeze_tote.jpg
+│   ├── vercel.svg
+│   └── window.svg
+├── README.md
+├── run-drizzle-kit.js
+├── scripts
+│   ├── check-dlq.ts
+│   ├── load-test-cdp.ts
+│   └── verify-cdp-pipeline.ts
+├── seed-settings.js
+├── src
+│   ├── actions
+│   │   ├── address.actions.ts
+│   │   ├── admin
+│   │   │   ├── announcements.actions.ts
+│   │   │   ├── brands.actions.ts
+│   │   │   ├── categories.actions.ts
+│   │   │   ├── cdp.actions.ts
+│   │   │   ├── cms.actions.ts
+│   │   │   ├── collections.actions.ts
+│   │   │   ├── coupons.actions.ts
+│   │   │   ├── inventory.actions.ts
+│   │   │   ├── materials.actions.ts
+│   │   │   ├── media.actions.ts
+│   │   │   ├── navigation.actions.ts
+│   │   │   ├── orders.actions.ts
+│   │   │   ├── products.actions.ts
+│   │   │   └── settings.actions.ts
+│   │   ├── auth.actions.ts
+│   │   ├── cart.actions.ts
+│   │   ├── checkout.actions.ts
+│   │   ├── customer.media.actions.ts
+│   │   ├── inquiry.actions.ts
+│   │   ├── newsletter.ts
+│   │   ├── notification.actions.ts
+│   │   ├── payment.actions.ts
+│   │   ├── profile.actions.ts
+│   │   ├── README.md
+│   │   ├── security.actions.ts
+│   │   └── wishlist.actions.ts
+│   ├── animations
+│   │   └── motion-variants.ts
+│   ├── app
+│   │   ├── (account)
+│   │   │   ├── account
+│   │   │   │   ├── addresses
+│   │   │   │   │   ├── AddressesList.tsx
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── notifications
+│   │   │   │   │   ├── NotificationsList.tsx
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── orders
+│   │   │   │   │   ├── [orderNumber]
+│   │   │   │   │   │   └── page.tsx
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── profile
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   └── ProfileForm.tsx
+│   │   │   │   ├── security
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   └── PasswordForm.tsx
+│   │   │   │   ├── settings
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   └── SettingsForm.tsx
+│   │   │   │   └── wishlist
+│   │   │   │       ├── page.tsx
+│   │   │   │       └── WishlistGrid.tsx
+│   │   │   ├── DashboardSidebar.tsx
+│   │   │   └── layout.tsx
+│   │   ├── (admin)
+│   │   │   └── admin
+│   │   │       ├── brands
+│   │   │       │   └── [id]
+│   │   │       │       ├── BrandEditor.tsx
+│   │   │       │       └── page.tsx
+│   │   │       ├── categories
+│   │   │       │   ├── [id]
+│   │   │       │   │   ├── CategoryEditor.tsx
+│   │   │       │   │   └── page.tsx
+│   │   │       │   └── page.tsx
+│   │   │       ├── cdp
+│   │   │       │   ├── health
+│   │   │       │   │   └── page.tsx
+│   │   │       │   └── page.tsx
+│   │   │       ├── cms
+│   │   │       │   ├── about
+│   │   │       │   │   ├── AboutSettingsForm.tsx
+│   │   │       │   │   └── page.tsx
+│   │   │       │   ├── announcements
+│   │   │       │   │   └── page.tsx
+│   │   │       │   ├── homepage
+│   │   │       │   │   ├── HomepageEditor.tsx
+│   │   │       │   │   └── page.tsx
+│   │   │       │   ├── media
+│   │   │       │   │   └── page.tsx
+│   │   │       │   ├── navigation
+│   │   │       │   │   └── page.tsx
+│   │   │       │   └── pages
+│   │   │       │       ├── [slug]
+│   │   │       │       │   ├── CMSPageEditor.tsx
+│   │   │       │       │   └── page.tsx
+│   │   │       │       └── page.tsx
+│   │   │       ├── collections
+│   │   │       │   └── [id]
+│   │   │       │       ├── CollectionEditor.tsx
+│   │   │       │       └── page.tsx
+│   │   │       ├── coupons
+│   │   │       │   └── [id]
+│   │   │       │       ├── CouponEditor.tsx
+│   │   │       │       └── page.tsx
+│   │   │       ├── inquiries
+│   │   │       │   ├── InquiriesTable.tsx
+│   │   │       │   ├── InquiryDetailsDrawer.tsx
+│   │   │       │   └── page.tsx
+│   │   │       ├── inventory
+│   │   │       │   └── page.tsx
+│   │   │       ├── layout.tsx
+│   │   │       ├── materials
+│   │   │       │   └── [id]
+│   │   │       │       ├── MaterialEditor.tsx
+│   │   │       │       └── page.tsx
+│   │   │       ├── orders
+│   │   │       │   ├── OrderDetailsDrawer.tsx
+│   │   │       │   ├── OrdersTable.tsx
+│   │   │       │   ├── page.tsx
+│   │   │       │   └── print
+│   │   │       │       └── [id]
+│   │   │       │           └── page.tsx
+│   │   │       ├── page.tsx
+│   │   │       ├── products
+│   │   │       │   ├── [id]
+│   │   │       │   │   ├── page.tsx
+│   │   │       │   │   └── ProductEditor.tsx
+│   │   │       │   └── page.tsx
+│   │   │       ├── settings
+│   │   │       │   ├── appearance
+│   │   │       │   │   ├── homepage
+│   │   │       │   │   │   ├── AppearanceHomepageForm.tsx
+│   │   │       │   │   │   └── page.tsx
+│   │   │       │   │   └── theme
+│   │   │       │   │       ├── AppearanceThemeForm.tsx
+│   │   │       │   │       └── page.tsx
+│   │   │       │   ├── features
+│   │   │       │   │   ├── FeaturesSettingsForm.tsx
+│   │   │       │   │   └── page.tsx
+│   │   │       │   ├── general
+│   │   │       │   │   ├── GeneralSettingsForm.tsx
+│   │   │       │   │   └── page.tsx
+│   │   │       │   ├── layout.tsx
+│   │   │       │   ├── maintenance
+│   │   │       │   │   ├── MaintenanceSettingsForm.tsx
+│   │   │       │   │   └── page.tsx
+│   │   │       │   ├── page.tsx
+│   │   │       │   └── store
+│   │   │       │       ├── contact
+│   │   │       │       │   ├── page.tsx
+│   │   │       │       │   └── StoreContactForm.tsx
+│   │   │       │       ├── invoice
+│   │   │       │       │   ├── page.tsx
+│   │   │       │       │   └── StoreInvoiceForm.tsx
+│   │   │       │       ├── payments
+│   │   │       │       │   ├── page.tsx
+│   │   │       │       │   └── PaymentSettingsForm.tsx
+│   │   │       │       ├── shipping
+│   │   │       │       │   ├── page.tsx
+│   │   │       │       │   └── StoreShippingForm.tsx
+│   │   │       │       └── taxes
+│   │   │       │           ├── page.tsx
+│   │   │       │           └── StoreTaxesForm.tsx
+│   │   │       └── users
+│   │   │           └── page.tsx
+│   │   ├── (auth)
+│   │   │   ├── login
+│   │   │   │   ├── LoginForm.tsx
+│   │   │   │   └── page.tsx
+│   │   │   └── register
+│   │   │       ├── page.tsx
+│   │   │       └── RegisterForm.tsx
+│   │   ├── (shop)
+│   │   │   ├── about
+│   │   │   │   └── page.tsx
+│   │   │   ├── cart
+│   │   │   │   └── page.tsx
+│   │   │   ├── checkout
+│   │   │   │   ├── layout.tsx
+│   │   │   │   └── page.tsx
+│   │   │   ├── collections
+│   │   │   │   ├── [slug]
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── bags
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── page.tsx
+│   │   │   ├── contact
+│   │   │   │   └── page.tsx
+│   │   │   ├── faq
+│   │   │   │   └── page.tsx
+│   │   │   ├── journal
+│   │   │   │   ├── [slug]
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── page.tsx
+│   │   │   ├── layout.tsx
+│   │   │   ├── page.tsx
+│   │   │   ├── payment
+│   │   │   │   ├── cancelled
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── dummy-gateway
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── failed
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── PaymentMethodSelector.tsx
+│   │   │   │   ├── success
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── verify
+│   │   │   │       └── page.tsx
+│   │   │   ├── privacy
+│   │   │   │   └── page.tsx
+│   │   │   ├── products
+│   │   │   │   └── [slug]
+│   │   │   │       └── page.tsx
+│   │   │   ├── returns
+│   │   │   │   └── page.tsx
+│   │   │   ├── search
+│   │   │   │   └── page.tsx
+│   │   │   ├── shipping
+│   │   │   │   └── page.tsx
+│   │   │   ├── terms
+│   │   │   │   └── page.tsx
+│   │   │   └── wishlist
+│   │   │       ├── AddAllToCartButton.tsx
+│   │   │       └── page.tsx
+│   │   ├── api
+│   │   │   ├── analytics
+│   │   │   │   └── event
+│   │   │   │       └── route.ts
+│   │   │   ├── auth
+│   │   │   │   └── [...nextauth]
+│   │   │   │       └── route.ts
+│   │   │   ├── nepal
+│   │   │   │   ├── districts
+│   │   │   │   │   └── route.ts
+│   │   │   │   └── municipalities
+│   │   │   │       └── route.ts
+│   │   │   └── README.md
+│   │   ├── error.tsx
+│   │   ├── favicon.ico
+│   │   ├── global-error.tsx
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   ├── loading.tsx
+│   │   ├── not-found.tsx
+│   │   └── preview
+│   │       └── page.tsx
+│   ├── auth.config.ts
+│   ├── auth.ts
+│   ├── components
+│   │   ├── admin
+│   │   │   ├── AdminSidebar.tsx
+│   │   │   ├── DeleteInventoryButton.tsx
+│   │   │   ├── DeleteProductButton.tsx
+│   │   │   ├── MediaGridItem.tsx
+│   │   │   ├── MediaSelector.tsx
+│   │   │   └── MediaUploader.tsx
+│   │   ├── cms
+│   │   │   └── BlockRenderer.tsx
+│   │   ├── shared
+│   │   │   ├── AnnouncementBar
+│   │   │   │   └── AnnouncementBar.tsx
+│   │   │   ├── Breadcrumb
+│   │   │   │   └── Breadcrumb.tsx
+│   │   │   ├── container.tsx
+│   │   │   ├── Footer
+│   │   │   │   └── Footer.tsx
+│   │   │   ├── grid.tsx
+│   │   │   ├── Header
+│   │   │   │   └── Header.tsx
+│   │   │   ├── Hero
+│   │   │   │   └── ParallaxHero.tsx
+│   │   │   ├── primitives.ts
+│   │   │   ├── section.tsx
+│   │   │   ├── skip-to-content.tsx
+│   │   │   └── stack.tsx
+│   │   ├── shop
+│   │   │   ├── HeroSlider.tsx
+│   │   │   ├── MaintenancePage.tsx
+│   │   │   └── WishlistToggleIcon.tsx
+│   │   ├── storefront
+│   │   │   ├── BagsSplitCanvas.tsx
+│   │   │   ├── ProductAccordion.tsx
+│   │   │   ├── ProductCard.tsx
+│   │   │   ├── ProductEditorialPair.tsx
+│   │   │   ├── ProductGallery.tsx
+│   │   │   ├── ProductInstagramCard.tsx
+│   │   │   ├── ProductTrustGrid.tsx
+│   │   │   ├── ProductTryOnGuide.tsx
+│   │   │   └── ProductVariantSelector.tsx
+│   │   └── ui
+│   │       ├── badge.tsx
+│   │       ├── button.tsx
+│   │       ├── card.tsx
+│   │       ├── input.tsx
+│   │       ├── label.tsx
+│   │       ├── select.tsx
+│   │       ├── separator.tsx
+│   │       ├── skeleton.tsx
+│   │       ├── sonner.tsx
+│   │       ├── spinner.tsx
+│   │       ├── switch.tsx
+│   │       └── textarea.tsx
+│   ├── config
+│   │   ├── env.ts
+│   │   ├── features.ts
+│   │   └── preview.ts
+│   ├── constants
+│   │   ├── brand.ts
+│   │   ├── navigation.ts
+│   │   └── site.ts
+│   ├── db
+│   │   ├── client.ts
+│   │   ├── index.ts
+│   │   ├── migrate-checkout.ts
+│   │   ├── migrate-cms-manual.ts
+│   │   ├── migrate-cms.ts
+│   │   ├── migrate-dashboard.ts
+│   │   ├── migrate-generated.ts
+│   │   ├── migrate-indexes.ts
+│   │   ├── migrate-instagram.ts
+│   │   ├── migrate-manual.js
+│   │   ├── migrate-payments.ts
+│   │   ├── migrate-short-description.ts
+│   │   ├── migrate-sprint1.ts
+│   │   ├── migrate-virtual-tryon.ts
+│   │   ├── migrations
+│   │   │   ├── 0000_loud_blink.sql
+│   │   │   ├── 0001_strange_mathemanic.sql
+│   │   │   ├── 0002_jittery_darwin.sql
+│   │   │   ├── 0003_past_steel_serpent.sql
+│   │   │   ├── 0004_idempotency_key.sql
+│   │   │   ├── 0004_low_pride.sql
+│   │   │   ├── 0005_big_dakota_north.sql
+│   │   │   ├── 0005_search_indexing.sql
+│   │   │   ├── 0006_happy_stardust.sql
+│   │   │   ├── 0006_variant_soft_delete.sql
+│   │   │   └── meta
+│   │   │       ├── _journal.json
+│   │   │       ├── 0000_snapshot.json
+│   │   │       ├── 0001_snapshot.json
+│   │   │       ├── 0002_snapshot.json
+│   │   │       ├── 0003_snapshot.json
+│   │   │       ├── 0004_snapshot.json
+│   │   │       ├── 0005_snapshot.json
+│   │   │       └── 0006_snapshot.json
+│   │   ├── mutations
+│   │   │   ├── announcements.ts
+│   │   │   ├── brands.ts
+│   │   │   ├── categories.ts
+│   │   │   ├── cms.ts
+│   │   │   ├── collections.ts
+│   │   │   ├── coupons.ts
+│   │   │   ├── inventory.ts
+│   │   │   ├── materials.ts
+│   │   │   ├── media.ts
+│   │   │   ├── navigation.ts
+│   │   │   ├── orders.ts
+│   │   │   ├── products.ts
+│   │   │   └── variants.ts
+│   │   ├── queries
+│   │   │   ├── brands.ts
+│   │   │   ├── cart.ts
+│   │   │   ├── catalog.ts
+│   │   │   ├── categories.ts
+│   │   │   ├── checkout.ts
+│   │   │   ├── collections.ts
+│   │   │   ├── index.ts
+│   │   │   ├── inventory.ts
+│   │   │   ├── nepal.ts
+│   │   │   ├── orders.ts
+│   │   │   ├── payments.ts
+│   │   │   ├── products.ts
+│   │   │   ├── README.md
+│   │   │   ├── search.ts
+│   │   │   ├── types.ts
+│   │   │   ├── variants.ts
+│   │   │   └── wishlist.ts
+│   │   ├── repositories
+│   │   │   ├── address.repository.ts
+│   │   │   ├── checkout.repository.ts
+│   │   │   ├── notification.repository.ts
+│   │   │   ├── order.repository.ts
+│   │   │   ├── payment.repository.ts
+│   │   │   └── profile.repository.ts
+│   │   ├── schema
+│   │   │   ├── addresses.ts
+│   │   │   ├── admin-audit-logs.ts
+│   │   │   ├── analytics-dlq.ts
+│   │   │   ├── audit-logs.ts
+│   │   │   ├── brands.ts
+│   │   │   ├── cart-items.ts
+│   │   │   ├── carts.ts
+│   │   │   ├── categories.ts
+│   │   │   ├── cdp-settings.ts
+│   │   │   ├── cms.ts
+│   │   │   ├── collections.ts
+│   │   │   ├── colors.ts
+│   │   │   ├── contact-inquiries.ts
+│   │   │   ├── coupons.ts
+│   │   │   ├── customer-metrics.ts
+│   │   │   ├── customer-timeline.ts
+│   │   │   ├── enums.ts
+│   │   │   ├── index.ts
+│   │   │   ├── inventory.ts
+│   │   │   ├── journal.ts
+│   │   │   ├── materials.ts
+│   │   │   ├── media.ts
+│   │   │   ├── navigation.ts
+│   │   │   ├── nepal-districts.ts
+│   │   │   ├── nepal-municipalities.ts
+│   │   │   ├── nepal-provinces.ts
+│   │   │   ├── notifications.ts
+│   │   │   ├── order-activity.ts
+│   │   │   ├── order-items.ts
+│   │   │   ├── orders.ts
+│   │   │   ├── payments.ts
+│   │   │   ├── price-book-entries.ts
+│   │   │   ├── price-books.ts
+│   │   │   ├── product-collections.ts
+│   │   │   ├── product-images.ts
+│   │   │   ├── product-materials.ts
+│   │   │   ├── product-tags.ts
+│   │   │   ├── products.ts
+│   │   │   ├── profiles.ts
+│   │   │   ├── recommendation-signals.ts
+│   │   │   ├── relations.ts
+│   │   │   ├── reviews.ts
+│   │   │   ├── settings.ts
+│   │   │   ├── sizes.ts
+│   │   │   ├── tags.ts
+│   │   │   ├── user-events.ts
+│   │   │   ├── user-sessions.ts
+│   │   │   ├── users.ts
+│   │   │   ├── variant-images.ts
+│   │   │   ├── variants.ts
+│   │   │   ├── wishlist-items.ts
+│   │   │   └── wishlists.ts
+│   │   ├── seed
+│   │   ├── seed-bags.js
+│   │   ├── seed-product.ts
+│   │   ├── seed-settings.ts
+│   │   ├── seed.ts
+│   │   └── update-images.ts
+│   ├── features
+│   │   ├── analytics
+│   │   │   ├── customers
+│   │   │   │   └── service.ts
+│   │   │   ├── events
+│   │   │   │   └── registry.ts
+│   │   │   └── ingestion
+│   │   │       ├── queue
+│   │   │       │   ├── interface.ts
+│   │   │       │   ├── memory.ts
+│   │   │       │   └── redis.ts
+│   │   │       ├── service.ts
+│   │   │       └── tracking-provider.tsx
+│   │   ├── cart
+│   │   │   └── components
+│   │   │       ├── AddToCartButton.tsx
+│   │   │       ├── CartBadge.tsx
+│   │   │       ├── CartItem.tsx
+│   │   │       └── CartSummary.tsx
+│   │   ├── checkout
+│   │   │   └── components
+│   │   │       ├── AddressPreview.tsx
+│   │   │       ├── CheckoutFlow.tsx
+│   │   │       ├── GeolocationCapture.tsx
+│   │   │       ├── NepalDeliveryForm.tsx
+│   │   │       ├── OrderSummary.tsx
+│   │   │       ├── PaymentMethodSelector.tsx
+│   │   │       ├── PaymentStep.tsx
+│   │   │       └── SearchableSelect.tsx
+│   │   ├── contact
+│   │   │   └── ContactForm.tsx
+│   │   ├── newsletter
+│   │   │   └── components
+│   │   │       └── NewsletterForm.tsx
+│   │   ├── search
+│   │   │   └── components
+│   │   │       └── SearchInput.tsx
+│   │   └── wishlist
+│   │       └── components
+│   │           ├── WishlistBadge.tsx
+│   │           └── WishlistButton.tsx
+│   ├── hooks
+│   │   ├── use-lock-body-scroll.ts
+│   │   ├── use-media-query.ts
+│   │   ├── use-reduced-motion.ts
+│   │   └── use-scroll-position.ts
+│   ├── lib
+│   │   ├── cn.ts
+│   │   ├── constants.ts
+│   │   ├── env.ts
+│   │   ├── image-processor.ts
+│   │   ├── metadata.ts
+│   │   ├── upload.ts
+│   │   └── utils.ts
+│   ├── middleware.ts
+│   ├── providers
+│   │   ├── providers.tsx
+│   │   └── theme-provider.tsx
+│   ├── services
+│   │   ├── address.service.ts
+│   │   ├── admin
+│   │   │   ├── orders.service.ts
+│   │   │   └── settings.service.ts
+│   │   ├── admin.audit.service.ts
+│   │   ├── admin.brand.service.ts
+│   │   ├── admin.category.service.ts
+│   │   ├── admin.collection.service.ts
+│   │   ├── admin.coupon.service.ts
+│   │   ├── admin.inventory.service.ts
+│   │   ├── admin.material.service.ts
+│   │   ├── admin.order.service.ts
+│   │   ├── admin.product.service.ts
+│   │   ├── admin.variant.service.ts
+│   │   ├── announcement.service.ts
+│   │   ├── authentication.service.ts
+│   │   ├── cart.service.ts
+│   │   ├── category
+│   │   │   └── category.service.ts
+│   │   ├── checkout.service.ts
+│   │   ├── cms.service.ts
+│   │   ├── collection
+│   │   │   └── collection.service.ts
+│   │   ├── errors.ts
+│   │   ├── inquiry.service.ts
+│   │   ├── inventory
+│   │   │   └── inventory.service.ts
+│   │   ├── inventory.service.ts
+│   │   ├── media.service.ts
+│   │   ├── navigation.service.ts
+│   │   ├── newsletter
+│   │   │   └── newsletter.service.ts
+│   │   ├── notification.service.ts
+│   │   ├── order-number.service.ts
+│   │   ├── order.service.ts
+│   │   ├── payment.service.ts
+│   │   ├── pricing.service.ts
+│   │   ├── product
+│   │   │   └── product.service.ts
+│   │   ├── profile.service.ts
+│   │   ├── providers
+│   │   │   ├── dummy-payment.provider.ts
+│   │   │   ├── payment-provider.factory.ts
+│   │   │   └── payment-provider.interface.ts
+│   │   ├── security.service.ts
+│   │   ├── session.service.ts
+│   │   ├── shared
+│   │   │   └── action-utils.ts
+│   │   ├── shipping.service.ts
+│   │   ├── storage
+│   │   │   └── client.ts
+│   │   ├── tax.service.ts
+│   │   ├── user.service.ts
+│   │   └── wishlist.service.ts
+│   ├── styles
+│   │   └── tokens.ts
+│   ├── types
+│   │   ├── actions.ts
+│   │   ├── brand.ts
+│   │   ├── common.ts
+│   │   ├── navigation.ts
+│   │   ├── next-auth.d.ts
+│   │   └── settings.ts
+│   └── validations
+│       ├── auth.ts
+│       ├── cart.ts
+│       ├── checkout.ts
+│       ├── index.ts
+│       ├── settings.ts
+│       └── wishlist.ts
+├── tailwind.config.ts
+├── tsconfig.json
+├── tsconfig.tsbuildinfo
+└── VISION.md
+
+166 directories, 509 files

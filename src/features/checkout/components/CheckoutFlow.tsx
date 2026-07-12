@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { NepalDeliveryForm } from "./NepalDeliveryForm"
 import { PaymentStep } from "./PaymentStep"
+import { OrderSummary } from "./OrderSummary"
 import { type NepalDeliveryFormValues } from "@/validations/checkout"
 
 interface CheckoutFlowProps {
@@ -61,18 +62,8 @@ export function CheckoutFlow({ provinces, savedAddress, totals, paymentQrs }: Ch
                 </div>
               </div>
               <div className="lg:col-span-4 hidden lg:block">
-                {/* Visual placeholder or mini summary for step 1 can go here */}
-                <div className="bg-surface rounded-2xl p-6 shadow-sm border border-border sticky top-24">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-text-secondary mb-4">
-                    Order Summary
-                  </h3>
-                  <div className="flex justify-between text-body-md text-text-primary mb-2">
-                    <span>Subtotal</span>
-                    <span>NPR {Math.round(totals.subtotal / 100).toLocaleString()}</span>
-                  </div>
-                  <div className="text-body-sm text-text-secondary mb-4">
-                    Shipping will be calculated in the next step.
-                  </div>
+                <div className="sticky top-24">
+                  <OrderSummary cart={totals.cart} />
                 </div>
               </div>
             </div>

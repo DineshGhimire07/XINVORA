@@ -1,10 +1,3 @@
-/**
- * app/products/[slug]/page.tsx — XINVORA Product Detail Experience
- *
- * Implements the premium Product Detail Page using live catalog data.
- * Composes existing shared layout primitives and follows a strict editorial design.
- */
-
 import * as React from "react"
 import { Section } from "@/components/shared/section"
 import { Container } from "@/components/shared/container"
@@ -18,8 +11,6 @@ import { ProductInstagramCard } from "@/components/storefront/ProductInstagramCa
 import { ProductTryOnGuide } from "@/components/storefront/ProductTryOnGuide"
 import { ProductEditorialPair } from "@/components/storefront/ProductEditorialPair"
 import { WishlistToggleIcon } from "@/components/shop/WishlistToggleIcon"
-import { SessionService } from "@/services/session.service"
-import { getWishlist } from "@/db/queries/wishlist"
 import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
@@ -29,6 +20,16 @@ import { db } from "@/db/client"
 import { priceBookEntries, priceBooks, categories } from "@/db/schema"
 import { and, eq, inArray } from "drizzle-orm"
 import { type TimingEntry, timedPromise, printTimingSummary } from "@/lib/perf"
+
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  // Pre-build the most recently published products at build time.
+  // Products not in this list still render fine on first visit and
+  // get cached automatically afterward (dynamicParams defaults to true).
+  const { items } = await findProducts({ limit: 100, sort: "newest" })
+  return items.map((product) => ({ slug: product.slug }))
+}
 
 export async function generateMetadata({
   params,
@@ -53,23 +54,17 @@ export default async function ProductDetailPage({
   const totalStart = performance.now()
   const timings: TimingEntry[] = []
 
-  // Phase 1: Fetch product and session concurrently — session doesn't depend on the product
-  const [product, session] = await Promise.all([
-    timedPromise('findProductBySlug', timings, findProductBySlug(slug)),
-    timedPromise('optionalAuth', timings, SessionService.optionalAuth()),
-  ])
+  const product = await timedPromise('findProductBySlug', timings, findProductBySlug(slug))
 
   if (!product) {
     notFound()
   }
 
-  // Phase 2: Resolve all secondary data concurrently now that product ID is known
+  // Resolve all secondary data concurrently now that product ID is known
   const activeVariants = product.variants.filter(v => v.isActive)
   const variantIds = activeVariants.map((v) => v.id)
 
-  const [wishlistResult, parentCategory, relatedResponse, variantPrices] = await Promise.all([
-    // Wishlist: only needed if user is logged in
-    timedPromise('wishlist', timings, session ? getWishlist(session.id) : Promise.resolve(null)),
+  const [parentCategory, relatedResponse, variantPrices] = await Promise.all([
     // Parent category breadcrumb
     timedPromise('parentCategory', timings, product.category?.parentId
       ? db.query.categories.findFirst({ where: eq(categories.id, product.category.parentId) })
@@ -91,7 +86,6 @@ export default async function ProductDetailPage({
       : Promise.resolve([])),
   ])
 
-  const wishlistVariantIds = wishlistResult?.items.map((item) => item.variant.id) ?? []
   const relatedProducts = relatedResponse.items
     .filter((p) => p.id !== product.id)
     .slice(0, 5)
@@ -185,7 +179,6 @@ export default async function ProductDetailPage({
                   productName={product.name}
                   sizeGuide={product.sizeGuide}
                   shortDescription={product.shortDescription}
-                  initialWishlistVariantIds={wishlistVariantIds}
                 />
 
                 {/* ── Trust Feature Grid: 24px below Buy Now ── */}

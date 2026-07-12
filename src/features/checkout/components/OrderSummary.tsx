@@ -5,8 +5,17 @@ import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { CartResult } from "@/db/queries/types"
 
-export function OrderSummary({ cart }: { cart: CartResult }) {
+interface OrderSummaryProps {
+  cart: CartResult
+  shippingCost?: number
+  discountAmount?: number
+  total?: number
+  children?: React.ReactNode
+}
+
+export function OrderSummary({ cart, shippingCost, discountAmount, total, children }: OrderSummaryProps) {
   const subtotal = cart.items.reduce((acc, item) => acc + item.price * item.quantity, 0)
+  const finalTotal = total !== undefined ? total : (subtotal - (discountAmount || 0) + (shippingCost || 0))
   
   return (
     <Card className="rounded-none border-border-primary/40 shadow-sm bg-white">
@@ -49,15 +58,27 @@ export function OrderSummary({ cart }: { cart: CartResult }) {
             <span className="text-gray-600">Subtotal</span>
             <span>NPR {Math.round(subtotal / 100).toLocaleString()}</span>
           </div>
+          {discountAmount !== undefined && discountAmount > 0 && (
+            <div className="flex justify-between text-sm text-green-600">
+              <span>Discount</span>
+              <span>- NPR {Math.round(discountAmount / 100).toLocaleString()}</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Shipping</span>
-            <span className="text-gray-500 text-xs italic">Calculated at next step</span>
+            {shippingCost !== undefined ? (
+              <span>NPR {Math.round(shippingCost / 100).toLocaleString()}</span>
+            ) : (
+              <span className="text-gray-500 text-xs italic">Calculated at next step</span>
+            )}
           </div>
           <div className="flex justify-between font-medium text-lg border-t border-border-primary/20 pt-4 mt-2">
             <span>Total</span>
-            <span>NPR {Math.round(subtotal / 100).toLocaleString()}</span>
+            <span>NPR {Math.round(finalTotal / 100).toLocaleString()}</span>
           </div>
         </div>
+
+        {children}
       </CardContent>
     </Card>
   )

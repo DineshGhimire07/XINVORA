@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useEffect } from "react"
 import { addToCartAction } from "@/actions/cart.actions"
 import { Button } from "@/components/ui/button"
 import { ShoppingBag } from "lucide-react"
@@ -12,6 +12,13 @@ interface AddToCartButtonProps {
 
 export function AddToCartButton({ variantId, inStock }: AddToCartButtonProps) {
   const [state, action, isPending] = useActionState<any, FormData>(addToCartAction, null)
+
+  // Notify Header to refresh cart badge after successful add
+  useEffect(() => {
+    if (state?.success) {
+      window.dispatchEvent(new Event("cart-updated"))
+    }
+  }, [state])
 
   return (
     <form action={action} className="w-full">
@@ -44,3 +51,4 @@ export function AddToCartButton({ variantId, inStock }: AddToCartButtonProps) {
     </form>
   )
 }
+

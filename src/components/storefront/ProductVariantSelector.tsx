@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useTransition } from "react"
+import { useState, useMemo, useTransition, useEffect } from "react"
 import { useActionState } from "react"
 import { useFormStatus } from "react-dom"
 import { useRouter } from "next/navigation"
@@ -103,6 +103,25 @@ export function ProductVariantSelector({
   const [wishlistIds, setWishlistIds] = useState<string[]>(initialWishlistVariantIds)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
+
+  useEffect(() => {
+    let cancelled = false
+
+    fetch("/api/wishlist/status")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.wishlistedVariantIds) {
+          setWishlistIds(data.wishlistedVariantIds)
+        }
+      })
+      .catch(() => {
+        // Silently ignore — heart icons just stay unfilled until next successful check
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const activeVariant = useMemo(() => {
     return variants.find((v) => {
@@ -288,6 +307,7 @@ function BuyNowButton({ variantId, inStock }: { variantId: string; inStock: bool
       
       const res = await addToCartAction(null, formData)
       if (res.success) {
+        window.dispatchEvent(new Event("cart-updated"))
         router.push("/checkout")
       } else {
         alert(res.error?.message || "Failed to initiate buy now")

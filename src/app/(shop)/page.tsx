@@ -20,6 +20,7 @@ import Image from "next/image"
 import { NewsletterForm } from "@/features/newsletter/components/NewsletterForm"
 import { getHomepageCatalog } from "@/db/queries"
 import type { ProductSummary } from "@/db/queries/types"
+import { Suspense } from "react"
 
 export const metadata = buildMetadata({
   title: "Home",
@@ -32,7 +33,6 @@ import { ParallaxHero } from "@/components/shared/Hero/ParallaxHero"
 import { WishlistToggleIcon } from "@/components/shop/WishlistToggleIcon"
 
 export default async function HomePage() {
-  const catalog = await getHomepageCatalog()
   const settingsQuery = await db.select().from(homepageSettings).limit(1)
   const settings = settingsQuery.length > 0 ? settingsQuery[0] : null
   
@@ -40,9 +40,34 @@ export default async function HomePage() {
     <>
       <HeroSection settings={settings} />
       <NewArrivalsSection settings={settings} />
-      <FeaturedProductsSection products={catalog.featuredProducts} />
+      <Suspense fallback={<FeaturedProductsSkeleton />}>
+        <FeaturedProductsData />
+      </Suspense>
       {(settings?.newsletterToggle ?? true) && <NewsletterSection />}
     </>
+  )
+}
+
+async function FeaturedProductsData() {
+  const catalog = await getHomepageCatalog()
+  return <FeaturedProductsSection products={catalog.featuredProducts} />
+}
+
+function FeaturedProductsSkeleton() {
+  return (
+    <Section id="featured-products" padding="2xl" className="bg-background">
+      <Container>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex flex-col gap-4">
+              <div className="aspect-[3/4] w-full bg-surface-secondary animate-pulse" />
+              <div className="h-3 w-2/3 bg-surface-secondary animate-pulse" />
+              <div className="h-3 w-1/3 bg-surface-secondary animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </Container>
+    </Section>
   )
 }
 

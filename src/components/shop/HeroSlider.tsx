@@ -1,10 +1,6 @@
-"use client"
-
-import * as React from "react"
 import Link from "next/link"
 import { ParallaxHero } from "@/components/shared/Hero/ParallaxHero"
 import { Section } from "@/components/shared/section"
-import { cn } from "@/lib/utils"
 
 interface HeroSlide {
   id: string
@@ -73,11 +69,7 @@ const placeholderSlides: HeroSlide[] = [
 ]
 
 export function HeroSlider({ heroLink }: { heroLink: string }) {
-  const [currentSlide, setCurrentSlide] = React.useState(0)
-  
-  // Update the link of the first placeholder to use the heroLink prop if needed, 
-  // but user requested static /collections link for Discover Piece.
-  const slide = placeholderSlides[currentSlide]
+  const slide = placeholderSlides[0]
 
   return (
     <Section
@@ -92,7 +84,7 @@ export function HeroSlider({ heroLink }: { heroLink: string }) {
       >
         <ParallaxHero
           src={slide.image}
-          alt={`Hero Background ${currentSlide + 1}`}
+          alt="Hero Background 1"
         />
       </div>
 

@@ -81,6 +81,37 @@ const journalList = [
 export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: HeaderProps) {
   const pathname = usePathname()
   const [isScrolled, setIsScrolled] = React.useState(false)
+  const [liveCartCount, setLiveCartCount] = React.useState(cartCount)
+  const [liveWishlistCount, setLiveWishlistCount] = React.useState(wishlistCount)
+
+  React.useEffect(() => {
+    let cancelled = false
+
+    const fetchSummary = () => {
+      fetch("/api/cart/summary")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (!cancelled && data) {
+            setLiveCartCount(data.cartCount ?? 0)
+            setLiveWishlistCount(data.wishlistCount ?? 0)
+          }
+        })
+        .catch(() => {
+          // Silently ignore — badge just stays at its current value
+        })
+    }
+
+    fetchSummary()
+
+    // Listen for cart mutations from AddToCartButton / other cart actions
+    window.addEventListener("cart-updated", fetchSummary)
+
+    return () => {
+      cancelled = true
+      window.removeEventListener("cart-updated", fetchSummary)
+    }
+  }, [pathname])
+
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
   const [activeAccordion, setActiveAccordion] = React.useState<string | null>(null)
   const drawerRef = React.useRef<HTMLDivElement>(null)
@@ -245,7 +276,7 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
             aria-label="Your wishlist"
           >
             <Heart className="w-4.5 h-4.5 stroke-[1.25]" />
-            {wishlistCount > 0 && (
+            {liveWishlistCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-text-primary rounded-full" />
             )}
           </Link>
@@ -258,9 +289,9 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
               aria-label="Your shopping cart"
             >
               <ShoppingBag className="w-4.5 h-4.5 stroke-[1.25]" />
-              {cartCount > 0 && (
+              {liveCartCount > 0 && (
                 <span className="ml-1 text-[10px] font-medium tracking-wide">
-                  ({cartCount})
+                  ({liveCartCount})
                 </span>
               )}
             </Link>
@@ -361,7 +392,7 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center gap-3 text-body-sm uppercase tracking-wider"
               >
-                <ShoppingBag className="w-4 h-4" /> Cart ({cartCount})
+                <ShoppingBag className="w-4 h-4" /> Cart ({liveCartCount})
               </Link>
             </div>
           </div>

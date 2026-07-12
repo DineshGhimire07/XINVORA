@@ -6,6 +6,7 @@ import { submitCheckoutAction } from "@/actions/checkout.actions"
 import { uploadCustomerLocalFileAction } from "@/actions/customer.media.actions"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { OrderSummary } from "./OrderSummary"
 
 export function PaymentStep({ addressData, totals, paymentQrs, onBack }: any) {
   const router = useRouter()
@@ -137,53 +138,38 @@ export function PaymentStep({ addressData, totals, paymentQrs, onBack }: any) {
       </div>
 
       <div className="lg:col-span-5">
-        <div className="bg-surface rounded-2xl p-6 shadow-sm border border-border sticky top-24">
-          <h2 className="text-lg font-semibold mb-6">Order Summary</h2>
-          
-          <div className="space-y-4 mb-6">
-            <div className="flex justify-between text-text-secondary">
-              <span>Subtotal</span>
-              <span>NPR {Math.round(totals.subtotal / 100).toLocaleString()}</span>
-            </div>
-            {totals.discountAmount > 0 && (
-              <div className="flex justify-between text-green-600">
-                <span>Discount</span>
-                <span>- NPR {Math.round(totals.discountAmount / 100).toLocaleString()}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-text-secondary">
-              <span>Shipping</span>
-              <span>NPR {Math.round(totals.shippingCost / 100).toLocaleString()}</span>
-            </div>
-          </div>
-          
-          <div className="pt-4 border-t border-border flex justify-between font-semibold text-lg text-text-primary mb-6">
-            <span>Total</span>
-            <span>NPR {Math.round(totals.total / 100).toLocaleString()}</span>
-          </div>
-
-          {error && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100">
-              {error}
-            </div>
-          )}
-
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting || (method === "ESEWA" && !file)}
-            className={cn(
-              "w-full h-14 rounded-xl font-semibold text-sm tracking-wide transition-all duration-300",
-              "bg-accent hover:bg-accent/90 text-white shadow-[0_4px_14px_0_rgba(0,0,0,0.1)]",
-              (isSubmitting || (method === "ESEWA" && !file)) && "opacity-50 cursor-not-allowed"
-            )}
+        <div className="sticky top-24">
+          <OrderSummary 
+            cart={totals.cart} 
+            shippingCost={totals.shippingCost} 
+            discountAmount={totals.discountAmount}
+            total={totals.total}
           >
-            {isSubmitting ? (
-              <div className="flex items-center justify-center gap-2">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Processing...</span>
-              </div>
-            ) : method === "ESEWA" ? "Submit Proof & Confirm Order" : "Confirm Order"}
-          </button>
+            <div className="mt-6 pt-6 border-t border-border-primary/20">
+              {error && (
+                <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100">
+                  {error}
+                </div>
+              )}
+
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting || (method === "ESEWA" && !file)}
+                className={cn(
+                  "w-full h-14 rounded-xl font-semibold text-sm tracking-wide transition-all duration-300",
+                  "bg-accent hover:bg-accent/90 text-white shadow-[0_4px_14px_0_rgba(0,0,0,0.1)]",
+                  (isSubmitting || (method === "ESEWA" && !file)) && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Processing...</span>
+                  </div>
+                ) : method === "ESEWA" ? "Submit Proof & Confirm Order" : "Confirm Order"}
+              </button>
+            </div>
+          </OrderSummary>
         </div>
       </div>
     </div>

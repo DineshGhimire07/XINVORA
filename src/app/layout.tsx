@@ -16,13 +16,8 @@ import { Cormorant_Garamond, Manrope, Playfair_Display } from "next/font/google"
 import type { ReactNode } from "react"
 import { Providers } from "@/providers/providers"
 import { buildRootMetadata } from "@/lib/metadata"
-import { Header } from "@/components/shared/Header/Header"
-import { Footer } from "@/components/shared/Footer/Footer"
-import { SessionService } from "@/services/session.service"
-import { getHeaderCommerceState } from "@/db/queries/cart"
 import { cn } from "@/lib/utils"
 import { SkipToContent } from "@/components/shared/skip-to-content"
-import { headers } from "next/headers"
 import NextTopLoader from "nextjs-toploader"
 import "@/app/globals.css"
 
@@ -70,41 +65,9 @@ export const viewport: Viewport = {
   ],
 }
 
-// ── Root Layout ───────────────────────────────────────────────────────────────
-import { findHierarchicalCollections } from "@/db/queries/collections"
-import { type TimingEntry, timedPromise, printTimingSummary } from "@/lib/perf"
-
-export default async function RootLayout({
-  children,
-}: {
-  children: ReactNode
-}) {
-  const totalStart = performance.now()
-  const timings: TimingEntry[] = []
-
-  const identityStart = performance.now()
-  const { userId, sessionId } = await SessionService.getCommerceIdentity()
-  timings.push({ name: 'getCommerceIdentity', ms: performance.now() - identityStart })
-
-  const [commerceState, collections] = await Promise.all([
-    timedPromise('getHeaderCommerceState', timings, getHeaderCommerceState(userId, sessionId)),
-    timedPromise('findHierarchicalCollections', timings, findHierarchicalCollections()),
-  ])
-
-  const headerList = await headers()
-  const pathname = headerList.get("x-pathname") || ""
-  const isAdmin = pathname.startsWith("/admin")
-  const isPreview = pathname === "/preview"
-
-  printTimingSummary('RootLayout', timings, performance.now() - totalStart)
-
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      // suppressHydrationWarning is required because next-themes
-      // injects the "dark" class attribute dynamically on the client.
-    >
+    <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
         className={cn(
@@ -124,19 +87,9 @@ export default async function RootLayout({
             shadow={false}
           />
           <SkipToContent />
-          {!isPreview && (
-            <Header 
-              cartCount={commerceState.cartCount} 
-              wishlistCount={commerceState.wishlistCount} 
-              collections={collections}
-            />
-          )}
-
           <main id="main-content" className="flex min-h-[100dvh] flex-col">
             {children}
           </main>
-
-          {!isAdmin && !isPreview && <Footer />}
         </Providers>
       </body>
     </html>

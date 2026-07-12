@@ -15,8 +15,10 @@ import { NewsletterForm } from "@/features/newsletter/components/NewsletterForm"
 import { AdminSettingsService } from "@/services/admin/settings.service"
 
 export async function Footer() {
-  const generalSettings = await AdminSettingsService.getSetting("general")
-  const contactSettings = await AdminSettingsService.getSetting("store_contact")
+  const [generalSettings, contactSettings] = await Promise.all([
+    AdminSettingsService.getSetting("general"),
+    AdminSettingsService.getSetting("store_contact"),
+  ])
   
   const storeName = generalSettings?.storeName || "XINVORA"
   const tagline = generalSettings?.storeTagline || "Designed with intention. Made to endure. We create premium, quiet luxury apparel and furniture objects built for daily life."

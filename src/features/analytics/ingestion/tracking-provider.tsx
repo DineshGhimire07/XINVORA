@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useEffect, useRef } from "react"
+import React, { createContext, useContext, useEffect, useRef, Suspense } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { AnalyticsEvent, AnalyticsEventType } from "../events/registry"
@@ -26,12 +26,7 @@ export function useAnalytics() {
 }
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
   const { data: session } = useSession()
-  
-  // Track previous path to send as referrer
-  const prevPathRef = useRef<string | null>(null)
 
   // Generate or load persistent session key
   const getSessionKey = (): string => {
@@ -67,7 +62,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         categoryId: categoryId || null,
         orderId: orderId || null,
         page: window.location.pathname + window.location.search,
-        referrer: prevPathRef.current || document.referrer || null,
+        referrer: (window as any).__xinvoraPrevPath || document.referrer || null,
         device: getDeviceType(),
         country: null,
         source: "WEB",
@@ -90,39 +85,60 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const getDeviceType = () => {
-    const width = window.innerWidth
-    if (width < 768) return "MOBILE"
-    if (width < 1024) return "TABLET"
-    return "DESKTOP"
-  }
+  return (
+    <AnalyticsContext.Provider value={{ trackEvent }}>
+      {/* Only this small tracker calls useSearchParams()/usePathname(), so only
+          it needs a Suspense boundary — children render immediately, unaffected. */}
+      <Suspense fallback={null}>
+        <PageViewTracker trackEvent={trackEvent} />
+      </Suspense>
+      {children}
+    </AnalyticsContext.Provider>
+  )
+}
 
-  const getUtmParameters = () => {
-    const params = new URLSearchParams(window.location.search)
-    return {
-      source: params.get("utm_source"),
-      medium: params.get("utm_medium"),
-      campaign: params.get("utm_campaign"),
-    }
-  }
+function PageViewTracker({
+  trackEvent,
+}: {
+  trackEvent: AnalyticsContextType["trackEvent"]
+}) {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const prevPathRef = useRef<string | null>(null)
 
-  // Auto-track PAGE_VIEW on route change
   useEffect(() => {
     const currentPath = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : "")
-    
+
     const timer = setTimeout(() => {
       trackEvent(AnalyticsEvent.PAGE_VIEW, {
         title: document.title,
       })
+      if (typeof window !== "undefined") {
+        (window as any).__xinvoraPrevPath = prevPathRef.current
+      }
       prevPathRef.current = currentPath
     }, 100)
 
     return () => clearTimeout(timer)
-  }, [pathname, searchParams])
+  }, [pathname, searchParams, trackEvent])
 
-  return (
-    <AnalyticsContext.Provider value={{ trackEvent }}>
-      {children}
-    </AnalyticsContext.Provider>
-  )
+  return null
+}
+
+const getDeviceType = () => {
+  if (typeof window === "undefined") return "DESKTOP"
+  const width = window.innerWidth
+  if (width < 768) return "MOBILE"
+  if (width < 1024) return "TABLET"
+  return "DESKTOP"
+}
+
+const getUtmParameters = () => {
+  if (typeof window === "undefined") return { source: null, medium: null, campaign: null }
+  const params = new URLSearchParams(window.location.search)
+  return {
+    source: params.get("utm_source"),
+    medium: params.get("utm_medium"),
+    campaign: params.get("utm_campaign"),
+  }
 }
