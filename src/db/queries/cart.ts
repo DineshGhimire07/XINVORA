@@ -4,11 +4,31 @@ import { carts, cartItems, variants, products, productImages, colors, sizes, var
 import type { CartResult, CartItemResult, HeaderCommerceState } from "./types"
 import { cache } from "react"
 
+// ── Short-lived per-user cart cache ──────────────────────────────────────────
+const cartMemCache = new Map<string, { data: CartResult | null; ts: number }>()
+const CART_CACHE_TTL_MS = 5_000 // 5 seconds
+
+/**
+ * Invalidates the in-memory cart cache for a given user/session.
+ * Must be called after any cart mutation to prevent stale reads.
+ */
+export function invalidateCartCache(userId: string | null, sessionId: string | null) {
+  if (userId) cartMemCache.delete(`user:${userId}`)
+  if (sessionId) cartMemCache.delete(`session:${sessionId}`)
+}
+
 export const getCart = cache(async (
   userId: string | null,
   sessionId: string | null
 ): Promise<CartResult | null> => {
   if (!userId && !sessionId) return null
+
+  // Check short-lived in-memory cache
+  const cacheKey = userId ? `user:${userId}` : `session:${sessionId!}`
+  const cached = cartMemCache.get(cacheKey)
+  if (cached && (Date.now() - cached.ts) < CART_CACHE_TTL_MS) {
+    return cached.data
+  }
 
   const cartFilters = []
   if (userId) {
@@ -43,32 +63,18 @@ export const getCart = cache(async (
     .where(eq(cartItems.cartId, cart.id))
     .orderBy(desc(cartItems.createdAt))
 
-  const variantSubquery = db
-    .select({ variantId: cartItems.variantId })
-    .from(cartItems)
-    .innerJoin(variants, and(eq(cartItems.variantId, variants.id), isNull(variants.deletedAt)))
-    .where(eq(cartItems.cartId, cart.id))
+  // Extract IDs from already-resolved items — avoids 2 redundant
+  // cartItems→variants subqueries that the old code ran per fetch
+  const variantIds = items.map(row => row.variant.id)
+  const productIds = [...new Set(items.map(row => row.product.id))]
 
-  const productSubquery = db
-    .select({ productId: variants.productId })
-    .from(cartItems)
-    .innerJoin(variants, and(eq(cartItems.variantId, variants.id), isNull(variants.deletedAt)))
-    .where(eq(cartItems.cartId, cart.id))
-
-  const [images, livePrices, prodImages] = await Promise.all([
-    db
-      .select()
-      .from(variantImages)
-      .where(inArray(variantImages.variantId, variantSubquery)),
-    db
-      .select()
-      .from(priceBookEntries)
-      .where(inArray(priceBookEntries.variantId, variantSubquery)),
-    db
-      .select()
-      .from(productImages)
-      .where(inArray(productImages.productId, productSubquery)),
-  ])
+  const [images, livePrices, prodImages] = variantIds.length > 0
+    ? await Promise.all([
+        db.select().from(variantImages).where(inArray(variantImages.variantId, variantIds)),
+        db.select().from(priceBookEntries).where(inArray(priceBookEntries.variantId, variantIds)),
+        db.select().from(productImages).where(inArray(productImages.productId, productIds)),
+      ])
+    : [[], [], []]
 
   const resolvedItems: CartItemResult[] = items.map((row) => {
     let itemImages = images.filter((img) => img.variantId === row.variant.id)
@@ -104,10 +110,15 @@ export const getCart = cache(async (
     }
   })
 
-  return {
+  const result: CartResult = {
     ...cart,
     items: resolvedItems,
   }
+
+  // Populate short-lived cache
+  cartMemCache.set(cacheKey, { data: result, ts: Date.now() })
+
+  return result
 })
 
 import { wishlists, wishlistItems } from "../schema"

@@ -7,6 +7,7 @@ import { CartService } from "../services/cart.service"
 import type { ActionResult } from "../types/actions"
 import { addToWishlistSchema, removeFromWishlistSchema } from "../validations/wishlist"
 import { type TimingEntry, printTimingSummary } from "@/lib/perf"
+import { invalidateCartCache } from "@/db/queries/cart"
 
 export async function saveForLaterAction(
   prevState: any,
@@ -23,6 +24,7 @@ export async function saveForLaterAction(
     // 2. Remove variant from cart
     await CartService.removeFromCart({ cartItemId }, session.id, null)
 
+    invalidateCartCache(session.id, null)
     revalidatePath("/cart")
     revalidatePath("/wishlist")
     revalidatePath("/account/wishlist")

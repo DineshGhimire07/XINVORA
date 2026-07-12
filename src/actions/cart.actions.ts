@@ -8,6 +8,7 @@ import { validateInput, handleServiceCall } from "@/services/shared/action-utils
 import { addToCartSchema, updateCartQuantitySchema, removeFromCartSchema } from "@/validations/cart"
 import type { ActionResult } from "@/types/actions"
 import { type TimingEntry, printTimingSummary } from "@/lib/perf"
+import { invalidateCartCache } from "@/db/queries/cart"
 
 /**
  * Gets or creates the guest cart session ID from cookies.
@@ -63,7 +64,9 @@ export async function addToCartAction(
   )
   timings.push({ name: 'CartService.addToCart', ms: performance.now() - serviceStart })
   if (result.success) {
-    // Rely on automatic router invalidation on client navigation + active Data Cache
+    invalidateCartCache(userId, sessionId)
+    revalidatePath("/cart")
+    revalidatePath("/", "layout")
   }
 
   printTimingSummary('addToCartAction', timings, performance.now() - totalStart)
@@ -87,7 +90,9 @@ export async function updateCartQuantityAction(
   )
 
   if (result.success) {
-    // Rely on automatic router invalidation
+    invalidateCartCache(userId, sessionId)
+    revalidatePath("/cart")
+    revalidatePath("/", "layout")
   }
 
   return result
@@ -109,7 +114,9 @@ export async function removeFromCartAction(
   )
 
   if (result.success) {
-    // Rely on automatic router invalidation
+    invalidateCartCache(userId, sessionId)
+    revalidatePath("/cart")
+    revalidatePath("/", "layout")
   }
 
   return result
@@ -125,7 +132,9 @@ export async function clearCartAction(
     CartService.clearCart(userId, sessionId)
   )
   if (result.success) {
-    // Rely on automatic router invalidation
+    invalidateCartCache(userId, sessionId)
+    revalidatePath("/cart")
+    revalidatePath("/", "layout")
   }
 
   return result
