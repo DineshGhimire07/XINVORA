@@ -15,12 +15,9 @@ interface CheckoutFlowProps {
     cart: any
     subtotal: number
     discountAmount: number
-    shippingMethod: any
+    shippingMethodId: string
     shippingCost: number
-    taxRate: number
-    taxAmount: number
     total: number
-    couponRecord: any
   }
   initialDistricts?: any[]
   initialMunicipalities?: any[]

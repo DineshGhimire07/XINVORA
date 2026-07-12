@@ -1,7 +1,6 @@
 import { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { SessionService } from "@/services/session.service"
-import { getCart } from "@/db/queries/cart"
 
 export const metadata: Metadata = {
   title: "Checkout | XINVORA",
@@ -17,12 +16,6 @@ export default async function CheckoutLayout({
   
   if (!session) {
     redirect("/auth/login?callbackUrl=/checkout")
-  }
-
-  const cart = await getCart(session.id, null)
-  
-  if (!cart || cart.items.length === 0) {
-    redirect("/cart")
   }
 
   return (

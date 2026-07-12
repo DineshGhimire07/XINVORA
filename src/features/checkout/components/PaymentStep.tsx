@@ -46,7 +46,7 @@ export function PaymentStep({ addressData, totals, paymentQrs, onBack }: any) {
       paymentMethod: method,
       paymentProofUrl,
       idempotencyKey,
-      shippingMethodId: totals.shippingMethod.id
+      shippingMethodId: totals.shippingMethodId
     })
 
     if (result.success) {

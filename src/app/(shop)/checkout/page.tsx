@@ -140,7 +140,14 @@ export default async function CheckoutPage() {
       <Suspense fallback={<CheckoutSkeleton />}>
         <CheckoutFlowWithData
           sessionId={session.id}
-          totals={initialTotals}
+          totals={{
+            cart: initialTotals.cart,
+            subtotal: initialTotals.subtotal,
+            discountAmount: initialTotals.discountAmount,
+            shippingMethodId: initialTotals.shippingMethod.id,
+            shippingCost: initialTotals.shippingCost,
+            total: initialTotals.total,
+          }}
         />
       </Suspense>
     </main>

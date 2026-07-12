@@ -326,7 +326,7 @@ export async function findProducts(
       .from(variants)
       .innerJoin(priceBookEntries, eq(variants.id, priceBookEntries.variantId))
       .innerJoin(priceBooks, and(eq(priceBookEntries.priceBookId, priceBooks.id), eq(priceBooks.isDefault, true)))
-      .where(and(inArray(variants.productId, productIds), isNull(variants.deletedAt)))
+      .where(and(inArray(variants.productId, productIds), isNull(variants.deletedAt), eq(variants.isActive, true)))
   }
 
   const itemsWithPrices = items.map(item => {

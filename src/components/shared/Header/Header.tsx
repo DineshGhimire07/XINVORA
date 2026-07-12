@@ -101,14 +101,15 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
         })
     }
 
-    fetchSummary()
-
-    // Listen for cart mutations from AddToCartButton / other cart actions
+    // Don't fetch on mount — server-rendered props are already accurate.
+    // Only re-sync on cart mutations or when the user returns to this tab.
     window.addEventListener("cart-updated", fetchSummary)
+    window.addEventListener("focus", fetchSummary)
 
     return () => {
       cancelled = true
       window.removeEventListener("cart-updated", fetchSummary)
+      window.removeEventListener("focus", fetchSummary)
     }
   }, [pathname])
 
