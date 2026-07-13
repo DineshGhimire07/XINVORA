@@ -62,7 +62,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Row of 3 Status Cards (Desktop: 3 columns, Mobile: 3 columns with compact layouts) */}
-      <Grid cols={{ base: 3, md: 3 }} gap={{ base: 2, md: 4 }}>
+      <Grid cols={{ base: 3, md: 3 }} gap={4}>
         {/* Order Status */}
         <div className="bg-white border border-[#F2EFEA] rounded-xl p-3 md:p-5 flex items-center md:items-start gap-2.5 md:gap-4 hover:border-[#D6CFB4] transition-all duration-300">
           <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#FAF8F5] border border-[#F2EFEA] flex items-center justify-center text-[#9A9087] shrink-0">
