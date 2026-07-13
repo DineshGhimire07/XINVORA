@@ -6,7 +6,7 @@ import { useFormStatus } from "react-dom"
 import { useRouter } from "next/navigation"
 import { AddToCartButton } from "@/features/cart/components/AddToCartButton"
 import { Button } from "@/components/ui/button"
-import { Heart, X } from "lucide-react"
+import { Heart, X, ShoppingBag } from "lucide-react"
 import { toggleWishlistAction } from "@/actions/wishlist.actions"
 import { addToCartAction } from "@/actions/cart.actions"
 import { useHeaderState } from "@/providers/header-state-provider"
@@ -99,13 +99,19 @@ export function ProductVariantSelector({
   initialWishlistVariantIds = [],
 }: ProductVariantSelectorProps) {
   const [selectedColorId, setSelectedColorId] = useState<string | null>(colors[0]?.id || null)
-  const [selectedSizeId, setSelectedSizeId] = useState<string | null>(sizes[0]?.id || null)
+  const [selectedSizeId, setSelectedSizeId] = useState<string | null>(null)
+  const [validationError, setValidationError] = useState<string | null>(null)
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false)
   const [wishlistIds, setWishlistIds] = useState<string[]>(initialWishlistVariantIds)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
   const { wishlistIds: sharedWishlistIds } = useHeaderState()
+
+  const handleSizeSelect = (sizeId: string) => {
+    setSelectedSizeId(sizeId)
+    setValidationError(null)
+  }
 
   useEffect(() => {
     if (sharedWishlistIds.length > 0) {
@@ -114,6 +120,7 @@ export function ProductVariantSelector({
   }, [sharedWishlistIds])
 
   const activeVariant = useMemo(() => {
+    if (!selectedSizeId) return undefined
     return variants.find((v) => {
       const colorMatches = v.color ? v.color.id === selectedColorId : true
       const sizeMatches = v.size ? v.size.id === selectedSizeId : true
@@ -122,15 +129,17 @@ export function ProductVariantSelector({
   }, [variants, selectedColorId, selectedSizeId])
 
   const displayPrice = useMemo(() => {
-    if (activeVariant && activeVariant.price !== undefined && activeVariant.price !== null) {
-      return `NPR ${Math.round(activeVariant.price / 100).toLocaleString()}`
+    const targetForPrice = activeVariant || variants[0]
+    if (targetForPrice && targetForPrice.price !== undefined && targetForPrice.price !== null) {
+      return `NPR ${Math.round(targetForPrice.price / 100).toLocaleString()}`
     }
     return "Contact for Price"
-  }, [activeVariant])
+  }, [activeVariant, variants])
 
   const handleWishlistToggle = () => {
-    if (!activeVariant) return
-    const vId = activeVariant.id
+    const targetVariant = variants[0]
+    if (!targetVariant) return
+    const vId = targetVariant.id
     const currentlyWishlisted = wishlistIds.includes(vId)
 
     // Optimistic toggle
@@ -213,7 +222,7 @@ export function ProductVariantSelector({
               return (
                 <button
                   key={size.id}
-                  onClick={() => setSelectedSizeId(size.id)}
+                  onClick={() => handleSizeSelect(size.id)}
                   aria-pressed={isSelected}
                   className={`w-11 h-11 flex items-center justify-center text-[11px] font-semibold uppercase rounded-full border transition-all select-none ${
                     isSelected
@@ -236,6 +245,13 @@ export function ProductVariantSelector({
         </span>
       )}
 
+      {/* Validation Error Message */}
+      {validationError && (
+        <p className="text-body-xs font-semibold text-red-500 text-center select-none animate-pulse">
+          {validationError}
+        </p>
+      )}
+
       {/* Actions — ADD TO BAG, WISHLIST, and BUY NOW grouped with tighter vertical gap */}
       <div className="flex flex-col gap-2.5 w-full pt-2">
         <div className="flex items-stretch gap-3 w-full">
@@ -243,17 +259,25 @@ export function ProductVariantSelector({
             {activeVariant ? (
               <AddToCartButton variantId={activeVariant.id} inStock={inStock} />
             ) : (
-              <Button variant="primary" size="lg" className="w-full" disabled>
-                Unavailable
+              <Button 
+                variant="primary" 
+                size="lg" 
+                className="w-full bg-text-primary border-text-primary text-surface hover:bg-text-primary/90 hover:border-text-primary/90 active:scale-[0.98] transition-all duration-300"
+                onClick={() => setValidationError("Please select a size first.")}
+              >
+                <span className="flex items-center justify-center gap-2">
+                  <ShoppingBag className="w-4 h-4" />
+                  Add to Bag
+                </span>
               </Button>
             )}
           </div>
 
-          {activeVariant ? (
+          {variants[0] ? (
             <WishlistButton
-              variantId={activeVariant.id}
+              variantId={variants[0].id}
               disabled={false}
-              isWishlisted={wishlistIds.includes(activeVariant.id)}
+              isWishlisted={wishlistIds.includes(variants[0].id)}
               isPending={isPending}
               onToggle={handleWishlistToggle}
             />
@@ -274,7 +298,12 @@ export function ProductVariantSelector({
           {activeVariant ? (
             <BuyNowButton variantId={activeVariant.id} inStock={inStock} />
           ) : (
-            <Button variant="outline" size="lg" className="w-full" disabled>
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="w-full h-12 text-black border-black/20 hover:border-black/50 hover:bg-neutral-50 transition-colors uppercase tracking-widest text-[11px]"
+              onClick={() => setValidationError("Please select a size first.")}
+            >
               Buy Now
             </Button>
           )}

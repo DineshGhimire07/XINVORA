@@ -50,14 +50,14 @@ export function WishlistCard({ item, loading, onRemove, onAddToCart }: WishlistC
             />
           </Link>
 
-          {/* Wishlist Heart Toggle (Top Right - Transparent Outline style) */}
+          {/* Wishlist Heart Toggle (Bottom Right - Clicked Filled style) */}
           <button
             onClick={() => onRemove(item.id)}
             disabled={loading}
-            className="absolute top-4 right-4 text-text-primary hover:text-accent active:scale-95 transition-all duration-300 disabled:opacity-50"
+            className="absolute bottom-3 right-3 text-accent hover:opacity-80 active:scale-95 transition-all duration-300 disabled:opacity-50"
             aria-label="Remove from wishlist"
           >
-            <Heart className="w-5 h-5 stroke-[1.5] fill-none hover:fill-accent/20 transition-all" />
+            <Heart className="w-5 h-5 stroke-[1.5] fill-accent text-accent" />
           </button>
         </div>
 
@@ -68,11 +68,7 @@ export function WishlistCard({ item, loading, onRemove, onAddToCart }: WishlistC
               {item.variant.product.name}
             </Link>
           </h3>
-          {specs && (
-            <p className="text-[10px] text-[#757575] font-light truncate">
-              {specs}
-            </p>
-          )}
+
           <p className="text-body-sm font-bold text-text-primary pt-0.5">
             {formattedPrice}
           </p>
