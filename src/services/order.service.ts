@@ -1,4 +1,4 @@
-import { findOrderByNumber, findUserOrdersPaginated } from "../db/queries/orders"
+import { findOrderByNumber, findUserOrdersPaginated, findRecentOrdersWithItems } from "../db/queries/orders"
 
 export class OrderService {
   static async getUserOrders(
@@ -13,6 +13,10 @@ export class OrderService {
     } = {}
   ) {
     return await findUserOrdersPaginated(userId, options)
+  }
+
+  static async getRecentOrdersWithItems(userId: string, limit?: number) {
+    return await findRecentOrdersWithItems(userId, limit)
   }
 
   static async getOrderDetail(userId: string, orderNumber: string) {

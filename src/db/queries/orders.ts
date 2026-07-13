@@ -153,3 +153,26 @@ export async function findAdminOrdersPaginated(
     currentPage: page,
   }
 }
+
+export async function findRecentOrdersWithItems(userId: string, limit: number = 3) {
+  return await db.query.orders.findMany({
+    where: eq(orders.userId, userId),
+    orderBy: desc(orders.createdAt),
+    limit: limit,
+    with: {
+      orderItems: {
+        with: {
+          variant: {
+            with: {
+              product: {
+                with: {
+                  productImages: true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+}

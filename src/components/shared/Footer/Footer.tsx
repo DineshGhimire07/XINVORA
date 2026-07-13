@@ -25,7 +25,7 @@ export async function Footer() {
 
   return (
     <footer className="border-t border-border/60 bg-background pt-16 pb-12 select-none" role="contentinfo">
-      <Container>
+      <Container size="full" className="px-6 sm:px-12 md:px-16 lg:px-20">
         
         {/* Main Footer Links & Newsletter Grid */}
         <Grid cols={{ base: 1, md: 12 }} gap={12} className="pb-12 border-b border-border/40">
