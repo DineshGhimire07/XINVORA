@@ -1,18 +1,17 @@
 import { Metadata } from "next"
 import Link from "next/link"
-import Image from "next/image"
+import { Heart } from "lucide-react"
 import { Container } from "@/components/shared/container"
 import { Section } from "@/components/shared/section"
-import { Grid } from "@/components/shared/grid"
-import { Button } from "@/components/ui/button"
 import { getWishlist } from "@/db/queries/wishlist"
+import { findFeaturedProducts } from "@/db/queries/products"
 import { SessionService } from "@/services/session.service"
-import { WishlistButton } from "@/features/wishlist/components/WishlistButton"
-import { AddAllToCartButton } from "./AddAllToCartButton"
+import { WishlistContainer } from "./WishlistContainer"
+import { WishlistRecommendations } from "./WishlistRecommendations"
 
 export const metadata: Metadata = {
   title: "Wishlist | XINVORA",
-  description: "View your saved items.",
+  description: "curated objects saved for later.",
 }
 
 export default async function WishlistPage() {
@@ -20,93 +19,42 @@ export default async function WishlistPage() {
   
   if (!session) {
     return (
-      <Section id="wishlist-empty" padding="2xl" className="min-h-[60vh] flex flex-col items-center justify-center text-center">
+      <Section id="wishlist-signin" className="pt-[120px] md:pt-32 pb-16 bg-[#F8F6F2] min-h-[80vh] flex items-center justify-center">
         <Container>
-          <h1 className="text-display-md font-display mb-6">Sign in to view your wishlist</h1>
-          <p className="text-body-md text-text-secondary mb-8 max-w-md mx-auto">
-            You must be logged in to view and manage your saved items.
-          </p>
-          <Link href="/login?callbackUrl=/wishlist">
-            <button className="bg-text-primary text-surface px-8 py-3 text-body-sm font-semibold tracking-widest uppercase hover:bg-text-secondary transition-colors">
-              Sign In
-            </button>
-          </Link>
+          <div className="flex flex-col items-center justify-center text-center select-none py-12">
+            <div className="w-16 h-16 rounded-full bg-white border border-[#ECE7DF] flex items-center justify-center text-[#CFCFCF] mb-6">
+              <Heart className="w-7 h-7 stroke-[1.25]" />
+            </div>
+            <h1 className="text-display-xs font-display text-[#222222] uppercase tracking-wide mb-2">
+              Sign in to view your wishlist
+            </h1>
+            <p className="text-body-sm text-[#757575] max-w-sm mb-8 leading-relaxed">
+              Curate your wishlist and sync it across devices for a faster checkout.
+            </p>
+            <Link href="/login?callbackUrl=/wishlist">
+              <button className="bg-accent hover:bg-accent-hover text-white px-8 py-3 text-[10px] uppercase tracking-widest font-semibold transition-colors duration-300 rounded-none">
+                Sign In / Register
+              </button>
+            </Link>
+          </div>
         </Container>
       </Section>
     )
   }
 
-  const wishlist = await getWishlist(session.id)
-
-  if (!wishlist || wishlist.items.length === 0) {
-    return (
-      <Section id="wishlist-empty" padding="2xl" className="min-h-[60vh] flex flex-col items-center justify-center text-center">
-        <Container>
-          <h1 className="text-display-md font-display mb-6">Your Wishlist is Empty</h1>
-          <p className="text-body-md text-text-secondary mb-8 max-w-md mx-auto">
-            Save items you love to your wishlist to keep track of them or buy them later.
-          </p>
-          <Link href="/search">
-            <button className="bg-text-primary text-surface px-8 py-3 text-body-sm font-semibold tracking-widest uppercase hover:bg-text-secondary transition-colors">
-              Discover Products
-            </button>
-          </Link>
-        </Container>
-      </Section>
-    )
-  }
+  const [wishlist, recommendedProducts] = await Promise.all([
+    getWishlist(session.id),
+    findFeaturedProducts(6),
+  ])
 
   return (
-    <Section id="wishlist" padding="2xl">
-      <Container>
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
-          <h1 className="text-display-sm font-display uppercase tracking-wide">
-            Wishlist
-          </h1>
-          <AddAllToCartButton />
-        </div>
+    <Section id="wishlist" className="pt-28 pb-12 md:pt-32 md:pb-24 bg-[#F8F6F2] min-h-screen">
+      <Container size="full" className="px-6 sm:px-12 md:px-16 lg:px-20">
+        {/* Wishlist Main Container */}
+        <WishlistContainer initialItems={wishlist?.items ?? []} />
 
-        <Grid cols={{ base: 2, md: 3, lg: 4 }} gap={6}>
-          {wishlist.items.map((item) => {
-            const primaryImage = item.variant.images[0]
-            return (
-              <div key={item.id} className="group flex flex-col relative">
-                <div className="aspect-[3/4] relative bg-surface overflow-hidden mb-4">
-                  {primaryImage && (
-                    <Image
-                      src={primaryImage.url}
-                      alt={primaryImage.altText || item.variant.product.name}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                    />
-                  )}
-                  <div className="absolute top-2 right-2">
-                    <WishlistButton 
-                      variantId={item.variant.id} 
-                      wishlistItemId={item.id}
-                      isWishlisted={true} 
-                    />
-                  </div>
-                </div>
-                
-                <Link href={`/products/${item.variant.product.slug}`} className="hover:underline">
-                  <h3 className="text-body-md font-medium text-text-primary">
-                    {item.variant.product.name}
-                  </h3>
-                </Link>
-                <div className="text-body-sm text-text-secondary mt-1">
-                  {item.variant.color && <span>{item.variant.color.name}</span>}
-                  {item.variant.color && item.variant.size && <span> | </span>}
-                  {item.variant.size && <span>{item.variant.size.name}</span>}
-                </div>
-                <div className="text-body-md text-text-primary mt-2">
-                  {item.price ? `NPR ${Math.round(item.price / 100).toLocaleString()}` : "Contact for Price"}
-                </div>
-              </div>
-            )
-          })}
-        </Grid>
+        {/* Selected For You / Recommendations */}
+        <WishlistRecommendations products={recommendedProducts} />
       </Container>
     </Section>
   )

@@ -53,7 +53,7 @@ export default async function CartPage() {
     <Section className="pt-28 pb-12 md:pt-32 md:pb-24">
       <Container size="full" className="px-6 sm:px-12 md:px-16 lg:px-20">
         <div className="mb-12">
-          <h1 className="text-display-sm font-display uppercase tracking-wide">
+          <h1 className="text-display-md font-display uppercase tracking-wide">
             Shopping Cart
           </h1>
           <p className="text-overline tracking-widest text-text-secondary mt-1">

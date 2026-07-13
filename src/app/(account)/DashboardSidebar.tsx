@@ -29,7 +29,7 @@ export function DashboardSidebar() {
     { href: "/account/profile", label: "Personal Information", icon: User },
     { href: "/account/orders", label: "Order History", icon: ShoppingBag },
     { href: "/account/addresses", label: "Saved Addresses", icon: MapPin },
-    { href: "/account/wishlist", label: "My Wishlist", icon: Heart },
+    { href: "/wishlist", label: "My Wishlist", icon: Heart },
     { href: "/account/notifications", label: "Notification Center", icon: Bell },
     { href: "/account/security", label: "Security & Passwords", icon: Lock },
     { href: "/account/settings", label: "Preferences", icon: Sliders },

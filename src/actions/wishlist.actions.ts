@@ -286,3 +286,27 @@ export async function toggleWishlistAction(variantId: string): Promise<ActionRes
   }
 }
 
+/**
+ * Clears the user's wishlist entirely.
+ */
+export async function clearWishlistAction(): Promise<ActionResult<void>> {
+  try {
+    const session = await SessionService.requireAuth()
+    const { WishlistService } = await import("@/services/wishlist.service")
+    await WishlistService.clearWishlist(session.id)
+    revalidatePath("/wishlist")
+    revalidatePath("/account/wishlist")
+    return { success: true, data: undefined }
+  } catch (error: any) {
+    console.error("[clearWishlistAction Error]:", error)
+    return {
+      success: false,
+      error: {
+        code: "WISHLIST_CLEAR_ERROR",
+        message: error.message || "Failed to clear wishlist.",
+      },
+    }
+  }
+}
+
+
