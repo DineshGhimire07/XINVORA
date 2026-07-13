@@ -102,7 +102,7 @@ function CheckoutSkeleton() {
 // ── Main Page (Tier A: blocking) ─────────────────────────────────────────────
 export default async function CheckoutPage() {
   const session = await SessionService.optionalAuth()
-  if (!session) redirect("/auth/login?callbackUrl=/checkout")
+  if (!session) redirect("/login?callbackUrl=/checkout")
 
   // Parallelize getCart + maintenance check — both only need session.id, not each other
   const { AdminSettingsService } = await import("@/services/admin/settings.service")

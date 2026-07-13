@@ -15,7 +15,7 @@ export default async function CheckoutLayout({
   const session = await SessionService.optionalAuth()
   
   if (!session) {
-    redirect("/auth/login?callbackUrl=/checkout")
+    redirect("/login?callbackUrl=/checkout")
   }
 
   return (
