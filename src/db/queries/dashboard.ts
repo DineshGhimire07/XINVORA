@@ -175,11 +175,23 @@ export async function getLowStockAlert() {
       productName: products.name,
       sku: variants.sku,
       quantity: inventory.quantity,
+      imageUrl: sql<string>`(
+        SELECT url 
+        FROM product_images 
+        WHERE product_id = ${products.id} 
+        ORDER BY position ASC 
+        LIMIT 1
+      )`,
     })
     .from(inventory)
     .innerJoin(variants, eq(inventory.variantId, variants.id))
     .innerJoin(products, eq(variants.productId, products.id))
-    .where(and(eq(inventory.status, "LOW_STOCK"), isNull(variants.deletedAt)))
+    .where(
+      and(
+        sql`${inventory.quantity} <= ${inventory.lowStockThreshold}`,
+        isNull(variants.deletedAt)
+      )
+    )
     .orderBy(asc(inventory.quantity))
     .limit(5)
 }

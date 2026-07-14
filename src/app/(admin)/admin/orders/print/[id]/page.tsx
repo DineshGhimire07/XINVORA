@@ -92,7 +92,7 @@ export default async function PrintInvoicePage(props: {
         <div className="inv-header">
           <div className="inv-title">XINVORA</div>
           <div className="inv-text">Company Address Placeholder</div>
-          <div className="inv-text">Phone: +977-98XXXXXXXX | Web: xinvora.com</div>
+          <div className="inv-text">Phone: +977-98XXXXXXXX | Web: xinvora.com.np</div>
           <div className="inv-text">VAT: ____________________</div>
         </div>
 
@@ -102,10 +102,11 @@ export default async function PrintInvoicePage(props: {
             <div className="inv-text inv-bold" style={{ fontSize: '10px' }}>{order.shippingAddress?.fullName}</div>
             <div className="inv-text">{order.shippingAddress?.phone}</div>
             <div className="inv-text" style={{ marginTop: '1mm' }}>
-              {order.shippingAddress?.street} {order.shippingAddress?.landmark && `(${order.shippingAddress?.landmark})`}<br />
+              {order.shippingAddress?.street} {order.shippingAddress?.landmark && `(${order.shippingAddress?.landmark})`}
+              {(order.shippingAddress?.street || order.shippingAddress?.landmark) && <br />}
               Ward {order.shippingAddress?.wardNumber}, {order.shippingAddress?.tole}<br />
-              {order.shippingAddress?.municipality}, {order.shippingAddress?.district}<br />
-              {order.shippingAddress?.province}
+              {order.shippingAddress?.municipalityName || order.shippingAddress?.municipality || ""}, {order.shippingAddress?.districtName || order.shippingAddress?.district || ""}<br />
+              {order.shippingAddress?.provinceName || order.shippingAddress?.province || ""}
             </div>
             {order.shippingAddress?.instructions && (
               <div className="inv-text" style={{ marginTop: '1mm', fontStyle: 'italic' }}>

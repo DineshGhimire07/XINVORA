@@ -527,6 +527,12 @@ export async function findAdminProductsPaginated(
         inner join ${inventory} on ${variants.id} = ${inventory.variantId}
         where ${variants.productId} = ${products.id}
       ), 0)`,
+      collections: sql<string>`coalesce((
+        select string_agg(c.name, ', ') 
+        from product_collections pc
+        inner join collections c on pc.collection_id = c.id
+        where pc.product_id = products.id
+      ), '')`,
     })
     .from(products)
     .leftJoin(categories, eq(products.categoryId, categories.id))

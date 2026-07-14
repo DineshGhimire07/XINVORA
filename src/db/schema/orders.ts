@@ -34,6 +34,7 @@ export const orders = pgTable("orders", {
   paymentIntentId: varchar("payment_intent_id", { length: 255 }),
   paymentProofUrl: varchar("payment_proof_url", { length: 1000 }),
   notes: varchar("notes", { length: 1000 }),
+  invoicePrintedAt: timestamp("invoice_printed_at"),
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

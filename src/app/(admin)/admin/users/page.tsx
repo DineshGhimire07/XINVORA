@@ -1,16 +1,48 @@
-import { Stack } from "@/components/shared/stack"
+import { SessionService } from "@/services/session.service"
+import { getCustomersAction } from "@/actions/admin/customers.actions"
+import { UsersClient } from "./UsersClient"
+import { notFound } from "next/navigation"
 
-export default function AdminUsersPage() {
+export const metadata = {
+  title: "Customers | XINVORA Admin",
+}
+
+interface PageProps {
+  searchParams: Promise<{
+    page?: string
+    search?: string
+  }>
+}
+
+export default async function AdminUsersPage(props: PageProps) {
+  // Gate check
+  await SessionService.requireAdmin()
+
+  const searchParams = await props.searchParams
+  const page = Number(searchParams.page) || 1
+  const search = searchParams.search || ""
+  const limit = 20
+
+  const res = await getCustomersAction({ page, limit, search })
+  if (!res.success || !res.data) {
+    notFound()
+  }
+
   return (
-    <Stack gap={8}>
+    <div className="space-y-6">
       <div>
-        <h1 className="text-display-sm font-display text-text-primary uppercase tracking-wide">
+        <h1 className="text-admin-2xl font-bold font-display text-admin-text-primary tracking-tight">
           Customers
         </h1>
-        <p className="text-body-sm text-text-secondary mt-2">
-          Manage customers and administrator accounts. (Coming soon)
+        <p className="text-admin-sm text-admin-text-secondary mt-1">
+          View customer purchase history, profile information, and saved delivery addresses.
         </p>
       </div>
-    </Stack>
+
+      <UsersClient
+        customersData={res.data}
+        currentSearch={search}
+      />
+    </div>
   )
 }

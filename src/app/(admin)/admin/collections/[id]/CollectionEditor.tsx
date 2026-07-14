@@ -219,6 +219,13 @@ export default function CollectionEditor({
                       onChange={() => handleToggleProduct(p.id)}
                       className="rounded border-admin-border text-admin-primary focus:ring-admin-primary"
                     />
+                    <div className="h-10 w-8 bg-admin-content border border-admin-border rounded-sm overflow-hidden flex-shrink-0 flex items-center justify-center">
+                      {p.imageUrl ? (
+                        <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover object-top" />
+                      ) : (
+                        <div className="text-[7px] uppercase font-bold text-admin-text-secondary">XINV</div>
+                      )}
+                    </div>
                     <div className="flex flex-col">
                       <span className="font-semibold leading-tight">{p.name}</span>
                       <span className="text-[10px] text-admin-text-secondary font-mono mt-0.5">{p.slug}</span>

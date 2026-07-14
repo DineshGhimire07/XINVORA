@@ -51,6 +51,7 @@ interface DashboardClientProps {
     productName: string
     sku: string
     quantity: number
+    imageUrl: string | null
   }[]
 }
 
@@ -225,16 +226,25 @@ export function DashboardClient({
           <div className="divide-y divide-admin-border">
             {lowStockItems.length > 0 ? (
               lowStockItems.map((item, idx) => (
-                <div key={idx} className="py-3 flex items-center justify-between first:pt-0 last:pb-0">
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-admin-sm font-semibold text-admin-text-primary">
-                      {item.productName}
-                    </span>
-                    <span className="text-admin-xs text-admin-text-secondary font-mono">
-                      SKU: {item.sku}
-                    </span>
+                <div key={idx} className="py-3 flex items-center justify-between first:pt-0 last:pb-0 gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-8 bg-admin-content border border-admin-border rounded-sm overflow-hidden flex-shrink-0 flex items-center justify-center">
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.productName} className="h-full w-full object-cover object-top" />
+                      ) : (
+                        <div className="text-[7px] uppercase font-bold text-admin-text-secondary">XINV</div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-0.5 text-left">
+                      <span className="text-admin-sm font-semibold text-admin-text-primary">
+                        {item.productName}
+                      </span>
+                      <span className="text-admin-xs text-admin-text-secondary font-mono">
+                        SKU: {item.sku}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <span className="text-admin-xs font-bold bg-admin-status-danger-bg text-admin-status-danger-text px-2 py-0.5 rounded-admin-sm">
                       {item.quantity} left
                     </span>

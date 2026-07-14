@@ -98,8 +98,8 @@ export class AdminOrdersService {
     "OUT_FOR_DELIVERY": ["DELIVERED", "RETURNED", "CANCELLED"],
     "DELIVERED": ["RETURN_REQUESTED"],
     "RETURN_REQUESTED": ["RETURNED", "DELIVERED"], // DELIVERED meaning return rejected
-    "RETURNED": [],
-    "CANCELLED": []
+    "RETURNED": ["PENDING", "CONFIRMED"],
+    "CANCELLED": ["PENDING", "CONFIRMED"]
   }
 
   /**
@@ -137,6 +137,14 @@ export class AdminOrdersService {
         performedBy: adminId,
       })
     })
+
+    // Trigger in-app notification to customer
+    try {
+      const { NotificationService } = await import("../notification.service")
+      await NotificationService.triggerOrderNotification(order.userId, order.orderNumber, newStatus)
+    } catch (err) {
+      console.error("Failed to trigger order status update notification", err)
+    }
 
     return { success: true }
   }
@@ -251,6 +259,22 @@ export class AdminOrdersService {
       orderBy: orderByClause,
       with: {
         user: true,
+        orderItems: {
+          limit: 1,
+          with: {
+            variant: {
+              with: {
+                product: {
+                  with: {
+                    productImages: {
+                      limit: 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     })
 
@@ -343,6 +367,37 @@ export class AdminOrdersService {
       
       // 3. Delete the order
       await tx.delete(orders).where(eq(orders.id, orderId))
+    })
+  }
+
+  static async markInvoiceAsPrinted(orderId: string, adminId: string) {
+    return await db.transaction(async (tx) => {
+      const orderList = await tx.select().from(orders).where(eq(orders.id, orderId)).limit(1)
+      if (orderList.length === 0) throw new Error("Order not found")
+      
+      await tx.update(orders)
+        .set({ invoicePrintedAt: new Date() })
+        .where(eq(orders.id, orderId))
+      
+      await tx.insert(orderActivity).values({
+        orderId,
+        action: "INVOICE_PRINTED",
+        performedBy: adminId
+      })
+    })
+  }
+
+  static async updateInvoiceNotes(orderId: string, notes: string, adminId: string) {
+    return await db.transaction(async (tx) => {
+      await tx.update(orders)
+        .set({ notes })
+        .where(eq(orders.id, orderId))
+      
+      await tx.insert(orderActivity).values({
+        orderId,
+        action: "NOTE_ADDED",
+        performedBy: adminId
+      })
     })
   }
 }

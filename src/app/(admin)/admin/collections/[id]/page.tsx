@@ -5,7 +5,7 @@ import { db } from "@/db/client"
 import { collections } from "@/db/schema/collections"
 import { products } from "@/db/schema/products"
 import { productCollections } from "@/db/schema/product-collections"
-import { eq, isNull, ne, and } from "drizzle-orm"
+import { eq, isNull, ne, and, sql } from "drizzle-orm"
 
 export const metadata = {
   title: "Collection Editor | XINVORA Admin",
@@ -45,6 +45,13 @@ export default async function AdminCollectionEditorPage(props: PageProps) {
       id: products.id,
       name: products.name,
       slug: products.slug,
+      imageUrl: sql<string>`(
+        SELECT url 
+        FROM product_images 
+        WHERE product_id = ${products.id} 
+        ORDER BY position ASC 
+        LIMIT 1
+      )`,
     })
     .from(products)
     .where(isNull(products.deletedAt))

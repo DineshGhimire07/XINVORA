@@ -23,6 +23,7 @@ interface ProductsClientProps {
       price: number
       stock: number
       productImages: { url: string }[]
+      collections: string
     }[]
     total: number
     totalPages: number
@@ -113,6 +114,50 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
         if (qty === 0) return <span className="text-admin-status-danger-text font-bold text-admin-xs">Out of stock</span>
         if (qty < 5) return <span className="text-admin-status-warning-text font-semibold text-admin-xs">Low stock ({qty})</span>
         return <span className="text-admin-text-secondary text-admin-xs">{qty} units</span>
+      },
+    },
+    {
+      accessorKey: "collections",
+      header: "Collections",
+      cell: ({ row }: any) => {
+        const collectionStr = row.original.collections
+        const collectionList = collectionStr ? collectionStr.split(", ").filter(Boolean) : []
+        return (
+          <div className="flex flex-wrap gap-1 max-w-[200px]">
+            {collectionList.length > 0 ? (
+              collectionList.map((colName: string, i: number) => {
+                const colors = [
+                  "bg-[#FEF2F2] text-[#991B1B] border-[#FEE2E2]",
+                  "bg-[#FFF7ED] text-[#9A3412] border-[#FFEDD5]",
+                  "bg-[#FEF9C3] text-[#854D0E] border-[#FEF08A]",
+                  "bg-[#F0FDF4] text-[#166534] border-[#DCFCE7]",
+                  "bg-[#F0FDFA] text-[#0F766E] border-[#CCFBF1]",
+                  "bg-[#EFF6FF] text-[#1E40AF] border-[#DBEAFE]",
+                  "bg-[#F5F3FF] text-[#5B21B6] border-[#EDE9FE]",
+                  "bg-[#FDF2F8] text-[#9D174D] border-[#FCE7F3]"
+                ]
+                let hash = 0
+                for (let c = 0; c < colName.length; c++) {
+                  hash = colName.charCodeAt(c) + ((hash << 5) - hash)
+                }
+                const colorClass = colors[Math.abs(hash) % colors.length]
+                return (
+                  <span
+                    key={i}
+                    className={cn(
+                      "text-[9px] font-semibold px-2 py-0.5 rounded-full border tracking-wide whitespace-nowrap",
+                      colorClass
+                    )}
+                  >
+                    {colName}
+                  </span>
+                )
+              })
+            ) : (
+              <span className="text-admin-xs text-admin-text-secondary/50">—</span>
+            )}
+          </div>
+        )
       },
     },
     {

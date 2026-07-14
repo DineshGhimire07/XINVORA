@@ -161,7 +161,18 @@ export default async function DashboardPage() {
 
                         {/* Details */}
                         <div className="flex flex-col">
-                          <span className="font-mono text-body-xs font-semibold text-[#3A3530]">{o.orderNumber}</span>
+                          {o.orderItems.length > 1 ? (
+                            <span className="text-body-xs font-semibold text-[#3A3530]">
+                              {firstItem?.productName || o.orderNumber}{" "}
+                              <span className="text-[9px] text-[#9A9087] font-normal font-sans tracking-normal">
+                                +{o.orderItems.length - 1} more
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-body-xs font-semibold text-[#3A3530]">
+                              {firstItem?.productName || o.orderNumber}
+                            </span>
+                          )}
                           <span className="text-[10px] text-[#9A9087] mt-1">{orderDate}</span>
                           <span className="text-[10px] text-[#9A9087] mt-0.5 font-medium">
                             {totalItemsCount} {totalItemsCount === 1 ? 'Item' : 'Items'} • {o.currency} {Math.round(o.total / 100).toLocaleString()}

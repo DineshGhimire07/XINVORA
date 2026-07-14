@@ -74,38 +74,52 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
         </Card>
       ) : (
         <div className="space-y-4">
-          {ordersResult.items.map((o) => (
-            <Card key={o.id} className="rounded-none border-border-primary/40 shadow-xs hover:shadow-sm transition-all duration-200">
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-body-md font-semibold text-text-primary">{o.orderNumber}</span>
-                      <span className="text-[9px] px-2 py-0.5 border border-border uppercase tracking-widest text-text-secondary bg-surface-secondary/30">
-                        {o.status.replace("_", " ")}
-                      </span>
+          {ordersResult.items.map((o) => {
+            const firstItem = o.orderItems?.[0]
+            return (
+              <Card key={o.id} className="rounded-none border-border-primary/40 shadow-xs hover:shadow-sm transition-all duration-200">
+                <CardContent className="p-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-3">
+                        {o.orderItems.length > 1 ? (
+                          <span className="text-body-md font-semibold text-text-primary">
+                            {firstItem?.productName || o.orderNumber}{" "}
+                            <span className="text-admin-xs text-text-secondary font-normal font-sans tracking-normal">
+                              +{o.orderItems.length - 1} more
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="text-body-md font-semibold text-text-primary">
+                            {firstItem?.productName || o.orderNumber}
+                          </span>
+                        )}
+                        <span className="text-[9px] px-2 py-0.5 border border-border uppercase tracking-widest text-text-secondary bg-surface-secondary/30">
+                          {o.status.replace("_", " ")}
+                        </span>
+                      </div>
+                      <p className="text-caption text-text-secondary">
+                        Placed on {new Date(o.createdAt).toLocaleDateString()}
+                      </p>
                     </div>
-                    <p className="text-caption text-text-secondary">
-                      Placed on {new Date(o.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center gap-6 justify-between md:justify-end">
-                    <div className="text-right">
-                      <span className="text-caption text-text-secondary block">Total Amount</span>
-                      <span className="text-body-md font-medium text-text-primary">{formatCurrency(o.total)}</span>
+                    
+                    <div className="flex items-center gap-6 justify-between md:justify-end">
+                      <div className="text-right">
+                        <span className="text-caption text-text-secondary block">Total Amount</span>
+                        <span className="text-body-md font-medium text-text-primary">{formatCurrency(o.total)}</span>
+                      </div>
+                      <Link
+                        href={`/account/orders/${o.orderNumber}`}
+                        className="px-4 py-2 border border-border text-[11px] uppercase tracking-wider font-medium hover:bg-surface-secondary/20 transition-all"
+                      >
+                        Details
+                      </Link>
                     </div>
-                    <Link
-                      href={`/account/orders/${o.orderNumber}`}
-                      className="px-4 py-2 border border-border text-[11px] uppercase tracking-wider font-medium hover:bg-surface-secondary/20 transition-all"
-                    >
-                      Details
-                    </Link>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            )
+          })}
 
           {/* Simple Pagination */}
           {ordersResult.totalPages > 1 && (

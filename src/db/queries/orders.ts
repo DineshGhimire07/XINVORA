@@ -71,20 +71,20 @@ export async function findUserOrdersPaginated(
     )
   }
 
-  const baseQuery = db
-    .select()
-    .from(orders)
-    .where(and(...conditions))
-
   // Sort settings
   const sortCol = options.sortBy === "total" ? orders.total : orders.createdAt
   const orderDirection = options.sortOrder === "asc" ? sortCol : desc(sortCol)
 
   const [items, countResult] = await Promise.all([
-    baseQuery
-      .orderBy(orderDirection)
-      .limit(limit)
-      .offset(offset),
+    db.query.orders.findMany({
+      where: and(...conditions),
+      orderBy: orderDirection,
+      limit: limit,
+      offset: offset,
+      with: {
+        orderItems: true
+      }
+    }),
     db
       .select({ count: sql<number>`count(*)` })
       .from(orders)
@@ -145,6 +145,15 @@ export async function findAdminOrdersPaginated(
       customerName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`,
       customerEmail: users.email,
       itemCount: sql<number>`coalesce((select sum(${orderItems.quantity}) from ${orderItems} where ${orderItems.orderId} = ${orders.id}), 0)`,
+      imageUrl: sql<string>`(
+        SELECT pi.url
+        FROM product_images pi
+        JOIN variants v ON v.product_id = pi.product_id
+        JOIN order_items oi ON oi.variant_id = v.id
+        WHERE oi.order_id = orders.id
+        ORDER BY pi.position ASC
+        LIMIT 1
+      )`,
     })
     .from(orders)
     .innerJoin(users, eq(orders.userId, users.id))
