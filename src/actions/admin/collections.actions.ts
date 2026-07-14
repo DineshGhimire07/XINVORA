@@ -13,6 +13,7 @@ const collectionSchema = z.object({
   sortOrder: z.number().int().default(0),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
+  productIds: z.array(z.string().uuid()).optional(),
 })
 
 export async function createCollectionAction(formData: FormData) {
@@ -27,6 +28,7 @@ export async function createCollectionAction(formData: FormData) {
       sortOrder: parseInt(formData.get("sortOrder") as string) || 0,
       seoTitle: formData.get("seoTitle") || undefined,
       seoDescription: formData.get("seoDescription") || undefined,
+      productIds: formData.getAll("productIds").map(id => String(id)),
     }
 
     const data = collectionSchema.parse(rawData)
@@ -53,6 +55,7 @@ export async function updateCollectionAction(id: string, formData: FormData) {
       sortOrder: parseInt(formData.get("sortOrder") as string) || 0,
       seoTitle: formData.get("seoTitle") || undefined,
       seoDescription: formData.get("seoDescription") || undefined,
+      productIds: formData.getAll("productIds").map(id => String(id)),
     }
 
     const data = collectionSchema.parse(rawData)

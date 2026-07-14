@@ -3,6 +3,8 @@ import { products } from "./products"
 import { categories } from "./categories"
 import { brands } from "./brands"
 import { variants } from "./variants"
+import { attributes } from "./attributes"
+import { attributeValues } from "./attribute-values"
 import { productImages } from "./product-images"
 import { productTags } from "./product-tags"
 import { productCollections } from "./product-collections"
@@ -242,3 +244,15 @@ export const orderActivityRelations = relations(orderActivity, ({ one }) => ({
     references: [users.id],
   }),
 }))
+
+export const attributesRelations = relations(attributes, ({ many }) => ({
+  values: many(attributeValues),
+}))
+
+export const attributeValuesRelations = relations(attributeValues, ({ one }) => ({
+  attribute: one(attributes, {
+    fields: [attributeValues.attributeId],
+    references: [attributes.id],
+  }),
+}))
+

@@ -490,7 +490,7 @@ export async function findAdminProductsPaginated(
   const limit = options.limit || 20
   const offset = (page - 1) * limit
 
-  const conditions: any[] = []
+  const conditions: any[] = [isNull(products.deletedAt)]
 
   if (options.status) {
     conditions.push(eq(products.status, options.status as any))
@@ -500,33 +500,70 @@ export async function findAdminProductsPaginated(
     conditions.push(ilike(products.name, `%${options.search}%`))
   }
 
-  // Sort settings
-  const sortCol = options.sortBy === "name" ? products.name : products.createdAt
-  const orderDirection = options.sortOrder === "asc" ? asc(sortCol) : desc(sortCol)
+  const { priceBookEntries } = await import("../schema/price-book-entries")
+  const { priceBooks } = await import("../schema/price-books")
+  const { variants } = await import("../schema/variants")
+  const { inventory } = await import("../schema/inventory")
+  const { categories } = await import("../schema/categories")
 
-  const items = await db.query.products.findMany({
-    where: conditions.length > 0 ? and(...conditions) : undefined,
-    orderBy: [orderDirection],
-    limit: limit,
-    offset: offset,
-    with: {
-      productImages: {
-        orderBy: (imgs, { asc }) => [asc(imgs.position)],
-        limit: 1,
-      }
-    }
-  })
-
-  // Get total count
-  const countResult = await db
-    .select({ count: count() })
+  const baseQuery = db
+    .select({
+      id: products.id,
+      name: products.name,
+      slug: products.slug,
+      status: products.status,
+      createdAt: products.createdAt,
+      categoryName: categories.name,
+      price: sql<number>`coalesce((
+        select min(${priceBookEntries.price}) 
+        from ${variants} 
+        inner join ${priceBookEntries} on ${variants.id} = ${priceBookEntries.variantId}
+        inner join ${priceBooks} on ${priceBookEntries.priceBookId} = ${priceBooks.id}
+        where ${variants.productId} = ${products.id} and ${priceBooks.isDefault} = true
+      ), 0)`,
+      stock: sql<number>`coalesce((
+        select sum(${inventory.quantity}) 
+        from ${variants} 
+        inner join ${inventory} on ${variants.id} = ${inventory.variantId}
+        where ${variants.productId} = ${products.id}
+      ), 0)`,
+    })
     .from(products)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
-    
+    .leftJoin(categories, eq(products.categoryId, categories.id))
+    .where(and(...conditions))
+
+  const sortCol = options.sortBy === "name" ? products.name : products.createdAt
+  const orderDirection = options.sortOrder === "asc" ? sortCol : desc(sortCol)
+
+  const [items, countResult] = await Promise.all([
+    baseQuery
+      .orderBy(orderDirection)
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(products)
+      .where(and(...conditions))
+  ])
+
   const total = Number(countResult[0]?.count ?? 0)
 
+  const { productImages } = await import("../schema/product-images")
+  const itemIds = items.map(item => item.id)
+  const images = itemIds.length > 0 
+    ? await db
+        .select()
+        .from(productImages)
+        .where(and(inArray(productImages.productId, itemIds), eq(productImages.position, 1)))
+    : []
+
+  const itemsWithImages = items.map(item => ({
+    ...item,
+    productImages: images.filter(img => img.productId === item.id)
+  }))
+
   return {
-    items,
+    items: itemsWithImages,
     total,
     totalPages: Math.ceil(total / limit),
     currentPage: page,

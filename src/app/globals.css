@@ -122,6 +122,81 @@
 
     --shadow-color: 0 0% 0%;
   }
+
+  /* ── Admin panel design tokens ───────────────────────────────────────────── */
+  :root {
+    /* Sidebar (always dark, not theme-dependent) */
+    --admin-sidebar-bg: #0e0e10;
+    --admin-sidebar-text: #a1a1aa;
+    --admin-sidebar-text-active: #ffffff;
+    --admin-sidebar-item-active-bg: #1c1c1f;
+
+    /* Content surfaces */
+    --admin-content-bg: #fafafa;
+    --admin-surface: #ffffff;
+    --admin-border: #e4e4e7;
+    --admin-border-strong: #d4d4d8;
+
+    /* Text */
+    --admin-text-primary: #18181b;
+    --admin-text-secondary: #71717a;
+    --admin-text-muted: #a1a1aa;
+
+    /* Primary action (black button) */
+    --admin-primary: #0a0a0a;
+    --admin-primary-hover: #262626;
+    --admin-on-primary: #ffffff;
+
+    /* Status pills — bg/text pairs, one role per meaning */
+    --admin-status-success-bg: #dcfce7;
+    --admin-status-success-text: #15803d;
+    --admin-status-warning-bg: #fef3c7;
+    --admin-status-warning-text: #b45309;
+    --admin-status-info-bg: #dbeafe;
+    --admin-status-info-text: #1d4ed8;
+    --admin-status-danger-bg: #fee2e2;
+    --admin-status-danger-text: #b91c1c;
+    --admin-status-neutral-bg: #f4f4f5;
+    --admin-status-neutral-text: #52525b;
+
+    /* Stat card icon accents (cycle through these, one per metric) */
+    --admin-accent-purple-bg: #ede9fe;
+    --admin-accent-purple-icon: #7c3aed;
+    --admin-accent-orange-bg: #ffedd5;
+    --admin-accent-orange-icon: #ea580c;
+    --admin-accent-blue-bg: #dbeafe;
+    --admin-accent-blue-icon: #2563eb;
+    --admin-accent-green-bg: #dcfce7;
+    --admin-accent-green-icon: #16a34a;
+    --admin-accent-pink-bg: #fce7f3;
+    --admin-accent-pink-icon: #db2777;
+
+    /* Charts */
+    --admin-chart-primary: #6d28d9;
+    --admin-chart-secondary: #a78bfa;
+    --admin-chart-compare: #d4d4d8;
+
+    /* Radius */
+    --admin-radius-sm: 6px;
+    --admin-radius-md: 8px;
+    --admin-radius-lg: 12px;
+
+    /* Shadow (cards use border, not shadow — keep this for popovers/drawers only) */
+    --admin-shadow-drawer: 0 4px 24px rgba(0, 0, 0, 0.08);
+
+    /* Spacing */
+    --admin-pad-page: 24px;
+    --admin-pad-card: 20px;
+    --admin-gap-grid: 16px;
+
+    /* Type scale */
+    --admin-text-xs: 12px;
+    --admin-text-sm: 13px;
+    --admin-text-base: 14px;
+    --admin-text-lg: 16px;
+    --admin-text-xl: 20px;
+    --admin-text-2xl: 24px;
+  }
 }
 
 /* ── Global Reset & Base Styles ─────────────────────────────────────────── */

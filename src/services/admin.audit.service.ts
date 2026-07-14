@@ -3,7 +3,7 @@ import { db } from "@/db/client"
 import { auditLogs } from "@/db/schema/audit-logs"
 
 export type AuditAction = "CREATE" | "UPDATE" | "DELETE" | "PUBLISH" | "ARCHIVE" | "RESTORE"
-export type AuditEntityType = "PRODUCT" | "VARIANT" | "INVENTORY" | "CATEGORY" | "COLLECTION" | "BRAND" | "MATERIAL" | "COLOR" | "SIZE" | "COUPON" | "ORDER" | "USER" | "CMS_PAGE" | "CMS_SECTION" | "CMS_BLOCK" | "MEDIA" | "NAVIGATION_MENU" | "MENU_ITEM" | "ANNOUNCEMENT" | "HOMEPAGE_SETTINGS"
+export type AuditEntityType = "PRODUCT" | "VARIANT" | "INVENTORY" | "CATEGORY" | "COLLECTION" | "BRAND" | "MATERIAL" | "COLOR" | "SIZE" | "COUPON" | "ORDER" | "USER" | "CMS_PAGE" | "CMS_SECTION" | "CMS_BLOCK" | "MEDIA" | "NAVIGATION_MENU" | "MENU_ITEM" | "ANNOUNCEMENT" | "HOMEPAGE_SETTINGS" | "TAG" | "ATTRIBUTE"
 
 export class AdminAuditService {
   /**

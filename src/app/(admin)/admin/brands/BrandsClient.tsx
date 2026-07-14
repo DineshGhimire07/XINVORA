@@ -1,0 +1,61 @@
+"use client"
+
+import { DataTable } from "@/components/admin/ui/DataTable"
+import Link from "next/link"
+
+interface BrandsClientProps {
+  brands: {
+    id: string
+    name: string
+    slug: string
+    createdAt: Date
+  }[]
+}
+
+export function BrandsClient({ brands }: BrandsClientProps) {
+  const columns = [
+    {
+      accessorKey: "name",
+      header: "Brand Name",
+      cell: ({ row }: any) => (
+        <span className="font-semibold text-admin-text-primary">
+          {row.getValue("name")}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "slug",
+      header: "Slug",
+      cell: ({ row }: any) => (
+        <span className="font-mono text-admin-text-secondary text-admin-xs">
+          {row.getValue("slug")}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }: any) => {
+        const item = row.original
+        return (
+          <div className="flex justify-end">
+            <Link
+              href={`/admin/brands/${item.id}`}
+              className="text-admin-xs uppercase tracking-wider font-bold text-admin-text-secondary hover:text-admin-primary transition-colors"
+            >
+              Edit
+            </Link>
+          </div>
+        )
+      },
+    },
+  ]
+
+  return (
+    <DataTable
+      columns={columns}
+      data={brands}
+      emptyStateText="No brands configured yet."
+    />
+  )
+}

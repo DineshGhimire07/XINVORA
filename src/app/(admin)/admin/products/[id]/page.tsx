@@ -1,4 +1,4 @@
-import { findAdminProductsPaginated } from "@/db/queries/products"
+import { SessionService } from "@/services/session.service"
 import { notFound } from "next/navigation"
 import ProductEditor from "./ProductEditor"
 import { db } from "@/db/client"
@@ -15,10 +15,20 @@ import { inventory } from "@/db/schema/inventory"
 import { productCollections } from "@/db/schema/product-collections"
 import { productMaterials } from "@/db/schema/product-materials"
 import { eq, isNull } from "drizzle-orm"
-
 import { sizes } from "@/db/schema/sizes"
 
-export default async function AdminProductEditorPage(props: { params: Promise<{ id: string }> }) {
+export const metadata = {
+  title: "Product Editor | XINVORA Admin",
+}
+
+interface PageProps {
+  params: Promise<{ id: string }>
+}
+
+export default async function AdminProductEditorPage(props: PageProps) {
+  // Gate check
+  await SessionService.requireAdmin()
+
   const { id } = await props.params
 
   let product: any = null
@@ -49,7 +59,6 @@ export default async function AdminProductEditorPage(props: { params: Promise<{ 
     const collectionsResult = await db.select().from(productCollections).where(eq(productCollections.productId, id))
     const materialsResult = await db.select().from(productMaterials).where(eq(productMaterials.productId, id))
 
-    // Query variant sizes and colors if there are variants
     const allVariants = await db.select().from(variants).where(eq(variants.productId, id))
     const sizeInventories: Record<string, number> = {}
     for (const v of allVariants) {
@@ -80,11 +89,16 @@ export default async function AdminProductEditorPage(props: { params: Promise<{ 
   const allSizes = await db.select().from(sizes)
 
   return (
-    <div className="max-w-4xl mx-auto pb-20">
-      <h1 className="text-display-sm font-display text-text-primary uppercase tracking-wide mb-8">
-        {product ? "Edit Product" : "New Product"}
-      </h1>
-      
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <div>
+        <h1 className="text-admin-2xl font-bold font-display text-admin-text-primary tracking-tight">
+          {product ? "Edit Product" : "New Product"}
+        </h1>
+        <p className="text-admin-sm text-admin-text-secondary mt-1">
+          Configure product descriptions, visual assets, pricing, and variant stock.
+        </p>
+      </div>
+
       <ProductEditor 
         product={product} 
         categories={allCategories} 

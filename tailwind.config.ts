@@ -129,6 +129,51 @@ const config: Config = {
         input: "hsl(var(--color-border))",
         ring: "hsl(var(--color-accent))",
         foreground: "hsl(var(--color-text-primary))",
+        "admin-sidebar": {
+          bg: "var(--admin-sidebar-bg)",
+          text: "var(--admin-sidebar-text)",
+          "text-active": "var(--admin-sidebar-text-active)",
+          "item-active": "var(--admin-sidebar-item-active-bg)",
+          "item-active-bg": "var(--admin-sidebar-item-active-bg)",
+        },
+        "admin-surface": "var(--admin-surface)",
+        "admin-content": "var(--admin-content-bg)",
+        "admin-border": "var(--admin-border)",
+        "admin-border-strong": "var(--admin-border-strong)",
+        "admin-text": {
+          primary: "var(--admin-text-primary)",
+          secondary: "var(--admin-text-secondary)",
+          muted: "var(--admin-text-muted)",
+        },
+        "admin-primary": {
+          DEFAULT: "var(--admin-primary)",
+          hover: "var(--admin-primary-hover)",
+          on: "var(--admin-on-primary)",
+        },
+        "admin-status": {
+          "success-bg": "var(--admin-status-success-bg)",
+          "success-text": "var(--admin-status-success-text)",
+          "warning-bg": "var(--admin-status-warning-bg)",
+          "warning-text": "var(--admin-status-warning-text)",
+          "info-bg": "var(--admin-status-info-bg)",
+          "info-text": "var(--admin-status-info-text)",
+          "danger-bg": "var(--admin-status-danger-bg)",
+          "danger-text": "var(--admin-status-danger-text)",
+          "neutral-bg": "var(--admin-status-neutral-bg)",
+          "neutral-text": "var(--admin-status-neutral-text)",
+        },
+        "admin-accent": {
+          "purple-bg": "var(--admin-accent-purple-bg)",
+          "purple-icon": "var(--admin-accent-purple-icon)",
+          "orange-bg": "var(--admin-accent-orange-bg)",
+          "orange-icon": "var(--admin-accent-orange-icon)",
+          "blue-bg": "var(--admin-accent-blue-bg)",
+          "blue-icon": "var(--admin-accent-blue-icon)",
+          "green-bg": "var(--admin-accent-green-bg)",
+          "green-icon": "var(--admin-accent-green-icon)",
+          "pink-bg": "var(--admin-accent-pink-bg)",
+          "pink-icon": "var(--admin-accent-pink-icon)",
+        },
       },
 
       // ── Typography ────────────────────────────────────────────────────────
@@ -171,6 +216,12 @@ const config: Config = {
         "label-sm": ["0.8125rem", { lineHeight: "1.4", letterSpacing: "0.01em" }],
         "caption": ["0.75rem", { lineHeight: "1.5", letterSpacing: "0.02em" }],
         "overline": ["0.6875rem", { lineHeight: "1.4", letterSpacing: "0.12em" }],
+        "admin-xs": "var(--admin-text-xs)",
+        "admin-sm": "var(--admin-text-sm)",
+        "admin-base": "var(--admin-text-base)",
+        "admin-lg": "var(--admin-text-lg)",
+        "admin-xl": "var(--admin-text-xl)",
+        "admin-2xl": "var(--admin-text-2xl)",
       },
 
       fontWeight: {
@@ -220,6 +271,9 @@ const config: Config = {
         "128": "32rem",
         "144": "36rem",
         "160": "40rem",
+        "admin-page": "var(--admin-pad-page)",
+        "admin-card": "var(--admin-pad-card)",
+        "admin-grid-gap": "var(--admin-gap-grid)",
       },
 
       // ── Max Widths ────────────────────────────────────────────────────────
@@ -248,6 +302,9 @@ const config: Config = {
         "xl": "1rem",       // 16px
         "2xl": "1.5rem",    // 24px
         "full": "9999px",
+        "admin-sm": "var(--admin-radius-sm)",
+        "admin-md": "var(--admin-radius-md)",
+        "admin-lg": "var(--admin-radius-lg)",
       },
 
       // ── Shadows ───────────────────────────────────────────────────────────
@@ -262,6 +319,7 @@ const config: Config = {
         "2xl": "0 30px 60px -12px hsl(var(--shadow-color) / 0.12)",
         "inner": "inset 0 2px 4px 0 hsl(var(--shadow-color) / 0.05)",
         "none": "none",
+        "admin-drawer": "var(--admin-shadow-drawer)",
       },
 
       // ── Animation Durations ───────────────────────────────────────────────
