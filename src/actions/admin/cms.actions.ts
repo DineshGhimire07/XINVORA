@@ -71,6 +71,10 @@ export async function archiveCMSPageAction(id: string) {
   }
 }
 
+import { db } from "@/db/client"
+import { cmsPages, cmsSections, cmsBlocks } from "@/db/schema/cms"
+import { eq, and } from "drizzle-orm"
+
 // Blocks/Sections simplified for now
 export async function addCMSSectionAction(pageId: string, name: string) {
   try {
@@ -104,6 +108,105 @@ export async function updateHomepageSettingsAction(formData: FormData) {
     }
 
     await CMSService.updateHomepageSettings(rawData, session.id)
+
+    // Save Hero Carousel Slides (heroRotation) directly into cmsBlocks HERO block
+    const heroSlidesStr = formData.get("heroSlides") as string
+    if (heroSlidesStr) {
+      try {
+        const slides = JSON.parse(heroSlidesStr)
+        
+        // Find homepage page
+        let page = await db.query.cmsPages.findFirst({
+          where: eq(cmsPages.slug, "home"),
+        })
+        if (!page) {
+          const [newPage] = await db.insert(cmsPages).values({
+            slug: "home",
+            title: "Homepage",
+            status: "PUBLISHED",
+          }).returning()
+          page = newPage
+        }
+
+        // Find or create default section
+        let section = await db.query.cmsSections.findFirst({
+          where: eq(cmsSections.pageId, page.id),
+        })
+        if (!section) {
+          const [newSection] = await db.insert(cmsSections).values({
+            pageId: page.id,
+            name: "Hero Section",
+            sortOrder: 0,
+          }).returning()
+          section = newSection
+        }
+
+        // Find HERO block
+        let heroBlock = await db.query.cmsBlocks.findFirst({
+          where: and(
+            eq(cmsBlocks.sectionId, section.id),
+            eq(cmsBlocks.type, "HERO")
+          ),
+        })
+
+        if (heroBlock) {
+          await db.update(cmsBlocks).set({
+            data: { slides },
+            updatedAt: new Date(),
+          }).where(eq(cmsBlocks.id, heroBlock.id))
+        } else {
+          await db.insert(cmsBlocks).values({
+            sectionId: section.id,
+            type: "HERO",
+            sortOrder: 0,
+            data: { slides },
+          })
+        }
+      } catch (err) {
+        console.error("Failed to update homepage HERO blocks in action:", err)
+      }
+    }
+
+    // Save Product Grid Items directly into cmsBlocks PRODUCT_GRID block
+    const productGridItemsStr = formData.get("productGridItems") as string
+    if (productGridItemsStr) {
+      try {
+        const items = JSON.parse(productGridItemsStr)
+        
+        let page = await db.query.cmsPages.findFirst({
+          where: eq(cmsPages.slug, "home"),
+        })
+        if (page) {
+          let section = await db.query.cmsSections.findFirst({
+            where: eq(cmsSections.pageId, page.id),
+          })
+          if (section) {
+            let pgBlock = await db.query.cmsBlocks.findFirst({
+              where: and(
+                eq(cmsBlocks.sectionId, section.id),
+                eq(cmsBlocks.type, "PRODUCT_GRID")
+              ),
+            })
+
+            if (pgBlock) {
+              await db.update(cmsBlocks).set({
+                data: { items },
+                updatedAt: new Date(),
+              }).where(eq(cmsBlocks.id, pgBlock.id))
+            } else {
+              await db.insert(cmsBlocks).values({
+                sectionId: section.id,
+                type: "PRODUCT_GRID",
+                sortOrder: 1,
+                data: { items },
+              })
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to update homepage PRODUCT_GRID blocks in action:", err)
+      }
+    }
 
     revalidatePath("/admin/cms/homepage")
     revalidatePath("/") // Revalidate storefront homepage

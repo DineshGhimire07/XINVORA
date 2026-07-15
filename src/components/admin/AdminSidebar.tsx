@@ -58,6 +58,7 @@ const navItems: NavItem[] = [
     name: "Content",
     icon: FileText,
     items: [
+      { name: "Homepage Builder", href: "/admin/cms/homepage" },
       { name: "All Content", href: "/admin/cms/pages" },
       { name: "Pages", href: "/admin/cms/pages" },
       { name: "Banners", href: "/admin/cms/banners" },

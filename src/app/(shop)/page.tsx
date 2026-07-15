@@ -18,7 +18,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { NewsletterForm } from "@/features/newsletter/components/NewsletterForm"
-import { getHomepageCatalog } from "@/db/queries"
+import { getHomepageCatalog, getHomepageCMS } from "@/db/queries"
 import type { ProductSummary } from "@/db/queries/types"
 import { Suspense } from "react"
 
@@ -31,19 +31,59 @@ import { homepageSettings } from "@/db/schema/cms"
 import { db } from "@/db/client"
 import { ParallaxHero } from "@/components/shared/Hero/ParallaxHero"
 import { WishlistToggleIcon } from "@/components/shop/WishlistToggleIcon"
+import { CMSBlockRenderer } from "@/components/cms/BlockRenderer"
+
+import { findProductsByIds } from "@/db/queries"
 
 export default async function HomePage() {
   const settingsQuery = await db.select().from(homepageSettings).limit(1)
   const settings = settingsQuery.length > 0 ? settingsQuery[0] : null
   
+  const homepageCMS = await getHomepageCMS()
+  let heroBlock = null
+  let productGridBlock = null
+  if (homepageCMS?.sections) {
+    for (const section of homepageCMS.sections) {
+      if (!heroBlock) {
+        heroBlock = section.blocks?.find((b: any) => b.type === "HERO")
+      }
+      if (!productGridBlock) {
+        productGridBlock = section.blocks?.find((b: any) => b.type === "PRODUCT_GRID")
+      }
+    }
+  }
+
+  const layoutConfig = settings?.layoutConfig as any
+  const defaultOrder = ["hero", "arrivals", "featured", "newsletter"]
+  const sectionOrder = Array.isArray(layoutConfig?.sectionOrder) ? layoutConfig.sectionOrder : defaultOrder
+
   return (
     <>
-      <HeroSection settings={settings} />
-      <NewArrivalsSection settings={settings} />
-      <Suspense fallback={<FeaturedProductsSkeleton />}>
-        <FeaturedProductsData />
-      </Suspense>
-      {(settings?.newsletterToggle ?? true) && <NewsletterSection />}
+      {sectionOrder.map((sectionId: string) => {
+        if (sectionId === "hero") {
+          return <HeroSection key="hero" heroBlock={heroBlock} settings={settings} />
+        }
+        if (sectionId === "arrivals") {
+          return (
+            <ArrivalsSectionWrapper
+              key="arrivals"
+              productGridBlock={productGridBlock}
+              settings={settings}
+            />
+          )
+        }
+        if (sectionId === "featured") {
+          return (
+            <Suspense key="featured" fallback={<FeaturedProductsSkeleton />}>
+              <FeaturedProductsData />
+            </Suspense>
+          )
+        }
+        if (sectionId === "newsletter" && (settings?.newsletterToggle ?? true)) {
+          return <NewsletterSection key="newsletter" />
+        }
+        return null
+      })}
     </>
   )
 }
@@ -71,8 +111,36 @@ function FeaturedProductsSkeleton() {
   )
 }
 
+async function ArrivalsSectionWrapper({ productGridBlock, settings }: { productGridBlock: any; settings?: any }) {
+  if (productGridBlock) {
+    const items = productGridBlock.data?.items || []
+    const productIds = productGridBlock.data?.productIds || []
+
+    if (items.length > 0) {
+      const ids = items.map((item: any) => item.productId)
+      const liveProducts = await findProductsByIds(ids)
+      const productsWithOverrides = items.map((item: any) => {
+        const found = liveProducts.find((p) => p.id === item.productId)
+        if (!found) return null
+        return {
+          ...found,
+          customImageUrl: item.customImageUrl,
+        }
+      }).filter(Boolean) as any[]
+      return <CMSBlockRenderer block={productGridBlock} products={productsWithOverrides} />
+    } else if (productIds.length > 0) {
+      const liveProducts = await findProductsByIds(productIds)
+      return <CMSBlockRenderer block={productGridBlock} products={liveProducts} />
+    }
+  }
+  return <NewArrivalsSection settings={settings} />
+}
+
 // ── 1. Hero Section ──────────────────────────────────────────────────────────
-function HeroSection({ settings }: { settings?: any }) {
+function HeroSection({ heroBlock, settings }: { heroBlock: any; settings?: any }) {
+  if (heroBlock) {
+    return <CMSBlockRenderer block={heroBlock} />
+  }
   const layoutConfig = settings?.layoutConfig as any
   const heroLink = layoutConfig?.heroLink || "/products/chatgpt-image-jul-4-2026-11-31-22-am"
   return <HeroSlider heroLink={heroLink} />
