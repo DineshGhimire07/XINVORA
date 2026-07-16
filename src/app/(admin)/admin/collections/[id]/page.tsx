@@ -40,22 +40,25 @@ export default async function AdminCollectionEditorPage(props: PageProps) {
   }
 
   // Fetch all active products for the assignment picker
-  const activeProducts = await db
-    .select({
-      id: products.id,
-      name: products.name,
-      slug: products.slug,
-      imageUrl: sql<string>`(
-        SELECT url 
-        FROM product_images 
-        WHERE product_id = ${products.id} 
-        ORDER BY position ASC 
-        LIMIT 1
-      )`,
-    })
-    .from(products)
-    .where(isNull(products.deletedAt))
-    .orderBy(products.name)
+  const activeProductsRaw = await db.query.products.findMany({
+    where: isNull(products.deletedAt),
+    with: {
+      productImages: {
+        orderBy: (img, { asc }) => [asc(img.position)],
+        columns: { url: true },
+        limit: 1,
+      },
+    },
+    columns: { id: true, name: true, slug: true },
+    orderBy: (p, { asc }) => [asc(p.name)],
+  })
+
+  const activeProducts = activeProductsRaw.map((p) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    imageUrl: p.productImages?.[0]?.url || null,
+  }))
 
   // Fetch all collections for parent hierarchy dropdown
   const collectionsQuery = collection

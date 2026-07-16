@@ -128,33 +128,45 @@ export default async function CollectionDetailPage(props: {
         </Container>
       </div>
 
-      {/* 2. Collection Hero Banner */}
-      <Section id="collection-detail-hero" padding="none" className="bg-white border-b border-neutral-100 pb-12 pt-8">
-        <Container className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-start">
-          <div className="flex flex-col items-start text-left max-w-lg gap-4">
-            <h1 className="text-display-md font-display text-text-primary uppercase tracking-wider">
-              {collection.name}
-            </h1>
-            <p className="text-body-sm text-text-secondary leading-relaxed max-w-md">
-              {collection.description || "Thoughtfully designed objects and essentials curated for contemporary living."}
-            </p>
-          </div>
-
-          {/* Render banner/featured image if exists */}
-          {collection.imageUrl && (
-            <div className="relative w-full md:w-[450px] aspect-[16/9] border border-neutral-100 overflow-hidden bg-neutral-50 rounded-sm">
-              <Image
-                src={collection.imageUrl}
-                alt={collection.name}
-                fill
-                sizes="(max-width: 768px) 100vw, 450px"
-                priority
-                className="object-cover"
-              />
+      {/* 2. Collection Hero Banner Overlay */}
+      {collection.bannerUrl ? (
+        <Section id="collection-detail-hero" padding="none" className="relative w-full aspect-[21/9] md:aspect-[32/10] overflow-hidden bg-neutral-900 border-b border-neutral-100 flex items-center select-none">
+          <Image
+            src={collection.bannerUrl}
+            alt={collection.name}
+            fill
+            priority
+            className="object-cover object-center"
+          />
+        </Section>
+      ) : (
+        /* Render standard text hero if no bannerUrl */
+        <Section id="collection-detail-hero" padding="none" className="bg-white border-b border-neutral-100 pb-12 pt-8">
+          <Container className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-start">
+            <div className="flex flex-col items-start text-left max-w-lg gap-4">
+              <h1 className="text-display-md font-display text-text-primary uppercase tracking-wider">
+                {collection.name}
+              </h1>
+              <p className="text-body-sm text-text-secondary leading-relaxed max-w-md">
+                {collection.description || "Thoughtfully designed objects and essentials curated for contemporary living."}
+              </p>
             </div>
-          )}
-        </Container>
-      </Section>
+
+            {collection.imageUrl && (
+              <div className="relative w-full md:w-[450px] aspect-[16/9] border border-neutral-100 overflow-hidden bg-neutral-50 rounded-sm">
+                <Image
+                  src={collection.imageUrl}
+                  alt={collection.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 450px"
+                  priority
+                  className="object-cover"
+                />
+              </div>
+            )}
+          </Container>
+        </Section>
+      )}
 
       {/* 3. Child Collections Navigation Pills */}
       {children.length > 0 && (

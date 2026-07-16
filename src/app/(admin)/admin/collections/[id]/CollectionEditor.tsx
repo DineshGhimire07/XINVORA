@@ -3,7 +3,9 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createCollectionAction, updateCollectionAction, archiveCollectionAction } from "@/actions/admin/collections.actions"
-import { Search } from "lucide-react"
+import { Search, Image as ImageIcon } from "lucide-react"
+import { uploadImage } from "@/lib/upload"
+import ImageCropperModal from "./ImageCropperModal"
 
 export default function CollectionEditor({
   collection,
@@ -21,6 +23,16 @@ export default function CollectionEditor({
   const [error, setError] = useState<string | null>(null)
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>(initialProductIds)
   const [searchQuery, setSearchQuery] = useState("")
+  const [imageUrl, setImageUrl] = useState<string | null>(collection?.imageUrl || null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [bannerUrl, setBannerUrl] = useState<string | null>(collection?.bannerUrl || null)
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false)
+
+  // Cropping states
+  const [coverSource, setCoverSource] = useState<string | null>(null)
+  const [isCroppingCover, setIsCroppingCover] = useState(false)
+  const [bannerSource, setBannerSource] = useState<string | null>(null)
+  const [isCroppingBanner, setIsCroppingBanner] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -178,7 +190,206 @@ export default function CollectionEditor({
               className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all leading-relaxed"
             />
           </div>
+
+          <div className="flex flex-col gap-1.5 pt-2">
+            <label className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+              Collection Cover Image
+            </label>
+            <input type="hidden" name="imageUrl" value={imageUrl || ""} />
+            
+            <div className="flex items-center gap-5">
+              <div className="w-24 h-24 bg-admin-content border border-admin-border rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative">
+                {imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt="Collection Cover"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <ImageIcon className="w-8 h-8 text-admin-text-secondary/40" />
+                )}
+              </div>
+              
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-3">
+                  <label className="cursor-pointer bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 text-admin-xs font-semibold px-4 py-2 rounded-admin-md transition-colors select-none">
+                    {isUploading ? "Uploading..." : imageUrl ? "Change Cover Photo" : "Upload Cover Photo"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={isUploading}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          const url = URL.createObjectURL(file)
+                          setCoverSource(url)
+                          setIsCroppingCover(true)
+                          e.target.value = ""
+                        }
+                      }}
+                    />
+                  </label>
+                  {imageUrl && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCoverSource(imageUrl)
+                          setIsCroppingCover(true)
+                        }}
+                        className="text-admin-primary text-admin-xs font-semibold hover:underline"
+                      >
+                        Recrop
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setImageUrl(null)}
+                        className="text-admin-status-danger-text text-admin-xs font-semibold hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </>
+                  )}
+                </div>
+                <p className="text-[10px] text-admin-text-secondary/70">
+                  Recommended aspect ratio: 3:4. Crop tool will open on image select.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5 pt-2 border-t border-admin-border/50">
+            <label className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+              Collection Landscape Banner Image (LinkedIn/YouTube banner style)
+            </label>
+            <input type="hidden" name="bannerUrl" value={bannerUrl || ""} />
+            
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-5">
+              <div className="w-full md:w-80 h-24 bg-admin-content border border-admin-border rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative">
+                {bannerUrl ? (
+                  <img
+                    src={bannerUrl}
+                    alt="Collection Banner"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <ImageIcon className="w-8 h-8 text-admin-text-secondary/40" />
+                )}
+              </div>
+              
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-3">
+                  <label className="cursor-pointer bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 text-admin-xs font-semibold px-4 py-2 rounded-admin-md transition-colors select-none">
+                    {isUploadingBanner ? "Uploading..." : bannerUrl ? "Change Banner" : "Upload Banner Photo"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={isUploadingBanner}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          const url = URL.createObjectURL(file)
+                          setBannerSource(url)
+                          setIsCroppingBanner(true)
+                          e.target.value = ""
+                        }
+                      }}
+                    />
+                  </label>
+                  {bannerUrl && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBannerSource(bannerUrl)
+                          setIsCroppingBanner(true)
+                        }}
+                        className="text-admin-primary text-admin-xs font-semibold hover:underline"
+                      >
+                        Recrop
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBannerUrl(null)}
+                        className="text-admin-status-danger-text text-admin-xs font-semibold hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </>
+                  )}
+                </div>
+                <p className="text-[10px] text-admin-text-secondary/70">
+                  Recommended size: 1200 x 400px (3:1 aspect ratio). Crop tool will open on image select.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Render Cropping Modals */}
+        {isCroppingCover && coverSource && (
+          <ImageCropperModal
+            imageSrc={coverSource}
+            aspect={3 / 4}
+            onCropComplete={async (croppedFile) => {
+              setIsCroppingCover(false)
+              if (coverSource.startsWith("blob:")) {
+                URL.revokeObjectURL(coverSource)
+              }
+              setCoverSource(null)
+              setIsUploading(true)
+              try {
+                const url = await uploadImage(croppedFile)
+                setImageUrl(url)
+              } catch (err) {
+                console.error(err)
+                alert("Failed to upload cropped cover image.")
+              } finally {
+                setIsUploading(false)
+              }
+            }}
+            onClose={() => {
+              setIsCroppingCover(false)
+              if (coverSource.startsWith("blob:")) {
+                URL.revokeObjectURL(coverSource)
+              }
+              setCoverSource(null)
+            }}
+          />
+        )}
+
+        {isCroppingBanner && bannerSource && (
+          <ImageCropperModal
+            imageSrc={bannerSource}
+            aspect={32 / 10}
+            onCropComplete={async (croppedFile) => {
+              setIsCroppingBanner(false)
+              if (bannerSource.startsWith("blob:")) {
+                URL.revokeObjectURL(bannerSource)
+              }
+              setBannerSource(null)
+              setIsUploadingBanner(true)
+              try {
+                const url = await uploadImage(croppedFile)
+                setBannerUrl(url)
+              } catch (err) {
+                console.error(err)
+                alert("Failed to upload cropped banner image.")
+              } finally {
+                setIsUploadingBanner(false)
+              }
+            }}
+            onClose={() => {
+              setIsCroppingBanner(false)
+              if (bannerSource.startsWith("blob:")) {
+                URL.revokeObjectURL(bannerSource)
+              }
+              setBannerSource(null)
+            }}
+          />
+        )}
 
         {/* Section 2: Product Assignment */}
         <div className="bg-admin-surface border border-admin-border rounded-admin-lg p-6 space-y-5 shadow-xs">

@@ -1,6 +1,6 @@
 import { db } from "@/db/client"
 import { cmsPages, cmsSections, cmsBlocks } from "@/db/schema/cms"
-import { products, variants, priceBooks, priceBookEntries } from "@/db/schema"
+import { products, variants, priceBooks, priceBookEntries, collections } from "@/db/schema"
 import { eq, and, isNull, inArray } from "drizzle-orm"
 
 export async function findProductsByIds(ids: string[]) {
@@ -62,6 +62,27 @@ export async function findProductsByIds(ids: string[]) {
     })
 }
 
+export async function findCollectionsByIds(ids: string[]) {
+  if (!ids || ids.length === 0) return []
+
+  const items = await db.query.collections.findMany({
+    where: and(
+      eq(collections.isActive, true),
+      isNull(collections.deletedAt),
+      inArray(collections.id, ids)
+    ),
+    columns: { id: true, slug: true, name: true, imageUrl: true },
+  })
+
+  // Order rows exactly as in the ids array parameter
+  const orderMap = new Map(ids.map((id, index) => [id, index]))
+  return items.sort((a, b) => {
+    const indexA = orderMap.get(a.id) ?? 9999
+    const indexB = orderMap.get(b.id) ?? 9999
+    return indexA - indexB
+  })
+}
+
 export async function getHomepageCMS() {
   // Try to find the homepage record
   let page = await db.query.cmsPages.findFirst({
@@ -78,7 +99,7 @@ export async function getHomepageCMS() {
     },
   })
 
-  // If homepage record doesn't exist, create it (along with a default section & HERO / PRODUCT_GRID blocks)
+  // If homepage record doesn't exist, create it (along with a default section & HERO / PRODUCT_GRID / COLLECTION_GRID blocks)
   if (!page) {
     try {
       const [newPage] = await db.insert(cmsPages).values({
@@ -118,6 +139,13 @@ export async function getHomepageCMS() {
         data: { items: [] },
       })
 
+      await db.insert(cmsBlocks).values({
+        sectionId: newSection.id,
+        type: "COLLECTION_GRID",
+        sortOrder: 2,
+        data: { collectionIds: [] },
+      })
+
       // Query again to get the populated structure
       page = await db.query.cmsPages.findFirst({
         where: eq(cmsPages.id, newPage.id),
@@ -135,12 +163,15 @@ export async function getHomepageCMS() {
   } else {
     // If homepage exists, ensure it has a PRODUCT_GRID block
     let productGridBlock = null
+    let collectionGridBlock = null
     const firstSection = page.sections[0]
+    
     for (const section of page.sections) {
-      const block = section.blocks?.find((b: any) => b.type === "PRODUCT_GRID")
-      if (block) {
-        productGridBlock = block
-        break
+      if (!productGridBlock) {
+        productGridBlock = section.blocks?.find((b: any) => b.type === "PRODUCT_GRID")
+      }
+      if (!collectionGridBlock) {
+        collectionGridBlock = section.blocks?.find((b: any) => b.type === "COLLECTION_GRID")
       }
     }
 
@@ -152,8 +183,27 @@ export async function getHomepageCMS() {
           sortOrder: 1,
           data: { items: [] },
         })
+      } catch (err) {
+        console.error("Failed to seed missing PRODUCT_GRID block:", err)
+      }
+    }
 
-        // Re-query to get updated page structure
+    if (!collectionGridBlock && firstSection) {
+      try {
+        await db.insert(cmsBlocks).values({
+          sectionId: firstSection.id,
+          type: "COLLECTION_GRID",
+          sortOrder: 2,
+          data: { collectionIds: [] },
+        })
+      } catch (err) {
+        console.error("Failed to seed missing COLLECTION_GRID block:", err)
+      }
+    }
+
+    // Re-query if anything was added
+    if ((!productGridBlock || !collectionGridBlock) && firstSection) {
+      try {
         page = await db.query.cmsPages.findFirst({
           where: eq(cmsPages.id, page.id),
           with: {
@@ -165,7 +215,7 @@ export async function getHomepageCMS() {
           },
         })
       } catch (err) {
-        console.error("Failed to seed missing PRODUCT_GRID block:", err)
+        console.error("Failed to re-query page structure after seeding blocks:", err)
       }
     }
   }

@@ -33,7 +33,7 @@ import { ParallaxHero } from "@/components/shared/Hero/ParallaxHero"
 import { WishlistToggleIcon } from "@/components/shop/WishlistToggleIcon"
 import { CMSBlockRenderer } from "@/components/cms/BlockRenderer"
 
-import { findProductsByIds } from "@/db/queries"
+import { findProductsByIds, findCollectionsByIds } from "@/db/queries"
 
 export default async function HomePage() {
   const settingsQuery = await db.select().from(homepageSettings).limit(1)
@@ -42,6 +42,7 @@ export default async function HomePage() {
   const homepageCMS = await getHomepageCMS()
   let heroBlock = null
   let productGridBlock = null
+  let collectionGridBlock = null
   if (homepageCMS?.sections) {
     for (const section of homepageCMS.sections) {
       if (!heroBlock) {
@@ -49,6 +50,9 @@ export default async function HomePage() {
       }
       if (!productGridBlock) {
         productGridBlock = section.blocks?.find((b: any) => b.type === "PRODUCT_GRID")
+      }
+      if (!collectionGridBlock) {
+        collectionGridBlock = section.blocks?.find((b: any) => b.type === "COLLECTION_GRID")
       }
     }
   }
@@ -74,9 +78,11 @@ export default async function HomePage() {
         }
         if (sectionId === "featured") {
           return (
-            <Suspense key="featured" fallback={<FeaturedProductsSkeleton />}>
-              <FeaturedProductsData />
-            </Suspense>
+            <FeaturedSectionWrapper
+              key="featured"
+              collectionGridBlock={collectionGridBlock}
+              settings={settings}
+            />
           )
         }
         if (sectionId === "newsletter" && (settings?.newsletterToggle ?? true)) {
@@ -134,6 +140,17 @@ async function ArrivalsSectionWrapper({ productGridBlock, settings }: { productG
     }
   }
   return <NewArrivalsSection settings={settings} />
+}
+
+async function FeaturedSectionWrapper({ collectionGridBlock, settings }: { collectionGridBlock: any; settings?: any }) {
+  if (collectionGridBlock) {
+    const collectionIds = collectionGridBlock.data?.collectionIds || []
+    if (collectionIds.length > 0) {
+      const liveCollections = await findCollectionsByIds(collectionIds)
+      return <CMSBlockRenderer block={collectionGridBlock} collections={liveCollections} />
+    }
+  }
+  return null
 }
 
 // ── 1. Hero Section ──────────────────────────────────────────────────────────

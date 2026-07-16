@@ -208,6 +208,47 @@ export async function updateHomepageSettingsAction(formData: FormData) {
       }
     }
 
+    // Save Collection Grid IDs directly into cmsBlocks COLLECTION_GRID block
+    const collectionGridIdsStr = formData.get("collectionGridIds") as string
+    if (collectionGridIdsStr) {
+      try {
+        const collectionIds = JSON.parse(collectionGridIdsStr)
+        
+        let page = await db.query.cmsPages.findFirst({
+          where: eq(cmsPages.slug, "home"),
+        })
+        if (page) {
+          let section = await db.query.cmsSections.findFirst({
+            where: eq(cmsSections.pageId, page.id),
+          })
+          if (section) {
+            let cgBlock = await db.query.cmsBlocks.findFirst({
+              where: and(
+                eq(cmsBlocks.sectionId, section.id),
+                eq(cmsBlocks.type, "COLLECTION_GRID")
+              ),
+            })
+
+            if (cgBlock) {
+              await db.update(cmsBlocks).set({
+                data: { collectionIds },
+                updatedAt: new Date(),
+              }).where(eq(cmsBlocks.id, cgBlock.id))
+            } else {
+              await db.insert(cmsBlocks).values({
+                sectionId: section.id,
+                type: "COLLECTION_GRID",
+                sortOrder: 2,
+                data: { collectionIds },
+              })
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to update homepage COLLECTION_GRID blocks in action:", err)
+      }
+    }
+
     revalidatePath("/admin/cms/homepage")
     revalidatePath("/") // Revalidate storefront homepage
     return { success: true }

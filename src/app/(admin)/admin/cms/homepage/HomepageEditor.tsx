@@ -8,12 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import HeroBlockEditor from "./HeroBlockEditor"
 import ProductGridEditor from "./ProductGridEditor"
+import CollectionGridEditor from "./CollectionGridEditor"
 
 interface HomepageEditorProps {
   settings?: any
   heroBlock?: any
   productGridBlock?: any
+  collectionGridBlock?: any
   allProducts?: any[]
+  activeCollections?: any[]
   categories?: any[]
   brands?: any[]
   materials?: any[]
@@ -24,7 +27,9 @@ export default function HomepageEditor({
   settings,
   heroBlock,
   productGridBlock,
+  collectionGridBlock,
   allProducts = [],
+  activeCollections = [],
   categories = [],
   brands = [],
   materials = [],
@@ -32,7 +37,8 @@ export default function HomepageEditor({
 }: HomepageEditorProps) {
   const [heroSlides, setHeroSlides] = useState<any[]>(heroBlock?.data?.slides || [])
   const [productGridItems, setProductGridItems] = useState<any[]>(productGridBlock?.data?.items || [])
-  const [activeTab, setActiveTab] = useState<"hero" | "arrivals" | "sections">("hero")
+  const [collectionGridIds, setCollectionGridIds] = useState<string[]>(collectionGridBlock?.data?.collectionIds || [])
+  const [activeTab, setActiveTab] = useState<"hero" | "arrivals" | "collections" | "sections">("hero")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -58,6 +64,7 @@ export default function HomepageEditor({
     formData.set("layoutConfig", JSON.stringify(finalConfig))
     formData.set("heroSlides", JSON.stringify(heroSlides))
     formData.set("productGridItems", JSON.stringify(productGridItems))
+    formData.set("collectionGridIds", JSON.stringify(collectionGridIds))
 
     const result = await updateHomepageSettingsAction(formData)
 
@@ -189,6 +196,17 @@ export default function HomepageEditor({
               >
                 New Arrivals Editor
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("collections")}
+                className={`pb-3 px-5 text-[10px] uppercase tracking-widest font-bold border-b-2 transition-all cursor-pointer ${
+                  activeTab === "collections"
+                    ? "border-text-primary text-text-primary"
+                    : "border-transparent text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                Featured Collections
+              </button>
             </div>
 
             {/* Hero Carousel Editor */}
@@ -205,6 +223,17 @@ export default function HomepageEditor({
                   allProducts={allProducts}
                   initialItems={productGridItems}
                   onChange={setProductGridItems}
+                />
+              </div>
+            )}
+
+            {/* Featured Collections Editor (COLLECTION_GRID block picker) */}
+            {activeTab === "collections" && (
+              <div className="pb-4">
+                <CollectionGridEditor
+                  allCollections={activeCollections}
+                  initialCollectionIds={collectionGridIds}
+                  onChange={setCollectionGridIds}
                 />
               </div>
             )}

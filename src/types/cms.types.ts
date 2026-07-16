@@ -19,6 +19,10 @@ export interface ProductGridBlockItem {
 export interface ProductGridBlockData {
   items: ProductGridBlockItem[]
 }
+
+export interface CollectionGridBlockData {
+  collectionIds: string[]
+}
 export type BlockType =
   | "HERO"
   | "RICHTEXT"
