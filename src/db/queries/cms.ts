@@ -201,8 +201,33 @@ export async function getHomepageCMS() {
       }
     }
 
+    let bannerBlock = null
+    for (const section of page.sections) {
+      if (!bannerBlock) {
+        bannerBlock = section.blocks?.find((b: any) => b.type === "BANNER")
+      }
+    }
+
+    if (!bannerBlock && firstSection) {
+      try {
+        await db.insert(cmsBlocks).values({
+          sectionId: firstSection.id,
+          type: "BANNER",
+          sortOrder: 3,
+          data: {
+            imageUrl: null,
+            title: "The Linen Edit",
+            isActive: false,
+            linkUrl: "/collections"
+          },
+        })
+      } catch (err) {
+        console.error("Failed to seed missing BANNER block:", err)
+      }
+    }
+
     // Re-query if anything was added
-    if ((!productGridBlock || !collectionGridBlock) && firstSection) {
+    if ((!productGridBlock || !collectionGridBlock || !bannerBlock) && firstSection) {
       try {
         page = await db.query.cmsPages.findFirst({
           where: eq(cmsPages.id, page.id),

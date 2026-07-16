@@ -249,6 +249,47 @@ export async function updateHomepageSettingsAction(formData: FormData) {
       }
     }
 
+    // Save BANNER block data
+    const bannerBlockDataStr = formData.get("bannerBlockData") as string
+    if (bannerBlockDataStr) {
+      try {
+        const bannerData = JSON.parse(bannerBlockDataStr)
+        
+        let page = await db.query.cmsPages.findFirst({
+          where: eq(cmsPages.slug, "home"),
+        })
+        if (page) {
+          let section = await db.query.cmsSections.findFirst({
+            where: eq(cmsSections.pageId, page.id),
+          })
+          if (section) {
+            let bannerBlock = await db.query.cmsBlocks.findFirst({
+              where: and(
+                eq(cmsBlocks.sectionId, section.id),
+                eq(cmsBlocks.type, "BANNER")
+              ),
+            })
+
+            if (bannerBlock) {
+              await db.update(cmsBlocks).set({
+                data: bannerData,
+                updatedAt: new Date(),
+              }).where(eq(cmsBlocks.id, bannerBlock.id))
+            } else {
+              await db.insert(cmsBlocks).values({
+                sectionId: section.id,
+                type: "BANNER",
+                sortOrder: 3,
+                data: bannerData,
+              })
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to update homepage BANNER block in action:", err)
+      }
+    }
+
     revalidatePath("/admin/cms/homepage")
     revalidatePath("/") // Revalidate storefront homepage
     return { success: true }

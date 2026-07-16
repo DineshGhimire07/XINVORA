@@ -48,6 +48,8 @@ export function CMSBlockRenderer({ block, products, collections }: { block: any;
       return <CMSProductGrid block={block} products={products || block.data?.products} />
     case "COLLECTION_GRID":
       return <CMSCollectionGrid block={block} collections={collections || block.data?.collections} />
+    case "BANNER":
+      return <CMSBannerBlock block={block} />
     default:
       return (
         <div className="p-8 border border-dashed border-border/40 text-center text-text-secondary text-body-sm">
@@ -246,47 +248,54 @@ function CMSHeroCarousel({ block }: { block: any }) {
             transition={{ duration: 0.85, ease: "easeInOut" }}
             className="absolute inset-0 w-full h-full"
           >
-            {currentSlide.redirectUrl ? (
-              <Link href={currentSlide.redirectUrl} className="relative block w-full h-full cursor-pointer">
-                <Image
-                  src={currentSlide.imageDesktopUrl}
-                  alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
-                  fill
-                  sizes="100vw"
-                  priority={currentIndex === 0}
-                  className="hidden md:block object-cover object-center"
-                />
-                <Image
-                  src={currentSlide.imageMobileUrl}
-                  alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
-                  fill
-                  sizes="100vw"
-                  priority={currentIndex === 0}
-                  className="block md:hidden object-cover object-center"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-black/30 pointer-events-none" />
-              </Link>
-            ) : (
-              <div className="relative w-full h-full">
-                <Image
-                  src={currentSlide.imageDesktopUrl}
-                  alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
-                  fill
-                  sizes="100vw"
-                  priority={currentIndex === 0}
-                  className="hidden md:block object-cover object-center"
-                />
-                <Image
-                  src={currentSlide.imageMobileUrl}
-                  alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
-                  fill
-                  sizes="100vw"
-                  priority={currentIndex === 0}
-                  className="block md:hidden object-cover object-center"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-black/30 pointer-events-none" />
-              </div>
-            )}
+            {(() => {
+              const isZebraImage = currentSlide.imageDesktopUrl?.includes("WA10263P65") || currentSlide.imageDesktopUrl?.includes("16x9");
+              return currentSlide.redirectUrl ? (
+                <Link href={currentSlide.redirectUrl} className="relative block w-full h-full cursor-pointer overflow-hidden">
+                  <div className={isZebraImage ? "hero-crop-container" : "absolute inset-0 w-full h-full"}>
+                    <Image
+                      src={currentSlide.imageDesktopUrl}
+                      alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
+                      fill
+                      sizes="100vw"
+                      priority={currentIndex === 0}
+                      className="hidden md:block object-cover object-center max-w-none w-full h-full"
+                    />
+                    <Image
+                      src={currentSlide.imageMobileUrl}
+                      alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
+                      fill
+                      sizes="100vw"
+                      priority={currentIndex === 0}
+                      className="block md:hidden object-cover object-center max-w-none w-full h-full"
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-black/30 pointer-events-none" />
+                </Link>
+              ) : (
+                <div className="relative w-full h-full overflow-hidden">
+                  <div className={isZebraImage ? "hero-crop-container" : "absolute inset-0 w-full h-full"}>
+                    <Image
+                      src={currentSlide.imageDesktopUrl}
+                      alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
+                      fill
+                      sizes="100vw"
+                      priority={currentIndex === 0}
+                      className="hidden md:block object-cover object-center max-w-none w-full h-full"
+                    />
+                    <Image
+                      src={currentSlide.imageMobileUrl}
+                      alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
+                      fill
+                      sizes="100vw"
+                      priority={currentIndex === 0}
+                      className="block md:hidden object-cover object-center max-w-none w-full h-full"
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-black/30 pointer-events-none" />
+                </div>
+              );
+            })()}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -327,6 +336,83 @@ function CMSHeroCarousel({ block }: { block: any }) {
               />
             )
           })}
+        </div>
+      )}
+    </Section>
+  )
+}
+
+function CMSBannerBlock({ block }: { block: any }) {
+  const data = block.data
+  if (!data || data.isActive === false || !data.imageUrl) return null
+
+  return (
+    <Section id={`banner-block-${block.id}`} padding="none" className="bg-background select-none w-screen overflow-hidden">
+      {data.linkUrl ? (
+        <Link href={data.linkUrl} className="group relative block w-full aspect-[3/4] md:aspect-[32/10] overflow-hidden bg-neutral-900">
+          <picture className="block w-full h-full">
+            {data.imageMobileUrl && (
+              <source media="(max-width: 767px)" srcSet={data.imageMobileUrl} />
+            )}
+            <img
+              src={data.imageUrl}
+              alt={data.title}
+              className="w-full h-full object-cover"
+            />
+          </picture>
+          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors duration-500" />
+          
+          <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-16 z-10 text-white max-w-3xl">
+            {data.eyebrow && (
+              <span className="text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase mb-4 opacity-90 drop-shadow-md">
+                {data.eyebrow}
+              </span>
+            )}
+            <h2 className="text-4xl md:text-6xl font-display font-light mb-4 drop-shadow-md">
+              {data.title}
+            </h2>
+            {data.tagline && (
+              <p className="text-body-sm md:text-body-base opacity-90 max-w-md mb-8 drop-shadow-md">
+                {data.tagline}
+              </p>
+            )}
+            {data.linkText && (
+              <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-widest group/link">
+                <span>{data.linkText}</span>
+                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/link:translate-x-1" />
+              </div>
+            )}
+          </div>
+        </Link>
+      ) : (
+        <div className="relative block w-full aspect-[3/4] md:aspect-[32/10] overflow-hidden bg-neutral-900">
+          <picture className="block w-full h-full">
+            {data.imageMobileUrl && (
+              <source media="(max-width: 767px)" srcSet={data.imageMobileUrl} />
+            )}
+            <img
+              src={data.imageUrl}
+              alt={data.title}
+              className="w-full h-full object-cover"
+            />
+          </picture>
+          <div className="absolute inset-0 bg-black/20" />
+          
+          <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-16 z-10 text-white max-w-3xl">
+            {data.eyebrow && (
+              <span className="text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase mb-4 opacity-90 drop-shadow-md">
+                {data.eyebrow}
+              </span>
+            )}
+            <h2 className="text-4xl md:text-6xl font-display font-light mb-4 drop-shadow-md">
+              {data.title}
+            </h2>
+            {data.tagline && (
+              <p className="text-body-sm md:text-body-base opacity-90 max-w-md drop-shadow-md">
+                {data.tagline}
+              </p>
+            )}
+          </div>
         </div>
       )}
     </Section>

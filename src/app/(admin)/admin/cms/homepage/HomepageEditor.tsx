@@ -9,12 +9,14 @@ import { Button } from "@/components/ui/button"
 import HeroBlockEditor from "./HeroBlockEditor"
 import ProductGridEditor from "./ProductGridEditor"
 import CollectionGridEditor from "./CollectionGridEditor"
+import BannerBlockEditor from "./BannerBlockEditor"
 
 interface HomepageEditorProps {
   settings?: any
   heroBlock?: any
   productGridBlock?: any
   collectionGridBlock?: any
+  bannerBlock?: any
   allProducts?: any[]
   activeCollections?: any[]
   categories?: any[]
@@ -28,6 +30,7 @@ export default function HomepageEditor({
   heroBlock,
   productGridBlock,
   collectionGridBlock,
+  bannerBlock,
   allProducts = [],
   activeCollections = [],
   categories = [],
@@ -38,16 +41,26 @@ export default function HomepageEditor({
   const [heroSlides, setHeroSlides] = useState<any[]>(heroBlock?.data?.slides || [])
   const [productGridItems, setProductGridItems] = useState<any[]>(productGridBlock?.data?.items || [])
   const [collectionGridIds, setCollectionGridIds] = useState<string[]>(collectionGridBlock?.data?.collectionIds || [])
-  const [activeTab, setActiveTab] = useState<"hero" | "arrivals" | "collections" | "sections">("hero")
+  const [bannerBlockData, setBannerBlockData] = useState<any>(bannerBlock?.data || null)
+  const [activeTab, setActiveTab] = useState<"hero" | "arrivals" | "collections" | "banner">("hero")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
   // Load initial list from settings layoutConfig
   const layoutConfig = settings?.layoutConfig as any
-  const [sectionOrder, setSectionOrder] = useState<string[]>(
-    layoutConfig?.sectionOrder || ["hero", "arrivals", "featured", "newsletter"]
-  )
+  const [sectionOrder, setSectionOrder] = useState<string[]>(() => {
+    const existing = layoutConfig?.sectionOrder || ["hero", "arrivals", "featured", "newsletter"]
+    if (!existing.includes("banner")) {
+      const insertIdx = existing.indexOf("featured")
+      if (insertIdx >= 0) {
+        existing.splice(insertIdx + 1, 0, "banner")
+      } else {
+        existing.push("banner")
+      }
+    }
+    return existing
+  })
   const [draggedSectionIndex, setDraggedSectionIndex] = useState<number | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -65,6 +78,9 @@ export default function HomepageEditor({
     formData.set("heroSlides", JSON.stringify(heroSlides))
     formData.set("productGridItems", JSON.stringify(productGridItems))
     formData.set("collectionGridIds", JSON.stringify(collectionGridIds))
+    if (bannerBlockData) {
+      formData.set("bannerBlockData", JSON.stringify(bannerBlockData))
+    }
 
     const result = await updateHomepageSettingsAction(formData)
 
@@ -128,6 +144,7 @@ export default function HomepageEditor({
                     sectionId === "hero" ? "Hero Carousel" :
                     sectionId === "arrivals" ? "New Arrivals" :
                     sectionId === "featured" ? "Featured Products" :
+                    sectionId === "banner" ? "Editorial Banner" :
                     sectionId === "newsletter" ? "Newsletter Section" : sectionId;
 
                   const handleDragStartSection = (e: React.DragEvent, index: number) => {
@@ -207,6 +224,17 @@ export default function HomepageEditor({
               >
                 Featured Collections
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("banner")}
+                className={`pb-3 px-5 text-[10px] uppercase tracking-widest font-bold border-b-2 transition-all cursor-pointer ${
+                  activeTab === "banner"
+                    ? "border-text-primary text-text-primary"
+                    : "border-transparent text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                Editorial Banner
+              </button>
             </div>
 
             {/* Hero Carousel Editor */}
@@ -234,6 +262,16 @@ export default function HomepageEditor({
                   allCollections={activeCollections}
                   initialCollectionIds={collectionGridIds}
                   onChange={setCollectionGridIds}
+                />
+              </div>
+            )}
+
+            {/* Editorial Banner Editor (BANNER block picker) */}
+            {activeTab === "banner" && (
+              <div className="pb-4">
+                <BannerBlockEditor
+                  initialData={bannerBlockData}
+                  onChange={setBannerBlockData}
                 />
               </div>
             )}

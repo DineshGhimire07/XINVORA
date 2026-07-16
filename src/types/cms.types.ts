@@ -23,6 +23,17 @@ export interface ProductGridBlockData {
 export interface CollectionGridBlockData {
   collectionIds: string[]
 }
+export interface BannerBlockData {
+  imageUrl: string | null
+  imageMobileUrl?: string | null
+  eyebrow?: string
+  title: string
+  tagline?: string
+  linkText?: string
+  linkUrl: string
+  isActive?: boolean
+}
+
 export type BlockType =
   | "HERO"
   | "RICHTEXT"

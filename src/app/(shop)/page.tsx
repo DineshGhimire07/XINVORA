@@ -43,6 +43,7 @@ export default async function HomePage() {
   let heroBlock = null
   let productGridBlock = null
   let collectionGridBlock = null
+  let bannerBlock = null
   if (homepageCMS?.sections) {
     for (const section of homepageCMS.sections) {
       if (!heroBlock) {
@@ -54,13 +55,23 @@ export default async function HomePage() {
       if (!collectionGridBlock) {
         collectionGridBlock = section.blocks?.find((b: any) => b.type === "COLLECTION_GRID")
       }
+      if (!bannerBlock) {
+        bannerBlock = section.blocks?.find((b: any) => b.type === "BANNER")
+      }
     }
   }
 
   const layoutConfig = settings?.layoutConfig as any
-  const defaultOrder = ["hero", "arrivals", "featured", "newsletter"]
-  const sectionOrder = Array.isArray(layoutConfig?.sectionOrder) ? layoutConfig.sectionOrder : defaultOrder
-
+  const defaultOrder = ["hero", "arrivals", "featured", "banner", "newsletter"]
+  let sectionOrder = Array.isArray(layoutConfig?.sectionOrder) ? [...layoutConfig.sectionOrder] : [...defaultOrder]
+  if (!sectionOrder.includes("banner")) {
+    const insertIdx = sectionOrder.indexOf("featured")
+    if (insertIdx >= 0) {
+      sectionOrder.splice(insertIdx + 1, 0, "banner")
+    } else {
+      sectionOrder.push("banner")
+    }
+  }
   return (
     <>
       {sectionOrder.map((sectionId: string) => {
@@ -84,6 +95,9 @@ export default async function HomePage() {
               settings={settings}
             />
           )
+        }
+        if (sectionId === "banner") {
+          return bannerBlock ? <CMSBlockRenderer key="banner" block={bannerBlock} /> : null
         }
         if (sectionId === "newsletter" && (settings?.newsletterToggle ?? true)) {
           return <NewsletterSection key="newsletter" />

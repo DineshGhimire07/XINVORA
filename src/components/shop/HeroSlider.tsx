@@ -75,7 +75,7 @@ export function HeroSlider({ heroLink }: { heroLink: string }) {
     <Section
       id="hero"
       padding="none"
-      className="relative h-[100dvh] w-full flex flex-col bg-background border-b border-border overflow-hidden select-none"
+      className="relative h-[100dvh] w-full flex flex-col bg-background overflow-hidden select-none"
     >
       {/* Background Image */}
       <div 

@@ -13,6 +13,7 @@ export default async function AdminHomepageBuilderRoute() {
   let heroBlock = null
   let productGridBlock = null
   let collectionGridBlock = null
+  let bannerBlock = null
   if (homepageCMS?.sections) {
     for (const section of homepageCMS.sections) {
       if (!heroBlock) {
@@ -23,6 +24,9 @@ export default async function AdminHomepageBuilderRoute() {
       }
       if (!collectionGridBlock) {
         collectionGridBlock = section.blocks?.find((b: any) => b.type === "COLLECTION_GRID")
+      }
+      if (!bannerBlock) {
+        bannerBlock = section.blocks?.find((b: any) => b.type === "BANNER")
       }
     }
   }
@@ -67,6 +71,7 @@ export default async function AdminHomepageBuilderRoute() {
         heroBlock={heroBlock}
         productGridBlock={productGridBlock}
         collectionGridBlock={collectionGridBlock}
+        bannerBlock={bannerBlock}
         allProducts={allProductsList}
         activeCollections={activeCollectionsList}
         categories={categoriesList}

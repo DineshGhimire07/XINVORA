@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Search, User, ShoppingBag, Heart, Menu, X, ChevronDown, ChevronRight } from "lucide-react"
+import { Search, User, ShoppingBag, Heart, Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useHeaderState } from "@/providers/header-state-provider"
 
@@ -81,14 +81,13 @@ const journalList = [
 
 export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: HeaderProps) {
   const pathname = usePathname()
-  const [isScrolled, setIsScrolled] = React.useState(false)
+  const isHomepage = pathname === "/"
   const { state } = useHeaderState()
 
   const liveCartCount = state.cart ? state.cart.cartCount : cartCount
   const liveWishlistCount = state.cart ? state.cart.wishlistCount : wishlistCount
 
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
-  const [activeAccordion, setActiveAccordion] = React.useState<string | null>(null)
   const drawerRef = React.useRef<HTMLDivElement>(null)
 
   // Body scroll lock on mobile menu toggle
@@ -147,16 +146,7 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
     }
   }, [mobileMenuOpen])
 
-  // Track scroll position to transition header from transparent to solid white
-  React.useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20)
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  const isHomepage = pathname === "/"
+  // No scroll listener needed — backdrop-blur naturally picks up color from page content behind the navbar
 
   // Merge static menu items with database collections dynamically
   const mergedCollections = React.useMemo(() => {
@@ -171,14 +161,9 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
 
   return (
     <header
-      className={cn(
-        "fixed top-0 left-0 w-full z-50 transition-all duration-300 ease-out h-[72px] md:h-20 flex items-center border-b",
-        isScrolled || !isHomepage
-          ? "bg-white text-text-primary border-neutral-100"
-          : "bg-transparent text-white border-transparent"
-      )}
+      className="fixed top-0 left-0 w-full z-50 h-[56px] md:h-[64px] flex items-center border-b bg-transparent backdrop-blur-[2px] text-text-primary border-transparent"
     >
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center px-6 sm:px-12 md:px-16 lg:px-20 w-full h-full relative">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 md:px-8 lg:px-10 w-full h-full relative">
         
         {/* LEFT NAV */}
         <nav className="hidden md:flex items-center gap-10 h-full">
@@ -283,95 +268,116 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
 
       </div>
 
-      {/* MOBILE DRAWER */}
-      {mobileMenuOpen && (
-        <div ref={drawerRef} className="fixed inset-0 z-[100] bg-surface text-text-primary flex flex-col animate-fade-in md:hidden">
-          <div className="h-[72px] flex items-center justify-between px-6 border-b border-border">
-            <span className="text-display-sm font-display tracking-[0.2em] uppercase">XINVORA</span>
+      {/* MOBILE DRAWER — COS style full-screen white panel */}
+      <div
+        ref={drawerRef}
+        className={cn(
+          "fixed inset-0 z-[200] md:hidden flex flex-col bg-white text-black h-screen",
+          "transition-transform duration-300 ease-in-out",
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+        aria-hidden={!mobileMenuOpen}
+      >
+        {/* TOP BAR: logo + icons */}
+        <div className="h-[56px] flex items-center justify-between px-5 border-b border-neutral-100 flex-shrink-0">
+          <Link
+            href="/"
+            onClick={() => setMobileMenuOpen(false)}
+            className="text-[15px] font-semibold tracking-[0.3em] uppercase"
+          >
+            XINVORA
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/search" onClick={() => setMobileMenuOpen(false)} aria-label="Search">
+              <Search className="w-[18px] h-[18px] stroke-[1.5]" />
+            </Link>
+            <Link href="/account" onClick={() => setMobileMenuOpen(false)} aria-label="Account" className="relative">
+              <User className="w-[18px] h-[18px] stroke-[1.5]" />
+            </Link>
+            <Link href="/cart" onClick={() => setMobileMenuOpen(false)} aria-label="Cart" className="relative">
+              <ShoppingBag className="w-[18px] h-[18px] stroke-[1.5]" />
+              {liveCartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-black rounded-full" />
+              )}
+            </Link>
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2 hover:opacity-60 transition-opacity"
+              className="hover:opacity-50 transition-opacity"
               aria-label="Close menu"
             >
-              <X className="w-6 h-6 stroke-[1.25]" />
+              <X className="w-[18px] h-[18px] stroke-[1.5]" />
             </button>
           </div>
-
-          <div className="flex-1 overflow-y-auto px-6 py-8">
-            <nav className="flex flex-col gap-6">
-              <Link
-                href="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg font-medium tracking-wide uppercase py-1 border-b border-border/40"
-              >
-                Home
-              </Link>
-
-              <Link
-                href="/search"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg font-medium tracking-wide uppercase border-b border-border/40 pb-3"
-              >
-                Shop
-              </Link>
-
-              <Link
-                href="/collections"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg font-medium tracking-wide uppercase border-b border-border/40 pb-3"
-              >
-                Collections
-              </Link>
-
-              <Link
-                href="/collections/home-decor"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg font-medium tracking-wide uppercase border-b border-border/40 pb-3"
-              >
-                Living
-              </Link>
-
-              <Link
-                href="/journal"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg font-medium tracking-wide uppercase border-b border-border/40 pb-3"
-              >
-                Journal
-              </Link>
-            </nav>
-
-            <div className="mt-12 pt-8 border-t border-border flex flex-col gap-4 text-text-secondary">
-              <Link
-                href="/search"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 text-body-sm uppercase tracking-wider"
-              >
-                <Search className="w-4 h-4" /> Search
-              </Link>
-              <Link
-                href="/wishlist"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 text-body-sm uppercase tracking-wider"
-              >
-                <Heart className="w-4 h-4" /> Wishlist
-              </Link>
-              <Link
-                href="/account"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 text-body-sm uppercase tracking-wider"
-              >
-                <User className="w-4 h-4" /> Account
-              </Link>
-              <Link
-                href="/cart"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 text-body-sm uppercase tracking-wider"
-              >
-                <ShoppingBag className="w-4 h-4" /> Cart ({liveCartCount})
-              </Link>
-            </div>
-          </div>
         </div>
+
+        {/* SCROLLABLE CONTENT */}
+        <div className="flex-1 overflow-y-auto">
+
+          {/* SHOP — plain link */}
+          <Link
+            href="/search"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center px-5 py-5 border-b border-neutral-100 text-[15px] font-semibold tracking-[0.06em] uppercase hover:opacity-60 transition-opacity"
+          >
+            Shop
+          </Link>
+
+          {/* COLLECTIONS — plain link */}
+          <Link
+            href="/collections"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center px-5 py-5 border-b border-neutral-100 text-[15px] font-semibold tracking-[0.06em] uppercase hover:opacity-60 transition-opacity"
+          >
+            Collections
+          </Link>
+
+
+          {/* LIVING — plain link */}
+          <Link
+            href="/collections/home-decor"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center px-5 py-5 border-b border-neutral-100 text-[15px] font-semibold tracking-[0.06em] uppercase hover:opacity-60 transition-opacity"
+          >
+            Living
+          </Link>
+
+          {/* JOURNAL — plain link */}
+          <Link
+            href="/journal"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center px-5 py-5 border-b border-neutral-100 text-[15px] font-semibold tracking-[0.06em] uppercase hover:opacity-60 transition-opacity"
+          >
+            Journal
+          </Link>
+
+          {/* UTILITY LINKS */}
+          <div className="px-5 pt-6 pb-10 flex flex-col gap-4">
+            <Link
+              href="/wishlist"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 text-[13px] tracking-[0.1em] uppercase text-neutral-500 hover:text-black transition-colors"
+            >
+              <Heart className="w-4 h-4" /> Wishlist
+            </Link>
+            <Link
+              href="/account"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 text-[13px] tracking-[0.1em] uppercase text-neutral-500 hover:text-black transition-colors"
+            >
+              <User className="w-4 h-4" /> Account
+            </Link>
+          </div>
+
+        </div>
+      </div>
+
+      {/* OVERLAY BACKDROP */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-[199] bg-black/20 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
       )}
     </header>
   )

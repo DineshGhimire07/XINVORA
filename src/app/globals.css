@@ -26,31 +26,49 @@
 @layer base {
   :root {
     /* ── Backgrounds ─────────────────────────────────────────────────────── */
-    --color-background: 36 33% 96%;         /* #F8F5F0 — Warm Ivory */
-    --color-surface: 0 0% 100%;             /* #FFFFFF — Pure White */
-    --color-surface-elevated: 34 30% 97%;   /* #FAF8F5 — Warm elevated */
-    --color-surface-overlay: 0 0% 10%;      /* Used with opacity for overlays */
-    --color-surface-warm: 30 28% 87%;       /* #E6DED3 — Warm plaster/linen */
-    --color-surface-secondary: 32 15% 94%;   /* #F2EFEA — Secondary background */
+    --color-background: 36 33% 96%;
+    /* #F8F5F0 — Warm Ivory */
+    --color-surface: 0 0% 100%;
+    /* #FFFFFF — Pure White */
+    --color-surface-elevated: 34 30% 97%;
+    /* #FAF8F5 — Warm elevated */
+    --color-surface-overlay: 0 0% 10%;
+    /* Used with opacity for overlays */
+    --color-surface-warm: 30 28% 87%;
+    /* #E6DED3 — Warm plaster/linen */
+    --color-surface-secondary: 32 15% 94%;
+    /* #F2EFEA — Secondary background */
 
     /* ── Text ────────────────────────────────────────────────────────────── */
-    --color-text-primary: 0 0% 10%;         /* #1A1A1A — Near black */
-    --color-text-secondary: 0 0% 40%;       /* #666666 — Muted gray */
-    --color-text-tertiary: 0 0% 60%;        /* #999999 — Light gray */
-    --color-text-inverse: 0 0% 100%;        /* #FFFFFF */
-    --color-text-disabled: 0 0% 73%;        /* #BBBBBB */
+    --color-text-primary: 0 0% 10%;
+    /* #1A1A1A — Near black */
+    --color-text-secondary: 0 0% 40%;
+    /* #666666 — Muted gray */
+    --color-text-tertiary: 0 0% 60%;
+    /* #999999 — Light gray */
+    --color-text-inverse: 0 0% 100%;
+    /* #FFFFFF */
+    --color-text-disabled: 0 0% 73%;
+    /* #BBBBBB */
 
     /* ── Accent (Warm Taupe) ─────────────────────────────────────────────── */
-    --color-accent: 25 22% 56%;             /* #A48B78 */
-    --color-accent-hover: 25 22% 46%;       /* #8F7562 */
-    --color-accent-muted: 26 28% 77%;       /* #D4C4B8 */
+    --color-accent: 25 22% 56%;
+    /* #A48B78 */
+    --color-accent-hover: 25 22% 46%;
+    /* #8F7562 */
+    --color-accent-muted: 26 28% 77%;
+    /* #D4C4B8 */
     --color-accent-foreground: 0 0% 100%;
 
     /* ── Borders ─────────────────────────────────────────────────────────── */
-    --color-border: 32 20% 91%;             /* #ECE8E2 */
-    --color-border-strong: 30 14% 83%;      /* #D4CFC9 */
-    --color-border-subtle: 34 26% 95%;      /* #F5F2EE */
-    --color-border-primary: 32 20% 91%;     /* #ECE8E2 — Primary border */
+    --color-border: 32 20% 91%;
+    /* #ECE8E2 */
+    --color-border-strong: 30 14% 83%;
+    /* #D4CFC9 */
+    --color-border-subtle: 34 26% 95%;
+    /* #F5F2EE */
+    --color-border-primary: 32 20% 91%;
+    /* #ECE8E2 — Primary border */
 
     /* ── Semantic States ─────────────────────────────────────────────────── */
     --color-success: 140 26% 39%;
@@ -64,11 +82,14 @@
     --color-error-muted: 7 69% 94%;
 
     /* ── Ink (Deep Blacks) ───────────────────────────────────────────────── */
-    --color-ink: 0 0% 7%;                   /* #111111 */
-    --color-ink-soft: 0 0% 10%;             /* #1A1A1A */
+    --color-ink: 0 0% 7%;
+    /* #111111 */
+    --color-ink-soft: 0 0% 10%;
+    /* #1A1A1A */
 
     /* ── Shadow ──────────────────────────────────────────────────────────── */
-    --shadow-color: 0 0% 10%;               /* Base for shadow calculations */
+    --shadow-color: 0 0% 10%;
+    /* Base for shadow calculations */
 
     /* ── Typography ──────────────────────────────────────────────────────── */
     --font-display: "Cormorant Garamond";
@@ -79,8 +100,10 @@
     --radius: 0.375rem;
 
     /* ── Navbar ──────────────────────────────────────────────────────────── */
-    --navbar-height: 4rem;        /* 64px — desktop */
-    --navbar-height-mobile: 3.5rem; /* 56px — mobile */
+    --navbar-height: 4rem;
+    /* 64px — desktop */
+    --navbar-height-mobile: 3.5rem;
+    /* 56px — mobile */
 
     /* ── Z-Index ─────────────────────────────────────────────────────────── */
     --z-base: 0;
@@ -201,6 +224,7 @@
 
 /* ── Global Reset & Base Styles ─────────────────────────────────────────── */
 @layer base {
+
   *,
   *::before,
   *::after {
@@ -212,19 +236,23 @@
     font-size: 16px;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    /* Smooth scrolling — overridden for reduced-motion users below */
     scroll-behavior: smooth;
-    /* Prevent layout shift from scrollbar appearing */
-    scrollbar-gutter: stable;
+    /* Zero margin/padding — full-bleed elements must start at exact viewport edge */
+    margin: 0;
+    padding: 0;
+    /* Hide scrollbar (keeps scroll) — eliminates right-side gap on full-bleed sections */
+    scrollbar-width: none; /* Firefox */
+    overflow-x: hidden;
     /* Premium font rendering */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    /* Safe-area insets — required for iPhone notch and home-indicator devices */
-    padding-top: env(safe-area-inset-top);
-    padding-right: env(safe-area-inset-right);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
+  }
+
+  /* Hide scrollbar Chrome/Safari/Edge — page still scrolls normally */
+  html::-webkit-scrollbar {
+    display: none;
+    width: 0;
   }
 
   body {
@@ -234,10 +262,19 @@
     font-size: 1rem;
     font-weight: 400;
     line-height: 1.75;
+    /* Zero margin/padding — no gaps around full-bleed sections */
+    margin: 0;
+    padding: 0;
     min-height: 100vh;
     min-height: 100dvh;
-    /* Prevent horizontal overflow on mobile */
     overflow-x: hidden;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  /* Hide scrollbar Chrome/Safari/Edge on body too */
+  body::-webkit-scrollbar {
+    display: none;
+    width: 0;
   }
 
   /* Focus ring — accessible, on-brand, visible */
@@ -260,6 +297,7 @@
 
   /* Reduced motion — respect user preferences */
   @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {
@@ -291,12 +329,22 @@
 
   /* Shimmer keyframes — used by .shimmer utility and animate-shimmer Tailwind class */
   @keyframes shimmer {
-    0%   { background-position: -200% 0; }
-    100% { background-position:  200% 0; }
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
   }
 
   /* Typography base styles */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display), Georgia, serif;
     font-weight: 400;
     line-height: 1.15;
@@ -313,10 +361,18 @@
     text-decoration: none;
   }
 
-  img, video {
+  img,
+  video {
     max-width: 100%;
-    height: auto;
     display: block;
+  }
+
+  /* Only apply height: auto to non-fill images.
+     Next/Image fill mode uses position: absolute with inset: 0 —
+     height: auto on those elements fights the container stretch. */
+  img:not([style*="position"]),
+  video:not([style*="position"]) {
+    height: auto;
   }
 
   button {
@@ -327,26 +383,47 @@
     font-family: inherit;
   }
 
-  input, textarea, select {
+  input,
+  textarea,
+  select {
     font-family: inherit;
     font-size: inherit;
   }
 
   /* Remove list styles when list is inside nav */
-  nav ul, nav ol {
+  nav ul,
+  nav ol {
     list-style: none;
     padding: 0;
     margin: 0;
   }
 
   /* Prevent text overflow */
-  p, h1, h2, h3, h4, h5, h6 {
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     overflow-wrap: break-word;
   }
 }
 
+/* ── Scrollbar Hide — MUST be outside @layer to guarantee application ──────
+   Hides the native scrollbar while keeping scroll working.
+   Inside @layer, ::-webkit-scrollbar rules may be deprioritized by the browser.
+   scrollbar-width: none handles Firefox (already in @layer base on html/body).
+────────────────────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 /* ── Typography Utility Classes ─────────────────────────────────────────── */
 @layer components {
+
   /* Display — editorial, large headlines */
   .text-display-2xl {
     font-family: var(--font-display), Georgia, serif;
@@ -422,17 +499,59 @@
   }
 
   /* Body */
-  .text-body-xl { font-size: 1.25rem; line-height: 1.7; }
-  .text-body-lg { font-size: 1.125rem; line-height: 1.75; }
-  .text-body-md { font-size: 1rem; line-height: 1.75; }
-  .text-body-sm { font-size: 0.9375rem; line-height: 1.65; }
-  .text-body-xs { font-size: 0.875rem; line-height: 1.6; }
+  .text-body-xl {
+    font-size: 1.25rem;
+    line-height: 1.7;
+  }
+
+  .text-body-lg {
+    font-size: 1.125rem;
+    line-height: 1.75;
+  }
+
+  .text-body-md {
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  .text-body-sm {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+  }
+
+  .text-body-xs {
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
 
   /* Labels & Meta */
-  .text-label-lg { font-size: 0.9375rem; line-height: 1.4; letter-spacing: 0.01em; font-weight: 500; }
-  .text-label-md { font-size: 0.875rem; line-height: 1.4; letter-spacing: 0.01em; font-weight: 500; }
-  .text-label-sm { font-size: 0.8125rem; line-height: 1.4; letter-spacing: 0.01em; font-weight: 500; }
-  .text-caption { font-size: 0.75rem; line-height: 1.5; letter-spacing: 0.02em; color: hsl(var(--color-text-secondary)); }
+  .text-label-lg {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    font-weight: 500;
+  }
+
+  .text-label-md {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    font-weight: 500;
+  }
+
+  .text-label-sm {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    font-weight: 500;
+  }
+
+  .text-caption {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+    color: hsl(var(--color-text-secondary));
+  }
 
   /* Overline — small caps, tracked */
   .text-overline {
@@ -454,7 +573,8 @@
   /* Code — inline and block monospace text (prices, SKUs, tracking IDs) */
   .text-code {
     font-family: var(--font-mono);
-    font-size: 0.875em;    /* Slightly smaller — monospace reads larger optically */
+    font-size: 0.875em;
+    /* Slightly smaller — monospace reads larger optically */
     line-height: 1.6;
     letter-spacing: 0.01em;
     font-weight: 400;
@@ -463,6 +583,7 @@
 
 /* ── Utility Classes ────────────────────────────────────────────────────── */
 @layer utilities {
+
   /* Visually hidden but accessible to screen readers */
   .sr-only {
     position: absolute;
@@ -484,12 +605,10 @@
 
   /* Shimmer animation for skeletons */
   .shimmer {
-    background: linear-gradient(
-      90deg,
-      hsl(var(--color-surface-elevated)) 0%,
-      hsl(var(--color-border-subtle)) 50%,
-      hsl(var(--color-surface-elevated)) 100%
-    );
+    background: linear-gradient(90deg,
+        hsl(var(--color-surface-elevated)) 0%,
+        hsl(var(--color-border-subtle)) 50%,
+        hsl(var(--color-surface-elevated)) 100%);
     background-size: 200% 100%;
     animation: shimmer 2s linear infinite;
   }
@@ -500,10 +619,36 @@
   }
 
   /* Prevent layout shift for images */
-  .aspect-product { aspect-ratio: 3 / 4; }
-  .aspect-editorial { aspect-ratio: 4 / 5; }
+  .aspect-product {
+    aspect-ratio: 3 / 4;
+  }
+
+  .aspect-editorial {
+    aspect-ratio: 4 / 5;
+  }
 
   /* Text balance for headings */
-  .text-balance { text-wrap: balance; }
-  .text-pretty { text-wrap: pretty; }
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Centered 16:9 box that covers the screen to crop baked-in letterboxing on 3:4 portrait files */
+  .hero-crop-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 177.78dvh;
+    height: 100dvh;
+  }
+  @media (min-aspect-ratio: 16/9) {
+    .hero-crop-container {
+      width: 100dvw;
+      height: 56.25dvw;
+    }
+  }
 }
