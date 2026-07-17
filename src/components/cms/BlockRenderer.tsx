@@ -65,61 +65,49 @@ function CMSCollectionGrid({ block, collections = [] }: { block: any; collection
   if (displayCollections.length === 0) return null
 
   return (
-    <Section id="featured-collections" padding="none" className="bg-background border-b border-border py-24 select-none">
-      <Container>
-        {/* Title Block Above Grid */}
-        <div className="flex flex-col justify-start select-none mb-14">
-          <span className="text-[10px] font-bold tracking-[0.4em] text-text-secondary uppercase select-none opacity-80 mb-3 pl-2">
-            Curated Collections
-          </span>
-          <h2 className="text-[2.2rem] md:text-[2.8rem] font-display font-light text-text-primary tracking-[0.2em] uppercase leading-none whitespace-nowrap pl-2">
-            Featured Collections
-          </h2>
-        </div>
-
-        {/* 4-box Editorial Collection Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-          {displayCollections.map((collection: any, index: number) => {
-            const hasCover = !!collection.imageUrl
-            return (
-              <Link
-                key={collection.id}
-                href={`/collections/${collection.slug}`}
-                className="group flex flex-col gap-3 relative w-full overflow-hidden"
-              >
-                {/* Visual Card Image container */}
-                <div className="relative w-full aspect-[3/4] bg-surface-secondary overflow-hidden select-none">
-                  {hasCover ? (
-                    <Image
-                      src={collection.imageUrl}
-                      alt={collection.name}
-                      fill
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                      priority={index < 2}
-                      className="object-cover transition-all duration-700 ease-out group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-[10px] text-text-secondary uppercase select-none font-semibold">
-                      {collection.name}
-                    </div>
-                  )}
-                  
-                  {/* Subtle Dark Overlay */}
-                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500" />
-
-                  {/* Text Overlay Bottom Left */}
-                  <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between text-white z-10">
-                    <span className="text-[11px] font-bold tracking-[0.2em] uppercase drop-shadow-md">
-                      {collection.name}
-                    </span>
-                    <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1.5 transition-transform duration-300 drop-shadow-md" />
+    <Section id="featured-collections" padding="none" className="bg-background select-none">
+      {/* 4-box Editorial Collection Grid - full screen height, no gap, full bleed */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 h-[100dvh] w-full">
+        {displayCollections.map((collection: any, index: number) => {
+          const hasCover = !!collection.imageUrl
+          return (
+            <Link
+              key={collection.id}
+              href={`/collections/${collection.slug}`}
+              className="group flex flex-col relative w-full h-full overflow-hidden"
+            >
+              {/* Visual Card Image container */}
+              <div className="relative w-full h-full bg-surface-secondary overflow-hidden select-none">
+                {hasCover ? (
+                  <Image
+                    src={collection.imageUrl}
+                    alt={collection.name}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    priority={index < 2}
+                    className="object-cover transition-all duration-700 ease-out group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[10px] text-text-secondary uppercase select-none font-semibold">
+                    {collection.name}
                   </div>
+                )}
+                
+                {/* Subtle Dark Overlay */}
+                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500" />
+
+                {/* Text Overlay Bottom Left */}
+                <div className="absolute bottom-8 left-8 right-8 flex items-center justify-between text-white z-10">
+                  <span className="text-[11px] font-bold tracking-[0.2em] uppercase drop-shadow-md">
+                    {collection.name}
+                  </span>
+                  <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1.5 transition-transform duration-300 drop-shadow-md" />
                 </div>
-              </Link>
-            )
-          })}
-        </div>
-      </Container>
+              </div>
+            </Link>
+          )
+        })}
+      </div>
     </Section>
   )
 }

@@ -17,8 +17,7 @@ const nextConfig: NextConfig = {
   // Image optimization — add CDN hostnames here as the project grows
   images: {
     remotePatterns: [
-      // Placeholder for future image CDN (Cloudinary, Sanity, etc.)
-      // { protocol: "https", hostname: "cdn.xinvora.com" },
+      { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "placehold.co" },
     ],
