@@ -174,7 +174,7 @@ function CMSProductGrid({ block, products = [] }: { block: any; products?: any[]
 
 function CMSHeroCarousel({ block }: { block: any }) {
   const slides = (block.data?.slides || []).filter(
-    (s: any) => s.isActive && s.imageDesktopUrl && s.imageMobileUrl
+    (s: any) => s.isActive && (s.imageDesktopUrl || s.imageMobileUrl)
   )
 
   if (slides.length === 0) return null
@@ -216,6 +216,8 @@ function CMSHeroCarousel({ block }: { block: any }) {
   }
 
   const currentSlide = slides[currentIndex]
+  const desktopSrc = currentSlide.imageDesktopUrl || currentSlide.imageMobileUrl
+  const mobileSrc = currentSlide.imageMobileUrl || currentSlide.imageDesktopUrl
 
   return (
     <Section
@@ -237,48 +239,56 @@ function CMSHeroCarousel({ block }: { block: any }) {
             className="absolute inset-0 w-full h-full"
           >
             {(() => {
-              const isZebraImage = currentSlide.imageDesktopUrl?.includes("WA10263P65") || currentSlide.imageDesktopUrl?.includes("16x9");
+              const isZebraImage = desktopSrc?.includes("WA10263P65") || desktopSrc?.includes("16x9");
               return currentSlide.redirectUrl ? (
                 <Link href={currentSlide.redirectUrl} className="relative block w-full h-full cursor-pointer overflow-hidden">
                   <div className={isZebraImage ? "hero-crop-container" : "absolute inset-0 w-full h-full"}>
-                    <Image
-                      src={currentSlide.imageDesktopUrl}
-                      alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
-                      fill
-                      sizes="100vw"
-                      priority={currentIndex === 0}
-                      className="hidden md:block object-cover object-center max-w-none w-full h-full"
-                    />
-                    <Image
-                      src={currentSlide.imageMobileUrl}
-                      alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
-                      fill
-                      sizes="100vw"
-                      priority={currentIndex === 0}
-                      className="block md:hidden object-cover object-center max-w-none w-full h-full"
-                    />
+                    {desktopSrc && (
+                      <Image
+                        src={desktopSrc}
+                        alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
+                        fill
+                        sizes="100vw"
+                        priority={currentIndex === 0}
+                        className="hidden md:block object-cover object-center max-w-none w-full h-full"
+                      />
+                    )}
+                    {mobileSrc && (
+                      <Image
+                        src={mobileSrc}
+                        alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
+                        fill
+                        sizes="100vw"
+                        priority={currentIndex === 0}
+                        className="block md:hidden object-cover object-center max-w-none w-full h-full"
+                      />
+                    )}
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-black/30 pointer-events-none" />
                 </Link>
               ) : (
                 <div className="relative w-full h-full overflow-hidden">
                   <div className={isZebraImage ? "hero-crop-container" : "absolute inset-0 w-full h-full"}>
-                    <Image
-                      src={currentSlide.imageDesktopUrl}
-                      alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
-                      fill
-                      sizes="100vw"
-                      priority={currentIndex === 0}
-                      className="hidden md:block object-cover object-center max-w-none w-full h-full"
-                    />
-                    <Image
-                      src={currentSlide.imageMobileUrl}
-                      alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
-                      fill
-                      sizes="100vw"
-                      priority={currentIndex === 0}
-                      className="block md:hidden object-cover object-center max-w-none w-full h-full"
-                    />
+                    {desktopSrc && (
+                      <Image
+                        src={desktopSrc}
+                        alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
+                        fill
+                        sizes="100vw"
+                        priority={currentIndex === 0}
+                        className="hidden md:block object-cover object-center max-w-none w-full h-full"
+                      />
+                    )}
+                    {mobileSrc && (
+                      <Image
+                        src={mobileSrc}
+                        alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
+                        fill
+                        sizes="100vw"
+                        priority={currentIndex === 0}
+                        className="block md:hidden object-cover object-center max-w-none w-full h-full"
+                      />
+                    )}
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-black/30 pointer-events-none" />
                 </div>
