@@ -44,6 +44,23 @@ export function OrderDetailWorkspace({ order, totalOrders, sessionInfo }: OrderD
   const [activeTab, setActiveTab] = useState<TabType>("details")
   const [isUpdating, setIsUpdating] = useState(false)
   const [updateError, setUpdateError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this order?")) return
+
+    setIsDeleting(true)
+    const { deleteOrderAction } = await import("@/actions/admin/orders.actions")
+    const res = await deleteOrderAction(order.id)
+    setIsDeleting(false)
+
+    if (res.success) {
+      router.push("/admin/orders")
+      router.refresh()
+    } else {
+      setUpdateError(res.error?.message || "Failed to delete order")
+    }
+  }
 
   // Dynamic VALID_TRANSITIONS mapping in client component
   const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -174,6 +191,13 @@ export function OrderDetailWorkspace({ order, totalOrders, sessionInfo }: OrderD
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="bg-red-50 text-red-600 border border-red-200 px-4 py-1.5 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md hover:bg-red-100 disabled:opacity-50 transition-colors"
+          >
+            {isDeleting ? "Deleting..." : "Delete Order"}
+          </button>
           <select
             value={order.status}
             onChange={(e) => handleStatusChange(e.target.value)}

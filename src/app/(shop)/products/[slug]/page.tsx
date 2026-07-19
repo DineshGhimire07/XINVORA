@@ -22,6 +22,7 @@ import { and, eq, inArray } from "drizzle-orm"
 import { type TimingEntry, timedPromise, printTimingSummary } from "@/lib/perf"
 import { ShopTheLookCarousel } from "@/components/storefront/ShopTheLookCarousel"
 import { ProductsInLook } from "@/components/storefront/ProductsInLook"
+import { ProductCard } from "@/components/storefront/ProductCard"
 
 export const revalidate = 3600
 
@@ -63,7 +64,11 @@ export default async function ProductDetailPage({
   }
 
   // Resolve all secondary data concurrently now that product ID is known
-  const activeVariants = product.variants.filter(v => v.isActive)
+  const activeVariantsRaw = product.variants.filter(v => v.isActive)
+  const hasSizeVariants = activeVariantsRaw.some(v => v.sizeId !== null)
+  const activeVariants = hasSizeVariants
+    ? activeVariantsRaw.filter(v => v.sizeId !== null)
+    : activeVariantsRaw
   const variantIds = activeVariants.map((v) => v.id)
 
   const [parentCategory, relatedResponse, variantPrices, lookbookData, pairingProducts] = await Promise.all([
@@ -81,6 +86,7 @@ export default async function ProductDetailPage({
           .select({
             variantId: priceBookEntries.variantId,
             price: priceBookEntries.price,
+            compareAtPrice: priceBookEntries.compareAtPrice,
           })
           .from(priceBookEntries)
           .innerJoin(priceBooks, and(eq(priceBookEntries.priceBookId, priceBooks.id), eq(priceBooks.isDefault, true)))
@@ -101,6 +107,7 @@ export default async function ProductDetailPage({
     return {
       ...v,
       price: p ? p.price : null,
+      compareAtPrice: p ? p.compareAtPrice : null,
     }
   })
 
@@ -202,6 +209,7 @@ export default async function ProductDetailPage({
                   productName={product.name}
                   sizeGuide={product.sizeGuide}
                   shortDescription={product.shortDescription}
+                  offSection={product.offSection}
                 />
 
                 {/* ── Trust Feature Grid: 24px below Buy Now ── */}
@@ -255,77 +263,23 @@ export default async function ProductDetailPage({
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-12">
-                {relatedProducts.map((rel: any) => (
-                  <div key={rel.id} className="group flex flex-col gap-4 text-left">
-                    {/* Image Container with Relative Wrapper (Contains PDP link + Wishlist Toggle Icon outside the link) */}
-                    <div className="relative w-full aspect-[3/4] overflow-hidden bg-surface-secondary select-none">
-                      <Link 
-                        href={`/products/${rel.slug}`}
-                        className="block w-full h-full"
-                      >
-                        {rel.productImages?.length ? (
-                          <>
-                            {/* Desktop View: Single image with zoom on hover */}
-                            <div className="hidden md:block w-full h-full relative">
-                              <Image
-                                src={rel.productImages[0].url}
-                                alt={rel.productImages[0].altText || rel.name}
-                                fill
-                                sizes="(max-width: 768px) 50vw, 20vw"
-                                className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
-                              />
-                            </div>
-
-                            {/* Mobile View: Swipeable horizontal gallery with touch-auto */}
-                            <div 
-                              className="flex md:hidden w-full h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory touch-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-                            >
-                              {rel.productImages.map((img: any, idx: number) => (
-                                <div key={img.url || idx} className="relative w-full h-full shrink-0 snap-center">
-                                  <Image
-                                    src={img.url}
-                                    alt={img.altText || `${rel.name} ${idx + 1}`}
-                                    fill
-                                    sizes="(max-width: 768px) 50vw, 20vw"
-                                    className="object-cover object-top"
-                                  />
-                                </div>
-                              ))}
-                            </div>
-
-                            {/* Mobile Slide Indicator dots (only show if multiple images) */}
-                            {rel.productImages.length > 1 && (
-                              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex md:hidden gap-1.5 z-10 pointer-events-none">
-                                {rel.productImages.map((_: any, idx: number) => (
-                                  <div key={idx} className="w-1.5 h-1.5 rounded-full bg-white/60 shadow-sm" />
-                                ))}
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <div className="text-[10px] text-text-secondary uppercase select-none">
-                            No Image
-                          </div>
-                        )}
-                      </Link>
-
-                      {/* Wishlist Toggle Heart Icon positioned relative to image wrapper bottom-right */}
-                      <WishlistToggleIcon productId={rel.id} />
-                    </div>
-
-                    {/* Metadata details */}
-                    <Link href={`/products/${rel.slug}`} className="flex flex-col gap-1.5 mt-2">
-                      <h3 className="text-[13px] font-display font-medium tracking-wide text-text-primary group-hover:text-text-primary/70 transition-colors duration-200 uppercase">
-                        {rel.name}
-                      </h3>
-                      <span className="font-semibold select-none font-mono text-[11px] text-text-primary/90">
-                        {rel.lowestPrice !== null && rel.lowestPrice !== undefined
-                          ? `NPR ${Math.round(rel.lowestPrice / 100).toLocaleString()}`
-                          : "Contact for Price"}
-                      </span>
-                    </Link>
-                  </div>
-                ))}
+                {relatedProducts.map((rel: any, idx: number) => {
+                  const inStock = (rel.variants || []).length > 0
+                    ? (rel.variants || []).some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)
+                    : true
+                  return (
+                    <ProductCard 
+                      key={rel.id}
+                      product={rel}
+                      itemColors={[]}
+                      itemSizes={[]}
+                      priority={idx < 5}
+                      inStock={inStock}
+                      hideWishlist={false}
+                      hideDiscountBadge={true}
+                    />
+                  )
+                })}
               </div>
             </Stack>
           </Section>

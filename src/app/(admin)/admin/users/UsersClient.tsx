@@ -30,6 +30,31 @@ export function UsersClient({ customersData, currentSearch }: UsersClientProps) 
   const searchParams = useSearchParams()
   const [searchInput, setSearchInput] = useState(currentSearch)
   const [isPending, startTransition] = useTransition()
+  const [mounted, setMounted] = useState(false)
+  const [isDeleting, setIsDeleting] = useState<string | null>(null)
+  
+  // Hydration fix
+  useState(() => {
+    if (typeof window !== "undefined") {
+      setMounted(true)
+    }
+  })
+
+  const handleDelete = async (e: React.MouseEvent, customerId: string) => {
+    e.stopPropagation()
+    if (!confirm("Are you sure you want to delete this customer?")) return
+    
+    setIsDeleting(customerId)
+    const { deleteCustomerAction } = await import("@/actions/admin/customers.actions")
+    const res = await deleteCustomerAction(customerId)
+    setIsDeleting(null)
+    
+    if (res.success) {
+      router.refresh()
+    } else {
+      alert(res.error?.message || "Failed to delete customer")
+    }
+  }
 
   const columns = [
     {
@@ -49,15 +74,18 @@ export function UsersClient({ customersData, currentSearch }: UsersClientProps) 
     {
       accessorKey: "createdAt",
       header: "Join Date",
-      cell: ({ row }: any) => (
-        <span className="text-admin-text-secondary font-medium">
-          {new Date(row.getValue("createdAt")).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </span>
-      ),
+      cell: ({ row }: any) => {
+        if (!mounted) return <span className="text-admin-text-secondary font-medium">Loading...</span>
+        return (
+          <span className="text-admin-text-secondary font-medium">
+            {new Date(row.getValue("createdAt")).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
+        )
+      },
     },
     {
       accessorKey: "totalOrders",
@@ -77,6 +105,22 @@ export function UsersClient({ customersData, currentSearch }: UsersClientProps) 
         </span>
       ),
     },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }: any) => {
+        const customerId = row.original.id
+        return (
+          <button
+            onClick={(e) => handleDelete(e, customerId)}
+            disabled={isDeleting === customerId}
+            className="text-red-600 hover:text-red-900 text-xs font-semibold px-2 py-1 rounded border border-red-200 hover:bg-red-50 disabled:opacity-50 transition-colors"
+          >
+            {isDeleting === customerId ? "Deleting..." : "Delete"}
+          </button>
+        )
+      }
+    }
   ]
 
   const handleSearchSubmit = (e: React.FormEvent) => {

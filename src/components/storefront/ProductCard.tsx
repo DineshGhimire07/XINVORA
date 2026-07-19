@@ -14,6 +14,8 @@ export interface ProductCardProps {
     slug: string
     name: string
     lowestPrice: number | null
+    compareAtPrice?: number | null
+    offSection?: { originalPrice: number; sellingPrice: number; isOffEnabled: boolean } | null
     productImages: { url: string; altText: string | null }[]
   }
   itemColors: { id: string; hexCode: string }[]
@@ -24,6 +26,7 @@ export interface ProductCardProps {
   hideWishlist?: boolean
   hidePrice?: boolean
   hideName?: boolean
+  hideDiscountBadge?: boolean
   overrideImage?: string | null
   disableHover?: boolean
   objectContain?: boolean
@@ -40,6 +43,7 @@ export function ProductCard({
   hideWishlist = false,
   hidePrice = false,
   hideName = false,
+  hideDiscountBadge = false,
   overrideImage = null,
   disableHover = false,
   objectContain = false,
@@ -50,6 +54,19 @@ export function ProductCard({
   const [isPending, startTransition] = React.useTransition()
   // We want at least the first image, up to all images
   const images = product.productImages || []
+
+  // Calculate discount percentage for sale badge
+  // Off Section pricing takes priority over compareAtPrice
+  const offEnabled = product.offSection?.isOffEnabled === true
+  const effectiveOriginalPrice = offEnabled ? product.offSection!.originalPrice : product.compareAtPrice
+  const effectiveSellingPrice = offEnabled ? product.offSection!.sellingPrice : product.lowestPrice
+
+  const discountPercent = React.useMemo(() => {
+    if (effectiveOriginalPrice && effectiveSellingPrice && effectiveOriginalPrice > effectiveSellingPrice) {
+      return Math.round(((effectiveOriginalPrice - effectiveSellingPrice) / effectiveOriginalPrice) * 100)
+    }
+    return 0
+  }, [effectiveOriginalPrice, effectiveSellingPrice])
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -177,6 +194,25 @@ export function ProductCard({
           </span>
         )}
 
+        {/* Sale discount badge */}
+        {inStock && discountPercent > 0 && !hideDiscountBadge && (
+          <span 
+            className="absolute top-3 right-3 z-10 text-[8px] font-bold tracking-[0.2em] uppercase select-none border"
+            style={{ 
+              backgroundColor: '#FCFBF8',
+              borderColor: 'rgba(201, 169, 106, 0.5)',
+              color: '#C9A96A',
+              paddingTop: '5px',
+              paddingBottom: '4px',
+              paddingLeft: '8px',
+              paddingRight: '8px',
+              lineHeight: '1'
+            }}
+          >
+            -{discountPercent}% OFF
+          </span>
+        )}
+
         {/* Color dot selectors overlay in top-left corner (only shown if not sold out to prevent collision) */}
         {inStock && itemColors.length > 0 && (
           <div className="absolute top-3 left-3 flex gap-1 z-10">
@@ -214,10 +250,29 @@ export function ProductCard({
                 </span>
               )}
               {!hidePrice && (
-                <span className="font-semibold select-none whitespace-nowrap font-mono text-text-primary">
-                  {product.lowestPrice !== null && product.lowestPrice !== undefined
-                    ? `NPR ${Math.round(product.lowestPrice / 100).toLocaleString()}`
-                    : "Contact for Price"}
+                <span className="flex items-center gap-3.5 select-none whitespace-nowrap font-mono">
+                  {(effectiveSellingPrice !== null && effectiveSellingPrice !== undefined) ? (
+                    effectiveOriginalPrice && discountPercent > 0 ? (
+                      <>
+                        <span className="line-through font-normal text-[10px]" style={{ color: '#9A9A9A' }}>
+                          NPR {Math.round(effectiveOriginalPrice / 100).toLocaleString()}
+                        </span>
+                        <span className="font-semibold text-[11px]" style={{ color: '#1A1A1A' }}>
+                          NPR {Math.round(effectiveSellingPrice / 100).toLocaleString()}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="font-semibold text-text-primary">
+                        NPR {Math.round(effectiveSellingPrice / 100).toLocaleString()}
+                      </span>
+                    )
+                  ) : product.lowestPrice !== null && product.lowestPrice !== undefined ? (
+                    <span className="font-semibold text-text-primary">
+                      NPR {Math.round(product.lowestPrice / 100).toLocaleString()}
+                    </span>
+                  ) : (
+                    <span className="text-text-primary">Contact for Price</span>
+                  )}
                 </span>
               )}
             </div>

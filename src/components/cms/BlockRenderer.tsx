@@ -164,6 +164,7 @@ function CMSProductGrid({ block, products = [] }: { block: any; products?: any[]
                 hideWishlist={true}
                 hidePrice={true}
                 hideName={true}
+                hideDiscountBadge={true}
                 overrideImage={product.customImageUrl}
                 disableHover={true}
                 objectContain={true}

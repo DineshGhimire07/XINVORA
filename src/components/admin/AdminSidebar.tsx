@@ -51,7 +51,15 @@ const navItems: NavItem[] = [
   },
   { name: "Collections", href: "/admin/collections", icon: Layers },
   { name: "Customers", href: "/admin/users", icon: Users },
-  { name: "Discounts", href: "/admin/coupons", icon: Percent },
+  {
+    name: "Discount & Offers",
+    icon: Percent,
+    items: [
+      { name: "Discount", href: "/admin/coupons" },
+      { name: "Couple Section", href: "/admin/couple-section" },
+      { name: "Off Section", href: "/admin/off-section" },
+    ],
+  },
   { name: "Analytics", href: "/admin/cdp", icon: BarChart3 },
   { name: "Marketing", href: "/admin/marketing", icon: Megaphone },
   {

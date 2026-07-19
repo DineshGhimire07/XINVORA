@@ -66,6 +66,11 @@ export type ProductFull = RawProduct & {
     inventory: RawInventory | null
     variantImages: RawVariantImage[]
   })[]
+  offSection?: {
+    originalPrice: number
+    sellingPrice: number
+    isOffEnabled: boolean
+  } | null
 }
 
 /** A lightweight product used for listing pages (PLP). */
@@ -83,6 +88,12 @@ export type ProductSummaryWithPrice = ProductSummary & {
   lowestPrice: number | null
   /** Compare-at price in minor units (cents) for sale display. */
   compareAtPrice: number | null
+  /** Off Section pricing overlay — when present and enabled, overrides compareAtPrice logic. */
+  offSection?: {
+    originalPrice: number
+    sellingPrice: number
+    isOffEnabled: boolean
+  } | null
 }
 
 /** A single Category node, optionally with its children. */

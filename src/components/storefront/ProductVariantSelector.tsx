@@ -19,6 +19,7 @@ interface Variant {
   inventory: { quantity: number } | null
   isActive: boolean
   price?: number | null
+  compareAtPrice?: number | null
 }
 
 interface ProductVariantSelectorProps {
@@ -30,6 +31,7 @@ interface ProductVariantSelectorProps {
   sizeGuide?: string | null
   shortDescription?: string | null
   initialWishlistVariantIds?: string[]
+  offSection?: { originalPrice: number; sellingPrice: number; isOffEnabled: boolean } | null
 }
 
 // ── Size Guide Modal ────────────────────────────────────────────────────────
@@ -100,6 +102,7 @@ export function ProductVariantSelector({
   sizeGuide,
   shortDescription,
   initialWishlistVariantIds = [],
+  offSection,
 }: ProductVariantSelectorProps) {
   const [selectedColorId, setSelectedColorId] = useState<string | null>(colors[0]?.id || null)
   const [selectedSizeId, setSelectedSizeId] = useState<string | null>(null)
@@ -132,12 +135,38 @@ export function ProductVariantSelector({
   }, [variants, selectedColorId, selectedSizeId])
 
   const displayPrice = useMemo(() => {
+    const offEnabled = offSection?.isOffEnabled === true
+    if (offEnabled) {
+      return `NPR ${Math.round(offSection!.sellingPrice / 100).toLocaleString()}`
+    }
     const targetForPrice = activeVariant || variants[0]
     if (targetForPrice && targetForPrice.price !== undefined && targetForPrice.price !== null) {
       return `NPR ${Math.round(targetForPrice.price / 100).toLocaleString()}`
     }
     return "Contact for Price"
-  }, [activeVariant, variants])
+  }, [activeVariant, variants, offSection])
+
+  const priceInfo = useMemo(() => {
+    const offEnabled = offSection?.isOffEnabled === true
+    if (offEnabled) {
+      const sellingPrice = offSection!.sellingPrice
+      const originalPrice = offSection!.originalPrice
+      const discountPercent = Math.round(((originalPrice - sellingPrice) / originalPrice) * 100)
+      return { sellingPrice, originalPrice, discountPercent, isOffEnabled: true }
+    }
+
+    const targetForPrice = activeVariant || variants[0]
+    if (!targetForPrice || targetForPrice.price === undefined || targetForPrice.price === null) {
+      return { sellingPrice: null, originalPrice: null, discountPercent: 0, isOffEnabled: false }
+    }
+    const sellingPrice = targetForPrice.price
+    const originalPrice = targetForPrice.compareAtPrice ?? null
+    let discountPercent = 0
+    if (originalPrice && originalPrice > sellingPrice) {
+      discountPercent = Math.round(((originalPrice - sellingPrice) / originalPrice) * 100)
+    }
+    return { sellingPrice, originalPrice, discountPercent, isOffEnabled: false }
+  }, [activeVariant, variants, offSection])
 
   const handleWishlistToggle = () => {
     const targetVariant = variants[0]
@@ -189,8 +218,43 @@ export function ProductVariantSelector({
       )}
 
       {/* Price */}
-      <div className="text-[1.5rem] font-sans font-light text-text-primary tracking-wide select-none -mt-4 border-b border-border/10 pb-3">
-        {displayPrice}
+      <div className="text-[1.5rem] font-sans font-light tracking-wide select-none -mt-4 border-b border-border/10 pb-3">
+        {priceInfo.sellingPrice !== null ? (
+          priceInfo.isOffEnabled ? (
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-3">
+                <span className="line-through text-base font-normal" style={{ color: '#9A9A9A' }}>
+                  NPR {Math.round(priceInfo.originalPrice! / 100).toLocaleString()}
+                </span>
+                <span className="font-medium" style={{ color: '#1A1A1A' }}>
+                  NPR {Math.round(priceInfo.sellingPrice / 100).toLocaleString()}
+                </span>
+                <span className="font-semibold text-xs px-2.5 py-0.5 text-white rounded-xs select-none" style={{ backgroundColor: '#D92D20' }}>
+                  -{priceInfo.discountPercent}% OFF
+                </span>
+              </div>
+              <div className="text-xs font-semibold text-emerald-600 mt-0.5">
+                You Save NPR {Math.round((priceInfo.originalPrice! - priceInfo.sellingPrice) / 100).toLocaleString()}
+              </div>
+            </div>
+          ) : priceInfo.originalPrice && priceInfo.discountPercent > 0 ? (
+            <div className="flex items-center gap-3">
+              <span className="line-through text-base font-normal" style={{ color: '#9A9A9A' }}>
+                NPR {Math.round(priceInfo.originalPrice / 100).toLocaleString()}
+              </span>
+              <span className="font-medium" style={{ color: '#1A1A1A' }}>
+                NPR {Math.round(priceInfo.sellingPrice / 100).toLocaleString()}
+              </span>
+              <span className="font-semibold text-xs px-2 py-0.5 text-white rounded-sm select-none" style={{ backgroundColor: '#D92D20' }}>
+                -{priceInfo.discountPercent}% OFF
+              </span>
+            </div>
+          ) : (
+            <span className="text-text-primary">{displayPrice}</span>
+          )
+        ) : (
+          <span className="text-text-primary">{displayPrice}</span>
+        )}
       </div>
 
       {/* Short Description */}

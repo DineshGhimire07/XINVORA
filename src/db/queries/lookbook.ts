@@ -84,6 +84,10 @@ export async function findLookbookSlides() {
       .where(inArray(priceBookEntries.variantId, variantIds))
   }
 
+  // Fetch Off Section overlay for these products
+  const { findOffSectionByProductIds } = await import("./off-section")
+  const offSectionMap = linkedProductIds.length > 0 ? await findOffSectionByProductIds(linkedProductIds) : new Map()
+
   // Map and assemble details
   const productsWithPricesAndStock = items.map((item) => {
     const productVariants = item.variants.map((v) => {
@@ -107,6 +111,8 @@ export async function findLookbookSlides() {
     const defaultVariant =
       productVariants.find((v) => v.inventory && v.inventory.quantity > 0) || productVariants[0]
 
+    const offData = offSectionMap.get(item.id)
+
     return {
       id: item.id,
       name: item.name,
@@ -114,6 +120,7 @@ export async function findLookbookSlides() {
       productImages: item.productImages,
       lowestPrice,
       compareAtPrice,
+      offSection: offData ?? null,
       inStock,
       defaultVariantId: defaultVariant?.id || null,
     }
@@ -179,6 +186,10 @@ export async function findProductPairings(productId: string) {
       .where(inArray(priceBookEntries.variantId, variantIds))
   }
 
+  // Fetch Off Section overlay for these products
+  const { findOffSectionByProductIds } = await import("./off-section")
+  const offSectionMap = pairedIds.length > 0 ? await findOffSectionByProductIds(pairedIds) : new Map()
+
   // Map and assemble
   const itemsWithPricesAndStock = items.map((item) => {
     // Resolve prices for all variants of this product
@@ -205,6 +216,8 @@ export async function findProductPairings(productId: string) {
     const defaultVariant =
       productVariants.find((v) => v.inventory && v.inventory.quantity > 0) || productVariants[0]
 
+    const offData = offSectionMap.get(item.id)
+
     return {
       id: item.id,
       name: item.name,
@@ -212,6 +225,7 @@ export async function findProductPairings(productId: string) {
       productImages: item.productImages,
       lowestPrice,
       compareAtPrice,
+      offSection: offData ?? null,
       inStock,
       defaultVariantId: defaultVariant?.id || null,
     }

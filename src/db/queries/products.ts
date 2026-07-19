@@ -60,6 +60,7 @@ async function _findProductBySlugInternal(slug: string): Promise<ProductFull | n
           },
         },
       },
+      offSection: true,
     },
   })
   return (result as ProductFull) ?? null
@@ -336,15 +337,21 @@ async function _findProductsInternal(
       .where(and(inArray(variants.productId, productIds), isNull(variants.deletedAt), eq(variants.isActive, true)))
   }
 
+  // Fetch Off Section overlay for these products
+  const { findOffSectionByProductIds } = await import("./off-section")
+  const offSectionMap = productIds.length > 0 ? await findOffSectionByProductIds(productIds) : new Map()
+
   const itemsWithPrices = items.map(item => {
     const itemPrices = prices.filter(p => p.productId === item.id)
     const lowestPrice = itemPrices.length > 0 ? Math.min(...itemPrices.map(p => p.price)) : null
     const compareAtPrice = itemPrices.length > 0 ? Math.min(...itemPrices.map(p => p.compareAtPrice).filter((p): p is number => p !== null)) : null
+    const offData = offSectionMap.get(item.id)
     
     return {
       ...item,
       lowestPrice,
       compareAtPrice: compareAtPrice === Infinity || compareAtPrice === null ? null : compareAtPrice,
+      offSection: offData ?? null,
     }
   })
 

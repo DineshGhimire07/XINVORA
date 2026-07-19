@@ -33,6 +33,8 @@ export default function ProductEditor({
   const [tryonPrompt, setTryonPrompt] = useState<string>(product?.virtualTryonPrompt || "")
   const [shortDesc, setShortDesc] = useState<string>(product?.shortDescription || "")
   const [pairedIds, setPairedIds] = useState<string[]>(product?.pairedProductIds || [])
+  const [sellingPrice, setSellingPrice] = useState<string>(product?.basePrice || "")
+  const [originalPrice, setOriginalPrice] = useState<string>(product?.compareAtPrice || "")
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -206,53 +208,87 @@ export default function ProductEditor({
             Pricing, Inventory & Status
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="basePrice" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
-                Base Price *
-              </label>
-              <input
-                id="basePrice"
-                name="basePrice"
-                type="number"
-                step="0.01"
-                defaultValue={product?.basePrice}
-                required
-                className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
-              />
-            </div>
+          {(() => {
+            const sellVal = parseFloat(sellingPrice)
+            const origVal = parseFloat(originalPrice)
+            let discountPercent = 0
+            if (origVal > 0 && sellVal > 0 && origVal > sellVal) {
+              discountPercent = Math.round(((origVal - sellVal) / origVal) * 100)
+            }
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="basePrice" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+                    Price We Are Selling *
+                  </label>
+                  <input
+                    id="basePrice"
+                    name="basePrice"
+                    type="number"
+                    step="0.01"
+                    value={sellingPrice}
+                    onChange={(e) => setSellingPrice(e.target.value)}
+                    required
+                    className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
+                  />
+                </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="stockQuantity" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
-                {product ? "Adjust Stock (+/-)" : "Stock Quantity"}
-              </label>
-              <input
-                id="stockQuantity"
-                name="stockQuantity"
-                type="number"
-                defaultValue={0}
-                required
-                className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
-              />
-              {product && <span className="text-admin-xs text-admin-text-secondary mt-0.5">Current Stock: {product.stockQuantity || 0}</span>}
-            </div>
+                <div className="flex flex-col gap-1.5 relative">
+                  <div className="flex justify-between items-center">
+                    <label htmlFor="compareAtPrice" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+                      Original Price (Optional)
+                    </label>
+                    {discountPercent > 0 && (
+                      <span className="text-[10px] font-bold text-admin-status-success-text bg-admin-status-success-bg px-2 py-0.5 rounded-sm">
+                        -{discountPercent}% OFF
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    id="compareAtPrice"
+                    name="compareAtPrice"
+                    type="number"
+                    step="0.01"
+                    value={originalPrice}
+                    onChange={(e) => setOriginalPrice(e.target.value)}
+                    placeholder="e.g. 100.00"
+                    className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
+                  />
+                </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="status" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
-                Publish Status
-              </label>
-              <select
-                id="status"
-                name="status"
-                defaultValue={product?.status || "DRAFT"}
-                className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong transition-colors"
-              >
-                <option value="DRAFT">Draft</option>
-                <option value="PUBLISHED">Published</option>
-                <option value="ARCHIVED">Archived</option>
-              </select>
-            </div>
-          </div>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="stockQuantity" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+                    {product ? "Adjust Stock (+/-)" : "Stock Quantity"}
+                  </label>
+                  <input
+                    id="stockQuantity"
+                    name="stockQuantity"
+                    type="number"
+                    defaultValue={0}
+                    required
+                    className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
+                  />
+                  {product && <span className="text-admin-xs text-admin-text-secondary mt-0.5">Current Stock: {product.stockQuantity || 0}</span>}
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="status" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+                    Publish Status
+                  </label>
+                  <select
+                    id="status"
+                    name="status"
+                    defaultValue={product?.status || "DRAFT"}
+                    className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong transition-colors"
+                  >
+                    <option value="DRAFT">Draft</option>
+                    <option value="PUBLISHED">Published</option>
+                    <option value="ARCHIVED">Archived</option>
+                  </select>
+                </div>
+              </div>
+            )
+          })()}
         </div>
 
         {/* Section 3: Sizing Stock Levels */}

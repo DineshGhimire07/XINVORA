@@ -16,6 +16,7 @@ interface PairedProduct {
   productImages: { url: string; altText: string | null }[]
   lowestPrice: number | null
   compareAtPrice: number | null
+  offSection?: { originalPrice: number; sellingPrice: number; isOffEnabled: boolean } | null
   inStock: boolean
   defaultVariantId: string | null
 }
@@ -52,14 +53,18 @@ export function LookProductCard({ product, compact = false }: LookProductCardPro
   }
 
   const images = product.productImages || []
+  const offEnabled = product.offSection?.isOffEnabled === true
+  const effectiveOriginalPrice = offEnabled ? product.offSection!.originalPrice : product.compareAtPrice
+  const effectiveSellingPrice = offEnabled ? product.offSection!.sellingPrice : product.lowestPrice
+
   const hasSale =
-    product.compareAtPrice &&
-    product.lowestPrice &&
-    product.compareAtPrice > product.lowestPrice
+    effectiveOriginalPrice &&
+    effectiveSellingPrice &&
+    effectiveOriginalPrice > effectiveSellingPrice
 
   const discountPercent =
-    hasSale && product.compareAtPrice && product.lowestPrice
-      ? Math.round(((product.compareAtPrice - product.lowestPrice) / product.compareAtPrice) * 100)
+    hasSale && effectiveOriginalPrice && effectiveSellingPrice
+      ? Math.round(((effectiveOriginalPrice - effectiveSellingPrice) / effectiveOriginalPrice) * 100)
       : 0
 
   const formatPrice = (minorUnits: number | null) => {
@@ -91,8 +96,20 @@ export function LookProductCard({ product, compact = false }: LookProductCardPro
             Sold Out
           </span>
         ) : hasSale ? (
-          <span className="absolute top-3 left-3 z-10 px-2 py-0.5 text-[8px] font-bold tracking-[0.25em] uppercase bg-neutral-900 text-white select-none">
-            {discountPercent}% off
+          <span 
+            className="absolute top-3 right-3 z-10 text-[8px] font-bold tracking-[0.2em] uppercase select-none border"
+            style={{ 
+              backgroundColor: '#FCFBF8',
+              borderColor: 'rgba(201, 169, 106, 0.5)',
+              color: '#C9A96A',
+              paddingTop: '5px',
+              paddingBottom: '4px',
+              paddingLeft: '8px',
+              paddingRight: '8px',
+              lineHeight: '1'
+            }}
+          >
+            -{discountPercent}% OFF
           </span>
         ) : null}
 
@@ -121,19 +138,19 @@ export function LookProductCard({ product, compact = false }: LookProductCardPro
         </Link>
 
         {/* Price */}
-        <div className="flex items-center gap-2 select-none">
+        <div className="flex items-center gap-3.5 select-none font-mono">
           {hasSale ? (
             <>
-              <span className="font-mono text-[11px] text-neutral-900 font-medium">
-                {formatPrice(product.lowestPrice)}
+              <span className="line-through font-normal text-[10px]" style={{ color: '#9A9A9A' }}>
+                {formatPrice(effectiveOriginalPrice)}
               </span>
-              <span className="font-mono text-[9px] text-neutral-400 line-through">
-                {formatPrice(product.compareAtPrice)}
+              <span className="font-semibold text-[11px]" style={{ color: '#1A1A1A' }}>
+                {formatPrice(effectiveSellingPrice)}
               </span>
             </>
           ) : (
-            <span className="font-mono text-[11px] text-neutral-700 font-medium">
-              {formatPrice(product.lowestPrice)}
+            <span className="font-semibold text-[11px]" style={{ color: '#1A1A1A' }}>
+              {formatPrice(effectiveSellingPrice)}
             </span>
           )}
         </div>

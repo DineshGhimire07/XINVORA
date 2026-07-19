@@ -44,6 +44,31 @@ export function OrdersClient({ ordersData, currentStatusTab, currentSearch }: Or
   const [searchInput, setSearchInput] = useState(currentSearch)
   const [isPending, startTransition] = useTransition()
 
+  const [mounted, setMounted] = useState(false)
+  const [isDeleting, setIsDeleting] = useState<string | null>(null)
+
+  useState(() => {
+    if (typeof window !== "undefined") {
+      setMounted(true)
+    }
+  })
+
+  const handleDelete = async (e: React.MouseEvent, orderId: string) => {
+    e.stopPropagation()
+    if (!confirm("Are you sure you want to delete this order?")) return
+
+    setIsDeleting(orderId)
+    const { deleteOrderAction } = await import("@/actions/admin/orders.actions")
+    const res = await deleteOrderAction(orderId)
+    setIsDeleting(null)
+
+    if (res.success) {
+      router.refresh()
+    } else {
+      alert(res.error?.message || "Failed to delete order")
+    }
+  }
+
   const columns = [
     {
       accessorKey: "orderNumber",
@@ -99,6 +124,13 @@ export function OrdersClient({ ordersData, currentStatusTab, currentSearch }: Or
       accessorKey: "createdAt",
       header: "Date",
       cell: ({ row }: any) => {
+        if (!mounted) {
+          return (
+            <div className="flex flex-col text-left">
+              <span className="text-admin-text-secondary font-medium">Loading...</span>
+            </div>
+          )
+        }
         const dateObj = new Date(row.getValue("createdAt"))
         const dateStr = dateObj.toLocaleDateString(undefined, {
           month: "short",
@@ -118,6 +150,22 @@ export function OrdersClient({ ordersData, currentStatusTab, currentSearch }: Or
         )
       },
     },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }: any) => {
+        const orderId = row.original.id
+        return (
+          <button
+            onClick={(e) => handleDelete(e, orderId)}
+            disabled={isDeleting === orderId}
+            className="text-red-600 hover:text-red-900 text-xs font-semibold px-2 py-1 rounded border border-red-200 hover:bg-red-50 disabled:opacity-50 transition-colors animate-fade-in"
+          >
+            {isDeleting === orderId ? "Deleting..." : "Delete"}
+          </button>
+        )
+      }
+    }
   ]
 
   const handleTabChange = (tabId: string) => {

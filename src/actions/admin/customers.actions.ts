@@ -81,3 +81,26 @@ export async function getCustomersAction(options: {
     }
   }
 }
+
+export async function deleteCustomerAction(customerId: string): Promise<ActionResult<any>> {
+  try {
+    await SessionService.requireAdmin()
+    
+    // Soft delete customer
+    await db
+      .update(users)
+      .set({ deletedAt: new Date() })
+      .where(eq(users.id, customerId))
+
+    return { success: true, data: null }
+  } catch (error: any) {
+    console.error("[deleteCustomerAction Error]:", error)
+    return {
+      success: false,
+      error: {
+        code: "DELETE_CUSTOMER_ERROR",
+        message: error.message || "Failed to delete customer.",
+      }
+    }
+  }
+}

@@ -44,11 +44,15 @@ export default async function AdminProductEditorPage(props: PageProps) {
     
     const variantResult = await db.select().from(variants).where(eq(variants.productId, id)).limit(1)
     let basePrice = ""
+    let compareAtPrice = ""
     let stockQuantity = 0
     if (variantResult.length > 0) {
       const priceResult = await db.select().from(priceBookEntries).where(eq(priceBookEntries.variantId, variantResult[0].id)).limit(1)
       if (priceResult.length > 0) {
         basePrice = (priceResult[0].price / 100).toString()
+        if (priceResult[0].compareAtPrice) {
+          compareAtPrice = (priceResult[0].compareAtPrice / 100).toString()
+        }
       }
       
       const inventoryResult = await db.select().from(inventory).where(eq(inventory.variantId, variantResult[0].id)).limit(1)
@@ -79,6 +83,7 @@ export default async function AdminProductEditorPage(props: PageProps) {
       materialIds: materialsResult.map(m => m.materialId),
       pairedProductIds: pairingsResult.map(p => p.pairedProductId),
       basePrice,
+      compareAtPrice,
       stockQuantity,
       sizeInventories
     }

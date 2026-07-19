@@ -44,6 +44,23 @@ export function CustomerWorkspace({
 }: CustomerWorkspaceProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabType>("overview")
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this customer?")) return
+    
+    setIsDeleting(true)
+    const { deleteCustomerAction } = await import("@/actions/admin/customers.actions")
+    const res = await deleteCustomerAction(customer.id)
+    setIsDeleting(false)
+    
+    if (res.success) {
+      router.push("/admin/users")
+      router.refresh()
+    } else {
+      alert(res.error?.message || "Failed to delete customer")
+    }
+  }
 
   const fullName = [customer.firstName, customer.lastName].filter(Boolean).join(" ") || "Unnamed Customer"
   const initials = [customer.firstName?.[0], customer.lastName?.[0]].filter(Boolean).join("").toUpperCase() || "C"
@@ -64,12 +81,21 @@ export function CustomerWorkspace({
             })}
           </p>
         </div>
-        <button
-          onClick={() => router.push("/admin/users")}
-          className="bg-admin-content text-admin-text-primary border border-admin-border px-4 py-1.5 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md hover:bg-admin-content-hover transition-colors"
-        >
-          Back to List
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="bg-red-50 text-red-600 border border-red-200 px-4 py-1.5 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md hover:bg-red-100 disabled:opacity-50 transition-colors"
+          >
+            {isDeleting ? "Deleting..." : "Delete Customer"}
+          </button>
+          <button
+            onClick={() => router.push("/admin/users")}
+            className="bg-admin-content text-admin-text-primary border border-admin-border px-4 py-1.5 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md hover:bg-admin-content-hover transition-colors"
+          >
+            Back to List
+          </button>
+        </div>
       </div>
 
       {/* Grid Layout: Main Workspace + Right Sidebar */}

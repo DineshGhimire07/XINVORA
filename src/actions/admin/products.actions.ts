@@ -21,6 +21,11 @@ const productSchema = z.object({
   brandId: z.string().uuid().optional().nullable(),
   status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]),
   basePrice: z.number().or(z.string().transform(Number)),
+  compareAtPrice: z.union([z.number(), z.string()]).optional().nullable().transform((val) => {
+    if (val === "" || val === undefined || val === null) return null;
+    const num = Number(val);
+    return isNaN(num) ? null : num;
+  }),
   stockQuantity: z.number().or(z.string().transform(Number)).default(0),
   images: z.array(z.string()).optional(),
   seoTitle: z.string().optional(),
@@ -65,6 +70,7 @@ export async function createProductAction(formData: FormData) {
       brandId: formData.get("brandId") || null,
       status: formData.get("status"),
       basePrice: formData.get("basePrice"),
+      compareAtPrice: formData.get("compareAtPrice"),
       stockQuantity: formData.get("stockQuantity") || "0",
       images: formData.getAll("images"),
       seoTitle: formData.get("seoTitle") || undefined,
@@ -85,7 +91,11 @@ export async function createProductAction(formData: FormData) {
       .replace(/-+/g, "-")
 
     const newProduct = await AdminProductService.createProduct(
-      { ...data, basePrice: data.basePrice.toString() },
+      {
+        ...data,
+        basePrice: data.basePrice.toString(),
+        compareAtPrice: data.compareAtPrice ? data.compareAtPrice.toString() : null
+      },
       session.id
     )
 
@@ -124,6 +134,7 @@ export async function updateProductAction(id: string, formData: FormData) {
       brandId: formData.get("brandId") || null,
       status: formData.get("status"),
       basePrice: formData.get("basePrice"),
+      compareAtPrice: formData.get("compareAtPrice"),
       stockQuantity: formData.get("stockQuantity") || "0",
       images: formData.getAll("images"),
       seoTitle: formData.get("seoTitle") || undefined,
@@ -145,7 +156,11 @@ export async function updateProductAction(id: string, formData: FormData) {
 
     await AdminProductService.updateProduct(
       id,
-      { ...data, basePrice: data.basePrice.toString() },
+      {
+        ...data,
+        basePrice: data.basePrice.toString(),
+        compareAtPrice: data.compareAtPrice ? data.compareAtPrice.toString() : null
+      },
       session.id
     )
 

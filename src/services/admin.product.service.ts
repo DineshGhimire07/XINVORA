@@ -32,6 +32,7 @@ export interface CreateProductInput {
   brandId?: string | null
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED"
   basePrice: string | number
+  compareAtPrice?: string | number | null
   stockQuantity?: string | number
   images?: string[]
   collectionIds?: string[]
@@ -56,7 +57,7 @@ export class AdminProductService {
         throw new Error("Slug already in use.")
       }
 
-      const { basePrice, stockQuantity, images, collectionIds, materialIds, pairedProductIds, sizeStocks, ...productData } = data
+      const { basePrice, compareAtPrice, stockQuantity, images, collectionIds, materialIds, pairedProductIds, sizeStocks, ...productData } = data
       const finalShortDesc = productData.shortDescription || (productData.description ? productData.description.slice(0, 200) : "Concise summary of this product details.")
       const product = await insertProduct({
         ...productData,
@@ -72,6 +73,13 @@ export class AdminProductService {
             position: index,
           }))
         )
+      }
+
+      // Add to default price book
+      const defaultPriceBook = await tx.select().from(priceBooks).where(eq(priceBooks.isDefault, true)).limit(1)
+      const priceBookId = defaultPriceBook[0]?.id
+      if (!priceBookId) {
+        throw new Error("Default price book not found.")
       }
 
       // Handle collections
@@ -105,25 +113,12 @@ export class AdminProductService {
         )
       }
 
-      // Resolve Default Price Book
-      let priceBook = await tx.select().from(priceBooks).where(eq(priceBooks.currency, "USD")).limit(1)
-      let priceBookId
-      if (priceBook.length === 0) {
-        const [newPb] = await tx.insert(priceBooks).values({
-          name: "Default USD",
-          currency: "USD",
-          isDefault: true
-        }).returning()
-        priceBookId = newPb.id
-      } else {
-        priceBookId = priceBook[0].id
-      }
-
-      const sizeEntries = sizeStocks ? Object.entries(sizeStocks) : []
-      if (sizeEntries.length > 0) {
-        // Create variants for each size specified
-        for (const [sizeId, qty] of sizeEntries) {
-          const quantity = Number(qty) || 0
+      // Handle variants
+      const activeSizes = Object.keys(sizeStocks || {}).filter(sizeId => (sizeStocks || {})[sizeId] > 0)
+      
+      if (activeSizes.length > 0) {
+        for (const sizeId of activeSizes) {
+          const quantity = (sizeStocks || {})[sizeId] || 0
           const uniqueSuffix = crypto.randomUUID().slice(0, 8)
           const [variant] = await tx.insert(variants).values({
             productId: product.id,
@@ -141,6 +136,7 @@ export class AdminProductService {
             priceBookId: priceBookId,
             variantId: variant.id,
             price: Math.round(Number(basePrice) * 100),
+            compareAtPrice: compareAtPrice ? Math.round(Number(compareAtPrice) * 100) : null,
           })
         }
       } else {
@@ -162,6 +158,7 @@ export class AdminProductService {
           priceBookId: priceBookId,
           variantId: variant.id,
           price: Math.round(Number(basePrice) * 100),
+          compareAtPrice: compareAtPrice ? Math.round(Number(compareAtPrice) * 100) : null,
         })
       }
 
@@ -187,7 +184,7 @@ export class AdminProductService {
         }
       }
 
-      const { basePrice, stockQuantity, images, collectionIds, materialIds, pairedProductIds, sizeStocks, ...productData } = data
+      const { basePrice, compareAtPrice, stockQuantity, images, collectionIds, materialIds, pairedProductIds, sizeStocks, ...productData } = data
       const product = await updateProduct(id, productData, tx)
 
       // Update images
@@ -287,7 +284,10 @@ export class AdminProductService {
             // Update price
             if (basePrice !== undefined) {
               await tx.update(priceBookEntries)
-                .set({ price: Math.round(Number(basePrice) * 100) })
+                .set({
+                  price: Math.round(Number(basePrice) * 100),
+                  compareAtPrice: compareAtPrice !== undefined ? (compareAtPrice ? Math.round(Number(compareAtPrice) * 100) : null) : undefined,
+                })
                 .where(eq(priceBookEntries.variantId, match.id))
             }
           } else {
@@ -312,6 +312,7 @@ export class AdminProductService {
               priceBookId: priceBookId,
               variantId: variant.id,
               price: Math.round(Number(basePrice) * 100),
+              compareAtPrice: compareAtPrice ? Math.round(Number(compareAtPrice) * 100) : null,
             })
           }
         }
@@ -347,7 +348,10 @@ export class AdminProductService {
           // Update price book entry
           if (basePrice !== undefined) {
             await tx.update(priceBookEntries)
-              .set({ price: Math.round(Number(basePrice) * 100) })
+              .set({
+                price: Math.round(Number(basePrice) * 100),
+                compareAtPrice: compareAtPrice !== undefined ? (compareAtPrice ? Math.round(Number(compareAtPrice) * 100) : null) : undefined,
+              })
               .where(eq(priceBookEntries.variantId, variant.id))
           }
         }

@@ -24,6 +24,7 @@ import { users } from "./users"
 import { orders } from "./orders"
 import { orderItems } from "./order-items"
 import { orderActivity } from "./order-activity"
+import { productOffSection } from "./product-off-section"
 export const collectionsRelations = relations(collections, ({ one, many }) => ({
   parent: one(collections, {
     fields: [collections.parentId],
@@ -50,6 +51,10 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   productCollections: many(productCollections),
   productMaterials: many(productMaterials),
   pairings: many(productPairings, { relationName: "product_pairings_source" }),
+  offSection: one(productOffSection, {
+    fields: [products.id],
+    references: [productOffSection.productId],
+  }),
 }))
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
@@ -255,6 +260,13 @@ export const attributeValuesRelations = relations(attributeValues, ({ one }) => 
   attribute: one(attributes, {
     fields: [attributeValues.attributeId],
     references: [attributes.id],
+  }),
+}))
+
+export const productOffSectionRelations = relations(productOffSection, ({ one }) => ({
+  product: one(products, {
+    fields: [productOffSection.productId],
+    references: [products.id],
   }),
 }))
 
