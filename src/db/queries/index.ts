@@ -15,3 +15,5 @@ export * from "./inventory"
 export * from "./search"
 export * from "./catalog"
 export * from "./cms"
+export * from "./lookbook"
+

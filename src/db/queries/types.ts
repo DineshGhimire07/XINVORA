@@ -271,6 +271,12 @@ export interface CartItemResult extends RawCartItem {
     images: Pick<RawVariantImage, "url" | "altText">[]
   }
   price: number // live price in cents
+  /** Sibling variants of the same product for inline size swapping */
+  siblingVariants: {
+    id: string
+    size: Pick<RawSize, "name" | "abbreviation"> | null
+    inStock: boolean
+  }[]
 }
 
 export interface CartResult extends RawCart {

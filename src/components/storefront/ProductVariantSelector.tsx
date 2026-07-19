@@ -10,6 +10,7 @@ import { Heart, X, ShoppingBag } from "lucide-react"
 import { toggleWishlistAction } from "@/actions/wishlist.actions"
 import { addToCartAction } from "@/actions/cart.actions"
 import { useHeaderState } from "@/providers/header-state-provider"
+import { NotifyMeButton } from "./NotifyMeButton"
 
 interface Variant {
   id: string
@@ -21,6 +22,7 @@ interface Variant {
 }
 
 interface ProductVariantSelectorProps {
+  productId: string
   variants: Variant[]
   colors: { id: string; name: string; hexCode?: string }[]
   sizes: { id: string; name: string; abbreviation: string | null }[]
@@ -90,6 +92,7 @@ function WishlistButton({
 
 // ── Main Component ──────────────────────────────────────────────────────────
 export function ProductVariantSelector({
+  productId,
   variants,
   colors,
   sizes,
@@ -254,60 +257,92 @@ export function ProductVariantSelector({
 
       {/* Actions — ADD TO BAG, WISHLIST, and BUY NOW grouped with tighter vertical gap */}
       <div className="flex flex-col gap-2.5 w-full pt-2">
-        <div className="flex items-stretch gap-3 w-full">
-          <div className="flex-1">
-            {activeVariant ? (
-              <AddToCartButton variantId={activeVariant.id} inStock={inStock} />
-            ) : (
-              <Button 
-                variant="primary" 
-                size="lg" 
-                className="w-full bg-text-primary border-text-primary text-surface hover:bg-text-primary/90 hover:border-text-primary/90 active:scale-[0.98] transition-all duration-300"
-                onClick={() => setValidationError("Please select a size first.")}
-              >
-                <span className="flex items-center justify-center gap-2">
-                  <ShoppingBag className="w-4 h-4" />
-                  Add to Bag
-                </span>
-              </Button>
-            )}
+        {!inStock ? (
+          <div className="flex flex-col gap-3 w-full">
+            <NotifyMeButton productId={productId} variant="full" />
+            
+            {/* Wishlist Button alongside */}
+            <div className="w-full flex justify-end">
+              {variants[0] ? (
+                <button
+                  type="button"
+                  onClick={handleWishlistToggle}
+                  disabled={isPending}
+                  className="w-full h-12 border border-border flex items-center justify-center text-text-primary uppercase tracking-widest text-[11px] gap-2 font-bold hover:bg-neutral-50 transition-colors"
+                >
+                  <Heart className={`w-4 h-4 transition-colors ${wishlistIds.includes(variants[0].id) ? "fill-accent text-accent" : ""}`} />
+                  {wishlistIds.includes(variants[0].id) ? "Wishlisted" : "Add to Wishlist"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full h-12 border border-border flex items-center justify-center text-text-secondary opacity-40 uppercase tracking-widest text-[11px] gap-2"
+                >
+                  <Heart className="w-4 h-4" />
+                  Wishlist Unavailable
+                </button>
+              )}
+            </div>
           </div>
+        ) : (
+          <>
+            <div className="flex items-stretch gap-3 w-full">
+              <div className="flex-1">
+                {activeVariant ? (
+                  <AddToCartButton variantId={activeVariant.id} inStock={inStock} />
+                ) : (
+                  <Button 
+                    variant="primary" 
+                    size="lg" 
+                    className="w-full bg-text-primary border-text-primary text-surface hover:bg-text-primary/90 hover:border-text-primary/90 active:scale-[0.98] transition-all duration-300"
+                    onClick={() => setValidationError("Please select a size first.")}
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <ShoppingBag className="w-4 h-4" />
+                      Add to Bag
+                    </span>
+                  </Button>
+                )}
+              </div>
 
-          {variants[0] ? (
-            <WishlistButton
-              variantId={variants[0].id}
-              disabled={false}
-              isWishlisted={wishlistIds.includes(variants[0].id)}
-              isPending={isPending}
-              onToggle={handleWishlistToggle}
-            />
-          ) : (
-            <button
-              type="button"
-              disabled
-              className="w-12 h-12 flex-shrink-0 border border-border flex items-center justify-center text-text-secondary opacity-40"
-              aria-label="Add to Wishlist"
-            >
-              <Heart className="w-5 h-5" />
-            </button>
-          )}
-        </div>
+              {variants[0] ? (
+                <WishlistButton
+                  variantId={variants[0].id}
+                  disabled={false}
+                  isWishlisted={wishlistIds.includes(variants[0].id)}
+                  isPending={isPending}
+                  onToggle={handleWishlistToggle}
+                />
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="w-12 h-12 flex-shrink-0 border border-border flex items-center justify-center text-text-secondary opacity-40"
+                  aria-label="Add to Wishlist"
+                >
+                  <Heart className="w-5 h-5" />
+                </button>
+              )}
+            </div>
 
-        {/* Buy Now Button — Full-width */}
-        <div className="w-full">
-          {activeVariant ? (
-            <BuyNowButton variantId={activeVariant.id} inStock={inStock} />
-          ) : (
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="w-full h-12 text-black border-black/20 hover:border-black/50 hover:bg-neutral-50 transition-colors uppercase tracking-widest text-[11px]"
-              onClick={() => setValidationError("Please select a size first.")}
-            >
-              Buy Now
-            </Button>
-          )}
-        </div>
+            {/* Buy Now Button — Full-width */}
+            <div className="w-full">
+              {activeVariant ? (
+                <BuyNowButton variantId={activeVariant.id} inStock={inStock} />
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="w-full h-12 text-black border-black/20 hover:border-black/50 hover:bg-neutral-50 transition-colors uppercase tracking-widest text-[11px]"
+                  onClick={() => setValidationError("Please select a size first.")}
+                >
+                  Buy Now
+                </Button>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

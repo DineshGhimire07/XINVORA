@@ -9,6 +9,7 @@ import { productImages } from "./product-images"
 import { productTags } from "./product-tags"
 import { productCollections } from "./product-collections"
 import { productMaterials } from "./product-materials"
+import { productPairings } from "./product-pairings"
 import { materials } from "./materials"
 import { inventory } from "./inventory"
 import { variantImages } from "./variant-images"
@@ -48,6 +49,7 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   productTags: many(productTags),
   productCollections: many(productCollections),
   productMaterials: many(productMaterials),
+  pairings: many(productPairings, { relationName: "product_pairings_source" }),
 }))
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
@@ -253,6 +255,19 @@ export const attributeValuesRelations = relations(attributeValues, ({ one }) => 
   attribute: one(attributes, {
     fields: [attributeValues.attributeId],
     references: [attributes.id],
+  }),
+}))
+
+export const productPairingsRelations = relations(productPairings, ({ one }) => ({
+  product: one(products, {
+    fields: [productPairings.productId],
+    references: [products.id],
+    relationName: "product_pairings_source",
+  }),
+  pairedProduct: one(products, {
+    fields: [productPairings.pairedProductId],
+    references: [products.id],
+    relationName: "product_pairings_target",
   }),
 }))
 

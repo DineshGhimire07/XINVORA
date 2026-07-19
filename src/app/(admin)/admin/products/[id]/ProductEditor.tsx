@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createProductAction, updateProductAction, archiveProductAction } from "@/actions/admin/products.actions"
 import { MediaSelector } from "@/components/admin/MediaSelector"
+import AdminProductPicker from "@/components/admin/AdminProductPicker"
 import { cn } from "@/lib/utils"
 
 export default function ProductEditor({
@@ -14,6 +15,7 @@ export default function ProductEditor({
   collections,
   materials,
   sizes,
+  allProducts,
 }: {
   product?: any
   categories?: any[]
@@ -22,6 +24,7 @@ export default function ProductEditor({
   collections?: any[]
   materials?: any[]
   sizes?: any[]
+  allProducts?: any[]
 }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
@@ -29,6 +32,7 @@ export default function ProductEditor({
   const [selectedImages, setSelectedImages] = useState<string[]>(product?.images || [])
   const [tryonPrompt, setTryonPrompt] = useState<string>(product?.virtualTryonPrompt || "")
   const [shortDesc, setShortDesc] = useState<string>(product?.shortDescription || "")
+  const [pairedIds, setPairedIds] = useState<string[]>(product?.pairedProductIds || [])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -323,6 +327,23 @@ export default function ProductEditor({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Section 4.5: Pairing Recommendations */}
+        <div className="bg-admin-surface border border-admin-border rounded-admin-lg p-6 space-y-5 shadow-xs">
+          <h3 className="text-admin-base font-bold text-admin-text-primary border-b border-admin-border pb-3">
+            Pairing Recommendations
+          </h3>
+          <AdminProductPicker
+            allProducts={(allProducts || []).filter(p => p.id !== product?.id)}
+            selectedIds={pairedIds}
+            onChange={setPairedIds}
+            mode="multi"
+            label="Select and order paired products for 'Products in this Look'"
+          />
+          {pairedIds.map((pId) => (
+            <input key={pId} type="hidden" name="pairedProductIds" value={pId} />
+          ))}
         </div>
 
         {/* Section 5: Media Selector */}

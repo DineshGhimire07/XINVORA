@@ -11,6 +11,7 @@ import {
   productCollections,
   productMaterials,
   productTags,
+  productPairings,
   inventory,
   priceBooks,
   priceBookEntries,
@@ -35,6 +36,7 @@ export interface CreateProductInput {
   images?: string[]
   collectionIds?: string[]
   materialIds?: string[]
+  pairedProductIds?: string[]
   seoTitle?: string | null
   seoDescription?: string | null
   instagramReelUrl?: string | null
@@ -54,7 +56,7 @@ export class AdminProductService {
         throw new Error("Slug already in use.")
       }
 
-      const { basePrice, stockQuantity, images, collectionIds, materialIds, sizeStocks, ...productData } = data
+      const { basePrice, stockQuantity, images, collectionIds, materialIds, pairedProductIds, sizeStocks, ...productData } = data
       const finalShortDesc = productData.shortDescription || (productData.description ? productData.description.slice(0, 200) : "Concise summary of this product details.")
       const product = await insertProduct({
         ...productData,
@@ -88,6 +90,17 @@ export class AdminProductService {
           materialIds.map((mId: string) => ({
             productId: product.id,
             materialId: mId,
+          }))
+        )
+      }
+
+      // Handle pairings
+      if (pairedProductIds && pairedProductIds.length > 0) {
+        await tx.insert(productPairings).values(
+          pairedProductIds.map((pId: string, index: number) => ({
+            productId: product.id,
+            pairedProductId: pId,
+            sortOrder: index,
           }))
         )
       }
@@ -174,7 +187,7 @@ export class AdminProductService {
         }
       }
 
-      const { basePrice, stockQuantity, images, collectionIds, materialIds, sizeStocks, ...productData } = data
+      const { basePrice, stockQuantity, images, collectionIds, materialIds, pairedProductIds, sizeStocks, ...productData } = data
       const product = await updateProduct(id, productData, tx)
 
       // Update images
@@ -209,6 +222,20 @@ export class AdminProductService {
             materialId: mId,
           }))
         )
+      }
+
+      // Update pairings
+      if (pairedProductIds !== undefined) {
+        await tx.delete(productPairings).where(eq(productPairings.productId, id))
+        if (pairedProductIds.length > 0) {
+          await tx.insert(productPairings).values(
+            pairedProductIds.map((pId: string, index: number) => ({
+              productId: id,
+              pairedProductId: pId,
+              sortOrder: index,
+            }))
+          )
+        }
       }
 
       // Update variants & inventory for sizes if sizeStocks is passed

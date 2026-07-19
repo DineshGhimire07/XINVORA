@@ -135,3 +135,28 @@ export async function clearCartAction(
 
   return result
 }
+
+export async function changeCartItemVariantAction(
+  prevState: ActionResult<unknown> | null,
+  formData: FormData
+): Promise<ActionResult<unknown>> {
+  const cartItemId = formData.get("cartItemId")?.toString()
+  const newVariantId = formData.get("newVariantId")?.toString()
+
+  if (!cartItemId || !newVariantId) {
+    return { success: false, error: { code: "VALIDATION_FAILED", message: "Missing cart item or variant." } }
+  }
+
+  const { userId, sessionId } = await resolveCommerceIdentity()
+
+  const result = await handleServiceCall(() =>
+    CartService.changeVariant(cartItemId, newVariantId, userId, sessionId)
+  )
+
+  if (result.success) {
+    invalidateCartCache(userId, sessionId)
+    revalidatePath("/cart")
+  }
+
+  return result
+}

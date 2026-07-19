@@ -76,6 +76,7 @@ export default async function CollectionDetailPage(props: {
           with: {
             color: true,
             size: true,
+            inventory: true,
           },
         })
       : Promise.resolve([]),
@@ -352,6 +353,10 @@ export default async function CollectionDetailPage(props: {
                 ).values()
               ).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
 
+              const inStock = itemVariants.length > 0
+                ? itemVariants.some((v) => v.inventory ? v.inventory.quantity > 0 : true)
+                : false
+
               return (
                 <ProductCard 
                   key={product.id}
@@ -360,6 +365,7 @@ export default async function CollectionDetailPage(props: {
                   itemSizes={itemSizes}
                   priority={index < 4}
                   isFirstInGrid={index === 0}
+                  inStock={inStock}
                 />
               )
             })}

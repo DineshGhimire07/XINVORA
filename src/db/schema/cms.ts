@@ -16,7 +16,8 @@ export const blockTypeEnum = pgEnum("block_type", [
   "BUTTON_GROUP",
   "GALLERY",
   "QUOTE",
-  "BANNER"
+  "BANNER",
+  "LOOKBOOK"
 ])
 
 export const cmsPages = pgTable("cms_pages", {
@@ -73,7 +74,6 @@ export const homepageSettings = pgTable("homepage_settings", {
   id: uuid("id").primaryKey().defaultRandom(),
   heroRotation: jsonb("hero_rotation").notNull().default([]), // array of block configs
   featuredCollectionIds: jsonb("featured_collection_ids").notNull().default([]), // array of collection UUIDs
-  featuredProductIds: jsonb("featured_product_ids").notNull().default([]), // array of product UUIDs
   newsletterToggle: boolean("newsletter_toggle").notNull().default(true),
   layoutConfig: jsonb("layout_config").notNull().default({}),
   createdAt: timestamp("created_at").notNull().defaultNow(),

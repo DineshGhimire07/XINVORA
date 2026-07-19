@@ -10,13 +10,15 @@ import HeroBlockEditor from "./HeroBlockEditor"
 import ProductGridEditor from "./ProductGridEditor"
 import CollectionGridEditor from "./CollectionGridEditor"
 import BannerBlockEditor from "./BannerBlockEditor"
+import LookbookBlockEditor from "./LookbookBlockEditor"
 
 interface HomepageEditorProps {
   settings?: any
   heroBlock?: any
   productGridBlock?: any
   collectionGridBlock?: any
-  bannerBlock?: any
+  bannerBlocks?: any[]
+  lookbookBlock?: any
   allProducts?: any[]
   activeCollections?: any[]
   categories?: any[]
@@ -30,7 +32,8 @@ export default function HomepageEditor({
   heroBlock,
   productGridBlock,
   collectionGridBlock,
-  bannerBlock,
+  bannerBlocks = [],
+  lookbookBlock,
   allProducts = [],
   activeCollections = [],
   categories = [],
@@ -41,27 +44,106 @@ export default function HomepageEditor({
   const [heroSlides, setHeroSlides] = useState<any[]>(heroBlock?.data?.slides || [])
   const [productGridItems, setProductGridItems] = useState<any[]>(productGridBlock?.data?.items || [])
   const [collectionGridIds, setCollectionGridIds] = useState<string[]>(collectionGridBlock?.data?.collectionIds || [])
-  const [bannerBlockData, setBannerBlockData] = useState<any>(bannerBlock?.data || null)
-  const [activeTab, setActiveTab] = useState<"hero" | "arrivals" | "collections" | "banner">("hero")
+  
+  // Manage multiple custom banners as objects
+  const [banners, setBanners] = useState<any[]>(() => {
+    return bannerBlocks.map((b) => ({
+      id: b.id,
+      data: b.data || {
+        imageUrl: null,
+        imageMobileUrl: null,
+        eyebrow: "EDITORIAL",
+        title: "The Linen Edit",
+        tagline: "Light. Breathable. Timeless.",
+        linkText: "Shop the Edit",
+        linkUrl: "/collections",
+        isActive: true,
+        size: "editorial"
+      }
+    }))
+  })
+
+  const [lookbookSlides, setLookbookSlides] = useState<any[]>(lookbookBlock?.data?.slides || [])
+  const [activeTab, setActiveTab] = useState<"hero" | "arrivals" | "collections" | "banner" | "lookbook">("hero")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  // Load initial list from settings layoutConfig
+  // Load initial list from settings layoutConfig and migrate dynamically
   const layoutConfig = settings?.layoutConfig as any
   const [sectionOrder, setSectionOrder] = useState<string[]>(() => {
-    const existing = layoutConfig?.sectionOrder || ["hero", "arrivals", "featured", "newsletter"]
-    if (!existing.includes("banner")) {
-      const insertIdx = existing.indexOf("featured")
-      if (insertIdx >= 0) {
-        existing.splice(insertIdx + 1, 0, "banner")
+    const existing = layoutConfig?.sectionOrder || ["hero", "arrivals", "featured", "banner", "newsletter"]
+    
+    // Migrate legacy "banner" to concrete banner block ids
+    const migrated: string[] = []
+    existing.forEach((key: string) => {
+      if (key === "banner") {
+        if (banners.length > 0) {
+          banners.forEach(b => migrated.push(`banner-${b.id}`))
+        } else {
+          migrated.push("banner")
+        }
       } else {
-        existing.push("banner")
+        migrated.push(key)
+      }
+    })
+
+    // Ensure all currently loaded banners are in the section order list
+    banners.forEach((b) => {
+      const bannerKey = `banner-${b.id}`
+      if (!migrated.includes(bannerKey)) {
+        const featuredIdx = migrated.indexOf("featured")
+        if (featuredIdx >= 0) {
+          migrated.splice(featuredIdx + 1, 0, bannerKey)
+        } else {
+          migrated.push(bannerKey)
+        }
+      }
+    })
+
+    if (!migrated.includes("lookbook")) {
+      const newsletterIdx = migrated.indexOf("newsletter")
+      if (newsletterIdx >= 0) {
+        migrated.splice(newsletterIdx, 0, "lookbook")
+      } else {
+        migrated.push("lookbook")
       }
     }
-    return existing
+
+    return migrated
   })
+
   const [draggedSectionIndex, setDraggedSectionIndex] = useState<number | null>(null)
+
+  // Handle addition/deletion of banners dynamically updating the sectionOrder list
+  const handleBannersChange = (updatedBanners: any[]) => {
+    setBanners(updatedBanners)
+    
+    // Adjust sectionOrder list to add new banner IDs and remove deleted ones
+    const bannerIds = updatedBanners.map(b => `banner-${b.id}`)
+    
+    // Remove any banner keys that no longer exist
+    let newOrder = sectionOrder.filter((key) => {
+      if (key.startsWith("banner-")) {
+        return bannerIds.includes(key)
+      }
+      return true
+    })
+
+    // Add any new banner keys that aren't in sectionOrder yet
+    bannerIds.forEach((key) => {
+      if (!newOrder.includes(key)) {
+        const featuredIdx = newOrder.indexOf("featured")
+        if (featuredIdx >= 0) {
+          newOrder.splice(featuredIdx + 1, 0, key)
+        } else {
+          newOrder.push(key)
+        }
+      }
+    })
+
+    setSectionOrder(newOrder)
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -78,9 +160,11 @@ export default function HomepageEditor({
     formData.set("heroSlides", JSON.stringify(heroSlides))
     formData.set("productGridItems", JSON.stringify(productGridItems))
     formData.set("collectionGridIds", JSON.stringify(collectionGridIds))
-    if (bannerBlockData) {
-      formData.set("bannerBlockData", JSON.stringify(bannerBlockData))
-    }
+    
+    // Submit all banners as a list of BannerItem structures
+    formData.set("bannersData", JSON.stringify(banners))
+    
+    formData.set("lookbookSlides", JSON.stringify(lookbookSlides))
 
     const result = await updateHomepageSettingsAction(formData)
 
@@ -140,12 +224,21 @@ export default function HomepageEditor({
               
               <div className="flex flex-wrap gap-3">
                 {sectionOrder.map((sectionId, idx) => {
-                  const label = 
-                    sectionId === "hero" ? "Hero Carousel" :
-                    sectionId === "arrivals" ? "New Arrivals" :
-                    sectionId === "featured" ? "Featured Products" :
-                    sectionId === "banner" ? "Editorial Banner" :
-                    sectionId === "newsletter" ? "Newsletter Section" : sectionId;
+                  const getLabel = () => {
+                    if (sectionId === "hero") return "Hero Carousel"
+                    if (sectionId === "arrivals") return "New Arrivals"
+                    if (sectionId === "featured") return "Featured Products"
+                    if (sectionId === "lookbook") return "Shop the Look"
+                    if (sectionId === "newsletter") return "Newsletter Section"
+                    if (sectionId === "banner") return "Editorial Banner (Default)"
+                    if (sectionId.startsWith("banner-")) {
+                      const id = sectionId.replace("banner-", "")
+                      const b = banners.find((x) => x.id === id)
+                      return `Banner: ${b?.data?.title || "Untitled Banner"}`
+                    }
+                    return sectionId
+                  }
+                  const label = getLabel()
 
                   const handleDragStartSection = (e: React.DragEvent, index: number) => {
                     setDraggedSectionIndex(index)
@@ -233,7 +326,18 @@ export default function HomepageEditor({
                     : "border-transparent text-text-secondary hover:text-text-primary"
                 }`}
               >
-                Editorial Banner
+                Banner Modules ({banners.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("lookbook")}
+                className={`pb-3 px-5 text-[10px] uppercase tracking-widest font-bold border-b-2 transition-all cursor-pointer ${
+                  activeTab === "lookbook"
+                    ? "border-text-primary text-text-primary"
+                    : "border-transparent text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                Shop the Look
               </button>
             </div>
 
@@ -270,8 +374,19 @@ export default function HomepageEditor({
             {activeTab === "banner" && (
               <div className="pb-4">
                 <BannerBlockEditor
-                  initialData={bannerBlockData}
-                  onChange={setBannerBlockData}
+                  banners={banners}
+                  onChange={handleBannersChange}
+                />
+              </div>
+            )}
+
+            {/* Shop the Look Editor (LOOKBOOK block picker) */}
+            {activeTab === "lookbook" && (
+              <div className="pb-4">
+                <LookbookBlockEditor
+                  allProducts={allProducts}
+                  initialSlides={lookbookSlides}
+                  onChange={setLookbookSlides}
                 />
               </div>
             )}

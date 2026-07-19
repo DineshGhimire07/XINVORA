@@ -96,6 +96,7 @@ export default async function CollectionsPage({
       with: {
         color: true,
         size: true,
+        inventory: true,
       },
     })
   } // Only show empty state if first page has no results
@@ -314,6 +315,10 @@ export default async function CollectionsPage({
                     ).values()
                   ).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
 
+                  const inStock = itemVariants.length > 0
+                    ? itemVariants.some((v) => v.inventory ? v.inventory.quantity > 0 : true)
+                    : false
+
                   return (
                     <ProductCard 
                       key={product.id}
@@ -322,6 +327,7 @@ export default async function CollectionsPage({
                       itemSizes={itemSizes}
                       priority={index < 4}
                       isFirstInGrid={index === 0}
+                      inStock={inStock}
                     />
                   )
                 })}

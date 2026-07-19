@@ -14,12 +14,14 @@ import { WishlistToggleIcon } from "@/components/shop/WishlistToggleIcon"
 import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
-import { findProductBySlug, findProducts } from "@/db/queries"
+import { findProductBySlug, findProducts, findLookbookSlides, findProductPairings } from "@/db/queries"
 import type { Metadata } from "next"
 import { db } from "@/db/client"
 import { priceBookEntries, priceBooks, categories } from "@/db/schema"
 import { and, eq, inArray } from "drizzle-orm"
 import { type TimingEntry, timedPromise, printTimingSummary } from "@/lib/perf"
+import { ShopTheLookCarousel } from "@/components/storefront/ShopTheLookCarousel"
+import { ProductsInLook } from "@/components/storefront/ProductsInLook"
 
 export const revalidate = 3600
 
@@ -64,7 +66,7 @@ export default async function ProductDetailPage({
   const activeVariants = product.variants.filter(v => v.isActive)
   const variantIds = activeVariants.map((v) => v.id)
 
-  const [parentCategory, relatedResponse, variantPrices] = await Promise.all([
+  const [parentCategory, relatedResponse, variantPrices, lookbookData, pairingProducts] = await Promise.all([
     // Parent category breadcrumb
     timedPromise('parentCategory', timings, product.category?.parentId
       ? db.query.categories.findFirst({ where: eq(categories.id, product.category.parentId) })
@@ -84,6 +86,10 @@ export default async function ProductDetailPage({
           .innerJoin(priceBooks, and(eq(priceBookEntries.priceBookId, priceBooks.id), eq(priceBooks.isDefault, true)))
           .where(inArray(priceBookEntries.variantId, variantIds))
       : Promise.resolve([])),
+    // Global lookbook slides (same carousel everywhere, no per-product filtering)
+    timedPromise('lookbookSlides', timings, findLookbookSlides()),
+    // Product pairings for "Products in This Look"
+    timedPromise('productPairings', timings, findProductPairings(product.id)),
   ])
 
   const relatedProducts = relatedResponse.items
@@ -124,9 +130,25 @@ export default async function ProductDetailPage({
 
   printTimingSummary('ProductDetailPage', timings, performance.now() - totalStart)
 
+  const hasLookbook = lookbookData.slides.length > 0
+  const hasPairings = pairingProducts.length > 0
+
   return (
     <main className="flex-1 bg-background pt-20 md:pt-28 pb-16">
       <Container>
+
+        {/* Compact "Shop the Look" carousel — only shown when this product is part of a look */}
+        {hasPairings && hasLookbook && (
+          <section className="py-8 border-b border-border/20 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <span className="text-[9px] font-bold tracking-[0.35em] text-accent uppercase select-none">Curated Looks</span>
+                <h2 className="text-sm font-display font-medium text-text-primary uppercase tracking-[0.15em] mt-0.5">Shop the Look</h2>
+              </div>
+            </div>
+            <ShopTheLookCarousel slides={lookbookData.slides} products={lookbookData.products} compact />
+          </section>
+        )}
         
         {/* 2. Product Hero: Split Editorial Layout */}
         <Section id="product-hero" padding="none" className="py-6 bg-background">
@@ -173,6 +195,7 @@ export default async function ProductDetailPage({
 
                 {/* Variant Selectors, Price, Short Description, and Add To Cart */}
                 <ProductVariantSelector 
+                  productId={product.id}
                   variants={variantsWithPrices}
                   colors={colors}
                   sizes={sizes}
@@ -208,6 +231,11 @@ export default async function ProductDetailPage({
             </div>
           </div>
         </Section>
+
+        {/* Products in This Look — pairing carousel */}
+        {hasPairings && (
+          <ProductsInLook products={pairingProducts} />
+        )}
 
         {/* 4. You May Also Love section */}
         {relatedProducts.length > 0 && (

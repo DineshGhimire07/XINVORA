@@ -240,6 +240,36 @@ export class CartService {
   }
 
   /**
+   * Swaps the variant on a cart item (e.g. change size).
+   * Verifies the new variant belongs to the same product.
+   */
+  static async changeVariant(cartItemId: string, newVariantId: string, userId: string | null, sessionId: string | null) {
+    const cart = await getCart(userId, sessionId)
+    if (!cart) throw new DomainError("NOT_FOUND", "Cart not found")
+
+    const item = cart.items.find(i => i.id === cartItemId)
+    if (!item) throw new DomainError("NOT_FOUND", "Cart item not found")
+
+    // Verify new variant belongs to same product
+    const [newVariant] = await db
+      .select({ id: variants.id, productId: variants.productId })
+      .from(variants)
+      .where(eq(variants.id, newVariantId))
+      .limit(1)
+
+    if (!newVariant) throw new DomainError("NOT_FOUND", "Variant not found")
+    if (newVariant.productId !== item.variant.product.id) {
+      throw new DomainError("VALIDATION_FAILED", "Variant does not belong to the same product")
+    }
+
+    await db.update(cartItems)
+      .set({ variantId: newVariantId, updatedAt: new Date() })
+      .where(eq(cartItems.id, cartItemId))
+
+    return { success: true }
+  }
+
+  /**
    * Merges a guest cart into a user cart when logging in.
    * Duplicate variants will take the larger quantity (capped by inventory).
    * Called by Authentication flow.

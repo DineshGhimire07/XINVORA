@@ -14,6 +14,7 @@ import { materials } from "@/db/schema/materials"
 import { inventory } from "@/db/schema/inventory"
 import { productCollections } from "@/db/schema/product-collections"
 import { productMaterials } from "@/db/schema/product-materials"
+import { productPairings } from "@/db/schema/product-pairings"
 import { eq, isNull } from "drizzle-orm"
 import { sizes } from "@/db/schema/sizes"
 
@@ -58,6 +59,7 @@ export default async function AdminProductEditorPage(props: PageProps) {
     
     const collectionsResult = await db.select().from(productCollections).where(eq(productCollections.productId, id))
     const materialsResult = await db.select().from(productMaterials).where(eq(productMaterials.productId, id))
+    const pairingsResult = await db.select().from(productPairings).where(eq(productPairings.productId, id)).orderBy(productPairings.sortOrder)
 
     const allVariants = await db.select().from(variants).where(eq(variants.productId, id))
     const sizeInventories: Record<string, number> = {}
@@ -75,6 +77,7 @@ export default async function AdminProductEditorPage(props: PageProps) {
       images: imagesResult.map(i => i.url),
       collectionIds: collectionsResult.map(c => c.collectionId),
       materialIds: materialsResult.map(m => m.materialId),
+      pairedProductIds: pairingsResult.map(p => p.pairedProductId),
       basePrice,
       stockQuantity,
       sizeInventories
@@ -87,6 +90,17 @@ export default async function AdminProductEditorPage(props: PageProps) {
   const allCollections = await db.select().from(collections)
   const allMaterials = await db.select().from(materials)
   const allSizes = await db.select().from(sizes)
+  const allProductsList = await db.query.products.findMany({
+    where: eq(products.status, "PUBLISHED"),
+    with: {
+      productImages: {
+        orderBy: (img, { asc }) => [asc(img.position)],
+        columns: { url: true },
+        limit: 1,
+      },
+    },
+    columns: { id: true, name: true, slug: true },
+  })
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -107,6 +121,7 @@ export default async function AdminProductEditorPage(props: PageProps) {
         collections={allCollections}
         materials={allMaterials}
         sizes={allSizes}
+        allProducts={allProductsList}
       />
     </div>
   )

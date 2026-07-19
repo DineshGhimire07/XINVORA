@@ -27,6 +27,7 @@ const productSchema = z.object({
   seoDescription: z.string().optional(),
   collectionIds: z.array(z.string()).optional(),
   materialIds: z.array(z.string()).optional(),
+  pairedProductIds: z.array(z.string()).optional(),
   sizeStocks: z.record(z.string(), z.number()).optional(),
 })
 
@@ -70,6 +71,7 @@ export async function createProductAction(formData: FormData) {
       seoDescription: formData.get("seoDescription") || undefined,
       collectionIds: formData.getAll("collectionIds"),
       materialIds: formData.getAll("materialIds"),
+      pairedProductIds: formData.getAll("pairedProductIds"),
       sizeStocks: sizeStocks,
     }
 
@@ -128,6 +130,7 @@ export async function updateProductAction(id: string, formData: FormData) {
       seoDescription: formData.get("seoDescription") || undefined,
       collectionIds: formData.getAll("collectionIds"),
       materialIds: formData.getAll("materialIds"),
+      pairedProductIds: formData.getAll("pairedProductIds"),
       sizeStocks: sizeStocks,
     }
 

@@ -12,15 +12,14 @@ import { Section } from "@/components/shared/section"
 import { Container } from "@/components/shared/container"
 import { HeroSlider } from "@/components/shop/HeroSlider"
 import { Grid } from "@/components/shared/grid"
+
 import { Stack } from "@/components/shared/stack"
 import { buildMetadata } from "@/lib/metadata"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+
 import Image from "next/image"
 import { NewsletterForm } from "@/features/newsletter/components/NewsletterForm"
-import { getHomepageCatalog, getHomepageCMS } from "@/db/queries"
-import type { ProductSummary } from "@/db/queries/types"
-import { Suspense } from "react"
+import { getHomepageCMS } from "@/db/queries"
 
 export const metadata = buildMetadata({
   title: "Home",
@@ -29,11 +28,11 @@ export const metadata = buildMetadata({
 
 import { homepageSettings } from "@/db/schema/cms"
 import { db } from "@/db/client"
-import { ParallaxHero } from "@/components/shared/Hero/ParallaxHero"
-import { WishlistToggleIcon } from "@/components/shop/WishlistToggleIcon"
+
 import { CMSBlockRenderer } from "@/components/cms/BlockRenderer"
 
-import { findProductsByIds, findCollectionsByIds } from "@/db/queries"
+import { findProductsByIds, findCollectionsByIds, findLookbookSlides } from "@/db/queries"
+import { ShopTheLookCarousel } from "@/components/storefront/ShopTheLookCarousel"
 
 export default async function HomePage() {
   const settingsQuery = await db.select().from(homepageSettings).limit(1)
@@ -43,7 +42,8 @@ export default async function HomePage() {
   let heroBlock = null
   let productGridBlock = null
   let collectionGridBlock = null
-  let bannerBlock = null
+  let lookbookBlock = null
+  const bannerBlocks: any[] = []
   if (homepageCMS?.sections) {
     for (const section of homepageCMS.sections) {
       if (!heroBlock) {
@@ -55,26 +55,48 @@ export default async function HomePage() {
       if (!collectionGridBlock) {
         collectionGridBlock = section.blocks?.find((b: any) => b.type === "COLLECTION_GRID")
       }
-      if (!bannerBlock) {
-        bannerBlock = section.blocks?.find((b: any) => b.type === "BANNER")
+      if (!lookbookBlock) {
+        lookbookBlock = section.blocks?.find((b: any) => b.type === "LOOKBOOK")
       }
+      const banners = section.blocks?.filter((b: any) => b.type === "BANNER") || []
+      bannerBlocks.push(...banners)
     }
   }
 
   const layoutConfig = settings?.layoutConfig as any
-  const defaultOrder = ["hero", "arrivals", "featured", "banner", "newsletter"]
+  const defaultOrder = ["hero", "arrivals", "featured", "banner", "lookbook", "newsletter"]
   let sectionOrder = Array.isArray(layoutConfig?.sectionOrder) ? [...layoutConfig.sectionOrder] : [...defaultOrder]
-  if (!sectionOrder.includes("banner")) {
-    const insertIdx = sectionOrder.indexOf("featured")
-    if (insertIdx >= 0) {
-      sectionOrder.splice(insertIdx + 1, 0, "banner")
+  
+  // If old order layout has legacy generic "banner", replace/expand it or map to dynamic banner keys
+  const resolvedSectionOrder: string[] = []
+  sectionOrder.forEach((key: string) => {
+    if (key === "banner") {
+      if (bannerBlocks.length > 0) {
+        bannerBlocks.forEach(b => resolvedSectionOrder.push(`banner-${b.id}`))
+      } else {
+        resolvedSectionOrder.push("banner")
+      }
     } else {
-      sectionOrder.push("banner")
+      resolvedSectionOrder.push(key)
     }
-  }
+  })
+
+  // Guarantee any new banners not in resolvedSectionOrder are appended after featured
+  bannerBlocks.forEach((b) => {
+    const key = `banner-${b.id}`
+    if (!resolvedSectionOrder.includes(key)) {
+      const featuredIdx = resolvedSectionOrder.indexOf("featured")
+      if (featuredIdx >= 0) {
+        resolvedSectionOrder.splice(featuredIdx + 1, 0, key)
+      } else {
+        resolvedSectionOrder.push(key)
+      }
+    }
+  })
+
   return (
     <>
-      {sectionOrder.map((sectionId: string) => {
+      {resolvedSectionOrder.map((sectionId: string) => {
         if (sectionId === "hero") {
           return <HeroSection key="hero" heroBlock={heroBlock} settings={settings} />
         }
@@ -97,7 +119,16 @@ export default async function HomePage() {
           )
         }
         if (sectionId === "banner") {
-          return bannerBlock ? <CMSBlockRenderer key="banner" block={bannerBlock} /> : null
+          const first = bannerBlocks[0]
+          return first ? <CMSBlockRenderer key="banner" block={first} /> : null
+        }
+        if (sectionId.startsWith("banner-")) {
+          const id = sectionId.replace("banner-", "")
+          const block = bannerBlocks.find((b) => b.id === id)
+          return block ? <CMSBlockRenderer key={sectionId} block={block} /> : null
+        }
+        if (sectionId === "lookbook") {
+          return lookbookBlock ? <LookbookSectionWrapper key="lookbook" lookbookBlock={lookbookBlock} /> : null
         }
         if (sectionId === "newsletter" && (settings?.newsletterToggle ?? true)) {
           return <NewsletterSection key="newsletter" />
@@ -108,28 +139,6 @@ export default async function HomePage() {
   )
 }
 
-async function FeaturedProductsData() {
-  const catalog = await getHomepageCatalog()
-  return <FeaturedProductsSection products={catalog.featuredProducts} />
-}
-
-function FeaturedProductsSkeleton() {
-  return (
-    <Section id="featured-products" padding="2xl" className="bg-background">
-      <Container>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex flex-col gap-4">
-              <div className="aspect-[3/4] w-full bg-surface-secondary animate-pulse" />
-              <div className="h-3 w-2/3 bg-surface-secondary animate-pulse" />
-              <div className="h-3 w-1/3 bg-surface-secondary animate-pulse" />
-            </div>
-          ))}
-        </div>
-      </Container>
-    </Section>
-  )
-}
 
 async function ArrivalsSectionWrapper({ productGridBlock, settings }: { productGridBlock: any; settings?: any }) {
   if (productGridBlock) {
@@ -166,6 +175,14 @@ async function FeaturedSectionWrapper({ collectionGridBlock, settings }: { colle
   }
   return null
 }
+
+async function LookbookSectionWrapper({ lookbookBlock }: { lookbookBlock: any }) {
+  const { slides, products } = await findLookbookSlides()
+  if (slides.length === 0) return null
+  // ShopTheLookCarousel renders its own section with heading, so render directly
+  return <ShopTheLookCarousel slides={slides} products={products} />
+}
+
 
 // ── 1. Hero Section ──────────────────────────────────────────────────────────
 function HeroSection({ heroBlock, settings }: { heroBlock: any; settings?: any }) {
@@ -307,123 +324,6 @@ function NewArrivalsSection({ settings }: { settings?: any }) {
   )
 }
 
-
-
-// ── 4. Featured Products Section ──────────────────────────────────────────────
-function FeaturedProductsSection({ products }: { products: ProductSummary[] }) {
-  return (
-    <Section id="featured-products" padding="2xl" className="bg-background">
-      <Container>
-        <Stack gap={12}>
-          {/* Section Heading */}
-          <Stack gap={3} className="text-center max-w-[32rem] mx-auto mb-4">
-            <span className="text-[11px] font-semibold tracking-widest text-accent uppercase select-none">
-              Editor&apos;s Selection
-            </span>
-            <h2 className="text-[2.2rem] md:text-[2.8rem] font-display font-light text-text-primary tracking-[0.2em] uppercase leading-none">
-              Selected Pieces
-            </h2>
-            <p className="text-body-md text-text-secondary font-light font-sans mt-2">
-              Timeless silhouettes, curated for effortless elegance.
-            </p>
-          </Stack>
-
-          {/* Grid Layout */}
-          <Grid cols={{ base: 1, sm: 2, lg: 4 }} gap={8}>
-            {products.length === 0 ? (
-               <p className="text-body-sm text-text-secondary text-center col-span-full">No products found.</p>
-            ) : (
-              products.map((item: any) => (
-                <div key={item.id} className="group flex flex-col gap-4 text-left relative">
-                  {/* Image Container with Relative Wrapper (Contains PDP link + Wishlist Toggle Icon outside the link) */}
-                  <div className="relative w-full aspect-[3/4] overflow-hidden bg-surface-secondary select-none">
-                    <Link 
-                      href={`/products/${item.slug}`}
-                      className="block w-full h-full"
-                    >
-                      {/* Optional Badge */}
-                      {item.badge && (
-                        <span className="absolute top-4 left-4 z-10 px-2 py-1 text-[9px] font-bold tracking-widest uppercase bg-background text-text-primary">
-                          {item.badge}
-                        </span>
-                      )}
-
-                      {item.productImages?.length ? (
-                        <>
-                          {/* Desktop View: Single image with zoom on hover */}
-                          <div className="hidden md:block w-full h-full relative">
-                            <Image 
-                              src={item.productImages[0].url} 
-                              alt={item.productImages[0].altText || item.name} 
-                              fill
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                              className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                            />
-                          </div>
-
-                          {/* Mobile View: Swipeable horizontal gallery with touch-auto */}
-                          <div 
-                            className="flex md:hidden w-full h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory touch-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-                          >
-                            {item.productImages.map((img: any, idx: number) => (
-                              <div key={img.url || idx} className="relative w-full h-full shrink-0 snap-center">
-                                <Image 
-                                  src={img.url} 
-                                  alt={img.altText || `${item.name} ${idx + 1}`} 
-                                  fill
-                                  sizes="(max-width: 640px) 100vw, 50vw"
-                                  className="object-cover object-top"
-                                />
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Mobile Slide Indicator dots (only show if multiple images) */}
-                          {item.productImages.length > 1 && (
-                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex md:hidden gap-1.5 z-10 pointer-events-none">
-                              {item.productImages.map((_: any, idx: number) => (
-                                <div key={idx} className="w-1.5 h-1.5 rounded-full bg-white/60 shadow-sm" />
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[10px] text-text-secondary uppercase select-none">No Image</div>
-                      )}
-                    </Link>
-
-                    {/* Wishlist Heart Icon (Functional) - placed outside the Link, positioned relative to image wrapper bottom-right */}
-                    <WishlistToggleIcon productId={item.id} />
-                  </div>
-
-                  {/* Metadata details */}
-                  <Link href={`/products/${item.slug}`} className="flex flex-col gap-1.5 mt-2">
-                    <h3 className="text-[13px] font-display font-medium tracking-wide text-text-primary group-hover:text-text-primary/70 transition-colors duration-200">
-                      {item.name}
-                    </h3>
-                    <span className="text-[13px] font-sans text-text-secondary font-light">
-                      NPR {item.lowestPrice != null ? (item.lowestPrice / 100).toLocaleString() : (item.basePrice?.toString() || item.price || "3,999")}
-                    </span>
-                  </Link>
-                </div>
-              ))
-            )}
-          </Grid>
-
-          {/* View All Button */}
-          <div className="flex justify-center mt-12">
-            <Link
-              href="/collections"
-              className="inline-flex items-center justify-center px-10 py-3.5 border border-border text-[11px] font-display font-semibold tracking-[0.2em] uppercase text-text-primary hover:bg-text-primary hover:text-background transition-all duration-300"
-            >
-              View All Pieces →
-            </Link>
-          </div>
-        </Stack>
-      </Container>
-    </Section>
-  )
-}
 
 
 // ── 6. Newsletter Section ─────────────────────────────────────────────────────

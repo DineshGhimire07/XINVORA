@@ -21,6 +21,7 @@ export async function findProductsByIds(ids: string[]) {
         with: {
           color: true,
           size: true,
+          inventory: true,
         }
       }
     },

@@ -6,6 +6,7 @@ import Image from "next/image"
 import { Heart } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toggleWishlistByProductIdAction } from "@/actions/wishlist.actions"
+import { NotifyMeButton } from "@/components/storefront/NotifyMeButton"
 
 export interface ProductCardProps {
   product: {
@@ -26,6 +27,7 @@ export interface ProductCardProps {
   overrideImage?: string | null
   disableHover?: boolean
   objectContain?: boolean
+  inStock?: boolean
 }
 
 export function ProductCard({
@@ -41,6 +43,7 @@ export function ProductCard({
   overrideImage = null,
   disableHover = false,
   objectContain = false,
+  inStock = true,
 }: ProductCardProps) {
   const router = useRouter()
   const [isWishlisted, setIsWishlisted] = React.useState(initialIsWishlisted)
@@ -167,8 +170,15 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Color dot selectors overlay in top-left corner */}
-        {itemColors.length > 0 && (
+        {/* Sold Out badge on top-left of image wrapper */}
+        {!inStock && (
+          <span className="absolute top-3 left-3 z-10 px-2 py-0.5 text-[8px] font-bold tracking-[0.25em] uppercase bg-neutral-900 text-white select-none">
+            Sold Out
+          </span>
+        )}
+
+        {/* Color dot selectors overlay in top-left corner (only shown if not sold out to prevent collision) */}
+        {inStock && itemColors.length > 0 && (
           <div className="absolute top-3 left-3 flex gap-1 z-10">
             {itemColors.map((color: any) => (
               <span 
@@ -194,22 +204,35 @@ export function ProductCard({
       </div>
 
       {/* Product details row */}
-      {(!hideName || !hidePrice) && (
+      {(!hideName || !hidePrice || !inStock) && (
         <div className="flex flex-col gap-1 px-4 mb-2">
-          <div className="flex items-center justify-between text-[10px] tracking-wider text-text-primary">
-            {!hideName && (
-              <span className="lowercase truncate font-sans text-text-primary font-medium max-w-[72%]">
-                {product.name.toLowerCase()}
-              </span>
-            )}
-            {!hidePrice && (
-              <span className="font-semibold select-none whitespace-nowrap font-mono text-text-primary">
-                {product.lowestPrice !== null && product.lowestPrice !== undefined
-                  ? `NPR ${Math.round(product.lowestPrice / 100).toLocaleString()}`
-                  : "Contact for Price"}
-              </span>
-            )}
-          </div>
+          {(!hideName || !hidePrice) && (
+            <div className="flex items-center justify-between text-[10px] tracking-wider text-text-primary">
+              {!hideName && (
+                <span className="lowercase truncate font-sans text-text-primary font-medium max-w-[72%]">
+                  {product.name.toLowerCase()}
+                </span>
+              )}
+              {!hidePrice && (
+                <span className="font-semibold select-none whitespace-nowrap font-mono text-text-primary">
+                  {product.lowestPrice !== null && product.lowestPrice !== undefined
+                    ? `NPR ${Math.round(product.lowestPrice / 100).toLocaleString()}`
+                    : "Contact for Price"}
+                </span>
+              )}
+            </div>
+          )}
+          {!inStock && (
+            <div 
+              onClick={(e) => { 
+                e.preventDefault(); 
+                e.stopPropagation(); 
+              }} 
+              className="mt-2.5 w-full relative z-30"
+            >
+              <NotifyMeButton productId={product.id} variant="inline" />
+            </div>
+          )}
         </div>
       )}
     </Link>

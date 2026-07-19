@@ -4,7 +4,7 @@ import { useActionState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Heart } from "lucide-react"
-import { updateCartQuantityAction, removeFromCartAction } from "@/actions/cart.actions"
+import { updateCartQuantityAction, removeFromCartAction, changeCartItemVariantAction } from "@/actions/cart.actions"
 import { saveForLaterAction } from "@/actions/wishlist.actions"
 import type { CartItemResult } from "@/db/queries/types"
 
@@ -16,9 +16,45 @@ export function CartItem({ item }: CartItemProps) {
   const [updateState, updateAction, isUpdating] = useActionState<any, FormData>(updateCartQuantityAction, null)
   const [removeState, removeAction, isRemoving] = useActionState<any, FormData>(removeFromCartAction, null)
   const [saveState, saveAction, isSaving] = useActionState<any, FormData>(saveForLaterAction, null)
+  const [sizeState, sizeAction, isSwitchingSize] = useActionState<any, FormData>(changeCartItemVariantAction, null)
 
-  const isPending = isUpdating || isRemoving || isSaving
+  const isPending = isUpdating || isRemoving || isSaving || isSwitchingSize
   const primaryImage = item.variant.images[0]
+  const currentSize = item.variant.size?.name
+
+  // Size pills — only render if siblings have size info
+  const hasSizes = item.siblingVariants.some(v => v.size)
+
+  const SizePills = () => hasSizes ? (
+    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+      {item.siblingVariants.map((v) => {
+        const isSelected = v.id === item.variantId
+        const label = v.size?.abbreviation || v.size?.name || "—"
+        return (
+          <form key={v.id} action={sizeAction}>
+            <input type="hidden" name="cartItemId" value={item.id} />
+            <input type="hidden" name="newVariantId" value={v.id} />
+            <button
+              type="submit"
+              disabled={isPending || !v.inStock || isSelected}
+              title={v.inStock ? v.size?.name : `${v.size?.name} — Out of Stock`}
+              className={`
+                h-6 min-w-[26px] px-1.5 text-[9px] font-bold tracking-wide uppercase border transition-all duration-200
+                ${isSelected
+                  ? "border-neutral-900 bg-neutral-900 text-white cursor-default"
+                  : v.inStock
+                    ? "border-transparent bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900 cursor-pointer"
+                    : "border-transparent bg-neutral-50 text-neutral-300 line-through cursor-not-allowed opacity-50"
+                }
+              `}
+            >
+              {label}
+            </button>
+          </form>
+        )
+      })}
+    </div>
+  ) : null
 
   return (
     <div
@@ -53,7 +89,7 @@ export function CartItem({ item }: CartItemProps) {
               {item.variant.size && (
                 <>
                   <span className="font-medium text-text-primary">Size:</span>
-                  <span>{item.variant.size.name}</span>
+                  <span className="font-semibold text-text-primary">{item.variant.size.name}</span>
                 </>
               )}
               {item.variant.size && item.variant.color && <span className="mx-1 text-text-tertiary">|</span>}
@@ -64,8 +100,11 @@ export function CartItem({ item }: CartItemProps) {
                 </>
               )}
             </div>
+
+            {/* Inline Size Switcher */}
+            <SizePills />
             
-            <div className="text-body-xs text-text-secondary uppercase mt-0.5">
+            <div className="text-body-xs text-text-secondary uppercase mt-2">
               SKU: <span className="text-accent font-medium font-mono">{item.variant.sku}</span>
             </div>
 
@@ -163,12 +202,19 @@ export function CartItem({ item }: CartItemProps) {
           </Link>
           
           <div className="text-body-xs text-text-secondary mt-0.5 flex items-center gap-1">
-            {item.variant.size && <span>Size: {item.variant.size.name}</span>}
+            {item.variant.size && (
+              <span>
+                Size: <strong className="text-text-primary font-semibold">{item.variant.size.name}</strong>
+              </span>
+            )}
             {item.variant.size && item.variant.color && <span> | </span>}
             {item.variant.color && <span>Color: {item.variant.color.name}</span>}
           </div>
+
+          {/* Inline Size Switcher on Mobile */}
+          <SizePills />
           
-          <div className="text-body-xs text-text-secondary uppercase mt-0.5">
+          <div className="text-body-xs text-text-secondary uppercase mt-1">
             SKU: <span className="text-accent font-medium font-mono">{item.variant.sku}</span>
           </div>
 

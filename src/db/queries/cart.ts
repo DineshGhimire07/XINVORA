@@ -1,6 +1,6 @@
 import { eq, and, desc, sql, inArray, isNull } from "drizzle-orm"
 import { db } from "../client"
-import { carts, cartItems, variants, products, productImages, colors, sizes, variantImages, priceBookEntries } from "../schema"
+import { carts, cartItems, variants, products, productImages, colors, sizes, variantImages, priceBookEntries, inventory } from "../schema"
 import type { CartResult, CartItemResult, HeaderCommerceState } from "./types"
 import { cache } from "react"
 
@@ -68,13 +68,34 @@ export const getCart = cache(async (
   const variantIds = items.map(row => row.variant.id)
   const productIds = [...new Set(items.map(row => row.product.id))]
 
-  const [images, livePrices, prodImages] = variantIds.length > 0
+  const [images, livePrices, prodImages, allVariants] = variantIds.length > 0
     ? await Promise.all([
         db.select().from(variantImages).where(inArray(variantImages.variantId, variantIds)),
         db.select().from(priceBookEntries).where(inArray(priceBookEntries.variantId, variantIds)),
         db.select().from(productImages).where(inArray(productImages.productId, productIds)),
+        // Fetch all variants for the same products (for size swapper)
+        db
+          .select({ id: variants.id, productId: variants.productId, sizeId: variants.sizeId })
+          .from(variants)
+          .where(and(inArray(variants.productId, productIds), isNull(variants.deletedAt))),
+        // And their inventory
+        db.select().from(inventory).where(inArray(inventory.variantId, variantIds)),
       ])
-    : [[], [], []]
+    : [[], [], [], [], []]
+
+  // Fetch size names for all sibling variant sizeIds
+  const allSizeIds = [...new Set(allVariants.map(v => v.sizeId).filter(Boolean) as string[])]
+  const allSizes = allSizeIds.length > 0
+    ? await db.select({ id: sizes.id, name: sizes.name, abbreviation: sizes.abbreviation })
+        .from(sizes)
+        .where(inArray(sizes.id, allSizeIds))
+    : []
+
+  // Fetch inventory for sibling variants
+  const siblingVariantIds = allVariants.map(v => v.id)
+  const siblingInventory = siblingVariantIds.length > 0
+    ? await db.select().from(inventory).where(inArray(inventory.variantId, siblingVariantIds))
+    : []
 
   const resolvedItems: CartItemResult[] = items.map((row) => {
     let itemImages = images.filter((img) => img.variantId === row.variant.id)
@@ -87,6 +108,20 @@ export const getCart = cache(async (
     }
 
     const priceEntry = livePrices.find((p) => p.variantId === row.variant.id)
+
+    // Build sibling variants for this product
+    const siblings = allVariants
+      .filter(v => v.productId === row.product.id)
+      .map(v => {
+        const sizeRow = allSizes.find(s => s.id === v.sizeId)
+        const inv = siblingInventory.find(i => i.variantId === v.id)
+        return {
+          id: v.id,
+          size: sizeRow ? { name: sizeRow.name, abbreviation: sizeRow.abbreviation } : null,
+          inStock: (inv?.quantity ?? 0) > 0,
+        }
+      })
+      .sort((a, b) => (a.size?.name ?? "").localeCompare(b.size?.name ?? ""))
 
     return {
       ...row.cartItem,
@@ -107,6 +142,7 @@ export const getCart = cache(async (
           altText: img.altText,
         })),
       },
+      siblingVariants: siblings,
     }
   })
 

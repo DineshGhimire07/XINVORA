@@ -149,6 +149,10 @@ function CMSProductGrid({ block, products = [] }: { block: any; products?: any[]
               ).values()
             ).sort((a: any, b: any) => a.name.localeCompare(b.name, undefined, { numeric: true })) as any[]
 
+            const inStock = (product.variants || []).length > 0
+              ? (product.variants || []).some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)
+              : false
+
             return (
               <ProductCard
                 key={product.id}
@@ -163,6 +167,7 @@ function CMSProductGrid({ block, products = [] }: { block: any; products?: any[]
                 overrideImage={product.customImageUrl}
                 disableHover={true}
                 objectContain={true}
+                inStock={inStock}
               />
             )
           })}
@@ -344,73 +349,71 @@ function CMSBannerBlock({ block }: { block: any }) {
   const data = block.data
   if (!data || data.isActive === false || !data.imageUrl) return null
 
+  // Determine aspect ratios and height classes based on size configuration
+  let containerClass = "relative block w-full aspect-[3/4] md:aspect-[32/10] overflow-hidden bg-neutral-900"
+  if (data.size === "full") {
+    containerClass = "relative block w-full h-[100dvh] overflow-hidden bg-neutral-900"
+  } else if (data.size === "half") {
+    containerClass = "relative block w-full h-[50dvh] overflow-hidden bg-neutral-900"
+  } else if (data.size === "cinematic") {
+    containerClass = "relative block w-full aspect-[3/4] md:aspect-[21/9] overflow-hidden bg-neutral-900"
+  } else if (data.size === "landscape") {
+    containerClass = "relative block w-full aspect-[3/4] md:aspect-[16/9] overflow-hidden bg-neutral-900"
+  } else if (data.size === "classic") {
+    containerClass = "relative block w-full aspect-[1/1] md:aspect-[4/3] overflow-hidden bg-neutral-900"
+  } else if (data.size === "portrait") {
+    containerClass = "relative block w-full aspect-[3/4] md:aspect-[3/4] overflow-hidden bg-neutral-900"
+  } else if (data.size === "editorial") {
+    containerClass = "relative block w-full aspect-[3/4] md:aspect-[32/10] overflow-hidden bg-neutral-900"
+  }
+
+  const InnerContent = () => (
+    <>
+      <picture className="block w-full h-full">
+        {data.imageMobileUrl && (
+          <source media="(max-width: 767px)" srcSet={data.imageMobileUrl} />
+        )}
+        <img
+          src={data.imageUrl}
+          alt={data.title}
+          className="w-full h-full object-cover"
+        />
+      </picture>
+      <div className="absolute inset-0 bg-black/25 group-hover:bg-black/35 transition-colors duration-500" />
+      
+      <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-16 z-10 text-white max-w-3xl">
+        {data.eyebrow && (
+          <span className="text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase mb-4 opacity-90 drop-shadow-md">
+            {data.eyebrow}
+          </span>
+        )}
+        <h2 className="text-4xl md:text-6xl font-display font-light mb-4 drop-shadow-md leading-none uppercase">
+          {data.title}
+        </h2>
+        {data.tagline && (
+          <p className="text-body-sm md:text-body-base opacity-90 max-w-md mb-8 drop-shadow-md font-sans">
+            {data.tagline}
+          </p>
+        )}
+        {data.linkText && (
+          <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-widest group/link">
+            <span>{data.linkText}</span>
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/link:translate-x-1" />
+          </div>
+        )}
+      </div>
+    </>
+  )
+
   return (
     <Section id={`banner-block-${block.id}`} padding="none" className="bg-background select-none w-screen overflow-hidden">
       {data.linkUrl ? (
-        <Link href={data.linkUrl} className="group relative block w-full aspect-[3/4] md:aspect-[32/10] overflow-hidden bg-neutral-900">
-          <picture className="block w-full h-full">
-            {data.imageMobileUrl && (
-              <source media="(max-width: 767px)" srcSet={data.imageMobileUrl} />
-            )}
-            <img
-              src={data.imageUrl}
-              alt={data.title}
-              className="w-full h-full object-cover"
-            />
-          </picture>
-          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors duration-500" />
-          
-          <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-16 z-10 text-white max-w-3xl">
-            {data.eyebrow && (
-              <span className="text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase mb-4 opacity-90 drop-shadow-md">
-                {data.eyebrow}
-              </span>
-            )}
-            <h2 className="text-4xl md:text-6xl font-display font-light mb-4 drop-shadow-md">
-              {data.title}
-            </h2>
-            {data.tagline && (
-              <p className="text-body-sm md:text-body-base opacity-90 max-w-md mb-8 drop-shadow-md">
-                {data.tagline}
-              </p>
-            )}
-            {data.linkText && (
-              <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-widest group/link">
-                <span>{data.linkText}</span>
-                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/link:translate-x-1" />
-              </div>
-            )}
-          </div>
+        <Link href={data.linkUrl} className={`group ${containerClass}`}>
+          <InnerContent />
         </Link>
       ) : (
-        <div className="relative block w-full aspect-[3/4] md:aspect-[32/10] overflow-hidden bg-neutral-900">
-          <picture className="block w-full h-full">
-            {data.imageMobileUrl && (
-              <source media="(max-width: 767px)" srcSet={data.imageMobileUrl} />
-            )}
-            <img
-              src={data.imageUrl}
-              alt={data.title}
-              className="w-full h-full object-cover"
-            />
-          </picture>
-          <div className="absolute inset-0 bg-black/20" />
-          
-          <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-16 z-10 text-white max-w-3xl">
-            {data.eyebrow && (
-              <span className="text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase mb-4 opacity-90 drop-shadow-md">
-                {data.eyebrow}
-              </span>
-            )}
-            <h2 className="text-4xl md:text-6xl font-display font-light mb-4 drop-shadow-md">
-              {data.title}
-            </h2>
-            {data.tagline && (
-              <p className="text-body-sm md:text-body-base opacity-90 max-w-md drop-shadow-md">
-                {data.tagline}
-              </p>
-            )}
-          </div>
+        <div className={containerClass}>
+          <InnerContent />
         </div>
       )}
     </Section>
