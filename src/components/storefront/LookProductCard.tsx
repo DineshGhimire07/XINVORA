@@ -82,7 +82,7 @@ export function LookProductCard({ product, compact = false }: LookProductCardPro
             alt={images[0].altText || product.name}
             fill
             sizes="(max-width: 768px) 50vw, 25vw"
-            className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
+            className="object-cover object-top transition-opacity duration-700 ease-out"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-[10px] text-neutral-400 uppercase select-none tracking-widest">

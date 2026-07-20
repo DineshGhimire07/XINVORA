@@ -286,18 +286,29 @@ export function ProductVariantSelector({
           <div className="flex items-center gap-2 flex-wrap" role="group" aria-label="Select Size">
             {sizes.map((size) => {
               const isSelected = size.id === selectedSizeId
+              const matchingVariants = variants.filter(v => v.size?.id === size.id)
+              const isSoldOut = matchingVariants.length > 0 && matchingVariants.every(v => !v.inventory || v.inventory.quantity <= 0)
+
               return (
                 <button
                   key={size.id}
                   onClick={() => handleSizeSelect(size.id)}
                   aria-pressed={isSelected}
-                  className={`w-11 h-11 flex items-center justify-center text-[11px] font-semibold uppercase rounded-full border transition-all select-none ${
+                  title={isSoldOut ? `${size.name} — Sold Out` : size.name}
+                  className={`w-11 h-11 flex items-center justify-center text-[11px] font-semibold uppercase rounded-full border transition-all select-none relative overflow-hidden ${
                     isSelected
                       ? "border-text-primary bg-text-primary text-surface font-bold"
-                      : "border-border/40 text-text-secondary hover:text-text-primary hover:border-text-primary"
+                      : isSoldOut
+                        ? "border-border/30 text-text-secondary/50 bg-neutral-100/50 hover:border-neutral-400"
+                        : "border-border/40 text-text-secondary hover:text-text-primary hover:border-text-primary"
                   }`}
                 >
-                  {size.abbreviation || size.name}
+                  <span>{size.abbreviation || size.name}</span>
+                  {isSoldOut && (
+                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="w-[130%] h-[1.5px] bg-neutral-400/80 -rotate-45" />
+                    </span>
+                  )}
                 </button>
               )
             })}

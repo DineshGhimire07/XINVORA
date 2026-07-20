@@ -139,9 +139,23 @@ export function CartItem({ item }: CartItemProps) {
           </div>
         </div>
 
-        {/* Price */}
+        {/* Price & Discount */}
         <div className="col-span-2 text-center text-body-md font-medium text-text-primary">
-          NPR {Math.round(item.price / 100).toLocaleString()}
+          {item.compareAtPrice && item.compareAtPrice > item.price ? (
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="line-through text-text-tertiary text-body-xs">
+                  NPR {Math.round(item.compareAtPrice / 100).toLocaleString()}
+                </span>
+                <span className="text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-200/60 px-1.5 py-0.5 rounded">
+                  {Math.round(((item.compareAtPrice - item.price) / item.compareAtPrice) * 100)}% OFF
+                </span>
+              </div>
+              <span>NPR {Math.round(item.price / 100).toLocaleString()}</span>
+            </div>
+          ) : (
+            <span>NPR {Math.round(item.price / 100).toLocaleString()}</span>
+          )}
         </div>
 
         {/* Quantity */}
@@ -219,8 +233,20 @@ export function CartItem({ item }: CartItemProps) {
           </div>
 
           <div className="mt-3 flex items-center justify-between">
-            <div className="text-body-sm font-semibold text-text-primary">
-              NPR {Math.round(item.price / 100).toLocaleString()}
+            <div className="flex flex-col">
+              {item.compareAtPrice && item.compareAtPrice > item.price && (
+                <div className="flex items-center gap-1.5">
+                  <span className="line-through text-text-tertiary text-[10px]">
+                    NPR {Math.round(item.compareAtPrice / 100).toLocaleString()}
+                  </span>
+                  <span className="text-[9px] font-bold text-amber-900 bg-amber-100 border border-amber-200/60 px-1 py-0.2 rounded">
+                    {Math.round(((item.compareAtPrice - item.price) / item.compareAtPrice) * 100)}% OFF
+                  </span>
+                </div>
+              )}
+              <div className="text-body-sm font-semibold text-text-primary">
+                NPR {Math.round(item.price / 100).toLocaleString()}
+              </div>
             </div>
             
             <form action={updateAction} className="flex items-center border border-border rounded bg-surface h-8 w-24 overflow-hidden">

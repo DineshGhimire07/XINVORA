@@ -123,8 +123,6 @@ export function ProductCard({
                 className={`${
                   objectContain ? "object-contain p-2" : "object-cover object-top"
                 } transition-all duration-700 ease-out ${
-                  !disableHover && images[1] ? "group-hover:scale-105" : ""
-                } ${
                   !disableHover && images[1] ? "opacity-100 group-hover:opacity-0" : ""
                 }`}
               />
@@ -136,7 +134,7 @@ export function ProductCard({
                   sizes="(max-width: 768px) 50vw, 25vw"
                   className={`${
                     objectContain ? "object-contain p-2" : "object-cover object-top"
-                  } absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out scale-100 group-hover:scale-105`}
+                  } absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out`}
                 />
               )}
             </div>

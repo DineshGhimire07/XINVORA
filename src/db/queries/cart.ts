@@ -126,6 +126,7 @@ export const getCart = cache(async (
     return {
       ...row.cartItem,
       price: priceEntry?.price ?? 0,
+      compareAtPrice: priceEntry?.compareAtPrice ?? null,
       variant: {
         id: row.variant.id,
         sku: row.variant.sku,

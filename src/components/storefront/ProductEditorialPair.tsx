@@ -73,7 +73,7 @@ export function ProductEditorialPair({ images, productName }: ProductEditorialPa
             }
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 40vw, 28vw"
-            className="object-cover object-top transition-transform duration-700 ease-out hover:scale-105"
+            className="object-cover object-top transition-opacity duration-700 ease-out"
             loading="lazy"
           />
         </div>
