@@ -1,4 +1,3 @@
-"use client"
 "use server"
 
 import { AnalyticsService } from "@/services/analytics.service"
