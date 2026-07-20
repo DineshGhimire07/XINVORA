@@ -67,7 +67,7 @@ const navItems: NavItem[] = [
     icon: FileText,
     items: [
       { name: "Homepage Builder", href: "/admin/cms/homepage" },
-      { name: "Login Manager", href: "/admin/cms/login" },
+      { name: "Login & Register", href: "/admin/cms/login" },
       { name: "All Content", href: "/admin/cms/pages" },
       { name: "Pages", href: "/admin/cms/pages" },
       { name: "Banners", href: "/admin/cms/banners" },
