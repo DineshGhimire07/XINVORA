@@ -276,7 +276,6 @@ export default async function ProductDetailPage({
                       priority={idx < 5}
                       inStock={inStock}
                       hideWishlist={false}
-                      hideDiscountBadge={true}
                     />
                   )
                 })}
