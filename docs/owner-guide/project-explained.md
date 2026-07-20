@@ -8,18 +8,18 @@ XINVORA is a high-end luxury lifestyle and fashion e-commerce platform. It provi
 ## What Problem Does XINVORA Solve?
 Traditional online shopping platforms are often slow, generic, and difficult to manage. XINVORA solves this by combining:
 
-1. **Luxury Editorial Design**: Visually stunning, fast-loading storefront tailored to high-end fashion.
+1. **Luxury Editorial Design**: A visually stunning, fast-loading storefront tailored to high-end fashion.
 2. **Seamless Mobile Experience**: Smooth scrolling, quick tap responses, and easy navigation on smartphones.
-3. **Privacy Compliance (CMP)**: Built-in consent banner and privacy controls that respect user rights (GDPR compliant).
+3. **Privacy Compliance (CMP)**: A built-in consent banner and privacy controls that respect user rights (GDPR compliant).
 4. **Complete Admin CMS**: An easy-to-use admin dashboard where business owners can manage products, orders, banners, discounts, and privacy settings without touching code.
 
 ---
 
 ## Key Features for Customers
 - **Curated Collections & Shop the Look**: Interactive editorial sliders that allow customers to view complete outfits and purchase matching pieces.
-- **Instant Search & Filtering**: Fast search bar with category, price, and color filters.
+- **Instant Search & Filtering**: A fast search bar with category, price, and color filters.
 - **Smart Shopping Cart**: Save items, update quantities, swap sizes inline, and view exact discount calculations.
-- **Privacy Controls**: Custom preference center to accept or customize analytics and marketing cookies.
+- **Privacy Controls**: A custom preference center to accept or customize analytics and marketing cookies.
 
 ---
 

@@ -31,7 +31,7 @@ flowchart TD
 - **Privacy Banner**: A luxury floating banner appears asking for cookie consent preferences.
 
 ### 2. Discovering Products
-- **Collections & Categories**: Customers browse items by category (e.g. Dresses, Bags, Outerwear).
+- **Collections & Categories**: Customers browse items by category (such as Dresses, Bags, Outerwear).
 - **Shop the Look**: Customers view editorial outfits and click interactive pins to buy matching pieces.
 
 ### 3. Product Selection
@@ -39,7 +39,7 @@ flowchart TD
 - **Out of Stock Line-Through**: Sold-out sizes display a single diagonal strike-through line so customers immediately know availability.
 
 ### 4. Shopping Cart
-- **Discount Badges**: Items on sale display original price strikethroughs and `% OFF` discount badges.
+- **Discount Badges**: Items on sale display original price strikethroughs and percentage off discount badges.
 - **Inline Size Swapper**: Customers can switch sizes directly inside the cart without returning to the product page.
 - **Recommendations ("YOU MAY ALSO LOVE")**: Displays curated matching dresses at the bottom of the cart.
 

@@ -22,7 +22,7 @@ flowchart TD
 - **Recent Orders Table**: Quick view of newest incoming orders requiring fulfillment.
 
 ### 2. Orders (`/admin/orders`)
-- **Fulfillment Pipeline**: Update order status (`PENDING` ➔ `PROCESSING` ➔ `SHIPPED` ➔ `DELIVERED`).
+- **Fulfillment Pipeline**: Update order status (`PENDING` -> `PROCESSING` -> `SHIPPED` -> `DELIVERED`).
 - **Invoice Printing**: Print clean branded packing slips and customer invoices (`/admin/orders/print`).
 
 ### 3. Products & Inventory (`/admin/products`)
@@ -40,7 +40,7 @@ flowchart TD
 
 ### 6. Executive Analytics Dashboard (`/admin/cdp`)
 - **Revenue Overview**: Gross vs net revenue line charts.
-- **Conversion Funnel**: Track customer drop-off from Homepage ➔ Product ➔ Cart ➔ Checkout.
+- **Conversion Funnel**: Track customer drop-off from Homepage -> Product -> Cart -> Checkout.
 - **Search Intelligence**: View top search terms entered by customers to guide inventory purchases.
 
 ---

@@ -28,7 +28,11 @@
 |   |   `-- setup-workflow.md
 |   |-- features
 |   |   |-- analytics-cdp.md
-|   |   `-- privacy-cmp.md
+|   |   |-- authentication.md
+|   |   |-- cart-checkout.md
+|   |   |-- order-processing.md
+|   |   |-- privacy-cmp.md
+|   |   `-- products-catalog.md
 |   `-- owner-guide
 |       |-- business-logic-guide.md
 |       |-- complete-admin-journey.md
@@ -885,4 +889,4 @@
 |-- tsconfig.json
 `-- tsconfig.tsbuildinfo
 
-199 directories, 687 files
+199 directories, 691 files
