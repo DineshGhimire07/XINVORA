@@ -13,6 +13,7 @@ import { SessionService } from "@/services/session.service"
 import { CartService } from "@/services/cart.service"
 import { ArrowRight } from "lucide-react"
 import { ProductTrustGrid } from "@/components/storefront/ProductTrustGrid"
+import { ProductCard } from "@/components/storefront/ProductCard"
 
 export const metadata: Metadata = {
   title: "Shopping Cart | XINVORA",
@@ -96,48 +97,26 @@ export default async function CartPage() {
           {/* Recommendations */}
           {recommendedProducts.length > 0 && (
             <div className="lg:col-span-8 order-3 lg:col-start-1">
-              <div className="mt-16 lg:mt-8">
-                <div className="flex justify-between items-baseline mb-8">
-                  <h2 className="text-body-md font-bold uppercase tracking-wider text-text-primary">
-                    You May Also Like
+              <div className="mt-16 lg:mt-12 border-t border-border/20 pt-10">
+                <div className="flex justify-between items-baseline mb-8 select-none">
+                  <h2 className="text-[10px] font-bold tracking-[0.25em] text-accent uppercase">
+                    YOU MAY ALSO LOVE
                   </h2>
-                  <Link href="/collections" className="text-caption font-semibold tracking-wider uppercase hover:underline inline-flex items-center gap-1">
-                    View All <ArrowRight className="w-3.5 h-3.5" />
+                  <Link href="/collections" className="text-[11px] font-semibold tracking-widest text-text-secondary uppercase hover:text-text-primary transition-colors inline-flex items-center gap-1">
+                    VIEW ALL <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
                 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
-                  {recommendedProducts.map((product) => {
-                    const mainImage = product.productImages?.[0]?.url
-                    return (
-                      <Link key={product.id} href={`/products/${product.slug}`} className="group flex flex-col text-left">
-                        <div className="aspect-[3/4] relative bg-surface-secondary overflow-hidden mb-3 border border-border rounded-sm">
-                          {mainImage ? (
-                            <Image
-                              src={mainImage}
-                              alt={product.name}
-                              fill
-                              className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-[10px] uppercase text-text-secondary bg-surface-secondary">
-                              No Image
-                            </div>
-                          )}
-                        </div>
-                        <h3 className="text-body-xs font-medium text-text-primary group-hover:underline truncate mt-1">
-                          {product.name}
-                        </h3>
-                        <p className="text-body-xs text-text-secondary mt-0.5 font-semibold">
-                          {product.lowestPrice !== null 
-                            ? `NPR ${Math.round(product.lowestPrice / 100).toLocaleString()}`
-                            : "Contact for Price"
-                          }
-                        </p>
-                      </Link>
-                    )
-                  })}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10">
+                  {recommendedProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      itemColors={[]}
+                      itemSizes={[]}
+                      hideWishlist={false}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
