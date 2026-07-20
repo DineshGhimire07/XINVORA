@@ -24,7 +24,32 @@ export async function registerAction(
     return validation
   }
 
-  return handleServiceCall(() => AuthenticationService.register(validation.data))
+  try {
+    await AuthenticationService.register(validation.data)
+    
+    // Automatically log in the newly registered user
+    await signIn("credentials", {
+      email: validation.data.email,
+      password: validation.data.password,
+      redirect: false,
+    })
+
+    return {
+      success: true,
+      data: {
+        message: "Account created successfully.",
+        email: validation.data.email,
+      },
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      error: {
+        code: "REGISTRATION_FAILED",
+        message: error?.message || "Failed to create account. Email may already be in use.",
+      },
+    }
+  }
 }
 
 /**

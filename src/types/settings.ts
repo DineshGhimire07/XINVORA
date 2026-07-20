@@ -118,6 +118,12 @@ export interface AboutPageSettings {
   futureImage: string
 }
 
+export interface AuthPageSettings {
+  heroImageUrl: string
+  headline: string
+  subheading: string
+}
+
 export interface AppSettings {
   general: GeneralSettings
   store_contact: StoreContactSettings
@@ -132,4 +138,6 @@ export interface AppSettings {
   announcement: AnnouncementSettings
   payment_qrs: PaymentQRSettings
   about_page: AboutPageSettings
+  auth_page: AuthPageSettings
 }
+

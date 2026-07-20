@@ -131,6 +131,14 @@ const defaultSettings = [
       startDate: null,
       endDate: null
     }
+  },
+  {
+    key: "auth_page",
+    value: {
+      heroImageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1000",
+      headline: "Luxury is found in the details.",
+      subheading: "SPRING EDITORIAL 2026"
+    }
   }
 ]
 

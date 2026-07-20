@@ -1,13 +1,11 @@
-import { buildMetadata } from "@/lib/metadata"
+import { SessionService } from "@/services/session.service"
 import { AdminSettingsService } from "@/services/admin/settings.service"
-import { AuthLayout } from "@/components/auth/AuthLayout"
-import { RegisterForm } from "./RegisterForm"
+import { LoginManagerClient } from "./LoginManagerClient"
 import type { AuthPageSettings } from "@/types/settings"
 
-export const metadata = buildMetadata({
-  title: "Create Account",
-  description: "Register for a new XINVORA account.",
-})
+export const metadata = {
+  title: "Login Manager | Admin CMS | XINVORA",
+}
 
 const defaultAuthSettings: AuthPageSettings = {
   heroImageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1000",
@@ -15,12 +13,10 @@ const defaultAuthSettings: AuthPageSettings = {
   subheading: "SPRING EDITORIAL 2026",
 }
 
-export default async function RegisterPage() {
+export default async function LoginManagerPage() {
+  await SessionService.requireAdmin()
+
   const authSettings = (await AdminSettingsService.getSetting("auth_page")) || defaultAuthSettings
 
-  return (
-    <AuthLayout settings={authSettings}>
-      <RegisterForm />
-    </AuthLayout>
-  )
+  return <LoginManagerClient initialSettings={authSettings} />
 }

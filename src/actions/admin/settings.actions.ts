@@ -188,3 +188,25 @@ export async function updateFeaturesSettingsAction(
     return { success: false, error: { code: "ERROR", message: error.message || "Failed to update settings" } }
   }
 }
+
+export const authPageSettingsSchema = z.object({
+  heroImageUrl: z.string().min(1, "Hero image is required"),
+  headline: z.string().default("Luxury is found in the details."),
+  subheading: z.string().default("SPRING EDITORIAL 2026"),
+})
+
+export async function updateAuthPageSettingsAction(
+  data: z.infer<typeof authPageSettingsSchema>
+): Promise<ActionResult<AppSettings["auth_page"]>> {
+  try {
+    const session = await SessionService.requireAdmin()
+    const validated = authPageSettingsSchema.parse(data)
+    await AdminSettingsService.updateSetting("auth_page", validated, session.id)
+    revalidatePath("/login")
+    revalidatePath("/register")
+    return { success: true, data: validated }
+  } catch (error: any) {
+    return { success: false, error: { code: "ERROR", message: error.message || "Failed to update auth page settings" } }
+  }
+}
+

@@ -19,7 +19,14 @@ const globalForDb = globalThis as unknown as {
   __dbClient: ReturnType<typeof postgres> | undefined
 }
 
-const queryClient = globalForDb.__dbClient ?? postgres(process.env.DATABASE_URL, { prepare: false })
+const queryClient =
+  globalForDb.__dbClient ??
+  postgres(process.env.DATABASE_URL, {
+    prepare: false,
+    max_lifetime: 30, // Recycles connections before Supabase pooler drops them
+    idle_timeout: 10,
+    connect_timeout: 10,
+  })
 
 globalForDb.__dbClient = queryClient
 
