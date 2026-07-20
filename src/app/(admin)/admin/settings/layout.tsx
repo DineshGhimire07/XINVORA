@@ -35,6 +35,7 @@ const settingsNav = [
   {
     title: "Advanced",
     items: [
+      { name: "Privacy & Cookies", href: "/admin/settings/privacy" },
       { name: "Feature Toggles", href: "/admin/settings/features" },
       { name: "SEO Settings", href: "/admin/settings/seo" },
     ]
