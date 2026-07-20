@@ -13,6 +13,7 @@ import Link from "next/link"
 import * as React from "react"
 import { NewsletterForm } from "@/features/newsletter/components/NewsletterForm"
 import { AdminSettingsService } from "@/services/admin/settings.service"
+import { CookieFooterButton } from "@/components/cookies/CookieFooterButton"
 
 export async function Footer() {
   const settings = await AdminSettingsService.getAllSettings()
@@ -101,10 +102,13 @@ export async function Footer() {
         {/* Bottom Social & Copyright Section */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
           
-          {/* Copyright notice */}
-          <p className="text-[11px] font-semibold text-text-secondary uppercase tracking-wider select-none">
-            &copy; {new Date().getFullYear()} {storeName}.
-          </p>
+          {/* Copyright notice & Cookie Preferences */}
+          <div className="flex items-center gap-4 flex-wrap select-none">
+            <p className="text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
+              &copy; {new Date().getFullYear()} {storeName}.
+            </p>
+            <CookieFooterButton />
+          </div>
 
           {/* Social links */}
           <ul className="flex flex-wrap items-center gap-6 text-[11px] font-bold text-text-secondary uppercase tracking-widest select-none">

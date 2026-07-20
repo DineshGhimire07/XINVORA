@@ -78,6 +78,13 @@ const navItems: NavItem[] = [
       { name: "Lookbook", href: "/admin/cms/lookbook" },
     ],
   },
+  {
+    name: "Settings",
+    icon: SettingsIcon,
+    items: [
+      { name: "Privacy & Cookies", href: "/admin/settings/privacy" },
+    ],
+  },
   { name: "Print Invoices", href: "/admin/orders/print", icon: Printer },
 ]
 

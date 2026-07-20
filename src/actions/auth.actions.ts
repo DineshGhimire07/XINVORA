@@ -84,6 +84,23 @@ export async function loginAction(
       cookieStore.delete("cart_session")
     }
 
+    // Sync Guest Consent to DB for logged in user
+    if (user) {
+      const consentCookie = cookieStore.get("xinvora-consent")?.value
+      if (consentCookie) {
+        try {
+          const { parseAndVerifySignedCookie } = await import("@/lib/cookies/cookie")
+          const { CookieConsentService } = await import("@/services/cookie-consent.service")
+          const parsedConsent = parseAndVerifySignedCookie(consentCookie)
+          if (parsedConsent) {
+            await CookieConsentService.syncGuestConsentToUser(user.id, parsedConsent)
+          }
+        } catch (e) {
+          console.error("[loginAction] Guest consent sync failed:", e)
+        }
+      }
+    }
+
     return {
       success: true,
       data: { 

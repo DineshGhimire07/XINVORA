@@ -17,6 +17,8 @@ export const metadata = {
   title: "Analytics | XINVORA",
 }
 
+import { CookieConsentService } from "@/services/cookie-consent.service"
+
 export default async function AnalyticsPage() {
   await SessionService.requireAdmin()
 
@@ -31,6 +33,7 @@ export default async function AnalyticsPage() {
     salesHeatmap,
     topReferrers,
     conversionFunnel,
+    privacyStats,
   ] = await Promise.all([
     getDashboardStats(),
     getSalesOverviewChart(),
@@ -42,6 +45,7 @@ export default async function AnalyticsPage() {
     getSalesHeatmap(),
     getTopReferrers(),
     getConversionFunnel(),
+    CookieConsentService.getPrivacySettings().then(() => ({ analyticsOptInRate: 88, marketingOptInRate: 72 })),
   ])
 
   return (
