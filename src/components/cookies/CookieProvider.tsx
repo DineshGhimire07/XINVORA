@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react"
 import type { CookieConsentState, PrivacyCMPSettings } from "@/types/cookies"
 import { saveConsentAction } from "@/actions/cookie-consent.actions"
-import { parseAndVerifySignedCookie, CONSENT_COOKIE_NAME } from "@/lib/cookies/cookie"
+import { parseAndVerifySignedCookie, buildSignedCookieValue, CONSENT_COOKIE_NAME } from "@/lib/cookies/cookie"
 import { emitCMPEvent } from "@/lib/cookies/events"
 
 export const CONSENT_CONTEXT_VERSION = 1
@@ -41,8 +41,47 @@ export function CookieProvider({ children }: { children: React.ReactNode }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
 
+  const persistClientSideConsent = (analytics: boolean, marketing: boolean, personalization: boolean, version: string, source: any, method: any) => {
+    try {
+      const signedVal = buildSignedCookieValue(
+        { analytics, marketing, personalization },
+        version,
+        source,
+        method
+      )
+      localStorage.setItem("xinvora-consent", signedVal)
+      document.cookie = `${CONSENT_COOKIE_NAME}=${encodeURIComponent(signedVal)}; path=/; max-age=${180 * 24 * 60 * 60}; SameSite=Lax`
+    } catch (e) {}
+  }
+
   useEffect(() => {
-    // Fetch initial consent and settings from API
+    let clientConsentFound = false
+
+    // 1. Instant client-side check from document.cookie or localStorage to prevent banner re-appearing on refresh
+    try {
+      const match = document.cookie.match(new RegExp(`(?:^|; )${CONSENT_COOKIE_NAME}=([^;]*)`))
+      const cookieVal = match ? decodeURIComponent(match[1]) : null
+      const localConsent = typeof window !== "undefined" ? localStorage.getItem("xinvora-consent") : null
+
+      const parsed = parseAndVerifySignedCookie(cookieVal || localConsent)
+      if (parsed) {
+        clientConsentFound = true
+        setConsentState({
+          necessary: true,
+          analytics: parsed.analytics,
+          marketing: parsed.marketing,
+          personalization: parsed.personalization,
+          policyVersion: parsed.policyVersion,
+          isConsentGiven: true,
+          consentGivenAt: parsed.timestamp,
+          method: parsed.method,
+          source: parsed.source,
+        })
+        setIsBannerOpen(false)
+      }
+    } catch (e) {}
+
+    // 2. Fetch initial consent and settings from server API
     fetch("/api/cookies/consent")
       .then((res) => res.json())
       .then((res) => {
@@ -63,16 +102,22 @@ export function CookieProvider({ children }: { children: React.ReactNode }) {
               source: consent.source,
             })
             setIsBannerOpen(false)
+          } else if (!consent && clientConsentFound && !requiresReconsent) {
+            setIsBannerOpen(false)
           } else {
             setIsBannerOpen(true)
           }
         } else {
-          setIsBannerOpen(true)
+          if (!clientConsentFound) {
+            setIsBannerOpen(true)
+          }
         }
       })
       .catch((err) => {
         console.error("[CookieProvider] Failed to fetch consent state:", err)
-        setIsBannerOpen(true)
+        if (!clientConsentFound) {
+          setIsBannerOpen(true)
+        }
       })
       .finally(() => {
         setIsLoaded(true)
@@ -80,12 +125,13 @@ export function CookieProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const acceptAll = async () => {
+    const policyVersion = settings?.currentPolicyVersion || "1.0"
     const newState: CookieConsentState = {
       necessary: true,
       analytics: true,
       marketing: true,
       personalization: true,
-      policyVersion: settings?.currentPolicyVersion || "1.0",
+      policyVersion,
       isConsentGiven: true,
       method: "accept_all",
       source: "banner",
@@ -94,6 +140,8 @@ export function CookieProvider({ children }: { children: React.ReactNode }) {
     setConsentState(newState)
     setIsBannerOpen(false)
     setIsModalOpen(false)
+
+    persistClientSideConsent(true, true, true, policyVersion, "banner", "accept_all")
 
     await saveConsentAction({
       analytics: true,
@@ -108,12 +156,13 @@ export function CookieProvider({ children }: { children: React.ReactNode }) {
   }
 
   const rejectOptional = async () => {
+    const policyVersion = settings?.currentPolicyVersion || "1.0"
     const newState: CookieConsentState = {
       necessary: true,
       analytics: false,
       marketing: false,
       personalization: false,
-      policyVersion: settings?.currentPolicyVersion || "1.0",
+      policyVersion,
       isConsentGiven: true,
       method: "reject_optional",
       source: "banner",
@@ -122,6 +171,8 @@ export function CookieProvider({ children }: { children: React.ReactNode }) {
     setConsentState(newState)
     setIsBannerOpen(false)
     setIsModalOpen(false)
+
+    persistClientSideConsent(false, false, false, policyVersion, "banner", "reject_optional")
 
     await saveConsentAction({
       analytics: false,
@@ -136,12 +187,13 @@ export function CookieProvider({ children }: { children: React.ReactNode }) {
   }
 
   const updatePreferences = async (prefs: { analytics: boolean; marketing: boolean; personalization: boolean }) => {
+    const policyVersion = settings?.currentPolicyVersion || "1.0"
     const newState: CookieConsentState = {
       necessary: true,
       analytics: prefs.analytics,
       marketing: prefs.marketing,
       personalization: prefs.personalization,
-      policyVersion: settings?.currentPolicyVersion || "1.0",
+      policyVersion,
       isConsentGiven: true,
       method: "custom",
       source: "preferences",
@@ -150,6 +202,8 @@ export function CookieProvider({ children }: { children: React.ReactNode }) {
     setConsentState(newState)
     setIsBannerOpen(false)
     setIsModalOpen(false)
+
+    persistClientSideConsent(prefs.analytics, prefs.marketing, prefs.personalization, policyVersion, "preferences", "custom")
 
     await saveConsentAction({
       analytics: prefs.analytics,

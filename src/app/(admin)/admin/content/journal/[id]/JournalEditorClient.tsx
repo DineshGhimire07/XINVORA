@@ -13,8 +13,21 @@ import { MediaSelector } from "@/components/admin/MediaSelector"
 import JournalBlockEditor from "@/components/admin/JournalBlockEditor"
 import { createJournalPostAction, updateJournalPostAction, restoreJournalRevisionAction } from "@/actions/admin/journal.actions"
 
+import { formatCurrency } from "@/lib/utils"
+
+interface JournalAnalytics {
+  views: number
+  uniqueReaders: number
+  clicks: number
+  ordersCount: number
+  ctr: number
+  conversion: number
+  revenueGenerated: number
+}
+
 interface JournalEditorClientProps {
   post?: any
+  analytics?: JournalAnalytics
   categories: any[]
   allProducts: any[]
   allCollections: any[]
@@ -23,6 +36,7 @@ interface JournalEditorClientProps {
 
 export function JournalEditorClient({
   post,
+  analytics,
   categories = [],
   allProducts = [],
   allCollections = [],
@@ -585,9 +599,11 @@ export function JournalEditorClient({
               <Eye size={16} />
             </div>
             <div className="mt-4">
-              <h3 className="text-display-sm font-display text-text-primary font-bold">1,240</h3>
+              <h3 className="text-display-sm font-display text-text-primary font-bold">
+                {(analytics?.views || 0).toLocaleString()}
+              </h3>
               <p className="text-admin-xs text-green-600 flex items-center gap-1.5 mt-1 font-semibold">
-                <TrendingUp size={12} /> +12.4% vs last period
+                <TrendingUp size={12} /> {(analytics?.uniqueReaders || 0).toLocaleString()} unique readers
               </p>
             </div>
           </Card>
@@ -598,8 +614,12 @@ export function JournalEditorClient({
               <MousePointer size={16} />
             </div>
             <div className="mt-4">
-              <h3 className="text-display-sm font-display text-text-primary font-bold">472</h3>
-              <p className="text-admin-xs text-text-secondary mt-1">38.0% Click-through Rate (CTR)</p>
+              <h3 className="text-display-sm font-display text-text-primary font-bold">
+                {(analytics?.clicks || 0).toLocaleString()}
+              </h3>
+              <p className="text-admin-xs text-text-secondary mt-1">
+                {(analytics?.ctr || 0).toFixed(1)}% Click-through Rate (CTR)
+              </p>
             </div>
           </Card>
 
@@ -609,9 +629,11 @@ export function JournalEditorClient({
               <ShoppingCart size={16} />
             </div>
             <div className="mt-4">
-              <h3 className="text-display-sm font-display text-text-primary font-bold">34</h3>
+              <h3 className="text-display-sm font-display text-text-primary font-bold">
+                {(analytics?.ordersCount || 0).toLocaleString()}
+              </h3>
               <p className="text-admin-xs text-green-600 flex items-center gap-1.5 mt-1 font-semibold">
-                7.2% checkout conversion
+                {(analytics?.conversion || 0).toFixed(1)}% checkout conversion
               </p>
             </div>
           </Card>
@@ -622,7 +644,11 @@ export function JournalEditorClient({
               <DollarSign size={16} />
             </div>
             <div className="mt-4">
-              <h3 className="text-display-sm font-display text-accent font-bold">Rs. 493,000</h3>
+              <h3 className="text-display-sm font-display text-accent font-bold">
+                {analytics?.revenueGenerated && analytics.revenueGenerated > 0
+                  ? formatCurrency(analytics.revenueGenerated)
+                  : "Rs. 0"}
+              </h3>
               <p className="text-admin-xs text-text-secondary mt-1">Direct sales funnel value</p>
             </div>
           </Card>

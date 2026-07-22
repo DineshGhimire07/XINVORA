@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LucideIcon,
+  Globe,
 } from "lucide-react"
 
 interface SubItem {
@@ -62,6 +63,7 @@ const navItems: NavItem[] = [
   },
   { name: "Analytics", href: "/admin/cdp", icon: BarChart3 },
   { name: "Marketing", href: "/admin/marketing", icon: Megaphone },
+  { name: "SEO Center", href: "/admin/seo", icon: Globe },
   {
     name: "Content",
     icon: FileText,

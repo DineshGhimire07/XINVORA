@@ -2,11 +2,20 @@ import NextAuth from "next-auth"
 import { authConfig } from "./auth.config"
 import { NextResponse } from "next/server"
 import { PREVIEW_CONFIG } from "./config/preview"
+import { SEORedirectEngine } from "./domains/seo/engines/redirect.engine"
 
 const { auth } = NextAuth(authConfig)
 
 export default auth((req) => {
   const { nextUrl } = req
+
+  // Fast SEO Redirect Check
+  const redirectMatch = SEORedirectEngine.matchRedirect(nextUrl.pathname)
+  if (redirectMatch) {
+    const target = new URL(redirectMatch.targetUrl, nextUrl)
+    return NextResponse.redirect(target, { status: redirectMatch.statusCode || 301 })
+  }
+
   const isLoggedIn = !!req.auth
   const user = req.auth?.user
 

@@ -20,12 +20,13 @@ export default async function EditJournalPage({ params }: EditJournalPageProps) 
   await SessionService.requireAdmin()
   const resolvedParams = await params
 
-  const [post, categories, allProducts, allCollections, mediaItems] = await Promise.all([
+  const [post, categories, allProducts, allCollections, mediaItems, analytics] = await Promise.all([
     JournalRepository.findPostById(resolvedParams.id),
     JournalRepository.findAllCategories(),
     db.select({ id: products.id, name: products.name, slug: products.slug }).from(products).where(isNull(products.deletedAt)),
     db.select({ id: collections.id, name: collections.name, slug: collections.slug }).from(collections).where(isNull(collections.deletedAt)),
     db.select().from(mediaLibrary).where(isNull(mediaLibrary.deletedAt)).orderBy(desc(mediaLibrary.createdAt)),
+    JournalRepository.getAttributionAnalytics(resolvedParams.id),
   ])
 
   if (!post) {
@@ -35,6 +36,7 @@ export default async function EditJournalPage({ params }: EditJournalPageProps) 
   return (
     <JournalEditorClient
       post={post}
+      analytics={analytics}
       categories={categories}
       allProducts={allProducts}
       allCollections={allCollections}

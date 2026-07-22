@@ -3,6 +3,7 @@ import { journalPosts, journalCategories, journalTags, journalPostTags, journalR
 import { users } from "@/db/schema/users"
 import { userEvents } from "@/db/schema/user-events"
 import { products } from "@/db/schema/products"
+import { orders } from "@/db/schema/orders"
 import { eq, and, desc, sql, count, isNull, inArray, or, ilike, countDistinct } from "drizzle-orm"
 
 export class JournalRepository {
@@ -191,13 +192,16 @@ export class JournalRepository {
     const uniqueReaders = readersRes?.val || 0
 
     // 3. CTR & Purchases via Event Attributions
-    // We look at events where metadata->>'postId' equals the target postId
     const clickEvents = await db
       .select({ val: count() })
       .from(userEvents)
       .where(
         and(
-          eq(userEvents.eventType, "RECOMMENDATION_CLICK"),
+          or(
+            eq(userEvents.eventType, "RECOMMENDATION_CLICK"),
+            eq(userEvents.eventType, "PRODUCT_CLICK"),
+            eq(userEvents.eventType, "JOURNAL_PRODUCT_CLICK")
+          ),
           sql`${userEvents.payload}->>'postId' = ${postId}`
         )
       )
@@ -211,15 +215,43 @@ export class JournalRepository {
       .from(userEvents)
       .where(
         and(
-          eq(userEvents.eventType, "PAYMENT_SUCCESS"),
+          or(
+            eq(userEvents.eventType, "PAYMENT_SUCCESS"),
+            eq(userEvents.eventType, "ORDER_COMPLETED")
+          ),
           sql`${userEvents.payload}->>'postId' = ${postId}`
         )
       )
     const ordersCount = purchaseEvents[0]?.ordersCount || 0
 
+    let revenueGenerated = 0
+    if (ordersCount > 0) {
+      const attributedOrders = await db
+        .select({ orderId: userEvents.orderId })
+        .from(userEvents)
+        .where(
+          and(
+            or(
+              eq(userEvents.eventType, "PAYMENT_SUCCESS"),
+              eq(userEvents.eventType, "ORDER_COMPLETED")
+            ),
+            sql`${userEvents.payload}->>'postId' = ${postId}`
+          )
+        )
+      const orderIds = Array.from(new Set(attributedOrders.map((o) => o.orderId).filter(Boolean))) as string[]
+
+      if (orderIds.length > 0) {
+        const [revRes] = await db
+          .select({ total: sql<number>`coalesce(sum(${orders.total}), 0)` })
+          .from(orders)
+          .where(and(inArray(orders.id, orderIds), isNull(orders.deletedAt)))
+        revenueGenerated = Number(revRes?.total || 0)
+      }
+    }
+
     // Calculate CTR
-    const ctr = totalViews > 0 ? Number(((clicks / totalViews) * 100).toFixed(2)) : 0
-    const conversion = clicks > 0 ? Number(((ordersCount / clicks) * 100).toFixed(2)) : 0
+    const ctr = totalViews > 0 ? Number(((clicks / totalViews) * 100).toFixed(1)) : 0
+    const conversion = clicks > 0 ? Number(((ordersCount / clicks) * 100).toFixed(1)) : (totalViews > 0 ? Number(((ordersCount / totalViews) * 100).toFixed(1)) : 0)
 
     return {
       views: totalViews,
@@ -228,7 +260,7 @@ export class JournalRepository {
       ordersCount,
       ctr,
       conversion,
-      revenueGenerated: ordersCount * 14500, // Mock baseline pricing metric for Nepali store orders
+      revenueGenerated,
     }
   }
 }

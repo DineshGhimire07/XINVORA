@@ -39,14 +39,35 @@ export function parseAndVerifySignedCookie(cookieString?: string | null): Signed
   if (!cookieString) return null
 
   try {
-    const parsed: SignedCookiePayload = JSON.parse(cookieString)
+    let raw = cookieString
+    if (raw.startsWith("%7B") || raw.includes("%22") || raw.startsWith("%22")) {
+      try {
+        raw = decodeURIComponent(raw)
+      } catch (e) {}
+    }
+    // Remove surrounding quotes if cookie value was double-quoted in HTTP headers
+    if (raw.startsWith('"') && raw.endsWith('"')) {
+      raw = raw.slice(1, -1)
+    }
+
+    const parsed: SignedCookiePayload = JSON.parse(raw)
     if (!parsed || parsed.schema !== 1 || !parsed.signature) return null
 
-    // Extract signature and rebuild base payload
-    const { signature, ...basePayload } = parsed
+    // Extract signature and rebuild base payload with explicit key order
+    const basePayload = {
+      schema: parsed.schema,
+      policyVersion: parsed.policyVersion,
+      necessary: parsed.necessary,
+      analytics: Boolean(parsed.analytics),
+      marketing: Boolean(parsed.marketing),
+      personalization: Boolean(parsed.personalization),
+      timestamp: parsed.timestamp,
+      method: parsed.method,
+      source: parsed.source,
+    }
     const payloadString = JSON.stringify(basePayload)
 
-    const isValid = verifyHmacSignature(payloadString, signature)
+    const isValid = verifyHmacSignature(payloadString, parsed.signature)
     if (!isValid) {
       console.warn("[CookieConsent] Tampered or invalid signature detected on consent cookie.")
       return null
