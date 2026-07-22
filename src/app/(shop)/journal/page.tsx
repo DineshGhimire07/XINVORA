@@ -10,82 +10,62 @@ import { Container } from "@/components/shared/container"
 import { Stack } from "@/components/shared/stack"
 import { buildMetadata } from "@/lib/metadata"
 import Link from "next/link"
+import { JournalRepository } from "@/db/repositories/journal.repository"
 
 export const metadata = buildMetadata({
   title: "Journal",
   description: "Read XINVORA Stories. A collection of articles on craftsmanship, materials, seasonal editions, and quiet living.",
 })
 
-export interface JournalArticle {
-  id: string
-  title: string
-  slug: string
-  category: string
-  readTime: string
-  date: string
-  excerpt: string
-}
+export default async function JournalPage() {
+  const postsRes = await JournalRepository.searchPosts({ workflowState: "PUBLISHED", limit: 50 })
+  const posts = postsRes.items as any[]
 
-export const JOURNAL_DATA: JournalArticle[] = [
-  {
-    id: "story-1",
-    title: "Belgian Flax: Sourcing Pure Linen",
-    slug: "belgian-flax-sourcing-pure-linen",
-    category: "Materials",
-    readTime: "8 min read",
-    date: "May 24, 2026",
-    excerpt: "From wild fields to historical looms. Why long-staple linen remains the foundation of XINVORA's textile philosophy and quiet luxury drape.",
-  },
-  {
-    id: "story-2",
-    title: "The Art of Slow Tailoring",
-    slug: "the-art-of-slow-tailoring",
-    category: "Craft",
-    readTime: "6 min read",
-    date: "July 02, 2026",
-    excerpt: "How unstructured flax patterns and bound seams create clothing that moves naturally with the body, prioritizing ease and structural longevity.",
-  },
-  {
-    id: "story-3",
-    title: "Edition 01: Behind the Shapes",
-    slug: "edition-01-behind-the-shapes",
-    category: "Collections",
-    readTime: "4 min read",
-    date: "June 15, 2026",
-    excerpt: "A deep dive into the design studies, drape tests, and neutral palette selections that formed our first garments.",
-  },
-  {
-    id: "story-4",
-    title: "Kyoto Wood Kilns & Stoneware",
-    slug: "kyoto-wood-kilns-stoneware",
-    category: "Craft",
-    readTime: "7 min read",
-    date: "April 18, 2026",
-    excerpt: "An exploration of historical multi-chamber kilns in Kyoto where hand-thrown stoneware clays absorb natural ash glazes and surface markings.",
-  },
-  {
-    id: "story-5",
-    title: "Restructuring Domestic Spacing",
-    slug: "restructuring-domestic-spacing",
-    category: "Lifestyle",
-    readTime: "5 min read",
-    date: "March 10, 2026",
-    excerpt: "A quiet study on designing simple home layouts and corners to encourage daily focus, order, and physical calm.",
-  },
-  {
-    id: "story-6",
-    title: "The Patina of Solid Timber",
-    slug: "patina-of-solid-timber",
-    category: "Materials",
-    readTime: "4 min read",
-    date: "February 28, 2026",
-    excerpt: "Understanding wood oxidation and why we finish our oak console tables with dry matte oils to let natural timber breathe and age beautifully.",
-  },
-]
+  const getReadingTime = (post: any) => {
+    if (post.readingTimeOverride) return `${post.readingTimeOverride} min read`
+    let words = 0
+    const body = (post.body as any[]) || []
+    body.forEach(b => {
+      if (b.type === "paragraph" || b.type === "heading" || b.type === "quote") {
+        words += (b.data.text || b.data.content || "").split(/\s+/).filter(Boolean).length
+      }
+    })
+    return `${Math.max(1, Math.ceil(words / 200))} min read`
+  }
 
-export default function JournalPage() {
-  const featuredStory = JOURNAL_DATA[0] // Belgian Flax is the Featured Story
-  const standardStories = JOURNAL_DATA.slice(1) // Remaining 5 standard stories
+  const formatDate = (date: Date | null) => {
+    if (!date) return "July 2026"
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric"
+    })
+  }
+
+  if (posts.length === 0) {
+    return (
+      <main className="flex-1 bg-background pt-20 md:pt-28 pb-16">
+        <Container>
+          <Section id="journal-hero" padding="md" className="bg-background">
+            <Stack gap={6} className="max-w-[32rem] text-left">
+              <span className="text-overline text-accent tracking-overline uppercase select-none">
+                Journal
+              </span>
+              <h1 className="text-display-lg font-display text-text-primary leading-tight tracking-tight">
+                Stories behind thoughtful living.
+              </h1>
+              <p className="text-body-md text-text-secondary leading-relaxed mt-4 italic">
+                No published articles found. Check back soon for editorial releases.
+              </p>
+            </Stack>
+          </Section>
+        </Container>
+      </main>
+    )
+  }
+
+  const featuredStory = posts[0]
+  const standardStories = posts.slice(1)
 
   return (
     <main className="flex-1 bg-background pt-20 md:pt-28 pb-16">
@@ -137,7 +117,11 @@ export default function JournalPage() {
             <div className="lg:col-span-7 select-none">
               <Link href={`/journal/${featuredStory.slug}`} className="block group">
                 <div className="relative w-full aspect-video bg-surface border border-border rounded-sm overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/[0.01]" />
+                  {featuredStory.coverImage ? (
+                    <img src={featuredStory.coverImage} alt={featuredStory.title} className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-700" />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/[0.01]" />
+                  )}
                 </div>
               </Link>
             </div>
@@ -146,7 +130,7 @@ export default function JournalPage() {
               <Stack gap={6}>
                 <div className="flex flex-col gap-2">
                   <span className="text-[10px] font-bold tracking-[0.25em] text-accent uppercase select-none">
-                    Featured / {featuredStory.category}
+                    Featured / {featuredStory.category?.name || "Editorial"}
                   </span>
                   <Link href={`/journal/${featuredStory.slug}`} className="group">
                     <h2 className="text-[1.75rem] font-display text-text-primary group-hover:text-accent transition-colors duration-200 leading-tight">
@@ -154,7 +138,7 @@ export default function JournalPage() {
                     </h2>
                   </Link>
                   <span className="text-[10px] font-semibold tracking-widest text-text-secondary uppercase select-none">
-                    {featuredStory.readTime} &bull; {featuredStory.date}
+                    {getReadingTime(featuredStory)} &bull; {formatDate(featuredStory.publishedAt)}
                   </span>
                 </div>
                 <p className="text-body-sm text-text-secondary leading-relaxed text-pretty">
@@ -177,51 +161,56 @@ export default function JournalPage() {
       <hr className="max-w-site mx-auto border-border/40 my-4" />
 
       {/* 4. Editorial Grid */}
-      <Section id="journal-grid" padding="lg" className="bg-background">
-        <Container>
-          {/* Grid layout (Desktop: 3 columns, Tablet: 2 columns, Mobile: 1 column) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-            {standardStories.map((story) => (
-              <div key={story.id} className="group flex flex-col gap-4 text-left">
-                {/* Visual card placeholder */}
-                <Link href={`/journal/${story.slug}`} className="block select-none">
-                  <div className="relative w-full aspect-video bg-surface border border-border rounded-sm overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/[0.01]" />
-                  </div>
-                </Link>
-                
-                {/* Meta details */}
-                <Stack gap={3}>
-                  <div className="flex flex-col gap-2">
-                    <span className="text-[10px] font-semibold tracking-[0.2em] text-accent uppercase select-none">
-                      {story.category}
-                    </span>
-                    <Link href={`/journal/${story.slug}`}>
-                      <h3 className="text-body-md font-display font-bold text-text-primary group-hover:text-accent transition-colors duration-200 leading-snug">
-                        {story.title}
-                      </h3>
-                    </Link>
-                    <span className="text-[10px] font-semibold tracking-widest text-text-secondary uppercase select-none">
-                      {story.readTime}
-                    </span>
-                  </div>
-                  <p className="text-body-sm text-text-secondary leading-relaxed text-pretty">
-                    {story.excerpt}
-                  </p>
-                  <div>
-                    <Link 
-                      href={`/journal/${story.slug}`}
-                      className="text-[11px] font-semibold tracking-widest uppercase border-b border-text-primary/30 pb-0.5 hover:border-text-primary text-text-primary select-none cursor-pointer transition-colors duration-200"
-                    >
-                      Read Story &rarr;
-                    </Link>
-                  </div>
-                </Stack>
-              </div>
-            ))}
-          </div>
-        </Container>
-      </Section>
+      {standardStories.length > 0 && (
+        <Section id="journal-grid" padding="lg" className="bg-background">
+          <Container>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+              {standardStories.map((story) => (
+                <div key={story.id} className="group flex flex-col gap-4 text-left">
+                  {/* Visual card placeholder */}
+                  <Link href={`/journal/${story.slug}`} className="block select-none">
+                    <div className="relative w-full aspect-video bg-surface border border-border rounded-sm overflow-hidden">
+                      {story.coverImage ? (
+                        <img src={story.coverImage} alt={story.title} className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-700" />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/[0.01]" />
+                      )}
+                    </div>
+                  </Link>
+                  
+                  {/* Meta details */}
+                  <Stack gap={3}>
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[10px] font-semibold tracking-[0.2em] text-accent uppercase select-none">
+                        {story.category?.name || "Editorial"}
+                      </span>
+                      <Link href={`/journal/${story.slug}`}>
+                        <h3 className="text-body-md font-display font-bold text-text-primary group-hover:text-accent transition-colors duration-200 leading-snug">
+                          {story.title}
+                        </h3>
+                      </Link>
+                      <span className="text-[10px] font-semibold tracking-widest text-text-secondary uppercase select-none">
+                        {getReadingTime(story)} &bull; {formatDate(story.publishedAt)}
+                      </span>
+                    </div>
+                    <p className="text-body-sm text-text-secondary leading-relaxed text-pretty">
+                      {story.excerpt}
+                    </p>
+                    <div>
+                      <Link 
+                        href={`/journal/${story.slug}`}
+                        className="text-[11px] font-semibold tracking-widest uppercase border-b border-text-primary/30 pb-0.5 hover:border-text-primary text-text-primary select-none cursor-pointer transition-colors duration-200"
+                      >
+                        Read Story &rarr;
+                      </Link>
+                    </div>
+                  </Stack>
+                </div>
+              ))}
+            </div>
+          </Container>
+        </Section>
+      )}
 
       {/* 5. Understated Newsletter signature block */}
       <Section id="journal-newsletter" padding="xl" className="border-t border-border/20 bg-surface-elevated mt-12">

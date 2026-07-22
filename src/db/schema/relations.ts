@@ -25,6 +25,7 @@ import { orders } from "./orders"
 import { orderItems } from "./order-items"
 import { orderActivity } from "./order-activity"
 import { productOffSection } from "./product-off-section"
+import { journalCategories, journalTags, journalPostTags, journalPosts, journalRevisions, journalViews } from "./journal"
 export const collectionsRelations = relations(collections, ({ one, many }) => ({
   parent: one(collections, {
     fields: [collections.parentId],
@@ -280,6 +281,57 @@ export const productPairingsRelations = relations(productPairings, ({ one }) => 
     fields: [productPairings.pairedProductId],
     references: [products.id],
     relationName: "product_pairings_target",
+  }),
+}))
+
+export const journalCategoriesRelations = relations(journalCategories, ({ many }) => ({
+  posts: many(journalPosts),
+}))
+
+export const journalTagsRelations = relations(journalTags, ({ many }) => ({
+  postTags: many(journalPostTags),
+}))
+
+export const journalPostsRelations = relations(journalPosts, ({ one, many }) => ({
+  author: one(users, {
+    fields: [journalPosts.authorId],
+    references: [users.id],
+  }),
+  category: one(journalCategories, {
+    fields: [journalPosts.categoryId],
+    references: [journalCategories.id],
+  }),
+  postTags: many(journalPostTags),
+  revisions: many(journalRevisions),
+  views: many(journalViews),
+}))
+
+export const journalPostTagsRelations = relations(journalPostTags, ({ one }) => ({
+  post: one(journalPosts, {
+    fields: [journalPostTags.postId],
+    references: [journalPosts.id],
+  }),
+  tag: one(journalTags, {
+    fields: [journalPostTags.tagId],
+    references: [journalTags.id],
+  }),
+}))
+
+export const journalRevisionsRelations = relations(journalRevisions, ({ one }) => ({
+  post: one(journalPosts, {
+    fields: [journalRevisions.postId],
+    references: [journalPosts.id],
+  }),
+  changedBy: one(users, {
+    fields: [journalRevisions.changedById],
+    references: [users.id],
+  }),
+}))
+
+export const journalViewsRelations = relations(journalViews, ({ one }) => ({
+  post: one(journalPosts, {
+    fields: [journalViews.postId],
+    references: [journalPosts.id],
   }),
 }))
 

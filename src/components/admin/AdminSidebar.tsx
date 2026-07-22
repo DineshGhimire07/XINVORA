@@ -71,7 +71,7 @@ const navItems: NavItem[] = [
       { name: "All Content", href: "/admin/cms/pages" },
       { name: "Pages", href: "/admin/cms/pages" },
       { name: "Banners", href: "/admin/cms/banners" },
-      { name: "Blog Posts", href: "/admin/cms/posts" },
+      { name: "Journal", href: "/admin/content/journal" },
       { name: "Media Library", href: "/admin/cms/media" },
       { name: "Navigation", href: "/admin/cms/navigation" },
       { name: "FAQ", href: "/admin/cms/faq" },
