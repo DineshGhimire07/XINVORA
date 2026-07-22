@@ -13,7 +13,7 @@ import { BRAND } from "./brand"
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL ||
   (process.env.NODE_ENV === "production"
-    ? "https://xinvora.com"
+    ? "https://xinvora.com.np"
     : "http://localhost:3000")
 
 // ── Site Config ───────────────────────────────────────────────────────────────

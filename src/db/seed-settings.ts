@@ -18,9 +18,9 @@ const defaultSettings = [
   {
     key: "store_contact",
     value: {
-      supportEmail: "support@xinvora.com",
-      salesEmail: "sales@xinvora.com",
-      returnsEmail: "returns@xinvora.com",
+      supportEmail: "support@xinvora.com.np",
+      salesEmail: "sales@xinvora.com.np",
+      returnsEmail: "returns@xinvora.com.np",
       phone: "+977 9800000000",
       whatsapp: "+977 9800000000",
       officeHours: "Sun-Fri, 10:00 AM - 6:00 PM NPT",
@@ -116,7 +116,7 @@ const defaultSettings = [
       googleVerification: "",
       facebookVerification: "",
       robots: "index, follow",
-      canonical: "https://xinvora.com"
+      canonical: "https://xinvora.com.np"
     }
   },
   {

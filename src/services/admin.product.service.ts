@@ -238,12 +238,12 @@ export class AdminProductService {
       // Update variants & inventory for sizes if sizeStocks is passed
       if (sizeStocks) {
         // Resolve Default Price Book
-        let priceBook = await tx.select().from(priceBooks).where(eq(priceBooks.currency, "USD")).limit(1)
+        let priceBook = await tx.select().from(priceBooks).where(eq(priceBooks.currency, "NPR")).limit(1)
         let priceBookId
         if (priceBook.length === 0) {
           const [newPb] = await tx.insert(priceBooks).values({
-            name: "Default USD",
-            currency: "USD",
+            name: "Default NPR",
+            currency: "NPR",
             isDefault: true
           }).returning()
           priceBookId = newPb.id

@@ -9,6 +9,8 @@ import { SEOPerformanceTab } from "./components/SEOPerformanceTab"
 import { SEORedirectsTab } from "./components/SEORedirectsTab"
 import { SEOSearchConsoleTab } from "./components/SEOSearchConsoleTab"
 import { SEOSettingsTab } from "./components/SEOSettingsTab"
+import { SEOInternalLinksTab } from "./components/SEOInternalLinksTab"
+import { SEOCrawlGraphTab } from "./components/SEOCrawlGraphTab"
 import { SEOInspectorModal } from "./components/SEOInspectorModal"
 
 import {
@@ -19,6 +21,7 @@ import {
   saveSEOSettingsAction,
   getEntitySEOInspectionAction,
   getSEOContentEntitiesAction,
+  fixSEOIssueAction,
 } from "@/actions/admin/seo.actions"
 
 import {
@@ -30,7 +33,8 @@ import {
   ArrowRightLeft,
   Globe,
   Settings,
-  RefreshCw,
+  Link2,
+  GitCommit,
 } from "lucide-react"
 
 import { toast } from "sonner"
@@ -42,7 +46,16 @@ interface SEOWorkspaceClientProps {
 
 export function SEOWorkspaceClient({ initialOverview, initialEntities }: SEOWorkspaceClientProps) {
   const [activeTab, setActiveTab] = useState<
-    "overview" | "content" | "technical" | "monitoring" | "performance" | "redirects" | "search-console" | "settings"
+    | "overview"
+    | "content"
+    | "technical"
+    | "monitoring"
+    | "performance"
+    | "redirects"
+    | "search-console"
+    | "internal-links"
+    | "crawl-graph"
+    | "settings"
   >("overview")
 
   const [isPending, startTransition] = useTransition()
@@ -60,7 +73,6 @@ export function SEOWorkspaceClient({ initialOverview, initialEntities }: SEOWork
       const res = await runFullSiteAuditAction()
       if (res.success && res.data) {
         toast.success(`Full site audit completed! Scanned ${res.data.totalEntitiesScanned} entities.`)
-        // Refresh entities & overview
         const entRes = await getSEOContentEntitiesAction()
         if (entRes.success && entRes.data) setEntities(entRes.data)
       } else {
@@ -128,6 +140,19 @@ export function SEOWorkspaceClient({ initialOverview, initialEntities }: SEOWork
     })
   }
 
+  const handleFixIssue = async (issue: any) => {
+    startTransition(async () => {
+      const res = await fixSEOIssueAction(issue.id)
+      if (res.success) {
+        toast.success(res.message || "Issue resolved successfully!")
+        const entRes = await getSEOContentEntitiesAction()
+        if (entRes.success && entRes.data) setEntities(entRes.data)
+      } else {
+        toast.error(res.message || "Failed to fix issue")
+      }
+    })
+  }
+
   const tabs = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "content", label: "Content", icon: FileText },
@@ -136,6 +161,8 @@ export function SEOWorkspaceClient({ initialOverview, initialEntities }: SEOWork
     { id: "performance", label: "Performance", icon: Gauge },
     { id: "redirects", label: "Redirects", icon: ArrowRightLeft },
     { id: "search-console", label: "Search Console", icon: Globe },
+    { id: "internal-links", label: "Internal Links", icon: Link2 },
+    { id: "crawl-graph", label: "Crawl Graph", icon: GitCommit },
     { id: "settings", label: "Settings", icon: Settings },
   ]
 
@@ -192,7 +219,7 @@ export function SEOWorkspaceClient({ initialOverview, initialEntities }: SEOWork
         )}
 
         {activeTab === "monitoring" && (
-          <SEOMonitoringTab issues={overview?.issues?.open || []} onRunAudit={handleRunAudit} />
+          <SEOMonitoringTab issues={overview?.issues?.open || []} onRunAudit={handleRunAudit} onFixIssue={handleFixIssue} />
         )}
 
         {activeTab === "performance" && <SEOPerformanceTab />}
@@ -206,6 +233,10 @@ export function SEOWorkspaceClient({ initialOverview, initialEntities }: SEOWork
         )}
 
         {activeTab === "search-console" && <SEOSearchConsoleTab searchConsole={overview?.searchConsole} />}
+
+        {activeTab === "internal-links" && <SEOInternalLinksTab suggestions={overview?.internalLinks} />}
+
+        {activeTab === "crawl-graph" && <SEOCrawlGraphTab graphData={overview?.crawlGraph} />}
 
         {activeTab === "settings" && (
           <SEOSettingsTab settings={overview?.settings} onSaveSettings={handleSaveSettings} />

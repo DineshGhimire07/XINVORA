@@ -14,7 +14,7 @@ interface SEOTechnicalTabProps {
 export function SEOTechnicalTab({ settings, onSaveSettings }: SEOTechnicalTabProps) {
   const [subTab, setSubTab] = useState<"robots" | "sitemap" | "social" | "schema">("robots")
   const [robotsTxt, setRobotsTxt] = useState(
-    settings?.robotsDefaults || "User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /checkout/\n\nSitemap: https://xinvora.com/sitemap.xml"
+    settings?.robotsDefaults || "User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /checkout/\n\nSitemap: https://xinvora.com.np/sitemap.xml"
   )
 
   const handleSaveRobots = () => {
@@ -161,8 +161,8 @@ export function SEOTechnicalTab({ settings, onSaveSettings }: SEOTechnicalTabPro
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "XINVORA",
-    url: "https://xinvora.com",
-    logo: "https://xinvora.com/logo.png",
+    url: "https://xinvora.com.np",
+    logo: "https://xinvora.com.np/logo.png",
     sameAs: ["https://instagram.com/xinvora", "https://facebook.com/xinvora"],
   },
   null,

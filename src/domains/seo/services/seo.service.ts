@@ -10,13 +10,16 @@ import { SEOAuditEngine } from "../engines/audit.engine"
 
 export class SEOService {
   public static async getDashboardOverview() {
-    const [entities, issues, redirects, auditHistory, settings, gscData] = await Promise.all([
-      SEOReadRepository.getAllEntities(),
+    const entities = await SEOReadRepository.getAllEntities()
+
+    const [issues, redirects, auditHistory, settings, gscData, internalLinks, crawlGraph] = await Promise.all([
       SEOReadRepository.getIssues("OPEN"),
       SEOReadRepository.getRedirects(),
       SEOReadRepository.getAuditHistory(10),
       SEOReadRepository.getSEOSettings(),
       SEOReadRepository.getSearchConsoleAnalytics(),
+      SEOReadRepository.getInternalLinkSuggestions(entities),
+      SEOReadRepository.getCrawlGraph(entities),
     ])
 
     // Update redirect cache
@@ -61,6 +64,8 @@ export class SEOService {
       recentAuditHistory: auditHistory,
       settings,
       searchConsole: gscData,
+      internalLinks,
+      crawlGraph,
     }
   }
 
@@ -87,7 +92,7 @@ export class SEOService {
     if (!entity) return null
 
     const report = SEOScoreEngine.calculateEntityScore(entity)
-    const schema = SEOSchemaEngine.generateJSONLD("https://xinvora.com", entity)
+    const schema = SEOSchemaEngine.generateJSONLD("https://xinvora.com.np", entity)
 
     return {
       entity,
@@ -138,6 +143,18 @@ export class SEOService {
       }
     }
     return { updatedCount: count }
+  }
+
+  public static async fixSEOIssue(issueId: string) {
+    return await SEOWriteRepository.fixIssue(issueId)
+  }
+
+  public static async applySuggestedMetadata(entityType: string, entityId: string, seoTitle: string, seoDescription: string) {
+    await SEOWriteRepository.updateEntityMetadata(entityType, entityId, {
+      seoTitle,
+      seoDescription,
+    })
+    return { success: true }
   }
 
   public static async getRedirects() {

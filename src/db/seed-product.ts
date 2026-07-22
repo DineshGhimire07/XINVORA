@@ -106,14 +106,14 @@ async function seed() {
 
     // 6. Create Price Book and Entry
     const [priceBook] = await db.insert(priceBooks).values({
-      name: "Default USD",
-      currency: "USD",
+      name: "Default NPR",
+      currency: "NPR",
       isDefault: true,
     }).onConflictDoNothing().returning()
     
     let priceBookId = priceBook?.id
     if (!priceBookId) {
-      const pb = await db.select().from(priceBooks).where(eq(priceBooks.name, "Default USD")).limit(1)
+      const pb = await db.select().from(priceBooks).where(eq(priceBooks.name, "Default NPR")).limit(1)
       priceBookId = pb[0].id
     }
 

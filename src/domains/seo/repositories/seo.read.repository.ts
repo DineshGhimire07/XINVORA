@@ -5,6 +5,10 @@ import { productSEOAdapter } from "../adapters/product.adapter"
 import { collectionSEOAdapter } from "../adapters/collection.adapter"
 import { journalSEOAdapter } from "../adapters/journal.adapter"
 import { cmsPageSEOAdapter } from "../adapters/cms.adapter"
+import { SEOInternalLinkEngine, type InternalLinkSuggestion } from "../engines/internal-link.engine"
+import { SEOCrawlGraphEngine, type CrawlGraphReport } from "../engines/crawl-graph.engine"
+import { GSCIntentEngine } from "../engines/gsc-intent.engine"
+import { GSCOpportunityEngine } from "../engines/gsc-opportunities.engine"
 import type { NormalizedSEOEntity } from "../contracts/entity.contract"
 
 export class SEOReadRepository {
@@ -116,7 +120,7 @@ export class SEOReadRepository {
       organizationName: "XINVORA",
       organizationLogo: "/logo.png",
       websiteName: "XINVORA Storefront",
-      robotsDefaults: "User-agent: *\nAllow: /\nDisallow: /admin/\nSitemap: https://xinvora.com/sitemap.xml",
+      robotsDefaults: "User-agent: *\nAllow: /\nDisallow: /admin/\nSitemap: https://xinvora.com.np/sitemap.xml",
       canonicalRules: "ENFORCE_HTTPS_LOWERCASE",
       gscPropertyUrl: "",
       gscConnected: false,
@@ -157,7 +161,6 @@ export class SEOReadRepository {
     try {
       const settings = await this.getSEOSettings()
 
-      // 1. Aggregate real user search queries
       const topQueries = await db
         .select({
           query: searchQueries.query,
@@ -171,17 +174,14 @@ export class SEOReadRepository {
         .limit(10)
         .catch(() => [])
 
-      // 2. Fetch total search volume
       const totalSearchesResult = await db.select({ total: count() }).from(searchQueries).catch(() => [{ total: 0 }])
       const totalSearches = Number(totalSearchesResult[0]?.total || 0)
 
-      // 3. Fetch total event impressions
       const totalEventsResult = await db.select({ total: count() }).from(userEvents).catch(() => [{ total: 0 }])
       const totalEvents = Number(totalEventsResult[0]?.total || 0)
 
       const totalImpressions = totalEvents + totalSearches * 4
 
-      // 4. Calculate total clicks
       const totalClicksResult = await db
         .select({ totalClicks: count() })
         .from(searchQueries)
@@ -196,14 +196,25 @@ export class SEOReadRepository {
         const qClicks = Number(q.clicks) || 0
         const qImpressions = qCount * 6 + 10
         const qCtr = qImpressions > 0 ? ((qClicks / qImpressions) * 100).toFixed(1) : "0.0"
+        const intent = GSCIntentEngine.classifySearchIntent(q.query)
         return {
           query: q.query,
           clicks: qClicks,
           impressions: qImpressions,
           ctr: `${qCtr}%`,
           position: (idx * 0.8 + 1.2).toFixed(1),
+          intent,
         }
       })
+
+      const intentBreakdown = {
+        commercial: formattedQueries.filter((q) => q.intent === "COMMERCIAL").length,
+        informational: formattedQueries.filter((q) => q.intent === "INFORMATIONAL").length,
+        navigational: formattedQueries.filter((q) => q.intent === "NAVIGATIONAL").length,
+      }
+
+      const keywordClusters = GSCIntentEngine.clusterKeywords(formattedQueries)
+      const opportunities = GSCOpportunityEngine.detectOpportunities(formattedQueries)
 
       return {
         organicClicks,
@@ -211,6 +222,9 @@ export class SEOReadRepository {
         ctr: `${ctrVal}%`,
         averagePosition: formattedQueries.length > 0 ? "2.4" : "0.0",
         topQueries: formattedQueries,
+        intentBreakdown,
+        keywordClusters,
+        opportunities,
         gscPropertyUrl: settings.gscPropertyUrl || "",
         gscConnected: Boolean(settings.gscConnected),
       }
@@ -222,8 +236,50 @@ export class SEOReadRepository {
         ctr: "0.0%",
         averagePosition: "0.0",
         topQueries: [],
+        intentBreakdown: { commercial: 0, informational: 0, navigational: 0 },
+        keywordClusters: [],
+        opportunities: [],
         gscPropertyUrl: "",
         gscConnected: false,
+      }
+    }
+  }
+
+  public static async getInternalLinkSuggestions(prefetchedEntities?: NormalizedSEOEntity[]): Promise<InternalLinkSuggestion[]> {
+    try {
+      const allEntities = prefetchedEntities || (await this.getAllEntities())
+      const suggestions: InternalLinkSuggestion[] = []
+
+      for (const entity of allEntities) {
+        const contentStr = JSON.stringify(entity.raw || {})
+        const found = SEOInternalLinkEngine.analyzeContentForLinks(contentStr, allEntities, entity.id)
+        found.forEach((item) => {
+          suggestions.push({
+            ...item,
+            entityId: `${entity.id}_${item.entityId}`,
+            contextSnippet: `Mentioned in ${entity.entityType} '${entity.name}'`,
+          })
+        })
+      }
+
+      return suggestions.slice(0, 20)
+    } catch (err) {
+      console.error("[SEOReadRepository.getInternalLinkSuggestions] Error:", err)
+      return []
+    }
+  }
+
+  public static async getCrawlGraph(prefetchedEntities?: NormalizedSEOEntity[]): Promise<CrawlGraphReport> {
+    try {
+      const allEntities = prefetchedEntities || (await this.getAllEntities())
+      return SEOCrawlGraphEngine.buildCrawlGraph(allEntities)
+    } catch (err) {
+      console.error("[SEOReadRepository.getCrawlGraph] Error:", err)
+      return {
+        totalNodes: 0,
+        orphanNodesCount: 0,
+        nodes: [],
+        orphanNodes: [],
       }
     }
   }

@@ -128,3 +128,25 @@ export async function connectGSCPropertyAction(propertyUrl: string) {
     return { success: false, error: error.message || "Failed to connect GSC property" }
   }
 }
+
+export async function fixSEOIssueAction(issueId: string) {
+  try {
+    await SessionService.requireAdmin()
+    const result = await SEOService.fixSEOIssue(issueId)
+    revalidatePath("/admin/seo")
+    return result
+  } catch (error: any) {
+    return { success: false, message: error.message || "Failed to fix issue" }
+  }
+}
+
+export async function applySuggestedSEOAction(entityType: string, entityId: string, seoTitle: string, seoDescription: string) {
+  try {
+    await SessionService.requireAdmin()
+    await SEOService.applySuggestedMetadata(entityType, entityId, seoTitle, seoDescription)
+    revalidatePath("/admin/seo")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to apply suggested metadata" }
+  }
+}

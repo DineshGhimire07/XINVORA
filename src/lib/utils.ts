@@ -39,8 +39,8 @@ export function formatCurrency(amount: number): string {
  */
 export function formatPrice(
   amount: number,
-  currency: string = "USD",
-  locale: string = "en-US"
+  currency: string = "NPR",
+  locale: string = "en-NP"
 ): string {
   return new Intl.NumberFormat(locale, {
     style: "currency",

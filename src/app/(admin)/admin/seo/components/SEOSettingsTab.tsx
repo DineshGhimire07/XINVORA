@@ -21,7 +21,7 @@ export function SEOSettingsTab({ settings, onSaveSettings }: SEOSettingsTabProps
     organizationName: settings?.organizationName || "XINVORA",
     organizationLogo: settings?.organizationLogo || "/logo.png",
     websiteName: settings?.websiteName || "XINVORA Storefront",
-    robotsDefaults: settings?.robotsDefaults || "User-agent: *\nAllow: /\nDisallow: /admin/\nSitemap: https://xinvora.com/sitemap.xml",
+    robotsDefaults: settings?.robotsDefaults || "User-agent: *\nAllow: /\nDisallow: /admin/\nSitemap: https://xinvora.com.np/sitemap.xml",
     canonicalRules: settings?.canonicalRules || "ENFORCE_HTTPS_LOWERCASE",
   })
 

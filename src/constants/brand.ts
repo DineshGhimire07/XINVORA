@@ -50,9 +50,9 @@ export const SOCIAL_LINKS: SocialLink[] = [
 
 // ── Contact ───────────────────────────────────────────────────────────────────
 export const BRAND_CONTACT = {
-  email: "hello@xinvora.com",
-  supportEmail: "support@xinvora.com",
-  pressEmail: "press@xinvora.com",
+  email: "hello@xinvora.com.np",
+  supportEmail: "support@xinvora.com.np",
+  pressEmail: "press@xinvora.com.np",
 } as const
 
 // ── Copyright ─────────────────────────────────────────────────────────────────

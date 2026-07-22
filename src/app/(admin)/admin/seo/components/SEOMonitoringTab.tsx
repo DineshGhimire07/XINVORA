@@ -1,19 +1,33 @@
 "use client"
 
 import React, { useState } from "react"
-import { AlertTriangle, CheckCircle2, RefreshCw, ShieldAlert, Wrench } from "lucide-react"
+import { AlertTriangle, CheckCircle2, RefreshCw, ShieldAlert, Wrench, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { toast } from "sonner"
 
 interface SEOMonitoringTabProps {
   issues: any[]
   onRunAudit: () => void
+  onFixIssue?: (issue: any) => void
 }
 
-export function SEOMonitoringTab({ issues = [], onRunAudit }: SEOMonitoringTabProps) {
+export function SEOMonitoringTab({ issues = [], onRunAudit, onFixIssue }: SEOMonitoringTabProps) {
   const [severityFilter, setSeverityFilter] = useState<string>("ALL")
+  const [fixingIds, setFixingIds] = useState<string[]>([])
 
   const filtered = issues.filter((i) => severityFilter === "ALL" || i.severity === severityFilter)
+
+  const handleFixClick = async (issue: any) => {
+    setFixingIds((prev) => [...prev, issue.id])
+    try {
+      if (onFixIssue) {
+        await onFixIssue(issue)
+      }
+    } finally {
+      setFixingIds((prev) => prev.filter((x) => x !== issue.id))
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -71,46 +85,63 @@ export function SEOMonitoringTab({ issues = [], onRunAudit }: SEOMonitoringTabPr
                   </td>
                 </tr>
               ) : (
-                filtered.map((issue) => (
-                  <tr key={issue.id} className="hover:bg-surface-secondary/30 transition-colors">
-                    <td className="py-4 px-6">
-                      <span
-                        className={`text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full border ${
-                          issue.severity === "HIGH"
-                            ? "bg-red-500/10 text-red-700 border-red-500/20"
-                            : issue.severity === "MEDIUM"
-                            ? "bg-amber-500/10 text-amber-700 border-amber-500/20"
-                            : "bg-blue-500/10 text-blue-700 border-blue-500/20"
-                        }`}
-                      >
-                        {issue.severity}
-                      </span>
-                    </td>
+                filtered.map((issue) => {
+                  const isFixing = fixingIds.includes(issue.id)
+                  return (
+                    <tr key={issue.id} className="hover:bg-surface-secondary/30 transition-colors">
+                      <td className="py-4 px-6">
+                        <span
+                          className={`text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full border ${
+                            issue.severity === "HIGH"
+                              ? "bg-red-500/10 text-red-700 border-red-500/20"
+                              : issue.severity === "MEDIUM"
+                              ? "bg-amber-500/10 text-amber-700 border-amber-500/20"
+                              : "bg-blue-500/10 text-blue-700 border-blue-500/20"
+                          }`}
+                        >
+                          {issue.severity}
+                        </span>
+                      </td>
 
-                    <td className="py-4 px-6">
-                      <div className="font-semibold text-text-primary">{issue.message}</div>
-                      <div className="text-[10px] font-mono text-text-secondary mt-0.5">Rule ID: {issue.ruleId}</div>
-                    </td>
+                      <td className="py-4 px-6">
+                        <div className="font-semibold text-text-primary">{issue.message}</div>
+                        <div className="text-[10px] font-mono text-text-secondary mt-0.5">Rule ID: {issue.ruleId}</div>
+                      </td>
 
-                    <td className="py-4 px-4">
-                      <span className="text-[9px] font-bold tracking-widest uppercase bg-surface-secondary px-2 py-0.5 rounded text-text-secondary border border-border/40">
-                        {issue.entityType}
-                      </span>
-                    </td>
+                      <td className="py-4 px-4">
+                        <span className="text-[9px] font-bold tracking-widest uppercase bg-surface-secondary px-2 py-0.5 rounded text-text-secondary border border-border/40">
+                          {issue.entityType}
+                        </span>
+                      </td>
 
-                    <td className="py-4 px-4">
-                      <span className="text-[10px] font-semibold text-text-secondary uppercase">{issue.category}</span>
-                    </td>
+                      <td className="py-4 px-4">
+                        <span className="text-[10px] font-semibold text-text-secondary uppercase">{issue.category}</span>
+                      </td>
 
-                    <td className="py-4 px-6 text-body-xs text-text-secondary italic max-w-xs">{issue.impact}</td>
+                      <td className="py-4 px-6 text-body-xs text-text-secondary italic max-w-xs">{issue.impact}</td>
 
-                    <td className="py-4 px-6 text-right">
-                      <Button variant="outline" size="sm" className="h-8 text-xs font-bold uppercase tracking-wider border-border/80">
-                        <Wrench size={13} className="mr-1" /> Fix Issue
-                      </Button>
-                    </td>
-                  </tr>
-                ))
+                      <td className="py-4 px-6 text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isFixing}
+                          onClick={() => handleFixClick(issue)}
+                          className="h-8 text-xs font-bold uppercase tracking-wider border-border/80 hover:bg-accent hover:text-white transition-colors"
+                        >
+                          {isFixing ? (
+                            <>
+                              <RefreshCw size={13} className="mr-1 animate-spin" /> Fixing...
+                            </>
+                          ) : (
+                            <>
+                              <Wrench size={13} className="mr-1" /> Fix Issue
+                            </>
+                          )}
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>

@@ -6,7 +6,7 @@ export const carts = pgTable("carts", {
   id: uuid("id").defaultRandom().primaryKey(),
   sessionId: varchar("session_id", { length: 255 }), // Anonymous cart
   userId: uuid("user_id").references(() => users.id),
-  currency: currencyEnum("currency").default("USD").notNull(),
+  currency: currencyEnum("currency").default("NPR").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
