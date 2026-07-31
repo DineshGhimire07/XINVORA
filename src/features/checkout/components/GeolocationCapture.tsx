@@ -31,13 +31,35 @@ export function GeolocationCapture({ onCapture, onClear, latitude, longitude }: 
     }
   }
 
+  const fallbackIpLocation = async (): Promise<boolean> => {
+    try {
+      const res = await fetch("https://ipwho.is/")
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success && data.latitude && data.longitude) {
+          const lat = data.latitude
+          const lng = data.longitude
+          const city = data.city || data.region || "Estimated Area"
+          onCapture(lat, lng)
+          setAddressLabel(`City Area (${city})`)
+          setState("success")
+          return true
+        }
+      }
+    } catch {
+      // Ignore IP fallback error
+    }
+    return false
+  }
+
   const handleCapture = useCallback(async () => {
+    setState("requesting")
+
     if (!("geolocation" in navigator)) {
-      setState("error")
+      const ipOk = await fallbackIpLocation()
+      if (!ipOk) setState("error")
       return
     }
-
-    setState("requesting")
 
     const successCallback = (position: GeolocationPosition) => {
       const lat = position.coords.latitude
@@ -50,15 +72,20 @@ export function GeolocationCapture({ onCapture, onClear, latitude, longitude }: 
     // Tier 1: Try GPS high accuracy with 4s timeout
     navigator.geolocation.getCurrentPosition(
       successCallback,
-      (err) => {
+      async (err) => {
         if (err.code === err.PERMISSION_DENIED) {
-          setState("denied")
+          // Automatic IP Geolocation fallback when browser permission is denied
+          const ipOk = await fallbackIpLocation()
+          if (!ipOk) setState("denied")
           return
         }
-        // Tier 2 Fallback: Standard Wi-Fi / Network positioning (works instantly on desktop & laptops)
+        // Tier 2 Fallback: Standard Wi-Fi / Network positioning
         navigator.geolocation.getCurrentPosition(
           successCallback,
-          () => setState("error"),
+          async () => {
+            const ipOk = await fallbackIpLocation()
+            if (!ipOk) setState("error")
+          },
           { timeout: 8000, enableHighAccuracy: false, maximumAge: 60000 }
         )
       },
@@ -117,7 +144,7 @@ export function GeolocationCapture({ onCapture, onClear, latitude, longitude }: 
           <button
             type="button"
             onClick={handleClear}
-            className="p-1 rounded. hover:bg-emerald-200/60 transition-colors"
+            className="p-1 rounded hover:bg-emerald-200/60 transition-colors"
             aria-label="Remove location"
           >
             <X className="w-4 h-4 text-emerald-700" />
@@ -126,30 +153,38 @@ export function GeolocationCapture({ onCapture, onClear, latitude, longitude }: 
       )}
 
       {state === "denied" && (
-        <div className="px-5 py-3 rounded-xl border border-amber-200 bg-amber-50/60">
-          <p className="text-sm font-medium text-amber-900 mb-0.5">Location permission denied by browser.</p>
-          <p className="text-xs text-amber-700">
-            No problem! Your entered address details are sufficient for delivery.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-3 rounded-xl border border-[#E8DED2] bg-[#FAF8F5]">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium text-[#1E1E1E]">Browser location permission blocked.</p>
+            <p className="text-xs text-[#777777]">Your typed address above will be used for courier delivery.</p>
+          </div>
           <button
             type="button"
-            onClick={handleCapture}
-            className="mt-2 text-xs font-semibold text-amber-800 underline hover:no-underline"
+            onClick={async () => {
+              setState("requesting")
+              const ipOk = await fallbackIpLocation()
+              if (!ipOk) setState("denied")
+            }}
+            className="text-xs font-bold text-[#B89563] underline shrink-0 hover:text-[#1E1E1E]"
           >
-            Try again
+            Auto-Estimate via IP
           </button>
         </div>
       )}
 
       {state === "error" && (
-        <div className="px-5 py-3 rounded-xl border border-[#E8DED2] bg-[#FAF8F5]">
-          <p className="text-sm text-[#1E1E1E]">Location detection timed out. Your address details above are sufficient.</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-3 rounded-xl border border-[#E8DED2] bg-[#FAF8F5]">
+          <p className="text-sm text-[#1E1E1E]">Location detection timed out.</p>
           <button
             type="button"
-            onClick={handleCapture}
-            className="mt-1 text-xs text-[#B89563] font-semibold underline hover:no-underline"
+            onClick={async () => {
+              setState("requesting")
+              const ipOk = await fallbackIpLocation()
+              if (!ipOk) setState("error")
+            }}
+            className="text-xs font-bold text-[#B89563] underline shrink-0 hover:text-[#1E1E1E]"
           >
-            Retry location capture
+            Auto-Estimate via IP
           </button>
         </div>
       )}
