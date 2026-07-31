@@ -22,7 +22,8 @@ import {
   MessageSquare,
   AlertTriangle,
   Smartphone,
-  Monitor
+  Monitor,
+  ExternalLink
 } from "lucide-react"
 
 interface OrderDetailClientProps {
@@ -460,6 +461,24 @@ export function OrderDetailWorkspace({ order, totalOrders, sessionInfo }: OrderD
                   <p className="font-semibold text-admin-sm text-admin-text-primary">{fullName}</p>
                   <div className="space-y-0.5">{getDetailedAddress()}</div>
                   <p className="text-admin-xs text-admin-text-secondary mt-1">{phone}</p>
+
+                  {addr.latitude && addr.longitude && (
+                    <div className="pt-3 border-t border-admin-border/60 mt-3 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-admin-xs text-admin-accent">
+                        <MapPin className="h-3.5 w-3.5 shrink-0" />
+                        <span className="font-mono text-[11px]">{addr.latitude.toFixed(5)}, {addr.longitude.toFixed(5)}</span>
+                      </div>
+                      <a
+                        href={`https://www.google.com/maps?q=${addr.latitude},${addr.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-admin-xs font-semibold text-admin-accent hover:underline flex items-center gap-1 bg-admin-accent/10 px-2.5 py-1 rounded-admin-sm"
+                      >
+                        <span>Open in Google Maps</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
 

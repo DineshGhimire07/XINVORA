@@ -1,7 +1,5 @@
-"use client"
-
 import React, { useState } from "react"
-import { ChevronLeft, Loader2, CreditCard, Banknote, UploadCloud } from "lucide-react"
+import { ChevronLeft, Loader2, CreditCard, Banknote, UploadCloud, CheckCircle2, X } from "lucide-react"
 import { submitCheckoutAction } from "@/actions/checkout.actions"
 import { uploadCustomerLocalFileAction } from "@/actions/customer.media.actions"
 import { useRouter } from "next/navigation"
@@ -11,8 +9,27 @@ export function PaymentStep({ addressData, totals, paymentQrs, onBack }: any) {
   const router = useRouter()
   const [method, setMethod] = useState<"COD" | "ESEWA">("COD")
   const [file, setFile] = useState<File | null>(null)
+  const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0] || null
+    setFile(selectedFile)
+    if (selectedFile) {
+      const url = URL.createObjectURL(selectedFile)
+      setFilePreviewUrl(url)
+    } else {
+      setFilePreviewUrl(null)
+    }
+  }
+
+  const handleRemoveFile = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setFile(null)
+    setFilePreviewUrl(null)
+  }
 
   const handleSubmit = async () => {
     setIsSubmitting(true)
@@ -121,14 +138,35 @@ export function PaymentStep({ addressData, totals, paymentQrs, onBack }: any) {
                   <label className="w-full">
                     <span className="block text-sm font-medium text-text-secondary mb-2">Upload Payment Screenshot</span>
                     <div className="flex items-center justify-center w-full">
-                      <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer bg-surface-secondary hover:bg-surface transition-colors">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <UploadCloud className="w-8 h-8 text-text-tertiary mb-2" />
-                          <p className="mb-2 text-sm text-text-secondary"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                          <p className="text-xs text-text-tertiary">{file ? file.name : 'PNG, JPG or JPEG (Max: 5MB)'}</p>
+                      {file && filePreviewUrl ? (
+                        <div className="flex flex-col items-center justify-center p-4 border-2 border-emerald-600/30 rounded-lg bg-emerald-50/20 w-full relative">
+                          <div className="relative w-36 h-36 rounded-md overflow-hidden border border-[#E8DED2] shadow-sm mb-3 bg-white">
+                            <img src={filePreviewUrl} alt="Uploaded Payment Screenshot" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-800 mb-1">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            <span>Payment Screenshot Uploaded</span>
+                          </div>
+                          <p className="text-xs text-[#777777] max-w-[240px] truncate">{file.name}</p>
+                          <button
+                            type="button"
+                            onClick={handleRemoveFile}
+                            className="mt-3 inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-800 font-medium transition-colors cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            <span>Remove & re-upload</span>
+                          </button>
                         </div>
-                        <input id="dropzone-file" type="file" className="hidden" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-                      </label>
+                      ) : (
+                        <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-[#E8DED2] rounded-lg cursor-pointer bg-[#FAF9F6] hover:bg-white hover:border-[#B89563] transition-all">
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <UploadCloud className="w-8 h-8 text-[#9A9087] mb-2" />
+                            <p className="mb-1 text-xs font-medium text-[#1E1E1E]"><span className="font-semibold text-[#B89563]">Click to upload</span> or drag and drop</p>
+                            <p className="text-[11px] text-[#777777]">PNG, JPG or JPEG (Max: 5MB)</p>
+                          </div>
+                          <input id="dropzone-file" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                        </label>
+                      )}
                     </div>
                   </label>
                 </div>
@@ -148,10 +186,10 @@ export function PaymentStep({ addressData, totals, paymentQrs, onBack }: any) {
             onClick={handleSubmit}
             disabled={isSubmitting || (method === "ESEWA" && !file)}
             className={cn(
-              "w-full h-14 rounded-lg font-semibold text-sm uppercase tracking-widest transition-all duration-300",
-              "bg-text-primary text-white hover:bg-ink",
-              "shadow-lg hover:shadow-xl active:scale-[0.98]",
-              (isSubmitting || (method === "ESEWA" && !file)) && "opacity-60 cursor-not-allowed scale-100"
+              "w-full h-[54px] rounded font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300",
+              "bg-[#1E1E1E] text-white hover:bg-[#B89563] hover:-translate-y-0.5 shadow-sm",
+              "flex items-center justify-center gap-2",
+              (isSubmitting || (method === "ESEWA" && !file)) && "opacity-60 cursor-not-allowed transform-none"
             )}
           >
             {isSubmitting ? (
@@ -161,6 +199,14 @@ export function PaymentStep({ addressData, totals, paymentQrs, onBack }: any) {
               </div>
             ) : method === "ESEWA" ? "Submit Proof & Confirm Order" : "Confirm Order"}
           </button>
+
+          {/* Editorial Brand Story Card */}
+          <div className="mt-8 p-6 bg-white border border-[#E8DED2] rounded-lg space-y-2">
+            <span className="text-[10px] font-bold tracking-[0.25em] text-[#B89563] uppercase">The XINVORA Promise</span>
+            <p className="text-xs text-[#777777] leading-relaxed font-light">
+              "Every XINVORA piece is carefully curated and quality checked before dispatch. Our goal isn't to sell more clothes. It's to help you discover pieces you'll genuinely love."
+            </p>
+          </div>
         </div>
       </div>
     </div>

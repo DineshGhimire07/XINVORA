@@ -117,6 +117,61 @@ export function ProductVariantSelector({
   const handleSizeSelect = (sizeId: string) => {
     setSelectedSizeId(sizeId)
     setValidationError(null)
+    router.prefetch("/checkout")
+  }
+
+  // Auto-select single size on mount
+  useEffect(() => {
+    if (sizes.length === 1 && !selectedSizeId) {
+      setSelectedSizeId(sizes[0].id)
+      router.prefetch("/checkout")
+    }
+  }, [sizes, selectedSizeId, router])
+
+  const handleUnselectedAction = (actionType: "cart" | "buy") => {
+    const availableSize =
+      sizes.find((s) => {
+        const v = variants.find(
+          (variant) =>
+            variant.size?.id === s.id && (selectedColorId ? variant.color?.id === selectedColorId : true)
+        )
+        return v && v.inventory && v.inventory.quantity > 0
+      }) ||
+      sizes.find((s) => {
+        const v = variants.find((variant) => variant.size?.id === s.id)
+        return v && v.inventory && v.inventory.quantity > 0
+      }) ||
+      sizes[0]
+
+    if (availableSize) {
+      setSelectedSizeId(availableSize.id)
+      setValidationError(null)
+      router.prefetch("/checkout")
+
+      const targetVariant =
+        variants.find(
+          (v) =>
+            (v.color && selectedColorId ? v.color.id === selectedColorId : true) &&
+            (v.size ? v.size.id === availableSize.id : true)
+        ) || variants[0]
+
+      if (targetVariant) {
+        startTransition(async () => {
+          const formData = new FormData()
+          formData.append("variantId", targetVariant.id)
+          formData.append("quantity", "1")
+          const res = await addToCartAction(null, formData)
+          if (res.success) {
+            window.dispatchEvent(new Event("cart-updated"))
+            if (actionType === "buy") {
+              router.push("/checkout")
+            }
+          }
+        })
+      }
+    } else {
+      setValidationError("Please select a size above.")
+    }
   }
 
   useEffect(() => {
@@ -370,12 +425,13 @@ export function ProductVariantSelector({
                   <Button 
                     variant="primary" 
                     size="lg" 
+                    disabled={isPending}
                     className="w-full bg-text-primary border-text-primary text-surface hover:bg-text-primary/90 hover:border-text-primary/90 active:scale-[0.98] transition-all duration-300"
-                    onClick={() => setValidationError("Please select a size first.")}
+                    onClick={() => handleUnselectedAction("cart")}
                   >
                     <span className="flex items-center justify-center gap-2">
                       <ShoppingBag className="w-4 h-4" />
-                      Add to Bag
+                      {isPending ? "Adding…" : "Add to Bag"}
                     </span>
                   </Button>
                 )}
@@ -409,10 +465,11 @@ export function ProductVariantSelector({
                 <Button 
                   variant="outline" 
                   size="lg" 
+                  disabled={isPending}
                   className="w-full h-12 text-black border-black/20 hover:border-black/50 hover:bg-neutral-50 transition-colors uppercase tracking-widest text-[11px]"
-                  onClick={() => setValidationError("Please select a size first.")}
+                  onClick={() => handleUnselectedAction("buy")}
                 >
-                  Buy Now
+                  {isPending ? "Processing…" : "Buy Now"}
                 </Button>
               )}
             </div>

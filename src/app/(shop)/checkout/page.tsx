@@ -17,6 +17,8 @@ export const metadata = buildMetadata({
   description: "Complete your order with secure delivery to anywhere in Nepal.",
 })
 
+import { getPaymentQrsAction } from "@/actions/checkout.actions"
+
 // ── Tier B: Non-blocking data loaded in a Suspense boundary ──────────────────
 async function CheckoutFlowWithData({
   sessionId,
@@ -25,8 +27,8 @@ async function CheckoutFlowWithData({
   sessionId: string
   totals: any
 }) {
-  // Tier B fetches — provinces + saved address in parallel (no paymentQrs — deferred to step 2)
-  const [provinces, savedAddress] = await Promise.all([
+  // Tier B fetches — provinces + saved address + payment QRs all in parallel for instant step-2 transition
+  const [provinces, savedAddress, paymentQrsRes] = await Promise.all([
     getProvinces(),
     db.query.addresses.findFirst({
       where: eq(addresses.userId, sessionId),
@@ -37,21 +39,25 @@ async function CheckoutFlowWithData({
         municipality: true,
       },
     }),
+    getPaymentQrsAction(),
   ])
 
-  // Part 2: Pre-fetch districts/municipalities for saved address so the cascade
-  // renders immediately without a client-side fetch waterfall
+  const initialPaymentQrs = paymentQrsRes.success ? paymentQrsRes.data : null
+
+  // Pre-fetch districts/municipalities for saved address or default Bagmati province
   let initialDistricts: any[] = []
   let initialMunicipalities: any[] = []
 
-  if (savedAddress?.provinceId && savedAddress?.districtId) {
-    // Both are independent once we have the IDs — run in parallel
-    ;[initialDistricts, initialMunicipalities] = await Promise.all([
-      getDistrictsByProvince(savedAddress.provinceId),
-      getMunicipalitiesByDistrict(savedAddress.districtId),
-    ])
-  } else if (savedAddress?.provinceId) {
-    initialDistricts = await getDistrictsByProvince(savedAddress.provinceId)
+  const targetProvinceId = savedAddress?.provinceId || provinces.find((p) => p.name.includes("Bagmati"))?.id || provinces[0]?.id
+  if (targetProvinceId) {
+    if (savedAddress?.districtId) {
+      ;[initialDistricts, initialMunicipalities] = await Promise.all([
+        getDistrictsByProvince(targetProvinceId),
+        getMunicipalitiesByDistrict(savedAddress.districtId),
+      ])
+    } else {
+      initialDistricts = await getDistrictsByProvince(targetProvinceId)
+    }
   }
 
   return (
@@ -61,6 +67,7 @@ async function CheckoutFlowWithData({
       totals={totals}
       initialDistricts={initialDistricts}
       initialMunicipalities={initialMunicipalities}
+      initialPaymentQrs={initialPaymentQrs}
     />
   )
 }
@@ -68,8 +75,8 @@ async function CheckoutFlowWithData({
 // ── Loading skeleton shown while Tier B data streams ─────────────────────────
 function CheckoutSkeleton() {
   return (
-    <div className="flex flex-col-reverse lg:flex-row min-h-screen w-full">
-      <div className="flex-1 bg-surface pt-32 pb-24 px-6 lg:px-12 xl:px-24">
+    <div className="flex flex-col lg:flex-row min-h-screen w-full">
+      <div className="flex-1 bg-surface pt-32 pb-16 lg:pb-24 px-6 lg:px-12 xl:px-24">
         <div className="max-w-2xl mx-auto lg:ml-auto lg:mr-16 w-full animate-pulse space-y-10">
           <div className="space-y-2">
             <div className="h-4 bg-surface-secondary rounded w-24" />
@@ -84,9 +91,9 @@ function CheckoutSkeleton() {
           </div>
         </div>
       </div>
-      <div className="w-full lg:w-[45%] xl:w-[40%] bg-surface-secondary/40 pt-32 pb-24 px-6 lg:px-12 xl:px-24 lg:border-l border-border/50">
+      <div className="w-full lg:w-[45%] xl:w-[40%] bg-surface-secondary/40 pt-8 pb-24 lg:pt-32 px-6 lg:px-12 xl:px-24 border-t lg:border-t-0 lg:border-l border-border/50">
         <div className="max-w-md mx-auto lg:mr-auto lg:ml-12 w-full animate-pulse">
-          <div className="bg-surface rounded-lg p-6 border border-border space-y-4">
+          <div className="bg-[#FFFFFF] rounded-lg p-6 border border-[#E8DED2] space-y-4">
             <div className="h-5 bg-surface-secondary rounded w-32" />
             <div className="space-y-3">
               <div className="h-16 bg-surface-secondary rounded" />

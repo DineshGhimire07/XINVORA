@@ -78,27 +78,38 @@ export async function uploadLocalFileAction(formData: FormData) {
       return { success: true, url: media.url }
     } else {
       // Local fallback path
-      const uploadsDir = path.join(process.cwd(), "public", "uploads")
-      if (!fs.existsSync(uploadsDir)) {
-        await fs.promises.mkdir(uploadsDir, { recursive: true })
+      let fileUrl = ""
+      let providerId = ""
+
+      try {
+        const uploadsDir = path.join(process.cwd(), "public", "uploads")
+        if (!fs.existsSync(uploadsDir)) {
+          await fs.promises.mkdir(uploadsDir, { recursive: true })
+        }
+
+        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_")
+        const uniqueName = `${Date.now()}_${safeName}`
+        const filePath = path.join(uploadsDir, uniqueName)
+
+        await fs.promises.writeFile(filePath, processedBuffer)
+        fileUrl = `/uploads/${uniqueName}`
+        providerId = uniqueName
+      } catch (fsError: any) {
+        console.warn("[uploadLocalFileAction] Read-only filesystem. Falling back to Data URL:", fsError.message)
+        const mimeType = file.type || "image/png"
+        fileUrl = `data:${mimeType};base64,${processedBuffer.toString("base64")}`
+        providerId = `data_url_${Date.now()}`
       }
 
-      // Sanitize and guarantee a unique file name
-      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_")
-      const uniqueName = `${Date.now()}_${safeName}`
-      const filePath = path.join(uploadsDir, uniqueName)
-
-      await fs.promises.writeFile(filePath, processedBuffer)
-
       const media = await MediaService.createMedia({
-        url: `/uploads/${uniqueName}`,
+        url: fileUrl,
         title: file.name,
         mimeType: file.type,
         sizeBytes: processedBuffer.length,
         width,
         height,
         provider: 'local',
-        providerId: uniqueName,
+        providerId,
       }, session.id)
 
       revalidatePath("/admin/cms/media")

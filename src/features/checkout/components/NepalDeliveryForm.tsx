@@ -61,11 +61,12 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
 
 // ─── Input ────────────────────────────────────────────────────────────────────
 const inputClass = cn(
-  "w-full h-12 px-4 rounded-lg border border-border bg-surface",
-  "text-sm text-text-primary placeholder:text-text-tertiary",
+  "w-full h-[52px] px-4 rounded border border-[#E8DED2] bg-white",
+  "text-sm font-normal text-[#1E1E1E] placeholder:text-[#9A9087] placeholder:font-light",
   "transition-all duration-200 outline-none",
-  "focus:border-accent focus:ring-2 focus:ring-accent/20",
-  "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-surface-secondary"
+  "hover:border-[#D6CFB4]",
+  "focus:border-[#B89563] focus:ring-4 focus:ring-[#B89563]/15",
+  "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-[#F2EFEA]"
 )
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -151,6 +152,18 @@ export function NepalDeliveryForm({
   useEffect(() => {
     isInitialMountRef.current = false
   }, [])
+
+  // Auto-set default province (Bagmati Province) if none selected so districts are 100% pre-loaded
+  useEffect(() => {
+    if (!selectedProvinceId && provinces.length > 0) {
+      const defaultProvince = provinces.find((p) => p.name.includes("Bagmati")) || provinces[0]
+      if (defaultProvince) {
+        setValue("provinceId", defaultProvince.id)
+        setValue("provinceName", defaultProvince.name)
+        setProvinceName(defaultProvince.name)
+      }
+    }
+  }, [selectedProvinceId, provinces, setValue])
 
   // Fetch districts when province changes
   useEffect(() => {
@@ -523,10 +536,10 @@ export function NepalDeliveryForm({
           disabled={isSubmitting}
           id="place-order-btn"
           className={cn(
-            "w-full h-14 rounded-lg font-semibold text-sm tracking-wide transition-all duration-300",
-            "bg-accent hover:bg-accent/90 text-white shadow-[0_4px_14px_0_rgba(0,0,0,0.1)]",
+            "w-full h-[54px] rounded font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300",
+            "bg-[#1E1E1E] hover:bg-[#B89563] hover:-translate-y-0.5 text-white shadow-sm",
             "flex items-center justify-center gap-2",
-            "disabled:opacity-50 disabled:cursor-not-allowed"
+            "disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           )}
         >
           {isSubmitting ? (
@@ -536,13 +549,29 @@ export function NepalDeliveryForm({
             </>
           ) : (
             <>
-              <span>Continue to Payment</span>
+              <span>Proceed to Payment</span>
               <ChevronRight className="w-4 h-4" />
             </>
           )}
         </button>
 
-        <p className="text-center text-xs text-text-tertiary">
+        {/* ─── Luxury Reassurance Trust Badges ───────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+          <div className="flex items-center justify-center gap-2 p-3 bg-white border border-[#E8DED2] rounded text-[11px] font-medium text-[#1E1E1E] shadow-2xs">
+            <span className="text-[#B89563] font-bold">✓</span>
+            <span>Complimentary Packaging</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 p-3 bg-white border border-[#E8DED2] rounded text-[11px] font-medium text-[#1E1E1E] shadow-2xs">
+            <span className="text-[#B89563] font-bold">✓</span>
+            <span>Quality Inspection</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 p-3 bg-white border border-[#E8DED2] rounded text-[11px] font-medium text-[#1E1E1E] shadow-2xs">
+            <span className="text-[#B89563] font-bold">✓</span>
+            <span>Carbon-Neutral Delivery</span>
+          </div>
+        </div>
+
+        <p className="text-center text-xs text-text-tertiary pt-2">
           By placing your order, you agree to our{" "}
           <Link href="/terms" className="underline hover:text-text-secondary transition-colors">
             Terms of Service

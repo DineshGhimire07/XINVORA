@@ -21,6 +21,7 @@ interface CheckoutFlowProps {
   }
   initialDistricts?: any[]
   initialMunicipalities?: any[]
+  initialPaymentQrs?: any
 }
 
 export function CheckoutFlow({
@@ -29,35 +30,36 @@ export function CheckoutFlow({
   totals,
   initialDistricts = [],
   initialMunicipalities = [],
+  initialPaymentQrs,
 }: CheckoutFlowProps) {
   const [step, setStep] = useState<1 | 2>(1)
   const [addressData, setAddressData] = useState<NepalDeliveryFormValues | null>(null)
-  const [paymentQrs, setPaymentQrs] = useState<any>(null)
+  const [paymentQrs, setPaymentQrs] = useState<any>(initialPaymentQrs || null)
   const [loadingQrs, setLoadingQrs] = useState(false)
 
-  // Fetch paymentQrs only when the user reaches Step 2 to save initial page load resources
+  // Eager pre-fetch & image preloading on mount (Step 1) for instant 0ms Step 2 transition
   useEffect(() => {
-    if (step !== 2 || paymentQrs) return;
-
     let active = true
-    setLoadingQrs(true)
-    async function fetchQrs() {
-      try {
-        const res = await getPaymentQrsAction()
-        if (res.success && active) {
+    if (!paymentQrs) {
+      setLoadingQrs(true)
+      getPaymentQrsAction().then((res) => {
+        if (res.success && active && res.data) {
           setPaymentQrs(res.data)
+          if (typeof window !== "undefined" && res.data.esewaUrl) {
+            const img = new Image()
+            img.src = res.data.esewaUrl
+          }
         }
-      } catch (err) {
-        console.error("Error fetching payment QRs:", err)
-      } finally {
         if (active) setLoadingQrs(false)
-      }
+      })
+    } else if (typeof window !== "undefined" && paymentQrs?.esewaUrl) {
+      const img = new Image()
+      img.src = paymentQrs.esewaUrl
     }
-    fetchQrs()
     return () => {
       active = false
     }
-  }, [step, paymentQrs])
+  }, [paymentQrs])
 
   const handleAddressSuccess = async (data: NepalDeliveryFormValues) => {
     setAddressData(data)
@@ -71,8 +73,8 @@ export function CheckoutFlow({
   }, [step])
 
   return (
-    <div className="flex flex-col-reverse lg:flex-row min-h-screen w-full">
-      <div className="flex-1 bg-surface pt-32 pb-24 px-6 lg:px-12 xl:px-24">
+    <div className="flex flex-col lg:flex-row min-h-screen w-full">
+      <div className="flex-1 bg-surface pt-32 pb-16 lg:pb-24 px-6 lg:px-12 xl:px-24">
         <div className="max-w-2xl mx-auto lg:ml-auto lg:mr-16 w-full">
           {/* Header */}
           <div className="mb-10 lg:mb-12">
@@ -129,8 +131,8 @@ export function CheckoutFlow({
         </div>
       </div>
 
-      <div className="w-full lg:w-[45%] xl:w-[40%] bg-surface-secondary/40 pt-32 pb-24 px-6 lg:px-12 xl:px-24 lg:border-l border-border/50">
-        <div className="max-w-md mx-auto lg:mr-auto lg:ml-12 w-full sticky top-32">
+      <div className="w-full lg:w-[45%] xl:w-[40%] bg-surface-secondary/40 pt-8 pb-24 lg:pt-32 px-6 lg:px-12 xl:px-24 border-t lg:border-t-0 lg:border-l border-border/50">
+        <div className="max-w-md mx-auto lg:mr-auto lg:ml-12 w-full lg:sticky lg:top-32">
           <OrderSummary 
             cart={totals.cart} 
             shippingCost={totals.shippingCost} 

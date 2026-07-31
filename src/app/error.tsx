@@ -73,23 +73,42 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
           )}
         </div>
 
-        {/* Recovery action */}
+        {/* Recovery actions */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
           <button
             onClick={reset}
             className="
               inline-flex items-center justify-center
               h-12 px-8
-              bg-ink text-text-inverse
+              bg-[#1A1A1A] text-white
               text-label-md font-medium tracking-wide
               rounded-sm
               transition-all duration-200
-              hover:bg-accent
+              hover:bg-[#A48B78]
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2
+              w-full sm:w-auto
             "
           >
             Try again
           </button>
+          
+          <a
+            href="/"
+            className="
+              inline-flex items-center justify-center
+              h-12 px-8
+              bg-white text-[#1A1A1A]
+              border border-[#E2DDD5]
+              text-label-md font-medium tracking-wide
+              rounded-sm
+              transition-all duration-200
+              hover:bg-[#FAF9F6] hover:border-[#3A3530]
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2
+              w-full sm:w-auto
+            "
+          >
+            Return to Home
+          </a>
         </div>
 
       </div>

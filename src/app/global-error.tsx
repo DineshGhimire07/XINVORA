@@ -45,10 +45,16 @@ export default function GlobalError({
               <p className="text-code text-sm text-text-error font-medium">{error.message}</p>
             </div>
           )}
-          <div className="pt-4">
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button onClick={() => reset()} variant="primary" size="lg" className="w-full sm:w-auto">
               Attempt Recovery
             </Button>
+            <a
+              href="/"
+              className="inline-flex items-center justify-center h-11 px-6 bg-white text-[#1A1A1A] border border-[#E2DDD5] text-sm font-medium rounded-md hover:bg-[#FAF9F6] transition-colors w-full sm:w-auto"
+            >
+              Return to Home
+            </a>
           </div>
         </div>
       </body>

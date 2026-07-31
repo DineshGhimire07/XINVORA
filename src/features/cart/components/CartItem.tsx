@@ -108,10 +108,6 @@ export function CartItem({ item }: CartItemProps) {
 
             {/* Inline Size Switcher */}
             <SizePills />
-            
-            <div className="text-body-xs text-text-secondary uppercase mt-2">
-              SKU: <span className="text-accent font-medium font-mono">{item.variant.sku}</span>
-            </div>
 
             {/* Actions */}
             <div className="flex items-center gap-4 mt-4 text-body-xs font-semibold uppercase tracking-wider text-text-secondary">
@@ -232,10 +228,6 @@ export function CartItem({ item }: CartItemProps) {
 
           {/* Inline Size Switcher on Mobile */}
           <SizePills />
-          
-          <div className="text-body-xs text-text-secondary uppercase mt-1">
-            SKU: <span className="text-accent font-medium font-mono">{item.variant.sku}</span>
-          </div>
 
           <div className="mt-3 flex items-center justify-between">
             <div className="flex flex-col">
