@@ -21,11 +21,13 @@ export const authConfig = {
       return token
     },
     session({ session, token }) {
-      if (token && session.user) {
+      if (token && token.id && session.user) {
         session.user.id = token.id
         session.user.role = token.role
         session.user.firstName = token.firstName
         session.user.lastName = token.lastName
+      } else {
+        session.user = null as any
       }
       return session
     },

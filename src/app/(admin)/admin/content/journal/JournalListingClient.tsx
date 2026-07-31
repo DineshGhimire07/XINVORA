@@ -280,10 +280,10 @@ export function JournalListingClient({
                         </span>
                       </td>
                       <td className="py-4 px-6 text-right font-mono font-medium">
-                        {metrics.views}
+                        {(post as any).viewCount ?? (post as any).viewsCount ?? metrics.views}
                       </td>
                       <td className="py-4 px-6 text-right font-mono text-accent font-semibold">
-                        Rs. {metrics.revenue.toLocaleString()}
+                        Rs. {((post as any).revenueGenerated ?? 0).toLocaleString()}
                       </td>
                       <td className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-2">

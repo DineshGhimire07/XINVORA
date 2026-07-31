@@ -204,7 +204,7 @@ export class SEOService {
 
   public static async generateEntitySitemapXML(options: { baseUrl: string; entityType: string }) {
     const { baseUrl, entityType } = options
-    const all = await SEOReadRepository.getAllEntities()
+    const all = await SEOReadRepository.getAllEntities({ limit: 50000 })
     let filtered = all.filter((e) => e.isIndexed)
 
     if (entityType === "products") filtered = filtered.filter((e) => e.entityType === "PRODUCT")

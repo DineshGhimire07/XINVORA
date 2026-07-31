@@ -12,26 +12,27 @@ import { GSCOpportunityEngine } from "../engines/gsc-opportunities.engine"
 import type { NormalizedSEOEntity } from "../contracts/entity.contract"
 
 export class SEOReadRepository {
-  public static async getAllEntities(): Promise<NormalizedSEOEntity[]> {
+  public static async getAllEntities(options?: { limit?: number }): Promise<NormalizedSEOEntity[]> {
     try {
+      const limitVal = options?.limit ?? 100
       const [rawProducts, rawCollections, rawJournal, rawCMS] = await Promise.all([
         db.query.products.findMany({
           where: isNull(products.deletedAt),
           with: { category: true, productImages: true, variants: true },
-          limit: 100,
+          limit: limitVal,
         }).catch(() => []),
         db.query.collections.findMany({
           where: isNull(collections.deletedAt),
-          limit: 100,
+          limit: limitVal,
         }).catch(() => []),
         db.query.journalPosts.findMany({
           where: isNull(journalPosts.deletedAt),
           with: { category: true, author: true },
-          limit: 100,
+          limit: limitVal,
         }).catch(() => []),
         db.query.cmsPages.findMany({
           where: isNull(cmsPages.deletedAt),
-          limit: 100,
+          limit: limitVal,
         }).catch(() => []),
       ])
 

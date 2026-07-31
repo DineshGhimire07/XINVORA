@@ -5,7 +5,6 @@ import { HeaderServer } from "@/components/shared/Header/HeaderServer"
 import { Footer } from "@/components/shared/Footer/Footer"
 import { HeaderStateProvider } from "@/providers/header-state-provider"
 import { ScrollToTop } from "@/components/storefront/ScrollToTop"
-import { CookieProvider } from "@/components/cookies/CookieProvider"
 import { CookieScriptLoader } from "@/components/cookies/CookieScriptLoader"
 import { CookieBanner } from "@/components/cookies/CookieBanner"
 import { CookieModal } from "@/components/cookies/CookieModal"
@@ -19,20 +18,18 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <CookieProvider>
-      <HeaderStateProvider>
-        <Suspense fallback={null}>
-          <ScrollToTop />
-        </Suspense>
-        <CookieScriptLoader />
-        <HeaderServer />
-        {children}
-        <CookieBanner />
-        <CookieModal />
-        <Suspense fallback={null}>
-          <Footer />
-        </Suspense>
-      </HeaderStateProvider>
-    </CookieProvider>
+    <HeaderStateProvider>
+      <Suspense fallback={null}>
+        <ScrollToTop />
+      </Suspense>
+      <CookieScriptLoader />
+      <HeaderServer />
+      {children}
+      <CookieBanner />
+      <CookieModal />
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
+    </HeaderStateProvider>
   )
 }

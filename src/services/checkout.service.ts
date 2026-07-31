@@ -4,7 +4,7 @@ import { ShippingService } from "./shipping.service"
 // import { TaxService } from "./tax.service"
 import { OrderNumberService } from "./order-number.service"
 import { CheckoutRepository } from "../db/repositories/checkout.repository"
-import type { CheckoutSubmission } from "../validations/checkout"
+import { CheckoutSubmissionSchema, type CheckoutSubmission } from "../validations/checkout"
 import { PricingService } from "./pricing.service"
 
 export class CheckoutService {
@@ -71,9 +71,29 @@ export class CheckoutService {
       if (coupon.expiresAt && now > coupon.expiresAt) {
         throw new Error("Coupon has expired")
       }
+      // Calculate qualifying subtotal based on product/category restrictions
+      let qualifyingSubtotal = 0
+      const hasProductRestrictions = coupon.applicableProducts && Array.isArray(coupon.applicableProducts) && coupon.applicableProducts.length > 0
+      const hasCategoryRestrictions = coupon.applicableCategories && Array.isArray(coupon.applicableCategories) && coupon.applicableCategories.length > 0
+
+      for (const item of cart.items) {
+        const matchesProduct = !hasProductRestrictions || (coupon.applicableProducts as string[]).includes(item.variant.product.id)
+        const matchesCategory = !hasCategoryRestrictions || (item.variant.product.categoryId && (coupon.applicableCategories as string[]).includes(item.variant.product.categoryId))
+        if (matchesProduct && matchesCategory) {
+          qualifyingSubtotal += item.price * item.quantity
+        }
+      }
+
+      if (hasProductRestrictions && qualifyingSubtotal === 0) {
+        throw new Error("Coupon is not applicable to any products in the cart")
+      }
+      if (hasCategoryRestrictions && qualifyingSubtotal === 0) {
+        throw new Error("Coupon is not applicable to any categories in the cart")
+      }
+
       // 6. Minimum order reached
-      if (coupon.minOrderAmount && subtotal < coupon.minOrderAmount) {
-        throw new Error(`Minimum order amount of $${(coupon.minOrderAmount / 100).toFixed(2)} not met`)
+      if (coupon.minOrderAmount && qualifyingSubtotal < coupon.minOrderAmount) {
+        throw new Error(`Minimum order amount of $${(coupon.minOrderAmount / 100).toFixed(2)} not met for qualifying items`)
       }
       // 7. Global max uses not exceeded
       if (coupon.maxUses && coupon.currentUses >= coupon.maxUses) {
@@ -87,26 +107,9 @@ export class CheckoutService {
           throw new Error("Coupon personal usage limit exceeded")
         }
       }
-      // 9. Applicable category/product
-      if (coupon.applicableProducts && Array.isArray(coupon.applicableProducts) && coupon.applicableProducts.length > 0) {
-        const hasQualifyingProduct = cart.items.some(item =>
-          (coupon.applicableProducts as string[]).includes(item.variant.product.id)
-        )
-        if (!hasQualifyingProduct) {
-          throw new Error("Coupon is not applicable to any products in the cart")
-        }
-      }
-      if (coupon.applicableCategories && Array.isArray(coupon.applicableCategories) && coupon.applicableCategories.length > 0) {
-        const hasQualifyingCategory = cart.items.some(item =>
-          item.variant.product.categoryId && (coupon.applicableCategories as string[]).includes(item.variant.product.categoryId)
-        )
-        if (!hasQualifyingCategory) {
-          throw new Error("Coupon is not applicable to any categories in the cart")
-        }
-      }
 
       // Apply discount
-      discountAmount = PricingService.calculateDiscountAmount(coupon, subtotal)
+      discountAmount = PricingService.calculateDiscountAmount(coupon, qualifyingSubtotal)
     }
 
     // Ensure we never discount below 0 subtotal
@@ -151,6 +154,12 @@ export class CheckoutService {
    * is held open.
    */
   static async createOrder(userId: string, submission: CheckoutSubmission) {
+    // BUG FIX #8: Service-level validation guardrail to ensure COD address completeness
+    const parsed = CheckoutSubmissionSchema.safeParse(submission)
+    if (!parsed.success) {
+      throw new Error("Invalid delivery address details: " + Object.keys(parsed.error.flatten().fieldErrors).join(", "))
+    }
+
     const orderNumber = OrderNumberService.generateOrderNumber()
 
     // 1. Fetch initial cart ONCE outside the transaction.

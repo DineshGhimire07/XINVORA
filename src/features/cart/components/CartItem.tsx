@@ -39,16 +39,21 @@ export function CartItem({ item }: CartItemProps) {
               disabled={isPending || !v.inStock || isSelected}
               title={v.inStock ? v.size?.name : `${v.size?.name} — Out of Stock`}
               className={`
-                h-6 min-w-[26px] px-1.5 text-[9px] font-bold tracking-wide uppercase border transition-all duration-200
+                h-6 min-w-[26px] px-1.5 text-[9px] font-bold tracking-wide uppercase border transition-all duration-200 relative overflow-hidden select-none rounded-sm
                 ${isSelected
                   ? "border-neutral-900 bg-neutral-900 text-white cursor-default"
                   : v.inStock
-                    ? "border-transparent bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900 cursor-pointer"
-                    : "border-transparent bg-neutral-50 text-neutral-300 line-through cursor-not-allowed opacity-50"
+                    ? "border-neutral-200 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 hover:border-neutral-400 hover:text-neutral-900 cursor-pointer"
+                    : "border-neutral-300/80 bg-neutral-100/60 text-neutral-400 cursor-not-allowed"
                 }
               `}
             >
-              {label}
+              <span>{label}</span>
+              {!v.inStock && (
+                <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span className="w-[140%] h-[1.5px] bg-neutral-400 -rotate-45" />
+                </span>
+              )}
             </button>
           </form>
         )

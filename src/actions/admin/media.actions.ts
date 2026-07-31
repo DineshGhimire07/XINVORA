@@ -12,6 +12,7 @@ import { v2 as cloudinary } from "cloudinary"
 import sharp from "sharp"
 
 export async function generateUploadSignatureAction(folder?: string) {
+  await SessionService.requireAdmin()
   // Always return useLocalFallback so that the client sends the file to the server action first,
   // allowing us to run the server-side image processing pipeline before storage routing.
   return { success: true, data: { useLocalFallback: true } }

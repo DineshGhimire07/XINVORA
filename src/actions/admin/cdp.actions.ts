@@ -3,7 +3,7 @@
 import { db } from "@/db/client"
 import { customerMetrics, users, profiles, customerTimeline, userSessions, userEvents, analyticsDlq } from "@/db/schema"
 import { eq, and, or, ilike, sql, desc, asc, gte } from "drizzle-orm"
-import { auth } from "@/auth"
+import { SessionService } from "@/services/session.service"
 
 export async function getCdpCustomersAction(params: {
   search?: string
@@ -12,10 +12,7 @@ export async function getCdpCustomersAction(params: {
   sortKey?: string
   sortOrder?: "asc" | "desc"
 }) {
-  const session = await auth()
-  if (!session || session.user?.role !== "ADMIN") {
-    throw new Error("Unauthorized access to Customer Intelligence")
-  }
+  await SessionService.requireAdmin()
 
   const limit = params.limit ?? 25
   const offset = params.offset ?? 0
@@ -115,10 +112,7 @@ export async function getCdpCustomersAction(params: {
 }
 
 export async function getCustomerDetailsAction(userId: string) {
-  const session = await auth()
-  if (!session || session.user?.role !== "ADMIN") {
-    throw new Error("Unauthorized access")
-  }
+  await SessionService.requireAdmin()
 
   // 1. Fetch user & profile info
   const userDetails = await db
@@ -175,10 +169,7 @@ export async function getCustomerDetailsAction(userId: string) {
 }
 
 export async function getSystemHealthAction() {
-  const session = await auth()
-  if (!session || session.user?.role !== "ADMIN") {
-    throw new Error("Unauthorized access")
-  }
+  await SessionService.requireAdmin()
 
   // 1. Get queue memory stats
   const { IngestionService } = require("@/features/analytics/ingestion/service")
@@ -219,10 +210,7 @@ export async function getSystemHealthAction() {
 }
 
 export async function getDlqEventsAction() {
-  const session = await auth()
-  if (!session || session.user?.role !== "ADMIN") {
-    throw new Error("Unauthorized access")
-  }
+  await SessionService.requireAdmin()
 
   const list = await db
     .select()
@@ -234,10 +222,7 @@ export async function getDlqEventsAction() {
 }
 
 export async function resolveDlqEventAction(id: string) {
-  const session = await auth()
-  if (!session || session.user?.role !== "ADMIN") {
-    throw new Error("Unauthorized access")
-  }
+  await SessionService.requireAdmin()
 
   await db
     .update(analyticsDlq)
@@ -248,10 +233,7 @@ export async function resolveDlqEventAction(id: string) {
 }
 
 export async function deleteDlqEventAction(id: string) {
-  const session = await auth()
-  if (!session || session.user?.role !== "ADMIN") {
-    throw new Error("Unauthorized access")
-  }
+  await SessionService.requireAdmin()
 
   await db
     .delete(analyticsDlq)

@@ -129,6 +129,18 @@ export class AdminOrdersService {
         .set(updates)
         .where(eq(orders.id, orderId))
 
+      // BUG FIX #1: Restore reserved inventory when an order is cancelled.
+      // Without this, cancelled orders permanently remove stock from the system.
+      if (newStatus === "CANCELLED") {
+        const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, orderId))
+        for (const item of items) {
+          if (!item.variantId) continue
+          await tx.update(inventory)
+            .set({ quantity: sql`${inventory.quantity} + ${item.quantity}` })
+            .where(eq(inventory.variantId, item.variantId))
+        }
+      }
+
       await tx.insert(orderActivity).values({
         orderId,
         action: "STATUS_UPDATE",

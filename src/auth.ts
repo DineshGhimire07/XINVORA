@@ -87,6 +87,40 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
           token.lastName = user.lastName as string | null
         }
       }
+
+      // BUG FIX #7: Invalidate session if the user has been soft-deleted.
+      // Optimisation: Throttle DB checks to once every 60 seconds and handle connection issues gracefully.
+      if (token?.id) {
+        const now = Math.floor(Date.now() / 1000)
+        const lastChecked = token.lastChecked as number | undefined
+
+        if (lastChecked && now - lastChecked < 60) {
+          if (token.isDeleted) {
+            return {} as any
+          }
+        } else {
+          try {
+            const { db } = await import("./db/client")
+            const { users } = await import("./db/schema/users")
+            const { eq } = await import("drizzle-orm")
+
+            const dbUser = await db.query.users.findFirst({
+              where: eq(users.id, token.id as string),
+              columns: { deletedAt: true },
+            })
+
+            token.lastChecked = now
+
+            if (!dbUser || dbUser.deletedAt) {
+              token.isDeleted = true
+              return {} as any
+            }
+          } catch (err) {
+            console.warn("[Auth JWT check] Database connection timeout or unreachable. Bypassing check.", err)
+          }
+        }
+      }
+
       return token
     },
   },

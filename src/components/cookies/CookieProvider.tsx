@@ -242,7 +242,21 @@ export function CookieProvider({ children }: { children: React.ReactNode }) {
 export function useCookieConsent() {
   const context = useContext(CookieConsentContext)
   if (!context) {
-    throw new Error("useCookieConsent must be used within a CookieProvider")
+    // Return a safe fallback rather than crashing the page (defense-in-depth)
+    return {
+      contextVersion: CONSENT_CONTEXT_VERSION,
+      consentState: defaultState,
+      settings: null,
+      isBannerOpen: false,
+      isModalOpen: false,
+      isLoaded: false,
+      acceptAll: async () => {},
+      rejectOptional: async () => {},
+      updatePreferences: async () => {},
+      openPreferencesModal: () => {},
+      closePreferencesModal: () => {},
+      closeBanner: () => {},
+    }
   }
   return context
 }

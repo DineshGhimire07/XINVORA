@@ -156,17 +156,44 @@ export class PaymentService {
       throw new Error("Unauthorized payment verification")
     }
 
+    // Idempotency check: if payment is already processed as PAID, return early immediately
+    if (payment.status === "PAID") {
+      return {
+        status: "PAID",
+        orderNumber: order.orderNumber,
+        idempotent: true,
+      }
+    }
+
     // Check expiration
     const isExpired = new Date(payment.sessionExpiresAt) < new Date()
     if (isExpired && ["NEW", "INITIATED", "PENDING"].includes(payment.status)) {
-      await PaymentRepository.updatePaymentStatus(null, payment.id, "EXPIRED", {
-        failureReason: "Payment session expired (15 minutes limit)",
-        metadata: {
-          ...(payment.metadata as Record<string, any>),
-          events: [
-            ...((payment.metadata as any).events || []),
-            { event: "EXPIRED", timestamp: new Date().toISOString() }
-          ]
+      const { orderItems, inventory } = await import("@/db/schema")
+      const { eq, sql } = await import("drizzle-orm")
+
+      await CheckoutRepository.executeTransaction(async (tx) => {
+        // 1. Update payment status to EXPIRED
+        await PaymentRepository.updatePaymentStatus(tx, payment.id, "EXPIRED", {
+          failureReason: "Payment session expired (15 minutes limit)",
+          metadata: {
+            ...(payment.metadata as Record<string, any>),
+            events: [
+              ...((payment.metadata as any).events || []),
+              { event: "EXPIRED", timestamp: new Date().toISOString() }
+            ]
+          }
+        })
+        // 2. Cancel order
+        await OrderRepository.updateOrderStatus(tx, order.id, "CANCELLED", {
+          paymentStatus: "FAILED",
+        })
+        // 3. Restore inventory quantity
+        const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, order.id))
+        for (const item of items) {
+          if (!item.variantId) continue
+          await tx.update(inventory)
+            .set({ quantity: sql`${inventory.quantity} + ${item.quantity}` })
+            .where(eq(inventory.variantId, item.variantId))
         }
       })
       throw new Error("Payment session has expired")

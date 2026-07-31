@@ -8,6 +8,9 @@ import { Suspense } from "react"
 import { HeaderServer } from "@/components/shared/Header/HeaderServer"
 import { Footer } from "@/components/shared/Footer/Footer"
 import { HeaderStateProvider } from "@/providers/header-state-provider"
+import { CookieScriptLoader } from "@/components/cookies/CookieScriptLoader"
+import { CookieBanner } from "@/components/cookies/CookieBanner"
+import { CookieModal } from "@/components/cookies/CookieModal"
 
 interface AccountLayoutProps {
   children: React.ReactNode
@@ -21,6 +24,7 @@ export default async function AccountLayout({ children }: AccountLayoutProps) {
 
   return (
     <HeaderStateProvider>
+      <CookieScriptLoader />
       <HeaderServer />
       <Section className="pt-[120px] md:pt-32 pb-12 md:pb-20 bg-background min-h-screen">
         <Container size="full" className="px-6 sm:px-12 md:px-16 lg:px-20">
@@ -37,6 +41,8 @@ export default async function AccountLayout({ children }: AccountLayoutProps) {
           </Grid>
         </Container>
       </Section>
+      <CookieBanner />
+      <CookieModal />
       <Suspense fallback={null}>
         <Footer />
       </Suspense>

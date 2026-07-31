@@ -76,9 +76,13 @@ export function SEOSearchConsoleTab({ searchConsole }: SEOSearchConsoleTabProps)
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold uppercase tracking-widest text-accent">GSC API Integration</span>
-              {isConnected && (
+              {isConnected ? (
                 <span className="text-[10px] font-bold uppercase bg-green-500/10 text-green-700 px-2 py-0.5 rounded flex items-center gap-1">
-                  <CheckCircle2 size={11} /> Connected: {searchConsole?.gscPropertyUrl || "xinvora.com"}
+                  <CheckCircle2 size={11} /> Connected: {searchConsole?.gscPropertyUrl || "xinvora.com.np"}
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold uppercase bg-amber-500/10 text-amber-700 px-2 py-0.5 rounded flex items-center gap-1 border border-amber-500/20">
+                  <AlertTriangle size={11} /> Demo Data Mode (GSC Disconnected)
                 </span>
               )}
             </div>

@@ -21,6 +21,7 @@ import {
   ChevronRight,
   LucideIcon,
   Globe,
+  MessageSquare,
 } from "lucide-react"
 
 interface SubItem {
@@ -51,7 +52,14 @@ const navItems: NavItem[] = [
     ],
   },
   { name: "Collections", href: "/admin/collections", icon: Layers },
-  { name: "Customers", href: "/admin/users", icon: Users },
+  {
+    name: "Customers",
+    icon: Users,
+    items: [
+      { name: "All Customers", href: "/admin/users" },
+      { name: "Customer Feedback", href: "/admin/customer-feedback" },
+    ],
+  },
   {
     name: "Discount & Offers",
     icon: Percent,

@@ -4,12 +4,26 @@ import type { NextConfig } from "next";
  * next.config.ts — XINVORA Next.js Configuration
  *
  * Production-grade config covering:
- * - Security headers (XSS, framing, MIME sniffing)
- * - Image optimization domains (future CDN / CMS)
+ * - Enterprise Security Headers (CSP, HSTS, X-Frame-Options, MIME sniffing)
+ * - Image optimization domains (Cloudinary, Unsplash)
  * - Strict mode for React 19
- * - Bundle analysis stub (enable via ANALYZE=true)
- * - Internationalization ready (matcher in middleware.ts)
+ * - Compiler optimizations
  */
+
+const cspHeader = `
+  default-src 'self';
+  script-src 'self' 'unsafe-eval' 'unsafe-inline';
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' blob: data: https: res.cloudinary.com images.unsplash.com placehold.co;
+  font-src 'self' data:;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'none';
+  block-all-mixed-content;
+  upgrade-insecure-requests;
+`.replace(/\s{2,}/g, ' ').trim();
+
 const nextConfig: NextConfig = {
   // React Strict Mode — catches double-invocation bugs in development
   reactStrictMode: true,
@@ -21,7 +35,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "placehold.co" },
     ],
-    // Curated device sizes aligned to our responsive breakpoints
     deviceSizes: [375, 640, 768, 1024, 1280, 1440, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ["image/avif", "image/webp"],
@@ -29,26 +42,33 @@ const nextConfig: NextConfig = {
 
   // Compiler optimizations
   compiler: {
-    // Remove console.log in production (keep console.error)
     removeConsole:
       process.env.NODE_ENV === "production"
         ? { exclude: ["error", "warn"] }
         : false,
   },
 
-  // Security headers applied to every response
+  // Enterprise Security Headers applied to every response
   async headers() {
     return [
       {
         source: "/(.*)",
         headers: [
           {
+            key: "Content-Security-Policy",
+            value: cspHeader,
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+          {
             key: "X-DNS-Prefetch-Control",
             value: "on",
           },
           {
             key: "X-Frame-Options",
-            value: "SAMEORIGIN",
+            value: "DENY",
           },
           {
             key: "X-Content-Type-Options",
@@ -67,9 +87,8 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Experimental features — enable carefully in production
+  // Experimental features
   experimental: {
-    // optimizePackageImports speeds up cold starts for large icon/component libs
     optimizePackageImports: ["lucide-react", "framer-motion"],
     serverActions: {
       bodySizeLimit: "10mb",
