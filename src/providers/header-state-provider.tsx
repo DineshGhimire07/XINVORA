@@ -6,6 +6,7 @@ interface HeaderState {
   cart: {
     cartCount: number
     wishlistCount: number
+    cartItems?: { productId: string; variantId: string; quantity: number }[]
   } | null
   wishlist: {
     items: { variant: { id: string } }[]
@@ -16,6 +17,7 @@ interface HeaderState {
 interface HeaderStateContextType {
   state: HeaderState
   wishlistIds: string[]
+  cartItemMap: Map<string, number>
   isLoading: boolean
   refetch: () => Promise<void>
 }
@@ -64,8 +66,19 @@ export function HeaderStateProvider({ children }: { children: React.ReactNode })
     return state.wishlist?.items?.map((item) => item.variant?.id).filter(Boolean) || []
   }, [state.wishlist])
 
+  const cartItemMap = useMemo(() => {
+    const map = new Map<string, number>()
+    if (state.cart?.cartItems) {
+      for (const item of state.cart.cartItems) {
+        map.set(item.productId, (map.get(item.productId) || 0) + item.quantity)
+        map.set(item.variantId, item.quantity)
+      }
+    }
+    return map
+  }, [state.cart])
+
   return (
-    <HeaderStateContext.Provider value={{ state, wishlistIds, isLoading, refetch: fetchState }}>
+    <HeaderStateContext.Provider value={{ state, wishlistIds, cartItemMap, isLoading, refetch: fetchState }}>
       {children}
     </HeaderStateContext.Provider>
   )

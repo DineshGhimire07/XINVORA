@@ -24,6 +24,7 @@ import {
   materials,
   priceBooks,
   priceBookEntries,
+  productOffSection,
 } from "../schema"
 import type {
   ProductFull,
@@ -223,12 +224,18 @@ async function _findProductsInternal(
     const idRowsPromise = db
       .select({ 
         productId: products.id,
-        lowestPrice: min(priceBookEntries.price).as("lowest_price")
+        lowestPrice: sql<number>`
+          COALESCE(
+            MIN(CASE WHEN ${productOffSection.isOffEnabled} = true THEN ${productOffSection.sellingPrice} ELSE NULL END),
+            MIN(${priceBookEntries.price})
+          )
+        `.as("lowest_price")
       })
       .from(products)
       .leftJoin(variants, and(eq(products.id, variants.productId), isNull(variants.deletedAt)))
       .leftJoin(priceBookEntries, eq(variants.id, priceBookEntries.variantId))
       .leftJoin(priceBooks, and(eq(priceBookEntries.priceBookId, priceBooks.id), eq(priceBooks.isDefault, true)))
+      .leftJoin(productOffSection, eq(products.id, productOffSection.productId))
       .where(and(...conditions))
       .groupBy(products.id)
       .orderBy(orderDir)
@@ -369,7 +376,7 @@ const _findProductsCached = unstable_cache(
     const params = JSON.parse(paramsStr) as CatalogFilterParams
     return _findProductsInternal(params)
   },
-  ["products-catalog"],
+  ["products-catalog-v3"],
   { tags: ["products"], revalidate: 1800 }
 )
 
@@ -392,7 +399,7 @@ function emptyResult(withCount: boolean): PaginatedResult<ProductSummaryWithPric
 /**
  * Fetch products tagged as featured for homepage.
  */
-export async function findFeaturedProducts(limit = 8): Promise<ProductSummary[]> {
+export async function findFeaturedProducts(limit = 8): Promise<ProductSummaryWithPrice[]> {
   const { items } = await findProducts({ limit, sort: "featured" })
   return items
 }
@@ -400,7 +407,7 @@ export async function findFeaturedProducts(limit = 8): Promise<ProductSummary[]>
 /**
  * Fetch the most recently published products for "New Arrivals".
  */
-export async function findLatestProducts(limit = 8): Promise<ProductSummary[]> {
+export async function findLatestProducts(limit = 8): Promise<ProductSummaryWithPrice[]> {
   const { items } = await findProducts({ limit, sort: "newest" })
   return items
 }
@@ -409,35 +416,23 @@ async function _findRelatedProductsInternal(
   categoryId: string,
   excludeProductId: string,
   limit = 4
-): Promise<ProductSummary[]> {
-  // Manual query for specific exclusion
-  const rows = await db.query.products.findMany({
-    where: and(
-      eq(products.status, "PUBLISHED"),
-      eq(products.categoryId, categoryId)
-    ),
-    limit: limit + 1,
-    orderBy: [desc(products.createdAt)],
-    with: {
-      category: { columns: { id: true, slug: true, name: true } },
-      productImages: {
-        orderBy: (img, { asc }) => [asc(img.position)],
-        columns: { url: true, altText: true, position: true },
-      },
-    },
-    columns: { id: true, slug: true, name: true, status: true, categoryId: true },
+): Promise<ProductSummaryWithPrice[]> {
+  const category = await db.query.categories.findFirst({
+    where: eq(categories.id, categoryId),
+    columns: { slug: true },
   })
 
-  return rows
-    .filter((p) => p.id !== excludeProductId)
-    .slice(0, limit) as unknown as ProductSummary[]
+  if (!category) return []
+
+  const { items } = await findProducts({ categorySlug: category.slug, limit: limit + 4 })
+  return items.filter((p) => p.id !== excludeProductId).slice(0, limit)
 }
 
 const _findRelatedProductsCached = unstable_cache(
   async (categoryId: string, excludeProductId: string, limit: number) => {
     return _findRelatedProductsInternal(categoryId, excludeProductId, limit)
   },
-  ["related-products"],
+  ["related-products-v3"],
   { tags: ["products"], revalidate: 1800 }
 )
 

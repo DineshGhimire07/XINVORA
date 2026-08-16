@@ -80,7 +80,7 @@ const _findCollectionBySlugCached = unstable_cache(
   async (slug: string, productLimit: number) => {
     return _findCollectionBySlugInternal(slug, productLimit)
   },
-  ["collection-by-slug"],
+  ["collection-by-slug-v4"],
   { tags: ["collections"], revalidate: 1800 }
 )
 
@@ -102,9 +102,29 @@ const _findCollectionDetailCached = unstable_cache(
     material: string,
     limit: number
   ) => {
-    const collection = await db.query.collections.findFirst({
+    let collection = await db.query.collections.findFirst({
       where: and(eq(collections.slug, slug), eq(collections.isActive, true)),
     })
+
+    if (!collection && (slug === "limited" || slug === "limited-edition")) {
+      const existingAny = await db.query.collections.findFirst({
+        where: eq(collections.slug, "limited"),
+      })
+      if (!existingAny) {
+        const [newCol] = await db
+          .insert(collections)
+          .values({
+            slug: "limited",
+            name: "Limited Edition",
+            description: "Rare pieces in very limited quantities. Once it's gone, it's gone.",
+            isActive: true,
+          })
+          .returning()
+        collection = newCol
+      } else {
+        collection = existingAny
+      }
+    }
 
     if (!collection) return null
 
@@ -139,7 +159,7 @@ const _findCollectionDetailCached = unstable_cache(
       productsResult,
     }
   },
-  ["collection-detail"],
+  ["collection-detail-v4"],
   { tags: ["collections"], revalidate: 1800 }
 )
 

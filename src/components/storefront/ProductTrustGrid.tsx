@@ -4,93 +4,32 @@
  * Inspired by COS / Toteme — quiet minimalism, hairline dividers, no shadows.
  */
 
+import { Clock, Truck, Undo2, ShieldCheck } from "lucide-react"
+
 const features = [
   {
     id: "shipping",
     heading: "Dispatches in 24 Hours",
     subtitle: "Weekdays before 4 PM",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.75}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-        className="w-[18px] h-[18px] md:w-[21px] md:h-[21px]"
-      >
-        <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3" />
-        <rect x="9" y="11" width="14" height="10" rx="2" />
-        <path d="M12 11v6" />
-        <path d="M9 17h.01M23 17h.01" />
-      </svg>
-    ),
+    icon: <Clock className="w-[18px] h-[18px] md:w-[21px] md:h-[21px] stroke-[1.6]" />,
   },
   {
     id: "delivery",
     heading: "Free Delivery",
     subtitle: "On orders above NPR 1,999",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.75}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-        className="w-[18px] h-[18px] md:w-[21px] md:h-[21px]"
-      >
-        <rect x="1" y="3" width="15" height="13" rx="1" />
-        <path d="M16 8h4l3 5v3h-7V8z" />
-        <circle cx="5.5" cy="18.5" r="2.5" />
-        <circle cx="18.5" cy="18.5" r="2.5" />
-      </svg>
-    ),
+    icon: <Truck className="w-[18px] h-[18px] md:w-[21px] md:h-[21px] stroke-[1.6]" />,
   },
   {
     id: "returns",
     heading: "Easy Returns",
     subtitle: "7-Day Return Policy",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.75}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-        className="w-[18px] h-[18px] md:w-[21px] md:h-[21px]"
-      >
-        <polyline points="1 4 1 10 7 10" />
-        <path d="M3.51 15a9 9 0 1 0 .49-3.93" />
-      </svg>
-    ),
+    icon: <Undo2 className="w-[18px] h-[18px] md:w-[21px] md:h-[21px] stroke-[1.6]" />,
   },
   {
     id: "secure",
     heading: "Secure Payments",
     subtitle: "SSL Encrypted Checkout",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.75}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-        className="w-[18px] h-[18px] md:w-[21px] md:h-[21px]"
-      >
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      </svg>
-    ),
+    icon: <ShieldCheck className="w-[18px] h-[18px] md:w-[21px] md:h-[21px] stroke-[1.6]" />,
   },
 ]
 

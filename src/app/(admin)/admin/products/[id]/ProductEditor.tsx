@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { createProductAction, updateProductAction, archiveProductAction } from "@/actions/admin/products.actions"
+import { createMaterialAction } from "@/actions/admin/materials.actions"
 import { MediaSelector } from "@/components/admin/MediaSelector"
 import AdminProductPicker from "@/components/admin/AdminProductPicker"
 import { cn } from "@/lib/utils"
@@ -28,6 +29,8 @@ export default function ProductEditor({
 }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [newMaterialName, setNewMaterialName] = useState("")
+  const [isSavingMaterial, startMaterialTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [selectedImages, setSelectedImages] = useState<string[]>(product?.images || [])
   const [tryonPrompt, setTryonPrompt] = useState<string>(product?.virtualTryonPrompt || "")
@@ -188,16 +191,42 @@ export default function ProductEditor({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="badge" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
-                Badge Label
-              </label>
+              <div className="flex justify-between items-center">
+                <label htmlFor="badge" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+                  Badge Label / Tag
+                </label>
+                <span className="text-[10px] text-amber-600 font-semibold uppercase">Set &quot;LIMITED EDITION&quot; to feature in /collections/limited</span>
+              </div>
               <input
                 id="badge"
                 name="badge"
                 defaultValue={product?.badge || ""}
-                placeholder="e.g. NEW, EDITORS PICK"
+                placeholder="e.g. LIMITED EDITION, NEW, BESTSELLER"
                 className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
               />
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[10px] text-admin-text-secondary uppercase">Quick Tag:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById("badge") as HTMLInputElement
+                    if (el) el.value = "LIMITED EDITION"
+                  }}
+                  className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-700 text-[10px] font-bold uppercase rounded hover:bg-amber-500/20 transition-colors cursor-pointer"
+                >
+                  + LIMITED EDITION
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById("badge") as HTMLInputElement
+                    if (el) el.value = "NEW"
+                  }}
+                  className="px-2 py-0.5 bg-admin-content border border-admin-border text-admin-text-primary text-[10px] font-bold uppercase rounded hover:bg-admin-content-hover transition-colors cursor-pointer"
+                >
+                  + NEW
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -360,6 +389,55 @@ export default function ProductEditor({
                     {mat.name}
                   </label>
                 ))}
+              </div>
+
+              {/* ── Inline Add New Material ── */}
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="text"
+                  value={newMaterialName}
+                  onChange={(e) => setNewMaterialName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      if (!newMaterialName.trim()) return
+                      startMaterialTransition(async () => {
+                        const fd = new FormData()
+                        fd.append("name", newMaterialName.trim())
+                        const res = await createMaterialAction(fd)
+                        if (res.success) {
+                          setNewMaterialName("")
+                          router.refresh()
+                        } else {
+                          alert(res.error || "Failed to add material")
+                        }
+                      })
+                    }
+                  }}
+                  placeholder="e.g. Silk"
+                  className="flex-1 h-8 px-3 text-admin-sm border border-admin-border rounded-admin-md bg-admin-content text-admin-text-primary placeholder:text-admin-text-tertiary focus:outline-none focus:ring-1 focus:ring-admin-primary"
+                />
+                <button
+                  type="button"
+                  disabled={isSavingMaterial || !newMaterialName.trim()}
+                  onClick={() => {
+                    if (!newMaterialName.trim()) return
+                    startMaterialTransition(async () => {
+                      const fd = new FormData()
+                      fd.append("name", newMaterialName.trim())
+                      const res = await createMaterialAction(fd)
+                      if (res.success) {
+                        setNewMaterialName("")
+                        router.refresh()
+                      } else {
+                        alert(res.error || "Failed to add material")
+                      }
+                    })
+                  }}
+                  className="h-8 px-3 text-admin-xs font-semibold uppercase tracking-wider bg-admin-primary text-white rounded-admin-md hover:bg-admin-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {isSavingMaterial ? "…" : "+ Add"}
+                </button>
               </div>
             </div>
           </div>

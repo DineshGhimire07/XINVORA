@@ -10,19 +10,19 @@ export async function notifyBackInStockAction(
   formData: FormData
 ): Promise<{ success: boolean; error?: string }> {
   const productId = formData.get("productId")?.toString().trim()
-  const name = formData.get("name")?.toString().trim() || ""
-  const phone = formData.get("phone")?.toString().trim() || ""
+  let name = formData.get("name")?.toString().trim() || ""
+  let phone = formData.get("phone")?.toString().trim() || ""
 
   if (!productId) {
     return { success: false, error: "Missing product ID." }
   }
 
   if (!name) {
-    return { success: false, error: "Please enter your name." }
+    name = "Interested Customer"
   }
 
   if (!phone) {
-    return { success: false, error: "Please enter your phone number." }
+    phone = "Single-Click Request"
   }
 
   try {
@@ -37,10 +37,11 @@ export async function notifyBackInStockAction(
       name,
       phone,
       email: "",
-      productName: product?.name || "",
+      productName: product?.name || "Product Query",
       notified: false,
     })
 
+    revalidatePath("/admin/customer-feedback")
     revalidatePath("/admin/inquiries")
     return { success: true }
   } catch {

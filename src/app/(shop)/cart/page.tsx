@@ -26,7 +26,7 @@ export default async function CartPage() {
 
   if (!cart || cart.items.length === 0) {
     return (
-      <Section className="py-24 md:py-32 flex flex-col items-center justify-center text-center">
+      <Section className="flex-1 py-24 md:py-32 flex flex-col items-center justify-center text-center">
         <Container>
           <h1 className="text-display-md font-display mb-6">Your Cart is Empty</h1>
           <p className="text-body-lg text-text-secondary mb-12 max-w-md mx-auto">

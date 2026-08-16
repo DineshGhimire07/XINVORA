@@ -58,6 +58,7 @@ const navItems: NavItem[] = [
     items: [
       { name: "All Customers", href: "/admin/users" },
       { name: "Customer Feedback", href: "/admin/customer-feedback" },
+      { name: "Dress & Stock Requests", href: "/admin/customer-feedback?tab=stock-alerts" },
     ],
   },
   {

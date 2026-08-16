@@ -262,7 +262,8 @@ export function ProductVariantSelector({
     })
   }
 
-  const inStock = activeVariant?.inventory ? activeVariant.inventory.quantity > 0 : true
+  const isSelectedVariantOut = activeVariant?.inventory ? activeVariant.inventory.quantity <= 0 : false
+  const inStock = isSelectedVariantOut ? false : (activeVariant?.inventory ? activeVariant.inventory.quantity > 0 : true)
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -371,12 +372,21 @@ export function ProductVariantSelector({
         </div>
       )}
 
-      {/* Availability */}
-      {!inStock && (
-        <span className="text-[10px] font-bold tracking-widest text-red-500 uppercase select-none">
-          Out of Stock
-        </span>
-      )}
+      {/* Stock Availability Messaging */}
+      {!inStock || (activeVariant?.inventory && activeVariant.inventory.quantity <= 0) ? (
+        <div className="flex items-center gap-2 select-none">
+          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          <span className="text-[11px] font-bold tracking-wider text-red-500 uppercase">
+            Out of Stock
+          </span>
+        </div>
+      ) : activeVariant?.inventory && activeVariant.inventory.quantity <= 5 ? (
+        <div className="flex items-center justify-center py-1 select-none">
+          <span className="text-[12px] font-medium text-red-500 tracking-wide">
+            Only {activeVariant.inventory.quantity} {activeVariant.inventory.quantity === 1 ? "item" : "items"} available in stock
+          </span>
+        </div>
+      ) : null}
 
       {/* Validation Error Message */}
       {validationError && (

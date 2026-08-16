@@ -33,6 +33,7 @@ interface Props {
   totalPages: number
   currentPage: number
   currentStatus: string
+  initialTab?: "inquiries" | "stock-alerts"
 }
 
 export function CustomerFeedbackClient({
@@ -41,8 +42,9 @@ export function CustomerFeedbackClient({
   totalPages,
   currentPage,
   currentStatus,
+  initialTab = "inquiries",
 }: Props) {
-  const [activeTab, setActiveTab] = React.useState<"inquiries" | "stock-alerts">("inquiries")
+  const [activeTab, setActiveTab] = React.useState<"inquiries" | "stock-alerts">(initialTab)
   const [selectedInquiry, setSelectedInquiry] = React.useState<Inquiry | null>(null)
   const [updatingId, setUpdatingId] = React.useState<string | null>(null)
   const router = useRouter()

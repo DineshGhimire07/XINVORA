@@ -5,12 +5,13 @@ import { buildMetadata } from "@/lib/metadata"
 import Link from "next/link"
 import Image from "next/image"
 import { ProductCard } from "@/components/storefront/ProductCard"
+import { CollectionFilterToolbar } from "@/components/storefront/CollectionFilterToolbar"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { db } from "@/db/client"
 import { colors, sizes, materials } from "@/db/schema"
 import { findCollectionDetailBySlug } from "@/db/queries/collections"
-import { ChevronRight, X } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import { inArray } from "drizzle-orm"
 
 export async function generateMetadata(props: {
@@ -84,30 +85,6 @@ export default async function CollectionDetailPage(props: {
     db.select().from(sizes),
     db.select().from(materials),
   ])
-
-  // Helper to build filter URLs
-  const createFilterLink = (key: string, value: string | null) => {
-    const params = new URLSearchParams()
-    if (searchParams.sort) params.set("sort", searchParams.sort)
-    if (searchParams.color) params.set("color", searchParams.color)
-    if (searchParams.size) params.set("size", searchParams.size)
-    if (searchParams.material) params.set("material", searchParams.material)
-
-    if (value === null) {
-      params.delete(key)
-    } else {
-      params.set(key, value)
-    }
-
-    const query = params.toString()
-    return `/collections/${slug}${query ? `?${query}` : ""}`
-  }
-
-  const activeFilters = [
-    searchParams.color && { key: "color", label: `Color: ${searchParams.color}` },
-    searchParams.size && { key: "size", label: `Size: ${searchParams.size}` },
-    searchParams.material && { key: "material", label: `Material: ${searchParams.material}` },
-  ].filter(Boolean) as { key: string; label: string }[]
 
   return (
     <main className="flex-1 bg-background pt-[72px] md:pt-20">
@@ -187,137 +164,17 @@ export default async function CollectionDetailPage(props: {
       )}
 
       {/* 4. Catalogue Toolbar / Filters & Sorting */}
-      <Section id="catalogue-toolbar" padding="none" className="bg-white py-5 border-b border-neutral-100">
-        <Container className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            {/* Filter pills */}
-            <div className="flex flex-wrap items-center gap-6">
-              {/* Color filter */}
-              <details className="relative group/details">
-                <summary className="list-none outline-none text-[11px] font-semibold tracking-wider text-text-secondary uppercase cursor-pointer hover:text-text-primary py-2 flex items-center gap-1 select-none [&::-webkit-details-marker]:hidden">
-                  Color <span className="text-[9px] text-text-tertiary">▼</span>
-                </summary>
-                <div className="absolute left-0 mt-1 bg-surface border border-border p-4 min-w-[200px] z-20 shadow-lg">
-                  <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
-                    {allColors.map(c => (
-                      <Link
-                        key={c.id}
-                        href={createFilterLink("color", searchParams.color === c.name ? null : c.name)}
-                        className={`text-body-sm hover:text-text-primary transition-colors flex items-center justify-between ${searchParams.color === c.name ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}
-                      >
-                        <span>{c.name}</span>
-                        {c.hexCode && (
-                          <span className="w-3 h-3 rounded-full border border-neutral-200" style={{ backgroundColor: c.hexCode }} />
-                        )}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </details>
-
-              {/* Size filter */}
-              <details className="relative group/details">
-                <summary className="list-none outline-none text-[11px] font-semibold tracking-wider text-text-secondary uppercase cursor-pointer hover:text-text-primary py-2 flex items-center gap-1 select-none [&::-webkit-details-marker]:hidden">
-                  Size <span className="text-[9px] text-text-tertiary">▼</span>
-                </summary>
-                <div className="absolute left-0 mt-1 bg-surface border border-border p-4 min-w-[150px] z-20 shadow-lg">
-                  <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
-                    {allSizes.map(s => (
-                      <Link
-                        key={s.id}
-                        href={createFilterLink("size", searchParams.size === s.name ? null : s.name)}
-                        className={`text-body-sm hover:text-text-primary transition-colors ${searchParams.size === s.name ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}
-                      >
-                        {s.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </details>
-
-              {/* Material filter */}
-              <details className="relative group/details">
-                <summary className="list-none outline-none text-[11px] font-semibold tracking-wider text-text-secondary uppercase cursor-pointer hover:text-text-primary py-2 flex items-center gap-1 select-none [&::-webkit-details-marker]:hidden">
-                  Material <span className="text-[9px] text-text-tertiary">▼</span>
-                </summary>
-                <div className="absolute left-0 mt-1 bg-surface border border-border p-4 min-w-[180px] z-20 shadow-lg">
-                  <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
-                    {allMaterials.map(m => (
-                      <Link
-                        key={m.id}
-                        href={createFilterLink("material", searchParams.material === m.name ? null : m.name)}
-                        className={`text-body-sm hover:text-text-primary transition-colors ${searchParams.material === m.name ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}
-                      >
-                        {m.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </details>
-            </div>
-
-            {/* Sorting & Item Count */}
-            <div className="flex items-center gap-6">
-              <span className="text-[11px] font-medium tracking-wide text-text-secondary uppercase select-none">
-                {productsResult.totalCount || products.length} Items
-              </span>
-
-              <details className="relative group/details">
-                <summary className="list-none outline-none text-[11px] font-semibold tracking-wider text-text-secondary uppercase cursor-pointer hover:text-text-primary py-2 flex items-center gap-1 select-none [&::-webkit-details-marker]:hidden">
-                  Sort By <span className="text-[9px] text-text-tertiary">▼</span>
-                </summary>
-                <div className="absolute right-0 mt-1 bg-surface border border-border p-3 min-w-[180px] z-20 shadow-lg">
-                  <div className="flex flex-col gap-2.5">
-                    <Link
-                      href={createFilterLink("sort", "newest")}
-                      className={`text-body-sm hover:text-text-primary transition-colors ${!searchParams.sort || searchParams.sort === "newest" ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}
-                    >
-                      Newest
-                    </Link>
-                    <Link
-                      href={createFilterLink("sort", "price_asc")}
-                      className={`text-body-sm hover:text-text-primary transition-colors ${searchParams.sort === "price_asc" ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}
-                    >
-                      Price: Low to High
-                    </Link>
-                    <Link
-                      href={createFilterLink("sort", "price_desc")}
-                      className={`text-body-sm hover:text-text-primary transition-colors ${searchParams.sort === "price_desc" ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}
-                    >
-                      Price: High to Low
-                    </Link>
-                  </div>
-                </div>
-              </details>
-            </div>
-          </div>
-
-          {/* Active filters row */}
-          {activeFilters.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-neutral-50">
-              <span className="text-[10px] font-bold tracking-widest text-text-secondary uppercase mr-2">
-                Active:
-              </span>
-              {activeFilters.map(filter => (
-                <Link
-                  key={filter.key}
-                  href={createFilterLink(filter.key, null)}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-neutral-50 hover:bg-neutral-100 text-[10px] text-text-primary tracking-wide border border-neutral-200 transition-colors uppercase font-medium rounded-full"
-                >
-                  {filter.label}
-                  <X className="w-3 h-3 text-text-secondary hover:text-text-primary" />
-                </Link>
-              ))}
-              <Link
-                href={`/collections/${slug}`}
-                className="text-[10px] text-text-secondary hover:text-text-primary underline tracking-wider uppercase ml-2"
-              >
-                Clear All
-              </Link>
-            </div>
-          )}
-        </Container>
-      </Section>
+      <CollectionFilterToolbar
+        slug={slug}
+        totalItems={productsResult.totalCount || products.length}
+        colors={allColors}
+        sizes={allSizes}
+        materials={allMaterials}
+        activeColor={searchParams.color}
+        activeSize={searchParams.size}
+        activeMaterial={searchParams.material}
+        activeSort={searchParams.sort}
+      />
 
       {/* 5. Product Catalogue Grid */}
       <Section id="catalogue-grid" padding="none" className="bg-background py-1.5 w-full">

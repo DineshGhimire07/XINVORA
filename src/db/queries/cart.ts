@@ -190,8 +190,8 @@ export async function getHeaderCommerceState(
   const cartId = cartList[0]?.id
   const wishlistId = wlList[0]?.id
 
-  // Phase 2: Count cart and wishlist items concurrently
-  const [cartCountResult, wishlistCountResult] = await Promise.all([
+  // Phase 2: Count cart/wishlist items and fetch active cart item identifiers concurrently
+  const [cartCountResult, wishlistCountResult, cartItemsResult] = await Promise.all([
     cartId
       ? db
           .select({ count: sql<number>`count(*)` })
@@ -204,10 +204,22 @@ export async function getHeaderCommerceState(
           .from(wishlistItems)
           .where(eq(wishlistItems.wishlistId, wishlistId))
       : Promise.resolve([]),
+    cartId
+      ? db
+          .select({
+            productId: variants.productId,
+            variantId: cartItems.variantId,
+            quantity: cartItems.quantity,
+          })
+          .from(cartItems)
+          .innerJoin(variants, eq(cartItems.variantId, variants.id))
+          .where(eq(cartItems.cartId, cartId))
+      : Promise.resolve([]),
   ])
 
   result.cartCount = Number(cartCountResult[0]?.count ?? 0)
   result.wishlistCount = Number(wishlistCountResult[0]?.count ?? 0)
+  result.cartItems = cartItemsResult as { productId: string; variantId: string; quantity: number }[]
 
   return result
 }

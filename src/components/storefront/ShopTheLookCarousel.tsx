@@ -183,7 +183,7 @@ export function ShopTheLookCarousel({
       style={{ 
         paddingTop: compact ? 15 : 30,
         paddingBottom: compact ? 15 : 40,
-        background: compact ? "transparent" : "#f7f5f2"
+        background: compact ? "transparent" : "var(--color-surface, #F5F2EB)"
       }}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
@@ -195,12 +195,12 @@ export function ShopTheLookCarousel({
           style={{ maxWidth: visibleTrackW, width: "100%" }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-bold tracking-[0.35em] text-neutral-900 uppercase">
+            <p className="text-[10px] font-bold tracking-[0.35em] text-text-primary uppercase">
               Shop the Look
             </p>
             <Link
               href="/looks"
-              className="hidden md:inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.28em] uppercase text-neutral-900 border-b border-neutral-900 pb-0.5 hover:text-neutral-500 hover:border-neutral-500 transition-colors shrink-0"
+              className="hidden md:inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.28em] uppercase text-text-primary border-b border-text-primary pb-0.5 hover:text-text-secondary hover:border-text-secondary transition-colors shrink-0"
             >
               View All Looks
             </Link>
@@ -214,9 +214,9 @@ export function ShopTheLookCarousel({
         <button
           onClick={prev}
           aria-label="Previous look"
-          className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center rounded-full bg-white/40 md:bg-white backdrop-blur-xs text-neutral-900 hover:bg-white/80 md:hover:bg-white border border-neutral-200/30 md:border-black/5 hover:shadow-md transition-all cursor-pointer active:scale-90 w-9 h-9 md:w-12 md:h-12"
+          className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center rounded-full bg-surface/80 md:bg-surface backdrop-blur-xs text-text-primary hover:bg-surface-elevated border border-border shadow-xs hover:shadow-md transition-all cursor-pointer active:scale-90 w-9 h-9 md:w-12 md:h-12"
         >
-          <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 text-black" />
+          <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 text-text-primary" />
         </button>
 
         {/* Sliding Area */}
@@ -265,7 +265,7 @@ export function ShopTheLookCarousel({
                 <div
                   key={`${i}-${slide.id}`}
                   onClick={() => handleSlideClick(i, slide.id)}
-                  className="group relative shrink-0 overflow-hidden bg-neutral-100 block cursor-pointer"
+                  className="group relative shrink-0 overflow-hidden bg-surface-secondary block cursor-pointer border border-border/40"
                   style={{
                     width: baseW,
                     height: baseH,
@@ -295,9 +295,9 @@ export function ShopTheLookCarousel({
         <button
           onClick={next}
           aria-label="Next look"
-          className="absolute right-3 md:right-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center rounded-full bg-white/40 md:bg-white backdrop-blur-xs text-neutral-900 hover:bg-white/80 md:hover:bg-white border border-neutral-200/30 md:border-black/5 hover:shadow-md transition-all cursor-pointer active:scale-90 w-9 h-9 md:w-12 md:h-12"
+          className="absolute right-3 md:right-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center rounded-full bg-surface/80 md:bg-surface backdrop-blur-xs text-text-primary hover:bg-surface-elevated border border-border shadow-xs hover:shadow-md transition-all cursor-pointer active:scale-90 w-9 h-9 md:w-12 md:h-12"
         >
-          <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-black" />
+          <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-text-primary" />
         </button>
       </div>
 
@@ -313,7 +313,7 @@ export function ShopTheLookCarousel({
               style={{
                 width: 8,
                 height: 8,
-                background: activeSlideIdx === i ? "#171717" : "#d4d4d4",
+                background: activeSlideIdx === i ? "var(--color-text-primary, #171717)" : "var(--color-border, #E5E2DC)",
                 transform: activeSlideIdx === i ? "scale(1.25)" : "scale(1)",
                 transition: "background 0.3s ease, transform 0.3s ease",
               }}
@@ -324,14 +324,17 @@ export function ShopTheLookCarousel({
 
       {/* ── PRODUCTS IN THIS LOOK ── */}
       {showProducts && activeSlide && activeProducts.length > 0 && (
-        <div className="mt-12 max-w-5xl mx-auto px-8 md:px-20">
-          {/* Divider + heading */}
-          <div className="flex items-center gap-6 mb-8">
-            <div className="flex-1 h-px bg-neutral-200" />
-            <p className="text-[9px] font-bold tracking-[0.38em] text-neutral-400 uppercase whitespace-nowrap shrink-0">
-              Shop this look
-            </p>
-            <div className="flex-1 h-px bg-neutral-200" />
+        <div className="mt-12 max-w-5xl mx-auto px-6 md:px-12">
+          {/* Divider + centered heading overlay */}
+          <div className="relative flex items-center justify-center mb-10">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+              <div className="w-full border-t border-border/80" />
+            </div>
+            <div className="relative bg-background px-6 select-none">
+              <span className="text-[10px] font-bold tracking-[0.3em] text-text-tertiary uppercase">
+                Shop This Look
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-6 gap-y-10">

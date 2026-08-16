@@ -31,6 +31,8 @@ export default async function CustomerFeedbackPage(props: {
     .orderBy(desc(backInStockRequests.createdAt))
     .limit(100)
 
+  const tab = searchParams.tab || "inquiries"
+
   return (
     <CustomerFeedbackClient
       inquiries={inquiries}
@@ -38,6 +40,7 @@ export default async function CustomerFeedbackPage(props: {
       totalPages={totalPages}
       currentPage={page}
       currentStatus={status}
+      initialTab={tab === "stock-alerts" ? "stock-alerts" : "inquiries"}
     />
   )
 }

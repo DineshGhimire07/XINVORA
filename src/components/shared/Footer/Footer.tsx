@@ -25,11 +25,11 @@ export async function Footer() {
   const socialLinks = contactSettings?.socialLinks
 
   return (
-    <footer className="border-t border-border/60 bg-background pt-16 pb-12 select-none" role="contentinfo">
+    <footer className="border-t border-border/60 bg-background pt-10 pb-6 select-none" role="contentinfo">
       <Container size="full" className="px-6 sm:px-12 md:px-16 lg:px-20">
         
         {/* Main Footer Links & Newsletter Grid */}
-        <Grid cols={{ base: 1, md: 12 }} gap={12} className="pb-12 border-b border-border/40">
+        <Grid cols={{ base: 1, md: 12 }} gap={12} className="pb-6 border-b border-border/40">
           
           {/* Brand Info Left Section (4/12 width) */}
           <div className="md:col-span-4 flex flex-col items-start text-left max-w-[20rem]">
@@ -100,7 +100,7 @@ export async function Footer() {
         </Grid>
 
         {/* Bottom Social & Copyright Section */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
+        <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
           
           {/* Copyright notice & Cookie Preferences */}
           <div className="flex items-center gap-4 flex-wrap select-none">

@@ -312,4 +312,5 @@ export interface WishlistResult extends RawWishlist {
 export interface HeaderCommerceState {
   cartCount: number
   wishlistCount: number
+  cartItems?: { productId: string; variantId: string; quantity: number }[]
 }

@@ -183,12 +183,12 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
             Collections
           </Link>
 
-          {/* LIVING LINK */}
+          {/* LIMITED LINK */}
           <Link
-            href="/collections/home-decor"
+            href="/collections/limited"
             className="text-[13px] font-medium tracking-[0.18em] uppercase hover:opacity-60 transition-opacity duration-200 py-1 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-text-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200"
           >
-            Living
+            Limited
           </Link>
 
           {/* JOURNAL LINK */}
@@ -331,14 +331,13 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
             Collections
           </Link>
 
-
-          {/* LIVING — plain link */}
+          {/* LIMITED — plain link */}
           <Link
-            href="/collections/home-decor"
+            href="/collections/limited"
             onClick={() => setMobileMenuOpen(false)}
             className="flex items-center px-5 py-5 border-b border-neutral-100 text-[15px] font-semibold tracking-[0.06em] uppercase hover:opacity-60 transition-opacity"
           >
-            Living
+            Limited
           </Link>
 
           {/* JOURNAL — plain link */}

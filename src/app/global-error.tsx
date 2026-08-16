@@ -12,11 +12,8 @@
  */
 
 import { Button } from "@/components/ui/button"
-import { Manrope } from "next/font/google"
 import { useEffect } from "react"
 import "./globals.css" // Required because layout.css might have failed
-
-const manrope = Manrope({ subsets: ["latin"], weight: ["400", "500", "600"] })
 
 export default function GlobalError({
   error,
@@ -31,7 +28,7 @@ export default function GlobalError({
   }, [error])
 
   return (
-    <html lang="en" className={manrope.className}>
+    <html lang="en" className="font-sans">
       <body className="flex min-h-screen flex-col items-center justify-center bg-background text-text-primary p-6 text-center antialiased">
         <div className="max-w-md space-y-6">
           <h1 className="text-display-sm font-semibold tracking-tight text-text-primary">

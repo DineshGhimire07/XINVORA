@@ -19,17 +19,19 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
 
   return (
     <HeaderStateProvider>
-      <Suspense fallback={null}>
-        <ScrollToTop />
-      </Suspense>
-      <CookieScriptLoader />
-      <HeaderServer />
-      {children}
-      <CookieBanner />
-      <CookieModal />
-      <Suspense fallback={null}>
-        <Footer />
-      </Suspense>
+      <div className="min-h-screen flex flex-col justify-between">
+        <Suspense fallback={null}>
+          <ScrollToTop />
+        </Suspense>
+        <CookieScriptLoader />
+        <HeaderServer />
+        <main className="flex-1 flex flex-col w-full">{children}</main>
+        <CookieBanner />
+        <CookieModal />
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
+      </div>
     </HeaderStateProvider>
   )
 }

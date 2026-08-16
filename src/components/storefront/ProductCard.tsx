@@ -7,6 +7,7 @@ import { Heart } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toggleWishlistByProductIdAction } from "@/actions/wishlist.actions"
 import { NotifyMeButton } from "@/components/storefront/NotifyMeButton"
+import { useHeaderState } from "@/providers/header-state-provider"
 
 export interface ProductCardProps {
   product: {
@@ -50,6 +51,8 @@ export function ProductCard({
   inStock = true,
 }: ProductCardProps) {
   const router = useRouter()
+  const { cartItemMap } = useHeaderState()
+  const inCartQty = cartItemMap.get(product.id) || 0
   const [isWishlisted, setIsWishlisted] = React.useState(initialIsWishlisted)
   const [isPending, startTransition] = React.useTransition()
   // We want at least the first image, up to all images
@@ -90,15 +93,15 @@ export function ProductCard({
   }
   
   return (
-    <Link 
-      href={`/products/${product.slug}`}
-      prefetch={false}
-      onMouseEnter={() => router.prefetch(`/products/${product.slug}`)}
-      onFocus={() => router.prefetch(`/products/${product.slug}`)}
-      className="group flex flex-col gap-2.5 text-left w-full relative"
-    >
+    <div className="group flex flex-col gap-2.5 text-left w-full relative">
       {/* Visual Card Image container */}
-      <div className="relative w-full aspect-[3/4] bg-surface-secondary overflow-hidden select-none">
+      <div className="relative w-full aspect-[3/4] bg-[#ECEBE7] overflow-hidden select-none">
+        <Link 
+          href={`/products/${product.slug}`}
+          prefetch={false}
+          className="absolute inset-0 z-[5]"
+          aria-label={product.name}
+        />
         {overrideImage ? (
           <div className="w-full h-full relative">
             <Image 
@@ -112,8 +115,8 @@ export function ProductCard({
           </div>
         ) : images.length > 0 ? (
           <>
-            {/* Desktop Hover State (Hidden on touch devices, shown on hover on desktop) */}
-            <div className="hidden md:block w-full h-full relative">
+            {/* Desktop Hover State — pointer-events-none so clicks pass to the Link below */}
+            <div className="hidden md:block w-full h-full relative pointer-events-none">
               <Image 
                 src={images[0].url} 
                 alt={images[0].altText || product.name} 
@@ -139,9 +142,9 @@ export function ProductCard({
               )}
             </div>
 
-            {/* Mobile Scrollable Carousel (Visible on mobile, hidden on desktop, touch-auto to prevent scroll locking) */}
+            {/* Mobile Scrollable Carousel */}
             {disableHover ? (
-              <div className="flex md:hidden w-full h-full relative">
+              <div className="flex md:hidden w-full h-full relative pointer-events-none">
                 <Image 
                   src={images[0].url} 
                   alt={images[0].altText || product.name} 
@@ -154,6 +157,7 @@ export function ProductCard({
             ) : (
               <div 
                 className="flex md:hidden w-full h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory touch-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                onClick={() => router.push(`/products/${product.slug}`)}
               >
                 {images.map((img, i) => (
                   <div key={i} className="relative w-full h-full shrink-0 snap-center">
@@ -170,7 +174,7 @@ export function ProductCard({
               </div>
             )}
             
-            {/* Slide Indicator for mobile (only show if multiple images) */}
+            {/* Slide Indicator for mobile */}
             {!disableHover && images.length > 1 && (
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex md:hidden gap-1.5 z-10 pointer-events-none">
                 {images.map((_, i) => (
@@ -185,33 +189,25 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Sold Out badge on top-left of image wrapper */}
-        {!inStock && (
-          <span className="absolute top-3 left-3 z-10 px-2 py-0.5 text-[8px] font-bold tracking-[0.25em] uppercase bg-neutral-900 text-white select-none">
-            Sold Out
+        {/* Sold Out / In Bag badge */}
+        {!inStock ? (
+          <span className="absolute top-3 left-3 z-10 px-2 py-0.5 text-[8px] font-bold tracking-[0.25em] uppercase bg-text-primary text-background select-none shadow-xs">
+            SOLD OUT
           </span>
-        )}
+        ) : inCartQty > 0 ? (
+          <span className="absolute top-3 left-3 z-10 px-2 py-0.5 text-[8px] font-bold tracking-[0.18em] uppercase bg-white/95 text-text-primary border border-neutral-200 shadow-xs select-none">
+            IN BAG ({inCartQty})
+          </span>
+        ) : null}
 
         {/* Sale discount badge */}
         {inStock && discountPercent > 0 && !hideDiscountBadge && (
-          <span 
-            className="absolute top-3 right-3 z-10 text-[8px] font-bold tracking-[0.2em] uppercase select-none border"
-            style={{ 
-              backgroundColor: '#FCFBF8',
-              borderColor: 'rgba(201, 169, 106, 0.5)',
-              color: '#C9A96A',
-              paddingTop: '5px',
-              paddingBottom: '4px',
-              paddingLeft: '8px',
-              paddingRight: '8px',
-              lineHeight: '1'
-            }}
-          >
+          <span className="absolute top-3 right-3 z-10 text-[8px] font-bold tracking-[0.18em] uppercase select-none border border-neutral-300 bg-white/90 text-text-primary px-2 py-0.5 leading-none shadow-xs">
             -{discountPercent}% OFF
           </span>
         )}
 
-        {/* Color dot selectors overlay in top-left corner (only shown if not sold out to prevent collision) */}
+        {/* Color dot selectors overlay */}
         {inStock && itemColors.length > 0 && (
           <div className="absolute top-3 left-3 flex gap-1 z-10">
             {itemColors.map((color: any) => (
@@ -229,33 +225,33 @@ export function ProductCard({
           <button
             onClick={handleWishlist}
             disabled={isPending}
-            className="absolute bottom-4 right-4 z-20 flex items-center justify-center text-text-primary hover:scale-110 transition-all disabled:opacity-70 disabled:hover:scale-100"
+            className="absolute bottom-3 right-3 z-20 flex items-center justify-center text-text-primary hover:scale-110 transition-all disabled:opacity-70 disabled:hover:scale-100"
             aria-label="Add to Wishlist"
           >
-            <Heart className={`w-5 h-5 transition-colors ${isWishlisted ? "fill-accent text-accent" : ""}`} />
+            <Heart className={`w-4.5 h-4.5 transition-colors ${isWishlisted ? "fill-accent text-accent" : "text-neutral-800"}`} />
           </button>
         )}
       </div>
 
       {/* Product details row */}
       {(!hideName || !hidePrice || !inStock) && (
-        <div className="flex flex-col gap-1 px-4 mb-2">
+        <div className="flex flex-col gap-1 px-0.5 pt-1.5 mb-2">
           {(!hideName || !hidePrice) && (
             <div className="flex items-center justify-between text-[10px] tracking-wider text-text-primary">
               {!hideName && (
-                <span className="lowercase truncate font-sans text-text-primary font-medium max-w-[72%]">
+                <Link href={`/products/${product.slug}`} className="lowercase truncate font-sans text-text-primary font-medium max-w-[72%] hover:text-text-secondary transition-colors">
                   {product.name.toLowerCase()}
-                </span>
+                </Link>
               )}
               {!hidePrice && (
                 <span className="flex items-center gap-3.5 select-none whitespace-nowrap font-mono">
                   {(effectiveSellingPrice !== null && effectiveSellingPrice !== undefined) ? (
                     effectiveOriginalPrice && discountPercent > 0 ? (
                       <>
-                        <span className="line-through font-normal text-[10px]" style={{ color: '#9A9A9A' }}>
+                        <span className="line-through font-normal text-[10px] text-text-tertiary">
                           NPR {Math.round(effectiveOriginalPrice / 100).toLocaleString()}
                         </span>
-                        <span className="font-semibold text-[11px]" style={{ color: '#1A1A1A' }}>
+                        <span className="font-semibold text-[11px] text-text-primary">
                           NPR {Math.round(effectiveSellingPrice / 100).toLocaleString()}
                         </span>
                       </>
@@ -288,6 +284,6 @@ export function ProductCard({
           )}
         </div>
       )}
-    </Link>
+    </div>
   )
 }

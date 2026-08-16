@@ -147,10 +147,25 @@ export class CartService {
       .limit(1)
     timings.push({ name: 'existingCartItemQuery', ms: performance.now() - existingStart })
 
-    const newQuantity = (existingItem?.quantity ?? 0) + input.quantity
+    const currentCartQty = existingItem?.quantity ?? 0
+    const newQuantity = currentCartQty + input.quantity
+
+    if (availableInventory <= 0) {
+      throw new DomainError("VALIDATION_FAILED", "This item is currently out of stock")
+    }
 
     if (newQuantity > availableInventory) {
-      throw new DomainError("VALIDATION_FAILED", `Only ${availableInventory} items available in stock`)
+      if (currentCartQty > 0) {
+        throw new DomainError(
+          "VALIDATION_FAILED",
+          `You already have the max available stock (${availableInventory} ${availableInventory === 1 ? "item" : "items"}) in your bag`
+        )
+      } else {
+        throw new DomainError(
+          "VALIDATION_FAILED",
+          `Only ${availableInventory} ${availableInventory === 1 ? "item" : "items"} available in stock`
+        )
+      }
     }
     if (newQuantity > 99) {
       throw new DomainError("VALIDATION_FAILED", "Maximum quantity limit reached")
