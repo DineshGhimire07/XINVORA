@@ -192,8 +192,38 @@ export async function archiveMediaAction(id: string, providerId?: string) {
 
     await MediaService.deleteMedia(id, session.id)
     revalidatePath("/admin/cms/media")
+    revalidatePath("/admin/media")
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to archive media" }
   }
 }
+
+export async function bulkDeleteMediaAction(items: { id: string; providerId?: string | null }[]) {
+  try {
+    const session = await SessionService.requireAdmin()
+
+    const errors: string[] = []
+    for (const item of items) {
+      try {
+        if (item.providerId) {
+          await StorageService.deleteImage(item.providerId).catch(() => {})
+          try {
+            const localPath = path.join(process.cwd(), "public", "uploads", item.providerId)
+            if (fs.existsSync(localPath)) await fs.promises.unlink(localPath)
+          } catch {}
+        }
+        await MediaService.deleteMedia(item.id, session.id)
+      } catch (err: any) {
+        errors.push(item.id)
+      }
+    }
+
+    revalidatePath("/admin/cms/media")
+    revalidatePath("/admin/media")
+    return { success: true, failed: errors }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to bulk delete media" }
+  }
+}
+

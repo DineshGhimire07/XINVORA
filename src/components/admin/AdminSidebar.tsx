@@ -84,7 +84,7 @@ const navItems: NavItem[] = [
       { name: "Pages", href: "/admin/cms/pages" },
       { name: "Banners", href: "/admin/cms/banners" },
       { name: "Journal", href: "/admin/content/journal" },
-      { name: "Media Library", href: "/admin/cms/media" },
+      { name: "Media Library", href: "/admin/media" },
       { name: "Navigation", href: "/admin/cms/navigation" },
       { name: "FAQ", href: "/admin/cms/faq" },
       { name: "Lookbook", href: "/admin/cms/lookbook" },
