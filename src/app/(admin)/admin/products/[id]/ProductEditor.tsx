@@ -32,14 +32,34 @@ export default function ProductEditor({
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [newMaterialName, setNewMaterialName] = useState("")
-  const [isSavingMaterial, startMaterialTransition] = useTransition()
-  const [newSizeName, setNewSizeName] = useState("")
-  const [isSavingSize, startSizeTransition] = useTransition()
-  const [customSizes, setCustomSizes] = useState<any[]>(sizes || [])
+  const [isSavingMaterial, setIsSavingMaterial] = useState(false)
   const [customCategories, setCustomCategories] = useState<any[]>(categories || [])
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(product?.categoryId || "")
   const [newCatName, setNewCatName] = useState("")
-  const [isSavingCategory, startCategoryTransition] = useTransition()
+  const [isSavingCategory, setIsSavingCategory] = useState(false)
+  const [newSizeName, setNewSizeName] = useState("")
+  const [isSavingSize, setIsSavingSize] = useState(false)
+  const [customSizes, setCustomSizes] = useState<any[]>(sizes || [])
+
+  const handleAddMaterial = async () => {
+    if (!newMaterialName.trim() || isSavingMaterial) return
+    setIsSavingMaterial(true)
+    try {
+      const fd = new FormData()
+      fd.append("name", newMaterialName.trim())
+      const res = await createMaterialAction(fd)
+      if (res.success) {
+        setNewMaterialName("")
+        router.refresh()
+      } else {
+        alert(res.error || "Failed to add material")
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to add material")
+    } finally {
+      setIsSavingMaterial(false)
+    }
+  }
   const [error, setError] = useState<string | null>(null)
   const [selectedImages, setSelectedImages] = useState<string[]>(product?.images || [])
   const [tryonPrompt, setTryonPrompt] = useState<string>(product?.virtualTryonPrompt || "")
@@ -47,6 +67,57 @@ export default function ProductEditor({
   const [pairedIds, setPairedIds] = useState<string[]>(product?.pairedProductIds || [])
   const [sellingPrice, setSellingPrice] = useState<string>(product?.basePrice || "")
   const [originalPrice, setOriginalPrice] = useState<string>(product?.compareAtPrice || "")
+
+  const handleAddCategory = async () => {
+    if (!newCatName.trim() || isSavingCategory) return
+    setIsSavingCategory(true)
+    try {
+      const fd = new FormData()
+      fd.append("name", newCatName.trim())
+      const res = await createCategoryAction(fd)
+      if (res.success && res.data) {
+        const newCat = res.data
+        setNewCatName("")
+        setCustomCategories((prev) => {
+          if (prev.some((c) => c.id === newCat.id)) return prev
+          return [...prev, newCat]
+        })
+        setSelectedCategoryId(newCat.id)
+        router.refresh()
+      } else {
+        alert(res.error || "Failed to add category")
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to add category")
+    } finally {
+      setIsSavingCategory(false)
+    }
+  }
+
+  const handleAddSize = async () => {
+    if (!newSizeName.trim() || isSavingSize) return
+    setIsSavingSize(true)
+    try {
+      const fd = new FormData()
+      fd.append("name", newSizeName.trim())
+      const res = await createSizeAction(fd)
+      if (res.success && res.data) {
+        const newSize = res.data
+        setNewSizeName("")
+        setCustomSizes((prev) => {
+          if (prev.some((s) => s.id === newSize.id)) return prev
+          return [...prev, newSize]
+        })
+        router.refresh()
+      } else {
+        alert(res.error || "Failed to add custom size")
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to add custom size")
+    } finally {
+      setIsSavingSize(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -193,24 +264,7 @@ export default function ProductEditor({
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault()
-                      if (!newCatName.trim()) return
-                      startCategoryTransition(async () => {
-                        const fd = new FormData()
-                        fd.append("name", newCatName.trim())
-                        const res = await createCategoryAction(fd)
-                        if (res.success && res.data) {
-                          const newCat = res.data
-                          setNewCatName("")
-                          setCustomCategories(prev => {
-                            if (prev.some(c => c.id === newCat.id)) return prev
-                            return [...prev, newCat]
-                          })
-                          setSelectedCategoryId(newCat.id)
-                          router.refresh()
-                        } else {
-                          alert(res.error || "Failed to add category")
-                        }
-                      })
+                      handleAddCategory()
                     }
                   }}
                   placeholder="e.g. Outerwear"
@@ -219,26 +273,7 @@ export default function ProductEditor({
                 <button
                   type="button"
                   disabled={isSavingCategory || !newCatName.trim()}
-                  onClick={() => {
-                    if (!newCatName.trim()) return
-                    startCategoryTransition(async () => {
-                      const fd = new FormData()
-                      fd.append("name", newCatName.trim())
-                      const res = await createCategoryAction(fd)
-                      if (res.success && res.data) {
-                        const newCat = res.data
-                        setNewCatName("")
-                        setCustomCategories(prev => {
-                          if (prev.some(c => c.id === newCat.id)) return prev
-                          return [...prev, newCat]
-                        })
-                        setSelectedCategoryId(newCat.id)
-                        router.refresh()
-                      } else {
-                        alert(res.error || "Failed to add category")
-                      }
-                    })
-                  }}
+                  onClick={handleAddCategory}
                   className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-wider bg-admin-primary text-white rounded-admin-md hover:bg-admin-primary/90 transition-colors disabled:opacity-50 flex-shrink-0"
                 >
                   {isSavingCategory ? "…" : "+ Add Category"}
@@ -409,22 +444,7 @@ export default function ProductEditor({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault()
-                    if (!newSizeName.trim()) return
-                    startSizeTransition(async () => {
-                      const fd = new FormData()
-                      fd.append("name", newSizeName.trim())
-                      const res = await createSizeAction(fd)
-                      if (res.success && res.data) {
-                        setNewSizeName("")
-                        setCustomSizes(prev => {
-                          if (prev.some(s => s.id === res.data.id)) return prev
-                          return [...prev, res.data]
-                        })
-                        router.refresh()
-                      } else {
-                        alert(res.error || "Failed to add custom size")
-                      }
-                    })
+                    handleAddSize()
                   }
                 }}
                 placeholder="e.g. Free Size (Fits XS-M) or XS-L"
@@ -433,24 +453,7 @@ export default function ProductEditor({
               <button
                 type="button"
                 disabled={isSavingSize || !newSizeName.trim()}
-                onClick={() => {
-                  if (!newSizeName.trim()) return
-                  startSizeTransition(async () => {
-                    const fd = new FormData()
-                    fd.append("name", newSizeName.trim())
-                    const res = await createSizeAction(fd)
-                    if (res.success && res.data) {
-                      setNewSizeName("")
-                      setCustomSizes(prev => {
-                        if (prev.some(s => s.id === res.data.id)) return prev
-                        return [...prev, res.data]
-                      })
-                      router.refresh()
-                    } else {
-                      alert(res.error || "Failed to add custom size")
-                    }
-                  })
-                }}
+                onClick={handleAddSize}
                 className="h-8 px-3 text-admin-xs font-semibold uppercase tracking-wider bg-admin-primary text-white rounded-admin-md hover:bg-admin-primary/90 transition-colors disabled:opacity-50 flex-shrink-0"
               >
                 {isSavingSize ? "…" : "+ Add Size"}
@@ -532,18 +535,7 @@ export default function ProductEditor({
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault()
-                      if (!newMaterialName.trim()) return
-                      startMaterialTransition(async () => {
-                        const fd = new FormData()
-                        fd.append("name", newMaterialName.trim())
-                        const res = await createMaterialAction(fd)
-                        if (res.success) {
-                          setNewMaterialName("")
-                          router.refresh()
-                        } else {
-                          alert(res.error || "Failed to add material")
-                        }
-                      })
+                      handleAddMaterial()
                     }
                   }}
                   placeholder="e.g. Silk"
@@ -552,20 +544,7 @@ export default function ProductEditor({
                 <button
                   type="button"
                   disabled={isSavingMaterial || !newMaterialName.trim()}
-                  onClick={() => {
-                    if (!newMaterialName.trim()) return
-                    startMaterialTransition(async () => {
-                      const fd = new FormData()
-                      fd.append("name", newMaterialName.trim())
-                      const res = await createMaterialAction(fd)
-                      if (res.success) {
-                        setNewMaterialName("")
-                        router.refresh()
-                      } else {
-                        alert(res.error || "Failed to add material")
-                      }
-                    })
-                  }}
+                  onClick={handleAddMaterial}
                   className="h-8 px-3 text-admin-xs font-semibold uppercase tracking-wider bg-admin-primary text-white rounded-admin-md hover:bg-admin-primary/90 transition-colors disabled:opacity-50"
                 >
                   {isSavingMaterial ? "…" : "+ Add"}

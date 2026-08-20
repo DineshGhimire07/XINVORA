@@ -38,7 +38,10 @@ export async function createCategoryAction(formData: FormData) {
     updateTag("categories")
     revalidatePath("/admin/categories")
     revalidatePath("/admin/products/create")
-    return { success: true, data: category }
+    return { 
+      success: true, 
+      data: JSON.parse(JSON.stringify(category)) 
+    }
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to create category" }
   }

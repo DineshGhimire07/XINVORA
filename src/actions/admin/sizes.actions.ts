@@ -40,7 +40,7 @@ export async function createSizeAction(formData: FormData) {
     if (existing.length > 0) {
       return {
         success: true,
-        data: existing[0],
+        data: JSON.parse(JSON.stringify(existing[0])),
         message: "Size already exists."
       }
     }
@@ -64,7 +64,10 @@ export async function createSizeAction(formData: FormData) {
 
     revalidatePath("/admin/products")
     revalidatePath("/admin/products/create")
-    return { success: true, data: newSize }
+    return { 
+      success: true, 
+      data: JSON.parse(JSON.stringify(newSize)) 
+    }
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to create custom size." }
   }
