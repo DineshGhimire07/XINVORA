@@ -31,6 +31,8 @@ export default function ProductEditor({
 }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [saveProgress, setSaveProgress] = useState(0)
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const [newMaterialName, setNewMaterialName] = useState("")
   const [isSavingMaterial, setIsSavingMaterial] = useState(false)
   const [customCategories, setCustomCategories] = useState<any[]>(categories || [])
@@ -123,6 +125,16 @@ export default function ProductEditor({
     e.preventDefault()
     setIsLoading(true)
     setError(null)
+    setSaveSuccess(false)
+    setSaveProgress(10)
+
+    // Animate progress bar while waiting
+    const progressInterval = setInterval(() => {
+      setSaveProgress(prev => {
+        if (prev >= 85) { clearInterval(progressInterval); return 85 }
+        return prev + Math.random() * 15
+      })
+    }, 200)
 
     const formData = new FormData(e.currentTarget)
 
@@ -133,12 +145,26 @@ export default function ProductEditor({
       result = await createProductAction(formData)
     }
 
+    clearInterval(progressInterval)
+    setSaveProgress(100)
+
     if (result.success) {
-      router.push("/admin/products")
+      setSaveSuccess(true)
+      setTimeout(() => {
+        setSaveProgress(0)
+        setSaveSuccess(false)
+        if (!product) {
+          router.push("/admin/products")
+        } else {
+          router.refresh()
+        }
+        setIsLoading(false)
+      }, 600)
     } else {
+      setSaveProgress(0)
       setError(result.error || "An unknown error occurred")
+      setIsLoading(false)
     }
-    setIsLoading(false)
   }
 
   const handleArchive = async () => {
@@ -157,6 +183,30 @@ export default function ProductEditor({
 
   return (
     <div className="space-y-6">
+      {/* ── Progress Bar ── */}
+      {isLoading && (
+        <div className="fixed top-0 left-0 right-0 z-[9999] h-1">
+          <div
+            className="h-full transition-all duration-300 ease-out"
+            style={{
+              width: `${saveProgress}%`,
+              background: saveSuccess
+                ? "linear-gradient(90deg, #22c55e, #16a34a)"
+                : "linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa)"
+            }}
+          />
+        </div>
+      )}
+
+      {saveSuccess && (
+        <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/30 text-green-600 text-admin-sm rounded-admin-md font-medium">
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          Product saved successfully!
+        </div>
+      )}
+
       {error && (
         <div className="p-4 bg-admin-status-danger-bg/25 border border-admin-status-danger-text/30 text-admin-status-danger-text text-admin-sm rounded-admin-md font-medium">
           {error}
@@ -736,9 +786,17 @@ export default function ProductEditor({
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-admin-primary text-admin-primary-on px-6 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md hover:bg-admin-primary/95 transition-colors disabled:opacity-50"
+              className="relative overflow-hidden bg-admin-primary text-admin-primary-on px-6 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md hover:bg-admin-primary/95 transition-colors disabled:opacity-70"
             >
-              {isLoading ? "Saving..." : "Save Product"}
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Saving...
+                </span>
+              ) : "Save Product"}
             </button>
           </div>
         </div>

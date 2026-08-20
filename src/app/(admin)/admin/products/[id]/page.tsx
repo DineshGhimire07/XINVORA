@@ -107,6 +107,10 @@ export default async function AdminProductEditorPage(props: PageProps) {
     columns: { id: true, name: true, slug: true },
   })
 
+  // Serialize all DB data to strip Date instances (prevents Next.js RPC digest error in production)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const serialize = (data: any) => JSON.parse(JSON.stringify(data))
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
@@ -119,14 +123,14 @@ export default async function AdminProductEditorPage(props: PageProps) {
       </div>
 
       <ProductEditor 
-        product={product} 
-        categories={allCategories} 
-        brands={allBrands} 
-        mediaItems={mediaItems} 
-        collections={allCollections}
-        materials={allMaterials}
-        sizes={allSizes}
-        allProducts={allProductsList}
+        product={product ? serialize(product) : null} 
+        categories={serialize(allCategories)} 
+        brands={serialize(allBrands)} 
+        mediaItems={serialize(mediaItems)} 
+        collections={serialize(allCollections)}
+        materials={serialize(allMaterials)}
+        sizes={serialize(allSizes)}
+        allProducts={serialize(allProductsList)}
       />
     </div>
   )
