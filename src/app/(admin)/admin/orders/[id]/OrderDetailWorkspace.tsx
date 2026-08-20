@@ -3,7 +3,7 @@
 import { useState, startTransition } from "react"
 import { useRouter } from "next/navigation"
 import { formatCurrency } from "@/lib/utils"
-import { updateOrderStatusAction } from "@/actions/admin/orders.actions"
+import { updateOrderStatusAction, deleteOrderAction } from "@/actions/admin/orders.actions"
 import { cn } from "@/lib/utils"
 import { 
   CheckCircle, 
@@ -51,7 +51,6 @@ export function OrderDetailWorkspace({ order, totalOrders, sessionInfo }: OrderD
     if (!confirm("Are you sure you want to delete this order?")) return
 
     setIsDeleting(true)
-    const { deleteOrderAction } = await import("@/actions/admin/orders.actions")
     const res = await deleteOrderAction(order.id)
     setIsDeleting(false)
 

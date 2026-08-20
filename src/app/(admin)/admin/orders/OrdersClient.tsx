@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/admin/ui/StatusBadge"
 import { formatCurrency } from "@/lib/utils"
 import { Search } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { deleteOrderAction } from "@/actions/admin/orders.actions"
 
 interface OrdersClientProps {
   ordersData: {
@@ -58,7 +59,6 @@ export function OrdersClient({ ordersData, currentStatusTab, currentSearch }: Or
     if (!confirm("Are you sure you want to delete this order?")) return
 
     setIsDeleting(orderId)
-    const { deleteOrderAction } = await import("@/actions/admin/orders.actions")
     const res = await deleteOrderAction(orderId)
     setIsDeleting(null)
 

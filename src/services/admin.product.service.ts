@@ -113,32 +113,35 @@ export class AdminProductService {
         )
       }
 
-      // Handle variants
+      // Handle variants (Batched for instant speed)
       const activeSizes = Object.keys(sizeStocks || {}).filter(sizeId => (sizeStocks || {})[sizeId] > 0)
       
       if (activeSizes.length > 0) {
-        for (const sizeId of activeSizes) {
-          const quantity = (sizeStocks || {})[sizeId] || 0
-          const uniqueSuffix = crypto.randomUUID().slice(0, 8)
-          const [variant] = await tx.insert(variants).values({
-            productId: product.id,
-            sku: `${product.slug}-${sizeId.slice(0, 4)}-${uniqueSuffix}`,
-            sizeId: sizeId,
-          }).returning()
+        const variantRows = activeSizes.map(sizeId => ({
+          productId: product.id,
+          sku: `${product.slug}-${sizeId.slice(0, 4)}-${crypto.randomUUID().slice(0, 8)}`,
+          sizeId,
+        }))
 
-          await tx.insert(inventory).values({
-            variantId: variant.id,
-            quantity,
-            status: quantity > 0 ? "IN_STOCK" : "OUT_OF_STOCK"
-          })
+        const insertedVariants = await tx.insert(variants).values(variantRows).returning()
 
-          await tx.insert(priceBookEntries).values({
-            priceBookId: priceBookId,
-            variantId: variant.id,
-            price: Math.round(Number(basePrice) * 100),
-            compareAtPrice: compareAtPrice ? Math.round(Number(compareAtPrice) * 100) : null,
+          const inventoryRows = insertedVariants.map(v => {
+            const quantity = (sizeStocks || {})[v.sizeId!] || 0
+            return {
+              variantId: v.id,
+              quantity,
+              status: (quantity > 0 ? "IN_STOCK" : "OUT_OF_STOCK") as "IN_STOCK" | "OUT_OF_STOCK"
+            }
           })
-        }
+        await tx.insert(inventory).values(inventoryRows)
+
+        const priceRows = insertedVariants.map(v => ({
+          priceBookId: priceBookId,
+          variantId: v.id,
+          price: Math.round(Number(basePrice) * 100),
+          compareAtPrice: compareAtPrice ? Math.round(Number(compareAtPrice) * 100) : null,
+        }))
+        await tx.insert(priceBookEntries).values(priceRows)
       } else {
         // Create single fallback base variant
         const uniqueSuffix = crypto.randomUUID().slice(0, 8)
@@ -252,36 +255,37 @@ export class AdminProductService {
         }
 
         const existingVariants = await tx.select().from(variants).where(eq(variants.productId, id))
+        const existingVariantIds = existingVariants.map(v => v.id)
         
+        let existingInventories: any[] = []
+        if (existingVariantIds.length > 0) {
+          existingInventories = await tx.select().from(inventory).where(inArray(inventory.variantId, existingVariantIds))
+        }
+
+        const newVariantSizesToCreate: { sizeId: string; qty: number }[] = []
+
         for (const [sizeId, qty] of Object.entries(sizeStocks)) {
-          const delta = Number(qty) || 0
+          const stockNum = Number(qty) || 0
           const match = existingVariants.find(v => v.sizeId === sizeId)
 
           if (match) {
-            // Update quantity via delta atomically
-            const existingInventory = await tx.select().from(inventory).where(eq(inventory.variantId, match.id)).limit(1)
-            if (existingInventory.length > 0) {
-              const nextQty = existingInventory[0].quantity + delta
-              if (nextQty < 0) {
-                throw new Error(`Inventory quantity for size ${sizeId} cannot be negative.`)
-              }
+            // Existing variant: update stock & price
+            const invRow = existingInventories.find(i => i.variantId === match.id)
+            if (invRow) {
               await tx.update(inventory)
-                .set({ 
-                  quantity: sql`${inventory.quantity} + ${delta}`, 
-                  status: nextQty > 0 ? "IN_STOCK" : "OUT_OF_STOCK" 
+                .set({
+                  quantity: stockNum,
+                  status: stockNum > 0 ? "IN_STOCK" : "OUT_OF_STOCK"
                 })
                 .where(eq(inventory.variantId, match.id))
             } else {
-              if (delta < 0) {
-                throw new Error(`Inventory quantity for size ${sizeId} cannot be negative.`)
-              }
               await tx.insert(inventory).values({
                 variantId: match.id,
-                quantity: delta,
-                status: delta > 0 ? "IN_STOCK" : "OUT_OF_STOCK"
+                quantity: stockNum,
+                status: stockNum > 0 ? "IN_STOCK" : "OUT_OF_STOCK"
               })
             }
-            // Update price
+
             if (basePrice !== undefined) {
               await tx.update(priceBookEntries)
                 .set({
@@ -290,58 +294,60 @@ export class AdminProductService {
                 })
                 .where(eq(priceBookEntries.variantId, match.id))
             }
-          } else {
-            // Create new size variant
-            if (delta < 0) {
-              throw new Error(`Initial stock for size ${sizeId} cannot be negative.`)
-            }
-            const uniqueSuffix = crypto.randomUUID().slice(0, 8)
-            const [variant] = await tx.insert(variants).values({
-              productId: id,
-              sku: `${product.slug}-${sizeId.slice(0, 4)}-${uniqueSuffix}`,
-              sizeId: sizeId,
-            }).returning()
-
-            await tx.insert(inventory).values({
-              variantId: variant.id,
-              quantity: delta,
-              status: delta > 0 ? "IN_STOCK" : "OUT_OF_STOCK"
-            })
-
-            await tx.insert(priceBookEntries).values({
-              priceBookId: priceBookId,
-              variantId: variant.id,
-              price: Math.round(Number(basePrice) * 100),
-              compareAtPrice: compareAtPrice ? Math.round(Number(compareAtPrice) * 100) : null,
-            })
+          } else if (stockNum > 0) {
+            // Collect new variant sizes to batch create
+            newVariantSizesToCreate.push({ sizeId, qty: stockNum })
           }
+        }
+
+        // Batch create all new size variants in 3 queries
+        if (newVariantSizesToCreate.length > 0) {
+          const variantRows = newVariantSizesToCreate.map(item => ({
+            productId: id,
+            sku: `${product.slug}-${item.sizeId.slice(0, 4)}-${crypto.randomUUID().slice(0, 8)}`,
+            sizeId: item.sizeId,
+          }))
+
+          const insertedVariants = await tx.insert(variants).values(variantRows).returning()
+
+          const inventoryRows = insertedVariants.map(v => {
+            const item = newVariantSizesToCreate.find(i => i.sizeId === v.sizeId)
+            const quantity = item?.qty || 0
+            return {
+              variantId: v.id,
+              quantity,
+              status: (quantity > 0 ? "IN_STOCK" : "OUT_OF_STOCK") as "IN_STOCK" | "OUT_OF_STOCK"
+            }
+          })
+          await tx.insert(inventory).values(inventoryRows)
+
+          const priceRows = insertedVariants.map(v => ({
+            priceBookId: priceBookId,
+            variantId: v.id,
+            price: Math.round(Number(basePrice) * 100),
+            compareAtPrice: compareAtPrice ? Math.round(Number(compareAtPrice) * 100) : null,
+          }))
+          await tx.insert(priceBookEntries).values(priceRows)
         }
       } else {
         // Fallback to update base variant inventory
         const [variant] = await tx.select().from(variants).where(eq(variants.productId, id)).limit(1)
         if (variant && stockQuantity !== undefined) {
-          const delta = Number(stockQuantity)
+          const stockNum = Number(stockQuantity) || 0
           
           const existingInventory = await tx.select().from(inventory).where(eq(inventory.variantId, variant.id)).limit(1)
           if (existingInventory.length > 0) {
-            const nextQty = existingInventory[0].quantity + delta
-            if (nextQty < 0) {
-              throw new Error("Inventory quantity cannot be negative.")
-            }
             await tx.update(inventory)
               .set({ 
-                quantity: sql`${inventory.quantity} + ${delta}`, 
-                status: nextQty > 0 ? "IN_STOCK" : "OUT_OF_STOCK" 
+                quantity: stockNum, 
+                status: stockNum > 0 ? "IN_STOCK" : "OUT_OF_STOCK" 
               })
               .where(eq(inventory.variantId, variant.id))
           } else {
-            if (delta < 0) {
-              throw new Error("Inventory quantity cannot be negative.")
-            }
             await tx.insert(inventory).values({
               variantId: variant.id,
-              quantity: delta,
-              status: delta > 0 ? "IN_STOCK" : "OUT_OF_STOCK"
+              quantity: stockNum,
+              status: stockNum > 0 ? "IN_STOCK" : "OUT_OF_STOCK"
             })
           }
 

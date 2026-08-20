@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createCollectionAction, updateCollectionAction, archiveCollectionAction } from "@/actions/admin/collections.actions"
+import { createCollectionAction, updateCollectionAction, archiveCollectionAction, hardDeleteCollectionAction } from "@/actions/admin/collections.actions"
 import { Search, Image as ImageIcon } from "lucide-react"
 import { uploadImage } from "@/lib/upload"
 import ImageCropperModal from "./ImageCropperModal"
@@ -65,6 +65,20 @@ export default function CollectionEditor({
 
     setIsLoading(true)
     const result = await archiveCollectionAction(collection.id)
+    if (result.success) {
+      router.push("/admin/collections")
+    } else {
+      setError(result.error)
+      setIsLoading(false)
+    }
+  }
+
+  const handleHardDelete = async () => {
+    if (!collection) return
+    if (!confirm(`Are you sure you want to PERMANENTLY delete collection "${collection.name}"? This action cannot be undone.`)) return
+
+    setIsLoading(true)
+    const result = await hardDeleteCollectionAction(collection.id)
     if (result.success) {
       router.push("/admin/collections")
     } else {
@@ -489,14 +503,24 @@ export default function CollectionEditor({
         {/* Form controls panel */}
         <div className="flex justify-between items-center pt-4">
           {collection ? (
-            <button
-              type="button"
-              onClick={handleArchive}
-              disabled={isLoading}
-              className="text-admin-status-danger-text text-admin-sm font-semibold underline hover:text-admin-status-danger-text/80 transition-colors"
-            >
-              Archive Collection
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={handleArchive}
+                disabled={isLoading}
+                className="text-amber-600 text-admin-sm font-semibold underline hover:text-amber-700 transition-colors"
+              >
+                Archive Collection
+              </button>
+              <button
+                type="button"
+                onClick={handleHardDelete}
+                disabled={isLoading}
+                className="text-red-500 text-admin-sm font-bold underline hover:text-red-700 transition-colors"
+              >
+                Delete Permanently
+              </button>
+            </div>
           ) : (
             <div />
           )}

@@ -83,8 +83,22 @@ export async function archiveCollectionAction(id: string) {
     await AdminCollectionService.deleteCollection(id, session.id)
     revalidateTag("collections", {})
     revalidatePath("/admin/collections")
+    revalidatePath("/collections")
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to archive collection" }
+  }
+}
+
+export async function hardDeleteCollectionAction(id: string) {
+  try {
+    const session = await SessionService.requireAdmin()
+    await AdminCollectionService.hardDeleteCollection(id, session.id)
+    revalidateTag("collections", {})
+    revalidatePath("/admin/collections")
+    revalidatePath("/collections")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to delete collection" }
   }
 }

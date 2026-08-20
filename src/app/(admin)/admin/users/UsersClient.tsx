@@ -6,6 +6,7 @@ import { DataTable } from "@/components/admin/ui/DataTable"
 import { formatCurrency } from "@/lib/utils"
 import { Search } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { deleteCustomerAction } from "@/actions/admin/customers.actions"
 
 interface UsersClientProps {
   customersData: {
@@ -45,7 +46,6 @@ export function UsersClient({ customersData, currentSearch }: UsersClientProps) 
     if (!confirm("Are you sure you want to delete this customer?")) return
     
     setIsDeleting(customerId)
-    const { deleteCustomerAction } = await import("@/actions/admin/customers.actions")
     const res = await deleteCustomerAction(customerId)
     setIsDeleting(null)
     

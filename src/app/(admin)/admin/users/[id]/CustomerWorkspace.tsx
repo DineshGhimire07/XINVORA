@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { formatCurrency } from "@/lib/utils"
 import { StatusBadge } from "@/components/admin/ui/StatusBadge"
 import { cn } from "@/lib/utils"
+import { deleteCustomerAction } from "@/actions/admin/customers.actions"
 import { 
   User, 
   MapPin, 
@@ -50,7 +51,6 @@ export function CustomerWorkspace({
     if (!confirm("Are you sure you want to delete this customer?")) return
     
     setIsDeleting(true)
-    const { deleteCustomerAction } = await import("@/actions/admin/customers.actions")
     const res = await deleteCustomerAction(customer.id)
     setIsDeleting(false)
     

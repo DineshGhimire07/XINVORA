@@ -73,4 +73,22 @@ export class AdminCollectionService {
       return collection
     })
   }
+
+  static async hardDeleteCollection(id: string, adminUserId: string) {
+    return await db.transaction(async (tx) => {
+      const { collections } = await import("@/db/schema/collections")
+      await tx.delete(productCollections).where(eq(productCollections.collectionId, id))
+      const [deleted] = await tx.delete(collections).where(eq(collections.id, id)).returning()
+
+      await AdminAuditService.logAction({
+        userId: adminUserId,
+        action: "DELETE",
+        entityType: "COLLECTION",
+        entityId: id,
+        reason: `Permanently deleted collection: ${deleted?.name || id}`
+      }, tx)
+
+      return deleted
+    })
+  }
 }

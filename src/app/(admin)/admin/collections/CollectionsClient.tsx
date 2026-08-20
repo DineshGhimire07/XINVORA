@@ -4,6 +4,7 @@ import { DataTable } from "@/components/admin/ui/DataTable"
 import { StatusBadge } from "@/components/admin/ui/StatusBadge"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { hardDeleteCollectionAction } from "@/actions/admin/collections.actions"
 
 interface CollectionsClientProps {
   collections: {
@@ -78,13 +79,29 @@ export function CollectionsClient({ collections }: CollectionsClientProps) {
       cell: ({ row }: any) => {
         const item = row.original
         return (
-          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-end gap-3" onClick={(e) => e.stopPropagation()}>
             <Link
               href={`/admin/collections/${item.id}`}
               className="text-admin-xs uppercase tracking-wider font-bold text-admin-text-secondary hover:text-admin-primary transition-colors"
             >
               Edit
             </Link>
+            <button
+              type="button"
+              onClick={async (e) => {
+                e.stopPropagation()
+                if (!confirm(`Are you sure you want to delete collection "${item.name}"? This action cannot be undone.`)) return
+                const res = await hardDeleteCollectionAction(item.id)
+                if (res.success) {
+                  router.refresh()
+                } else {
+                  alert(res.error || "Failed to delete collection.")
+                }
+              }}
+              className="text-admin-xs uppercase tracking-wider font-bold text-red-500 hover:text-red-700 transition-colors"
+            >
+              Delete
+            </button>
           </div>
         )
       },
