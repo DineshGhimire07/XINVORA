@@ -46,6 +46,7 @@ const navItems: NavItem[] = [
     items: [
       { name: "All Products", href: "/admin/products" },
       { name: "Bulk Import", href: "/admin/products/bulk-upload" },
+      { name: "Media Library", href: "/admin/media" },
       { name: "Categories", href: "/admin/categories" },
       { name: "Tags", href: "/admin/tags" },
       { name: "Brands", href: "/admin/brands" },
@@ -84,7 +85,6 @@ const navItems: NavItem[] = [
       { name: "Pages", href: "/admin/cms/pages" },
       { name: "Banners", href: "/admin/cms/banners" },
       { name: "Journal", href: "/admin/content/journal" },
-      { name: "Media Library", href: "/admin/media" },
       { name: "Navigation", href: "/admin/cms/navigation" },
       { name: "FAQ", href: "/admin/cms/faq" },
       { name: "Lookbook", href: "/admin/cms/lookbook" },
