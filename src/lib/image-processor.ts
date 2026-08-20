@@ -1,12 +1,17 @@
-import sharp from "sharp"
-
 /**
  * Automatically trims uniform background margin around a garment in a product image
  * and pads it back to a consistent 3:4 aspect ratio.
- * Falls back to the original buffer on any failure or if trimming is not applicable.
+ * Falls back to the original buffer on any failure or if sharp module is not supported.
  */
 export async function processProductImage(buffer: Buffer): Promise<Buffer> {
   try {
+    // Dynamic import to prevent Vercel Serverless libvips DLOPEN errors
+    const sharpModule = await import("sharp").catch(() => null)
+    if (!sharpModule) {
+      return buffer
+    }
+
+    const sharp = sharpModule.default || sharpModule
     const image = sharp(buffer)
     const metadata = await image.metadata()
     

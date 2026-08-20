@@ -12,7 +12,6 @@ import path from "path"
 
 import { processProductImage } from "@/lib/image-processor"
 import { v2 as cloudinary } from "cloudinary"
-import sharp from "sharp"
 
 export async function generateUploadSignatureAction(folder: string = "xinvora_media") {
   try {
@@ -74,10 +73,18 @@ export async function uploadLocalFileAction(formData: FormData) {
     // Run the automatic trimming and padding pipeline
     const processedBuffer = await processProductImage(buffer)
 
-    // Resolve width and height metadata
-    const processedMetadata = await sharp(processedBuffer).metadata()
-    const width = processedMetadata.width || undefined
-    const height = processedMetadata.height || undefined
+    // Safely resolve width and height metadata
+    let width: number | undefined = undefined
+    let height: number | undefined = undefined
+    try {
+      const sharpModule = await import("sharp").catch(() => null)
+      if (sharpModule) {
+        const sharp = sharpModule.default || sharpModule
+        const processedMetadata = await sharp(processedBuffer).metadata()
+        width = processedMetadata.width || undefined
+        height = processedMetadata.height || undefined
+      }
+    } catch {}
 
     // Check if Cloudinary is configured
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME
