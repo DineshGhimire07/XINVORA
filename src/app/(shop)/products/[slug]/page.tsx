@@ -117,15 +117,8 @@ export default async function ProductDetailPage({
   // If colors is empty (e.g. base variant creation), provide a default color dot
   const colors = rawColors.length > 0 ? rawColors : [{ id: "default-color", name: "Default", hexCode: "" }]
 
-  // If sizes is empty (e.g. base variant creation), provide standard sizing options S, M, L, XL
-  const sizes = rawSizes.length > 0 
-    ? rawSizes 
-    : [
-        { id: "s", name: "S", abbreviation: "S" },
-        { id: "m", name: "M", abbreviation: "M" },
-        { id: "l", name: "L", abbreviation: "L" },
-        { id: "xl", name: "XL", abbreviation: "XL" },
-      ]
+  // Only display sizes that actually exist on this product's active variants
+  const sizes = rawSizes
 
   // Check inventory availability (naive global check for now)
   const inStock = activeVariants.some(v => v.inventory && v.inventory.quantity > 0)

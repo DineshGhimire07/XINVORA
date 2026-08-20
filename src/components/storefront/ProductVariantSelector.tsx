@@ -120,13 +120,21 @@ export function ProductVariantSelector({
     router.prefetch("/checkout")
   }
 
-  // Auto-select single size on mount
+  // Filter sizes to show ONLY those with active stock > 0
+  const availableSizes = useMemo(() => {
+    return sizes.filter((size) => {
+      const matchingVariants = variants.filter((v) => v.size?.id === size.id)
+      return matchingVariants.some((v) => v.inventory && v.inventory.quantity > 0)
+    })
+  }, [sizes, variants])
+
+  // Auto-select first in-stock size on mount
   useEffect(() => {
-    if (sizes.length === 1 && !selectedSizeId) {
-      setSelectedSizeId(sizes[0].id)
+    if (availableSizes.length > 0 && !selectedSizeId) {
+      setSelectedSizeId(availableSizes[0].id)
       router.prefetch("/checkout")
     }
-  }, [sizes, selectedSizeId, router])
+  }, [availableSizes, selectedSizeId, router])
 
   const handleUnselectedAction = (actionType: "cart" | "buy") => {
     const availableSize =
@@ -143,32 +151,34 @@ export function ProductVariantSelector({
       }) ||
       sizes[0]
 
-    if (availableSize) {
-      setSelectedSizeId(availableSize.id)
+    const targetVariant =
+      (availableSize
+        ? variants.find(
+            (v) =>
+              (v.color && selectedColorId ? v.color.id === selectedColorId : true) &&
+              (v.size ? v.size.id === availableSize.id : true)
+          )
+        : null) || variants[0]
+
+    if (targetVariant) {
+      if (availableSize) {
+        setSelectedSizeId(availableSize.id)
+      }
       setValidationError(null)
       router.prefetch("/checkout")
 
-      const targetVariant =
-        variants.find(
-          (v) =>
-            (v.color && selectedColorId ? v.color.id === selectedColorId : true) &&
-            (v.size ? v.size.id === availableSize.id : true)
-        ) || variants[0]
-
-      if (targetVariant) {
-        startTransition(async () => {
-          const formData = new FormData()
-          formData.append("variantId", targetVariant.id)
-          formData.append("quantity", "1")
-          const res = await addToCartAction(null, formData)
-          if (res.success) {
-            window.dispatchEvent(new Event("cart-updated"))
-            if (actionType === "buy") {
-              router.push("/checkout")
-            }
+      startTransition(async () => {
+        const formData = new FormData()
+        formData.append("variantId", targetVariant.id)
+        formData.append("quantity", "1")
+        const res = await addToCartAction(null, formData)
+        if (res.success) {
+          window.dispatchEvent(new Event("cart-updated"))
+          if (actionType === "buy") {
+            router.push("/checkout")
           }
-        })
-      }
+        }
+      })
     } else {
       setValidationError("Please select a size above.")
     }
@@ -181,12 +191,12 @@ export function ProductVariantSelector({
   }, [sharedWishlistIds])
 
   const activeVariant = useMemo(() => {
-    if (!selectedSizeId) return undefined
+    if (!selectedSizeId) return variants[0]
     return variants.find((v) => {
       const colorMatches = v.color ? v.color.id === selectedColorId : true
       const sizeMatches = v.size ? v.size.id === selectedSizeId : true
       return colorMatches && sizeMatches
-    })
+    }) || variants[0]
   }, [variants, selectedColorId, selectedSizeId])
 
   const displayPrice = useMemo(() => {
@@ -322,8 +332,8 @@ export function ProductVariantSelector({
 
 
 
-      {/* Sizes — circular buttons with Size Guide link */}
-      {sizes.length > 0 && (
+      {/* Sizes — render ONLY in-stock sizes (no crossed-out buttons) */}
+      {availableSizes.length > 0 && (
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold tracking-widest text-text-secondary uppercase select-none">
@@ -340,10 +350,13 @@ export function ProductVariantSelector({
             )}
           </div>
           <div className="flex items-center gap-2 flex-wrap" role="group" aria-label="Select Size">
-            {sizes.map((size) => {
+            {availableSizes.map((size) => {
               const isSelected = size.id === selectedSizeId
               const matchingVariants = variants.filter(v => v.size?.id === size.id)
               const isSoldOut = matchingVariants.length > 0 && matchingVariants.every(v => !v.inventory || v.inventory.quantity <= 0)
+
+              const sizeText = size.abbreviation || size.name
+              const isLongText = sizeText.length > 3
 
               return (
                 <button
@@ -351,7 +364,7 @@ export function ProductVariantSelector({
                   onClick={() => handleSizeSelect(size.id)}
                   aria-pressed={isSelected}
                   title={isSoldOut ? `${size.name} — Sold Out` : size.name}
-                  className={`w-11 h-11 flex items-center justify-center text-[11px] font-semibold uppercase rounded-full border transition-all select-none relative overflow-hidden ${
+                  className={`h-11 ${isLongText ? 'px-4 font-bold' : 'w-11'} flex items-center justify-center text-[11px] font-semibold uppercase rounded-full border transition-all select-none relative overflow-hidden ${
                     isSelected
                       ? "border-text-primary bg-text-primary text-surface font-bold"
                       : isSoldOut
@@ -359,7 +372,7 @@ export function ProductVariantSelector({
                         : "border-border/40 text-text-secondary hover:text-text-primary hover:border-text-primary"
                   }`}
                 >
-                  <span>{size.abbreviation || size.name}</span>
+                  <span className="whitespace-nowrap">{sizeText}</span>
                   {isSoldOut && (
                     <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <span className="w-[130%] h-[1.5px] bg-neutral-400/80 -rotate-45" />

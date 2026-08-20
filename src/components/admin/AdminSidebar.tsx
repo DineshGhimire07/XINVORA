@@ -45,6 +45,7 @@ const navItems: NavItem[] = [
     icon: ShoppingBag,
     items: [
       { name: "All Products", href: "/admin/products" },
+      { name: "Bulk Import", href: "/admin/products/bulk-upload" },
       { name: "Categories", href: "/admin/categories" },
       { name: "Tags", href: "/admin/tags" },
       { name: "Brands", href: "/admin/brands" },

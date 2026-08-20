@@ -4,6 +4,8 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { createProductAction, updateProductAction, archiveProductAction } from "@/actions/admin/products.actions"
 import { createMaterialAction } from "@/actions/admin/materials.actions"
+import { createSizeAction } from "@/actions/admin/sizes.actions"
+import { createCategoryAction } from "@/actions/admin/categories.actions"
 import { MediaSelector } from "@/components/admin/MediaSelector"
 import AdminProductPicker from "@/components/admin/AdminProductPicker"
 import { cn } from "@/lib/utils"
@@ -31,6 +33,13 @@ export default function ProductEditor({
   const [isLoading, setIsLoading] = useState(false)
   const [newMaterialName, setNewMaterialName] = useState("")
   const [isSavingMaterial, startMaterialTransition] = useTransition()
+  const [newSizeName, setNewSizeName] = useState("")
+  const [isSavingSize, startSizeTransition] = useTransition()
+  const [customSizes, setCustomSizes] = useState<any[]>(sizes || [])
+  const [customCategories, setCustomCategories] = useState<any[]>(categories || [])
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(product?.categoryId || "")
+  const [newCatName, setNewCatName] = useState("")
+  const [isSavingCategory, startCategoryTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [selectedImages, setSelectedImages] = useState<string[]>(product?.images || [])
   const [tryonPrompt, setTryonPrompt] = useState<string>(product?.virtualTryonPrompt || "")
@@ -156,21 +165,85 @@ export default function ProductEditor({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="categoryId" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
-                Category *
-              </label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="categoryId" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+                  Category *
+                </label>
+              </div>
               <select
                 id="categoryId"
                 name="categoryId"
-                defaultValue={product?.categoryId || ""}
+                value={selectedCategoryId}
+                onChange={(e) => setSelectedCategoryId(e.target.value)}
                 required
                 className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong transition-colors"
               >
                 <option value="" disabled>Select category</option>
-                {categories?.map((cat) => (
+                {customCategories?.map((cat) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
+
+              {/* ── Inline Add New Category ── */}
+              <div className="flex items-center gap-1.5 mt-1">
+                <input
+                  type="text"
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      if (!newCatName.trim()) return
+                      startCategoryTransition(async () => {
+                        const fd = new FormData()
+                        fd.append("name", newCatName.trim())
+                        const res = await createCategoryAction(fd)
+                        if (res.success && res.data) {
+                          const newCat = res.data
+                          setNewCatName("")
+                          setCustomCategories(prev => {
+                            if (prev.some(c => c.id === newCat.id)) return prev
+                            return [...prev, newCat]
+                          })
+                          setSelectedCategoryId(newCat.id)
+                          router.refresh()
+                        } else {
+                          alert(res.error || "Failed to add category")
+                        }
+                      })
+                    }
+                  }}
+                  placeholder="e.g. Outerwear"
+                  className="flex-1 h-7 px-2.5 text-[11px] border border-admin-border rounded-admin-md bg-admin-content text-admin-text-primary placeholder:text-admin-text-tertiary focus:outline-none focus:ring-1 focus:ring-admin-primary"
+                />
+                <button
+                  type="button"
+                  disabled={isSavingCategory || !newCatName.trim()}
+                  onClick={() => {
+                    if (!newCatName.trim()) return
+                    startCategoryTransition(async () => {
+                      const fd = new FormData()
+                      fd.append("name", newCatName.trim())
+                      const res = await createCategoryAction(fd)
+                      if (res.success && res.data) {
+                        const newCat = res.data
+                        setNewCatName("")
+                        setCustomCategories(prev => {
+                          if (prev.some(c => c.id === newCat.id)) return prev
+                          return [...prev, newCat]
+                        })
+                        setSelectedCategoryId(newCat.id)
+                        router.refresh()
+                      } else {
+                        alert(res.error || "Failed to add category")
+                      }
+                    })
+                  }}
+                  className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-wider bg-admin-primary text-white rounded-admin-md hover:bg-admin-primary/90 transition-colors disabled:opacity-50 flex-shrink-0"
+                >
+                  {isSavingCategory ? "…" : "+ Add Category"}
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -322,14 +395,73 @@ export default function ProductEditor({
 
         {/* Section 3: Sizing Stock Levels */}
         <div className="bg-admin-surface border border-admin-border rounded-admin-lg p-6 space-y-5 shadow-xs">
-          <h3 className="text-admin-base font-bold text-admin-text-primary border-b border-admin-border pb-3">
-            Clothing Sizing & Stock
-          </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-admin-border pb-3">
+            <h3 className="text-admin-base font-bold text-admin-text-primary">
+              Clothing Sizing & Stock
+            </h3>
+
+            {/* ── Inline Add Custom Size ── */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newSizeName}
+                onChange={(e) => setNewSizeName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    if (!newSizeName.trim()) return
+                    startSizeTransition(async () => {
+                      const fd = new FormData()
+                      fd.append("name", newSizeName.trim())
+                      const res = await createSizeAction(fd)
+                      if (res.success && res.data) {
+                        setNewSizeName("")
+                        setCustomSizes(prev => {
+                          if (prev.some(s => s.id === res.data.id)) return prev
+                          return [...prev, res.data]
+                        })
+                        router.refresh()
+                      } else {
+                        alert(res.error || "Failed to add custom size")
+                      }
+                    })
+                  }
+                }}
+                placeholder="e.g. Free Size (Fits XS-M) or XS-L"
+                className="h-8 px-3 text-admin-sm border border-admin-border rounded-admin-md bg-admin-content text-admin-text-primary placeholder:text-admin-text-tertiary focus:outline-none focus:ring-1 focus:ring-admin-primary w-60"
+              />
+              <button
+                type="button"
+                disabled={isSavingSize || !newSizeName.trim()}
+                onClick={() => {
+                  if (!newSizeName.trim()) return
+                  startSizeTransition(async () => {
+                    const fd = new FormData()
+                    fd.append("name", newSizeName.trim())
+                    const res = await createSizeAction(fd)
+                    if (res.success && res.data) {
+                      setNewSizeName("")
+                      setCustomSizes(prev => {
+                        if (prev.some(s => s.id === res.data.id)) return prev
+                        return [...prev, res.data]
+                      })
+                      router.refresh()
+                    } else {
+                      alert(res.error || "Failed to add custom size")
+                    }
+                  })
+                }}
+                className="h-8 px-3 text-admin-xs font-semibold uppercase tracking-wider bg-admin-primary text-white rounded-admin-md hover:bg-admin-primary/90 transition-colors disabled:opacity-50 flex-shrink-0"
+              >
+                {isSavingSize ? "…" : "+ Add Size"}
+              </button>
+            </div>
+          </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-            {sizes?.filter(s => s.category === "CLOTHING" || s.category === "ALL").map((size) => (
+            {customSizes?.filter(s => s.category === "CLOTHING" || s.category === "ALL" || !s.category).map((size) => (
               <div key={size.id} className="flex flex-col gap-1.5 bg-admin-content/10 border border-admin-border p-3 rounded-admin-md">
-                <label htmlFor={`sizeStock_${size.id}`} className="text-admin-xs font-bold text-admin-text-primary">
+                <label htmlFor={`sizeStock_${size.id}`} className="text-admin-xs font-bold text-admin-text-primary truncate" title={size.name}>
                   Size {size.name}
                 </label>
                 <input

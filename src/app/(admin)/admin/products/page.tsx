@@ -44,7 +44,13 @@ export default async function AdminProductsPage(props: PageProps) {
             Manage your product inventory, specifications, and variants.
           </p>
         </div>
-        <div>
+        <div className="flex items-center gap-3">
+          <a
+            href="/admin/products/bulk-upload"
+            className="inline-flex items-center justify-center bg-admin-surface border border-admin-border text-admin-text-primary hover:bg-admin-content-hover px-4 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md transition-colors"
+          >
+            ⚡ Bulk Import
+          </a>
           <a
             href="/admin/products/create"
             className="inline-flex items-center justify-center bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 px-4 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md transition-colors"

@@ -562,7 +562,7 @@ export async function findAdminProductsPaginated(
     ? await db
         .select()
         .from(productImages)
-        .where(and(inArray(productImages.productId, itemIds), eq(productImages.position, 1)))
+        .where(and(inArray(productImages.productId, itemIds), eq(productImages.position, 0)))
     : []
 
   const itemsWithImages = items.map(item => ({

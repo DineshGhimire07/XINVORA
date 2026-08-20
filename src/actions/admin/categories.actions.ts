@@ -15,19 +15,30 @@ export async function createCategoryAction(formData: FormData) {
   try {
     const session = await SessionService.requireAdmin()
 
-    const rawData = {
-      name: formData.get("name"),
-      slug: formData.get("slug"),
-      description: formData.get("description"),
+    const name = (formData.get("name") as string)?.trim()
+    let slug = (formData.get("slug") as string)?.trim()
+    const description = (formData.get("description") as string)?.trim() || undefined
+
+    if (!name) {
+      return { success: false, error: "Category name is required." }
     }
 
-    const data = categorySchema.parse(rawData)
+    if (!slug) {
+      slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-") || `category-${Date.now()}`
+    }
 
-    await AdminCategoryService.createCategory(data, session.id)
+    const data = categorySchema.parse({ name, slug, description })
+
+    const category = await AdminCategoryService.createCategory(data, session.id)
 
     updateTag("categories")
     revalidatePath("/admin/categories")
-    return { success: true }
+    revalidatePath("/admin/products/create")
+    return { success: true, data: category }
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to create category" }
   }
