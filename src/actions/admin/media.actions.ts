@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache"
 import { MediaService } from "@/services/media.service"
 import { SessionService } from "@/services/session.service"
 import { StorageService } from "@/services/storage/client"
+import { db } from "@/db/client"
+import { mediaLibrary } from "@/db/schema/media"
+import { inArray } from "drizzle-orm"
 import fs from "fs"
 import path from "path"
 
@@ -201,27 +204,32 @@ export async function archiveMediaAction(id: string, providerId?: string) {
 
 export async function bulkDeleteMediaAction(items: { id: string; providerId?: string | null }[]) {
   try {
-    const session = await SessionService.requireAdmin()
+    await SessionService.requireAdmin()
 
-    const errors: string[] = []
-    for (const item of items) {
-      try {
-        if (item.providerId) {
-          await StorageService.deleteImage(item.providerId).catch(() => {})
-          try {
-            const localPath = path.join(process.cwd(), "public", "uploads", item.providerId)
-            if (fs.existsSync(localPath)) await fs.promises.unlink(localPath)
-          } catch {}
-        }
-        await MediaService.deleteMedia(item.id, session.id)
-      } catch (err: any) {
-        errors.push(item.id)
-      }
+    // 1. Delete from Cloudinary + local filesystem in parallel
+    await Promise.all(
+      items.map(async (item) => {
+        try {
+          if (item.providerId) {
+            await StorageService.deleteImage(item.providerId).catch(() => {})
+            try {
+              const localPath = path.join(process.cwd(), "public", "uploads", item.providerId)
+              if (fs.existsSync(localPath)) await fs.promises.unlink(localPath)
+            } catch {}
+          }
+        } catch {}
+      })
+    )
+
+    // 2. Single batch DELETE from DB — one query regardless of count
+    const ids = items.map(i => i.id)
+    if (ids.length > 0) {
+      await db.delete(mediaLibrary).where(inArray(mediaLibrary.id, ids))
     }
 
     revalidatePath("/admin/cms/media")
     revalidatePath("/admin/media")
-    return { success: true, failed: errors }
+    return { success: true, failed: [] as string[] }
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to bulk delete media" }
   }
