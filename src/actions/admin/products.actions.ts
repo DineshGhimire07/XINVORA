@@ -7,19 +7,22 @@ import { z } from "zod"
 
 // Ideally this schema lives in a shared lib/validations file, inline here for brevity
 const productSchema = z.object({
-  name: z.string().min(1),
-  slug: z.string().min(1),
-  description: z.string().optional(),
+  name: z.string().min(1, "Product name is required"),
+  slug: z.string().min(1, "Slug is required"),
+  description: z.string().optional().nullable(),
   badge: z.string().optional().nullable(),
   details: z.string().optional().nullable(),
   careGuide: z.string().optional().nullable(),
   sizeGuide: z.string().optional().nullable(),
   instagramReelUrl: z.string().optional().nullable(),
   virtualTryonPrompt: z.string().optional().nullable(),
-  shortDescription: z.string().min(30, "Short description must be at least 30 characters").max(250, "Short description must be at most 250 characters"),
-  categoryId: z.string().uuid(),
-  brandId: z.string().uuid().optional().nullable(),
-  status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]),
+  shortDescription: z.string().optional().nullable().transform((val) => {
+    if (!val || !val.trim()) return "Premium quality garment crafted with attention to detail and timeless style."
+    return val.trim()
+  }),
+  categoryId: z.string().min(1, "Category is required"),
+  brandId: z.union([z.string().uuid(), z.literal(""), z.null()]).optional().transform((v) => (v && v.trim() ? v.trim() : null)),
+  status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]).default("DRAFT"),
   basePrice: z.number().or(z.string().transform(Number)),
   compareAtPrice: z.union([z.number(), z.string()]).optional().nullable().transform((val) => {
     if (val === "" || val === undefined || val === null) return null;
@@ -28,8 +31,8 @@ const productSchema = z.object({
   }),
   stockQuantity: z.number().or(z.string().transform(Number)).default(0),
   images: z.array(z.string()).optional(),
-  seoTitle: z.string().optional(),
-  seoDescription: z.string().optional(),
+  seoTitle: z.string().optional().nullable(),
+  seoDescription: z.string().optional().nullable(),
   collectionIds: z.array(z.string()).optional(),
   materialIds: z.array(z.string()).optional(),
   pairedProductIds: z.array(z.string()).optional(),
@@ -37,6 +40,9 @@ const productSchema = z.object({
 })
 
 function extractDbError(error: any): string {
+  if (error instanceof z.ZodError) {
+    return error.issues.map((issue) => `${issue.path.join(".") || "Field"}: ${issue.message}`).join(" | ")
+  }
   if (error.cause?.message) {
     return error.cause.message;
   }
