@@ -121,6 +121,9 @@ export default function ProductEditor({
     }
   }
 
+  const [toastMsg, setToastMsg] = useState<string | null>(null)
+  const [showToast, setShowToast] = useState(false)
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
@@ -128,13 +131,9 @@ export default function ProductEditor({
     setSaveSuccess(false)
     setSaveProgress(10)
 
-    // Animate progress bar while waiting
     const progressInterval = setInterval(() => {
-      setSaveProgress(prev => {
-        if (prev >= 85) { clearInterval(progressInterval); return 85 }
-        return prev + Math.random() * 15
-      })
-    }, 200)
+      setSaveProgress((prev) => (prev >= 90 ? 90 : prev + 15))
+    }, 100)
 
     const formData = new FormData(e.currentTarget)
 
@@ -150,16 +149,19 @@ export default function ProductEditor({
 
     if (result.success) {
       setSaveSuccess(true)
+      setToastMsg(product ? `"${formData.get("name") || "Product"}" updated successfully!` : `"${formData.get("name") || "Product"}" created successfully!`)
+      setShowToast(true)
       setTimeout(() => {
         setSaveProgress(0)
-        setSaveSuccess(false)
+        setIsLoading(false)
         if (!product) {
           router.push("/admin/products")
         } else {
           router.refresh()
         }
-        setIsLoading(false)
-      }, 600)
+      }, 400)
+      // Auto-hide toast after 5 seconds
+      setTimeout(() => setShowToast(false), 5000)
     } else {
       setSaveProgress(0)
       setError(result.error || "An unknown error occurred")
@@ -183,6 +185,25 @@ export default function ProductEditor({
 
   return (
     <div className="space-y-6">
+      {/* ── Floating Toast Notification ── */}
+      {showToast && (
+        <div className="fixed top-5 right-5 z-[99999] bg-green-600 text-white px-5 py-3.5 rounded-admin-lg shadow-2xl flex items-center gap-3.5 border border-green-400/40 animate-in slide-in-from-top-5 duration-300">
+          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-lg shrink-0">
+            ✓
+          </div>
+          <div className="flex flex-col">
+            <span className="font-bold text-admin-sm tracking-wide">{toastMsg}</span>
+            <span className="text-[11px] text-green-100 mt-0.5">All details, images, prices, and stock levels saved.</span>
+          </div>
+          <button
+            onClick={() => setShowToast(false)}
+            className="ml-3 w-6 h-6 rounded-full hover:bg-white/20 flex items-center justify-center text-white/80 hover:text-white text-xs font-bold transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* ── Progress Bar ── */}
       {isLoading && (
         <div className="fixed top-0 left-0 right-0 z-[9999] h-1">
@@ -199,11 +220,14 @@ export default function ProductEditor({
       )}
 
       {saveSuccess && (
-        <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/30 text-green-600 text-admin-sm rounded-admin-md font-medium">
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-          Product saved successfully!
+        <div className="flex items-center justify-between p-4 bg-green-500/10 border border-green-500/30 text-green-700 text-admin-sm rounded-admin-md font-semibold shadow-xs animate-in fade-in">
+          <div className="flex items-center gap-2.5">
+            <svg className="w-5 h-5 flex-shrink-0 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{toastMsg || "Product updated successfully!"}</span>
+          </div>
+          <span className="text-[11px] text-green-600 font-normal">Changes published</span>
         </div>
       )}
 
