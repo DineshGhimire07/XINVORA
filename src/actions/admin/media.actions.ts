@@ -14,10 +14,40 @@ import { processProductImage } from "@/lib/image-processor"
 import { v2 as cloudinary } from "cloudinary"
 import sharp from "sharp"
 
-export async function generateUploadSignatureAction(folder?: string) {
+export async function generateUploadSignatureAction(folder: string = "xinvora_media") {
   await SessionService.requireAdmin()
-  // Always return useLocalFallback so that the client sends the file to the server action first,
-  // allowing us to run the server-side image processing pipeline before storage routing.
+
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME
+  const apiKey = process.env.CLOUDINARY_API_KEY
+  const apiSecret = process.env.CLOUDINARY_API_SECRET
+
+  if (cloudName && apiKey && apiSecret) {
+    cloudinary.config({
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret,
+      secure: true,
+    })
+
+    const timestamp = Math.round(new Date().getTime() / 1000)
+    const signature = cloudinary.utils.api_sign_request(
+      { timestamp, folder },
+      apiSecret
+    )
+
+    return {
+      success: true,
+      data: {
+        useLocalFallback: false,
+        signature,
+        timestamp,
+        cloudName,
+        apiKey,
+        folder,
+      },
+    }
+  }
+
   return { success: true, data: { useLocalFallback: true } }
 }
 
