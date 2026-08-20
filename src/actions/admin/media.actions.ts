@@ -235,3 +235,23 @@ export async function bulkDeleteMediaAction(items: { id: string; providerId?: st
   }
 }
 
+export async function getMediaLibraryItemsAction() {
+  try {
+    await SessionService.requireAdmin()
+    const { db } = await import("@/db/client")
+    const { mediaLibrary } = await import("@/db/schema/media")
+    const { isNull, desc } = await import("drizzle-orm")
+
+    const items = await db
+      .select()
+      .from(mediaLibrary)
+      .where(isNull(mediaLibrary.deletedAt))
+      .orderBy(desc(mediaLibrary.createdAt))
+
+    return { success: true, data: JSON.parse(JSON.stringify(items)) }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+

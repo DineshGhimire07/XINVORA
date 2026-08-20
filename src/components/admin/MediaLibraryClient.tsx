@@ -5,6 +5,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { uploadImage } from "@/lib/upload"
 import { archiveMediaAction, bulkDeleteMediaAction } from "@/actions/admin/media.actions"
+import { SmartAutoGroupModal } from "@/components/admin/SmartAutoGroupModal"
 
 interface MediaItem {
   id: string
@@ -45,6 +46,8 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null)
   const [uploadStats, setUploadStats] = useState<{ done: number; total: number; failed: number } | null>(null)
+  const [isSmartModalOpen, setIsSmartModalOpen] = useState(false)
+  const [smartModalImages, setSmartModalImages] = useState<{ url: string; title: string }[]>([])
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type })
@@ -221,8 +224,34 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
     ? Math.round(((uploadStats.done + uploadStats.failed) / uploadStats.total) * 100)
     : 0
 
+  const handleOpenSmartModal = () => {
+    let targetItems: MediaItem[] = []
+    if (selected.size > 0) {
+      targetItems = items.filter((i) => selected.has(i.id))
+    } else {
+      targetItems = filteredItems
+    }
+    if (targetItems.length === 0) {
+      showToast("No images available to group", "error")
+      return
+    }
+    setSmartModalImages(targetItems.map((i) => ({ url: i.url, title: i.title })))
+    setIsSmartModalOpen(true)
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-admin-content">
+      {/* ── Smart Auto-Group Modal ── */}
+      <SmartAutoGroupModal
+        isOpen={isSmartModalOpen}
+        onClose={() => setIsSmartModalOpen(false)}
+        inputImages={smartModalImages}
+        onImportComplete={() => {
+          showToast("Products imported successfully!")
+          router.refresh()
+        }}
+      />
+
       {/* ── Toast ── */}
       {toast && (
         <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-admin-lg shadow-xl text-sm font-semibold flex items-center gap-2 animate-in slide-in-from-bottom-4 ${toast.type === "success" ? "bg-green-600 text-white" : "bg-red-600 text-white"}`}>
@@ -297,6 +326,13 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
           <button onClick={() => { setSelectionMode(v => !v); setSelected(new Set()) }}
             className={`px-4 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md border transition-colors ${selectionMode ? "bg-admin-primary text-white border-admin-primary" : "bg-admin-surface text-admin-text-secondary border-admin-border hover:border-admin-border-strong"}`}>
             {selectionMode ? `✓ ${selected.size} Selected` : "Select"}
+          </button>
+          <button
+            onClick={handleOpenSmartModal}
+            className="flex items-center gap-1.5 px-4 py-2 text-admin-xs font-bold uppercase tracking-wider bg-purple-600 text-white rounded-admin-md hover:bg-purple-700 transition-colors shadow-sm"
+          >
+            <span>✨</span>
+            AI Auto-Group Products
           </button>
           <button onClick={() => fileInputRef.current?.click()}
             className="flex items-center gap-1.5 px-4 py-2 text-admin-xs font-bold uppercase tracking-wider bg-admin-primary text-white rounded-admin-md hover:bg-admin-primary/90 transition-colors">

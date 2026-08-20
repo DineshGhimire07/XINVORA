@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { bulkUploadProductsAction, generateAiProductContentAction } from "@/actions/admin/bulk-products.actions"
+import { getMediaLibraryItemsAction } from "@/actions/admin/media.actions"
+import { SmartAutoGroupModal } from "@/components/admin/SmartAutoGroupModal"
 import { BulkProductItemInput, BulkImportResult } from "@/services/admin.bulk-product.service"
 import { cn } from "@/lib/utils"
 
@@ -14,6 +16,26 @@ export default function BulkUploadClient() {
   const [importResult, setImportResult] = useState<BulkImportResult | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [isSmartModalOpen, setIsSmartModalOpen] = useState(false)
+  const [smartModalImages, setSmartModalImages] = useState<{ url: string; title: string }[]>([])
+  const [isLoadingMedia, setIsLoadingMedia] = useState(false)
+
+  const handleOpenMediaGrouper = async () => {
+    setIsLoadingMedia(true)
+    setErrorMsg(null)
+    const res = await getMediaLibraryItemsAction()
+    if (res.success && res.data) {
+      if (res.data.length === 0) {
+        setErrorMsg("Media Library is empty. Please upload photos first.")
+      } else {
+        setSmartModalImages(res.data.map((i: any) => ({ url: i.url, title: i.title })))
+        setIsSmartModalOpen(true)
+      }
+    } else {
+      setErrorMsg(res.error || "Failed to fetch Media Library items.")
+    }
+    setIsLoadingMedia(false)
+  }
 
   // 1. Download Sample CSV Template
   const handleDownloadTemplate = () => {
@@ -217,18 +239,37 @@ export default function BulkUploadClient() {
 
   return (
     <div className="space-y-6">
+      {/* ── Smart Auto-Group Modal ── */}
+      <SmartAutoGroupModal
+        isOpen={isSmartModalOpen}
+        onClose={() => setIsSmartModalOpen(false)}
+        inputImages={smartModalImages}
+        onImportComplete={() => {
+          router.push("/admin/products")
+        }}
+      />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-admin-2xl font-bold font-display text-admin-text-primary tracking-tight">
-            Bulk Product Import
+            Bulk Product Import & Smart AI Photo Grouper
           </h1>
           <p className="text-admin-sm text-admin-text-secondary mt-1">
-            Import hundreds of products via CSV. Products will be created as <span className="font-bold text-amber-500">DRAFT</span> so you can review them and add images manually.
+            Import products via CSV or use <span className="font-bold text-purple-600">AI Smart Photo Auto-Grouper</span> to group photos into dresses automatically.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleOpenMediaGrouper}
+            disabled={isLoadingMedia}
+            className="px-4 py-2 bg-purple-600 text-white text-admin-xs font-bold uppercase tracking-wider rounded-admin-md hover:bg-purple-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
+          >
+            <span>✨</span>
+            {isLoadingMedia ? "Loading Library..." : "AI Auto-Group Photos"}
+          </button>
           <button
             type="button"
             onClick={handleDownloadTemplate}
@@ -320,19 +361,33 @@ export default function BulkUploadClient() {
             Upload your CSV file containing Product Name, Category, Price, and Sizes. We will auto-fill descriptions, care guides, and SEO metadata automatically!
           </p>
 
-          <label className="mt-6 px-6 py-2.5 bg-admin-primary text-admin-primary-on text-admin-xs font-bold uppercase tracking-wider rounded-admin-md hover:bg-admin-primary/95 transition-colors cursor-pointer">
-            Select CSV File
-            <input
-              type="file"
-              accept=".csv,.txt"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  handleFileUpload(e.target.files[0])
-                }
-              }}
-            />
-          </label>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+            <label className="px-6 py-2.5 bg-admin-primary text-admin-primary-on text-admin-xs font-bold uppercase tracking-wider rounded-admin-md hover:bg-admin-primary/95 transition-colors cursor-pointer shadow-xs">
+              Select CSV File
+              <input
+                type="file"
+                accept=".csv,.txt"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleFileUpload(e.target.files[0])
+                  }
+                }}
+              />
+            </label>
+
+            <span className="text-admin-xs font-bold text-admin-text-tertiary uppercase">OR</span>
+
+            <button
+              type="button"
+              onClick={handleOpenMediaGrouper}
+              disabled={isLoadingMedia}
+              className="px-6 py-2.5 bg-purple-600 text-white text-admin-xs font-bold uppercase tracking-wider rounded-admin-md hover:bg-purple-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
+            >
+              <span>✨</span>
+              Auto-Group Photos from Media Library
+            </button>
+          </div>
         </div>
       )}
 
