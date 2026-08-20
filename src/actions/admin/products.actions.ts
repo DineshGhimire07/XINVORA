@@ -204,3 +204,27 @@ export async function hardDeleteProductAction(id: string) {
     return { success: false, error: extractDbError(error) }
   }
 }
+
+export async function getAdminProductsListAction() {
+  try {
+    await SessionService.requireAdmin()
+    const { db } = await import("@/db/client")
+    const { products } = await import("@/db/schema/products")
+    const { isNull, desc } = await import("drizzle-orm")
+
+    const list = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        status: products.status,
+      })
+      .from(products)
+      .where(isNull(products.deletedAt))
+      .orderBy(desc(products.createdAt))
+
+    return { success: true, data: list }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to fetch products list" }
+  }
+}

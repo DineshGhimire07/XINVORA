@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { uploadImage } from "@/lib/upload"
 import { archiveMediaAction, bulkDeleteMediaAction } from "@/actions/admin/media.actions"
 import { SmartAutoGroupModal } from "@/components/admin/SmartAutoGroupModal"
+import { AttachToProductModal } from "@/components/admin/AttachToProductModal"
 
 interface MediaItem {
   id: string
@@ -48,6 +49,21 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
   const [uploadStats, setUploadStats] = useState<{ done: number; total: number; failed: number } | null>(null)
   const [isSmartModalOpen, setIsSmartModalOpen] = useState(false)
   const [smartModalImages, setSmartModalImages] = useState<{ url: string; title: string }[]>([])
+  const [isAttachModalOpen, setIsAttachModalOpen] = useState(false)
+  const [attachModalUrls, setAttachModalUrls] = useState<string[]>([])
+
+  const handleOpenAttachModal = (urls?: string[]) => {
+    if (urls && urls.length > 0) {
+      setAttachModalUrls(urls)
+      setIsAttachModalOpen(true)
+    } else if (selected.size > 0) {
+      const selectedUrls = items.filter(i => selected.has(i.id)).map(i => i.url)
+      setAttachModalUrls(selectedUrls)
+      setIsAttachModalOpen(true)
+    } else {
+      showToast("Select one or more photos to attach to a product", "error")
+    }
+  }
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type })
@@ -315,18 +331,36 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {selectionMode && selected.size > 0 && (
-            <button onClick={handleBulkDelete} disabled={isDeleting}
-              className="flex items-center gap-1.5 px-4 py-2 text-admin-xs font-bold uppercase tracking-wider bg-red-600 text-white rounded-admin-md hover:bg-red-700 transition-colors disabled:opacity-50">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              {isDeleting ? "Deleting..." : `Delete ${selected.size}`}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleOpenAttachModal()}
+                className="flex items-center gap-1.5 px-4 py-2 text-admin-xs font-bold uppercase tracking-wider bg-green-600 text-white rounded-admin-md hover:bg-green-700 transition-colors shadow-sm"
+              >
+                <span>➕</span>
+                Attach {selected.size} to Product
+              </button>
+              <button onClick={handleBulkDelete} disabled={isDeleting}
+                className="flex items-center gap-1.5 px-4 py-2 text-admin-xs font-bold uppercase tracking-wider bg-red-600 text-white rounded-admin-md hover:bg-red-700 transition-colors disabled:opacity-50">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                {isDeleting ? "Deleting..." : `Delete ${selected.size}`}
+              </button>
+            </div>
           )}
           <button onClick={() => { setSelectionMode(v => !v); setSelected(new Set()) }}
             className={`px-4 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md border transition-colors ${selectionMode ? "bg-admin-primary text-white border-admin-primary" : "bg-admin-surface text-admin-text-secondary border-admin-border hover:border-admin-border-strong"}`}>
             {selectionMode ? `✓ ${selected.size} Selected` : "Select"}
           </button>
+          {!selectionMode && (
+            <button
+              onClick={() => handleOpenAttachModal()}
+              className="flex items-center gap-1.5 px-4 py-2 text-admin-xs font-bold uppercase tracking-wider bg-emerald-600 text-white rounded-admin-md hover:bg-emerald-700 transition-colors shadow-sm"
+            >
+              <span>➕</span>
+              Add to Product Inventory
+            </button>
+          )}
           <button
             onClick={handleOpenSmartModal}
             className="flex items-center gap-1.5 px-4 py-2 text-admin-xs font-bold uppercase tracking-wider bg-purple-600 text-white rounded-admin-md hover:bg-purple-700 transition-colors shadow-sm"
@@ -493,7 +527,14 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
 
                   {!selectionMode && (
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-                      <div className="flex justify-end">
+                      <div className="flex items-center justify-between gap-1">
+                        <button
+                          onClick={e => { e.stopPropagation(); handleOpenAttachModal([item.url]) }}
+                          title="Attach to Product Inventory"
+                          className="px-2 py-1 rounded bg-emerald-600/95 hover:bg-emerald-600 text-white text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors shadow-xs"
+                        >
+                          <span>➕</span> Inventory
+                        </button>
                         <button onClick={e => { e.stopPropagation(); handleSingleDelete(item) }}
                           className="w-7 h-7 rounded bg-red-600/90 hover:bg-red-600 flex items-center justify-center transition-colors">
                           <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -561,6 +602,12 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
                       <td className="px-3 py-2 text-admin-text-secondary whitespace-nowrap">{item.width && item.height ? `${item.width}×${item.height}` : "—"}</td>
                       <td className="px-3 py-2">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleOpenAttachModal([item.url])}
+                            className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex items-center gap-1"
+                          >
+                            <span>➕</span> Attach
+                          </button>
                           <button onClick={() => copyUrl(item.url)}
                             className={`px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider rounded transition-colors ${isCopied ? "bg-green-600 text-white" : "bg-admin-surface border border-admin-border text-admin-text-secondary hover:border-admin-primary hover:text-admin-primary"}`}>
                             {isCopied ? "✓ Copied" : "Copy URL"}
@@ -586,6 +633,17 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
           </div>
         )}
       </div>
+
+      <AttachToProductModal
+        isOpen={isAttachModalOpen}
+        onClose={() => setIsAttachModalOpen(false)}
+        imageUrls={attachModalUrls}
+        onSuccess={(productName) => {
+          showToast(`Successfully attached ${attachModalUrls.length} photo(s) to "${productName}"!`, "success")
+          setSelected(new Set())
+          setSelectionMode(false)
+        }}
+      />
     </div>
   )
 }
