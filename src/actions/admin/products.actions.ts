@@ -268,8 +268,7 @@ export async function quickUpdateProductAction(
           .insert(variants)
           .values({
             productId: id,
-            sku: `${p[0].slug}-DEFAULT`,
-            title: "Default Title",
+            sku: `${p[0].slug}-DEFAULT-${Date.now()}`,
           })
           .returning()
         variantId = newVar.id
