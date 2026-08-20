@@ -45,41 +45,52 @@ export async function uploadLocalFileAction(formData: FormData) {
     const apiSecret = process.env.CLOUDINARY_API_SECRET
     const isCloudinaryConfigured = !!(cloudName && apiKey && apiSecret)
 
+    let uploadSuccess = false
+    let mediaUrl = ""
+
     if (isCloudinaryConfigured) {
-      // Configure Cloudinary
-      cloudinary.config({
-        cloud_name: cloudName,
-        api_key: apiKey,
-        api_secret: apiSecret,
-        secure: true,
-      })
+      try {
+        // Configure Cloudinary
+        cloudinary.config({
+          cloud_name: cloudName,
+          api_key: apiKey,
+          api_secret: apiSecret,
+          secure: true,
+        })
 
-      // Upload processed buffer to Cloudinary
-      const uploadResult = await new Promise<any>((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder: "xinvora_media" },
-          (error, result) => {
-            if (error) reject(error)
-            else resolve(result)
-          }
-        )
-        stream.end(processedBuffer)
-      })
+        // Upload processed buffer to Cloudinary
+        const uploadResult = await new Promise<any>((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: "xinvora_media" },
+            (error, result) => {
+              if (error) reject(error)
+              else resolve(result)
+            }
+          )
+          stream.end(processedBuffer)
+        })
 
-      const media = await MediaService.createMedia({
-        url: uploadResult.secure_url,
-        title: file.name,
-        mimeType: file.type,
-        sizeBytes: uploadResult.bytes,
-        width: uploadResult.width,
-        height: uploadResult.height,
-        provider: 'cloudinary',
-        providerId: uploadResult.public_id,
-      }, session.id)
+        const media = await MediaService.createMedia({
+          url: uploadResult.secure_url,
+          title: file.name,
+          mimeType: file.type,
+          sizeBytes: uploadResult.bytes,
+          width: uploadResult.width,
+          height: uploadResult.height,
+          provider: 'cloudinary',
+          providerId: uploadResult.public_id,
+        }, session.id)
 
-      revalidatePath("/admin/cms/media")
-      return { success: true, url: media.url }
-    } else {
+        revalidatePath("/admin/cms/media")
+        revalidatePath("/admin/media")
+        uploadSuccess = true
+        mediaUrl = media.url
+      } catch (cloudinaryError: any) {
+        console.warn("[uploadLocalFileAction] Cloudinary upload failed. Falling back to local storage:", cloudinaryError.message)
+      }
+    }
+
+    if (!uploadSuccess) {
       // Local fallback path
       let fileUrl = ""
       let providerId = ""
@@ -116,8 +127,11 @@ export async function uploadLocalFileAction(formData: FormData) {
       }, session.id)
 
       revalidatePath("/admin/cms/media")
-      return { success: true, url: media.url }
+      revalidatePath("/admin/media")
+      mediaUrl = media.url
     }
+
+    return { success: true, url: mediaUrl }
   } catch (error: any) {
     console.error("[uploadLocalFileAction] Error:", error)
     return { success: false, error: error.message || "Failed to upload file" }

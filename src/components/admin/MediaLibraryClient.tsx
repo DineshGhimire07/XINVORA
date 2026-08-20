@@ -399,15 +399,22 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
                   ⏳ {uploadingFiles.filter(f => f.status === "uploading" || f.status === "queued").length} pending
                 </span>
                 {uploadingFiles.some(f => f.status === "error") && (
-                  <span className="text-red-500 font-semibold">
-                    ✗ {uploadingFiles.filter(f => f.status === "error").length} failed
-                  </span>
+                  <button
+                    onClick={() => setUploadingFiles(prev => prev.filter(f => f.status !== "error"))}
+                    className="text-red-500 hover:text-red-600 font-bold underline"
+                  >
+                    Clear {uploadingFiles.filter(f => f.status === "error").length} Failed ✕
+                  </button>
                 )}
               </div>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
               {uploadingFiles.map(f => (
-                <div key={f.id} className="relative aspect-square bg-admin-border/20 rounded-admin-md overflow-hidden border border-admin-border">
+                <div
+                  key={f.id}
+                  title={f.error || f.name}
+                  className="relative aspect-square bg-admin-border/20 rounded-admin-md overflow-hidden border border-admin-border group"
+                >
                   {f.preview && <img src={f.preview} alt={f.name} className="w-full h-full object-cover opacity-70" />}
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50">
                     {f.status === "queued" ? (
@@ -437,8 +444,10 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
                       </div>
                     )}
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-1 py-0.5">
-                    <p className="text-[8px] font-medium text-white truncate">{f.name}</p>
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-1 py-0.5">
+                    <p className="text-[8px] font-medium text-white truncate" title={f.error || f.name}>
+                      {f.error ? `Error: ${f.error}` : f.name}
+                    </p>
                   </div>
                 </div>
               ))}
