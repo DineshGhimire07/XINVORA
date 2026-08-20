@@ -3,13 +3,13 @@
 import { useState, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { DataTable } from "@/components/admin/ui/DataTable"
-import { StatusBadge } from "@/components/admin/ui/StatusBadge"
 import { formatCurrency } from "@/lib/utils"
 import { Search } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { DeleteProductButton } from "@/components/admin/DeleteProductButton"
+import { quickUpdateProductAction } from "@/actions/admin/products.actions"
 
 interface ProductsClientProps {
   productsData: {
@@ -39,6 +39,197 @@ const TABS = [
   { label: "Draft", id: "draft" },
   { label: "Archived", id: "archived" },
 ]
+
+function InlineStatusCell({ productId, initialStatus }: { productId: string; initialStatus: string }) {
+  const [status, setStatus] = useState(initialStatus)
+  const [isSaving, setIsSaving] = useState(false)
+
+  const handleChange = async (newStatus: string) => {
+    if (newStatus === status) return
+    const prev = status
+    setStatus(newStatus)
+    setIsSaving(true)
+    const res = await quickUpdateProductAction(productId, { status: newStatus as any })
+    setIsSaving(false)
+    if (!res.success) {
+      setStatus(prev)
+      alert(res.error || "Failed to update status")
+    }
+  }
+
+  return (
+    <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5">
+      <select
+        value={status}
+        disabled={isSaving}
+        onChange={(e) => handleChange(e.target.value)}
+        className={`px-2.5 py-1 text-[11px] font-bold tracking-wide rounded-full border cursor-pointer focus:outline-none transition-all ${
+          status === "PUBLISHED"
+            ? "bg-green-500/10 text-green-700 border-green-500/30 hover:bg-green-500/20"
+            : status === "DRAFT"
+            ? "bg-amber-500/10 text-amber-700 border-amber-500/30 hover:bg-amber-500/20"
+            : "bg-gray-500/10 text-gray-700 border-gray-500/30 hover:bg-gray-500/20"
+        }`}
+      >
+        <option value="PUBLISHED" className="bg-admin-content text-admin-text-primary">PUBLISHED</option>
+        <option value="DRAFT" className="bg-admin-content text-admin-text-primary">DRAFT</option>
+        <option value="ARCHIVED" className="bg-admin-content text-admin-text-primary">ARCHIVED</option>
+      </select>
+      {isSaving && <div className="w-3 h-3 rounded-full border-2 border-admin-primary border-t-transparent animate-spin" />}
+    </div>
+  )
+}
+
+function InlinePriceCell({ productId, initialPrice }: { productId: string; initialPrice: number }) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [price, setPrice] = useState(initialPrice)
+  const [inputValue, setInputValue] = useState(initialPrice.toString())
+  const [isSaving, setIsSaving] = useState(false)
+  const [savedSuccess, setSavedSuccess] = useState(false)
+
+  const handleSave = async () => {
+    setIsEditing(false)
+    const num = parseFloat(inputValue)
+    if (isNaN(num) || num === price) return
+
+    setIsSaving(true)
+    const res = await quickUpdateProductAction(productId, { price: num })
+    setIsSaving(false)
+
+    if (res.success) {
+      setPrice(num)
+      setSavedSuccess(true)
+      setTimeout(() => setSavedSuccess(false), 2000)
+    } else {
+      setInputValue(price.toString())
+      alert(res.error || "Failed to update price")
+    }
+  }
+
+  if (isEditing) {
+    return (
+      <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-1">
+        <span className="text-admin-xs text-admin-text-secondary font-mono">NPR</span>
+        <input
+          type="number"
+          step="1"
+          autoFocus
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSave()
+            if (e.key === "Escape") {
+              setInputValue(price.toString())
+              setIsEditing(false)
+            }
+          }}
+          onBlur={handleSave}
+          className="w-24 px-2 py-1 text-admin-xs font-mono font-bold bg-admin-content border-2 border-admin-primary rounded text-admin-text-primary focus:outline-none shadow-sm"
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div
+      onClick={(e) => {
+        e.stopPropagation()
+        setIsEditing(true)
+      }}
+      title="Click to edit price directly"
+      className="group flex items-center gap-1.5 cursor-pointer py-1 px-1.5 -ml-1.5 rounded hover:bg-admin-content-hover/60 transition-colors"
+    >
+      <span className="font-mono text-admin-text-primary font-bold">
+        {price > 0 ? formatCurrency(price) : "NPR 0"}
+      </span>
+      {isSaving ? (
+        <div className="w-3 h-3 rounded-full border-2 border-admin-primary border-t-transparent animate-spin" />
+      ) : savedSuccess ? (
+        <span className="text-green-600 text-xs font-bold animate-in fade-in">✓</span>
+      ) : (
+        <span className="text-[10px] text-admin-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity">✏️</span>
+      )}
+    </div>
+  )
+}
+
+function InlineStockCell({ productId, initialStock }: { productId: string; initialStock: number }) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [stock, setStock] = useState(initialStock)
+  const [inputValue, setInputValue] = useState(initialStock.toString())
+  const [isSaving, setIsSaving] = useState(false)
+  const [savedSuccess, setSavedSuccess] = useState(false)
+
+  const handleSave = async () => {
+    setIsEditing(false)
+    const num = parseInt(inputValue, 10)
+    if (isNaN(num) || num === stock) return
+
+    setIsSaving(true)
+    const res = await quickUpdateProductAction(productId, { stock: num })
+    setIsSaving(false)
+
+    if (res.success) {
+      setStock(num)
+      setSavedSuccess(true)
+      setTimeout(() => setSavedSuccess(false), 2000)
+    } else {
+      setInputValue(stock.toString())
+      alert(res.error || "Failed to update stock")
+    }
+  }
+
+  if (isEditing) {
+    return (
+      <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-1">
+        <input
+          type="number"
+          min="0"
+          step="1"
+          autoFocus
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSave()
+            if (e.key === "Escape") {
+              setInputValue(stock.toString())
+              setIsEditing(false)
+            }
+          }}
+          onBlur={handleSave}
+          className="w-20 px-2 py-1 text-admin-xs font-bold bg-admin-content border-2 border-admin-primary rounded text-admin-text-primary focus:outline-none shadow-sm"
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div
+      onClick={(e) => {
+        e.stopPropagation()
+        setIsEditing(true)
+      }}
+      title="Click to edit stock quantity directly"
+      className="group flex items-center gap-1.5 cursor-pointer py-1 px-1.5 -ml-1.5 rounded hover:bg-admin-content-hover/60 transition-colors"
+    >
+      {stock === 0 ? (
+        <span className="text-admin-status-danger-text font-bold text-admin-xs">Out of stock ({stock})</span>
+      ) : stock < 5 ? (
+        <span className="text-amber-600 font-bold text-admin-xs">Low stock ({stock})</span>
+      ) : (
+        <span className="text-admin-text-primary font-semibold text-admin-xs">{stock} units</span>
+      )}
+
+      {isSaving ? (
+        <div className="w-3 h-3 rounded-full border-2 border-admin-primary border-t-transparent animate-spin" />
+      ) : savedSuccess ? (
+        <span className="text-green-600 text-xs font-bold animate-in fade-in">✓</span>
+      ) : (
+        <span className="text-[10px] text-admin-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity">✏️</span>
+      )}
+    </div>
+  )
+}
 
 export function ProductsClient({ productsData, currentStatusTab, currentSearch }: ProductsClientProps) {
   const router = useRouter()
@@ -92,29 +283,23 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }: any) => {
-        const rawStatus = row.getValue("status")
-        return <StatusBadge status={rawStatus} />
-      },
+      cell: ({ row }: any) => (
+        <InlineStatusCell productId={row.original.id} initialStatus={row.getValue("status")} />
+      ),
     },
     {
       accessorKey: "price",
       header: "Price",
       cell: ({ row }: any) => (
-        <span className="font-mono text-admin-text-primary font-medium">
-          {row.getValue("price") > 0 ? formatCurrency(row.getValue("price")) : "--"}
-        </span>
+        <InlinePriceCell productId={row.original.id} initialPrice={row.getValue("price") || 0} />
       ),
     },
     {
       accessorKey: "stock",
       header: "Stock Level",
-      cell: ({ row }: any) => {
-        const qty = row.getValue("stock")
-        if (qty === 0) return <span className="text-admin-status-danger-text font-bold text-admin-xs">Out of stock</span>
-        if (qty < 5) return <span className="text-admin-status-warning-text font-semibold text-admin-xs">Low stock ({qty})</span>
-        return <span className="text-admin-text-secondary text-admin-xs">{qty} units</span>
-      },
+      cell: ({ row }: any) => (
+        <InlineStockCell productId={row.original.id} initialStock={row.getValue("stock") || 0} />
+      ),
     },
     {
       accessorKey: "collections",

@@ -228,3 +228,115 @@ export async function getAdminProductsListAction() {
     return { success: false, error: error.message || "Failed to fetch products list" }
   }
 }
+
+export async function quickUpdateProductAction(
+  id: string,
+  updates: {
+    status?: "DRAFT" | "PUBLISHED" | "ARCHIVED"
+    price?: number
+    stock?: number
+  }
+) {
+  try {
+    await SessionService.requireAdmin()
+    const { db } = await import("@/db/client")
+    const { products, variants, priceBookEntries, inventory, priceBooks } = await import("@/db/schema")
+    const { eq } = await import("drizzle-orm")
+
+    // Update Product status if provided
+    if (updates.status) {
+      await db
+        .update(products)
+        .set({ status: updates.status, updatedAt: new Date() })
+        .where(eq(products.id, id))
+    }
+
+    // Get primary variant for this product
+    const existingVariants = await db
+      .select()
+      .from(variants)
+      .where(eq(variants.productId, id))
+      .limit(1)
+
+    let variantId = existingVariants[0]?.id
+
+    if (!variantId && (updates.price !== undefined || updates.stock !== undefined)) {
+      // Create default variant if none exists
+      const p = await db.select().from(products).where(eq(products.id, id)).limit(1)
+      if (p.length > 0) {
+        const [newVar] = await db
+          .insert(variants)
+          .values({
+            productId: id,
+            sku: `${p[0].slug}-DEFAULT`,
+            title: "Default Title",
+          })
+          .returning()
+        variantId = newVar.id
+      }
+    }
+
+    if (variantId) {
+      // Update Price if provided
+      if (updates.price !== undefined && updates.price >= 0) {
+        const priceInCents = Math.round(updates.price * 100)
+        const defaultPB = await db
+          .select()
+          .from(priceBooks)
+          .where(eq(priceBooks.isDefault, true))
+          .limit(1)
+
+        if (defaultPB.length > 0) {
+          const pbId = defaultPB[0].id
+          const existingPrice = await db
+            .select()
+            .from(priceBookEntries)
+            .where(eq(priceBookEntries.variantId, variantId))
+            .limit(1)
+
+          if (existingPrice.length > 0) {
+            await db
+              .update(priceBookEntries)
+              .set({ price: priceInCents, updatedAt: new Date() })
+              .where(eq(priceBookEntries.id, existingPrice[0].id))
+          } else {
+            await db.insert(priceBookEntries).values({
+              priceBookId: pbId,
+              variantId: variantId,
+              price: priceInCents,
+            })
+          }
+        }
+      }
+
+      // Update Stock if provided
+      if (updates.stock !== undefined && updates.stock >= 0) {
+        const existingInv = await db
+          .select()
+          .from(inventory)
+          .where(eq(inventory.variantId, variantId))
+          .limit(1)
+
+        if (existingInv.length > 0) {
+          await db
+            .update(inventory)
+            .set({ quantity: updates.stock, updatedAt: new Date() })
+            .where(eq(inventory.id, existingInv[0].id))
+        } else {
+          await db.insert(inventory).values({
+            variantId: variantId,
+            quantity: updates.stock,
+          })
+        }
+      }
+    }
+
+    revalidatePath("/admin/products")
+    revalidatePath(`/admin/products/${id}`)
+    revalidateTag("products", {})
+
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to update product." }
+  }
+}
