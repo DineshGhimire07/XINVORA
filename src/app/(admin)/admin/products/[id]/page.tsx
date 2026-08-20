@@ -95,17 +95,10 @@ export default async function AdminProductEditorPage(props: PageProps) {
   const allCollections = await db.select().from(collections)
   const allMaterials = await db.select().from(materials)
   const allSizes = await db.select().from(sizes)
-  const allProductsList = await db.query.products.findMany({
-    where: eq(products.status, "PUBLISHED"),
-    with: {
-      productImages: {
-        orderBy: (img, { asc }) => [asc(img.position)],
-        columns: { url: true },
-        limit: 1,
-      },
-    },
-    columns: { id: true, name: true, slug: true },
-  })
+  const allProductsList = await db
+    .select({ id: products.id, name: products.name, slug: products.slug })
+    .from(products)
+    .where(isNull(products.deletedAt))
 
   // Serialize all DB data to strip Date instances (prevents Next.js RPC digest error in production)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

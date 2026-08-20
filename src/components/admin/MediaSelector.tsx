@@ -21,7 +21,6 @@ export function MediaSelector({ mediaItems, selectedImages, onChange }: { mediaI
   const handleUploadComplete = (urls: string[]) => {
     // Automatically select newly uploaded images
     onChange([...selectedImages, ...urls])
-    router.refresh() // Refresh to get the new media items in the props
   }
 
   return (

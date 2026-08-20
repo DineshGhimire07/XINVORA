@@ -15,45 +15,55 @@ import { v2 as cloudinary } from "cloudinary"
 import sharp from "sharp"
 
 export async function generateUploadSignatureAction(folder: string = "xinvora_media") {
-  await SessionService.requireAdmin()
-
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME
-  const apiKey = process.env.CLOUDINARY_API_KEY
-  const apiSecret = process.env.CLOUDINARY_API_SECRET
-
-  if (cloudName && apiKey && apiSecret) {
-    cloudinary.config({
-      cloud_name: cloudName,
-      api_key: apiKey,
-      api_secret: apiSecret,
-      secure: true,
-    })
-
-    const timestamp = Math.round(new Date().getTime() / 1000)
-    const signature = cloudinary.utils.api_sign_request(
-      { timestamp, folder },
-      apiSecret
-    )
-
-    return {
-      success: true,
-      data: {
-        useLocalFallback: false,
-        signature,
-        timestamp,
-        cloudName,
-        apiKey,
-        folder,
-      },
+  try {
+    const session = await SessionService.optionalAuth()
+    if (!session || session.role !== "ADMIN") {
+      return { success: false, error: "Admin session required. Please refresh the page or log in again." }
     }
-  }
 
-  return { success: true, data: { useLocalFallback: true } }
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME
+    const apiKey = process.env.CLOUDINARY_API_KEY
+    const apiSecret = process.env.CLOUDINARY_API_SECRET
+
+    if (cloudName && apiKey && apiSecret) {
+      cloudinary.config({
+        cloud_name: cloudName,
+        api_key: apiKey,
+        api_secret: apiSecret,
+        secure: true,
+      })
+
+      const timestamp = Math.round(new Date().getTime() / 1000)
+      const signature = cloudinary.utils.api_sign_request(
+        { timestamp, folder },
+        apiSecret
+      )
+
+      return {
+        success: true,
+        data: {
+          useLocalFallback: false,
+          signature,
+          timestamp,
+          cloudName,
+          apiKey,
+          folder,
+        },
+      }
+    }
+
+    return { success: true, data: { useLocalFallback: true } }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to generate upload signature" }
+  }
 }
 
 export async function uploadLocalFileAction(formData: FormData) {
   try {
-    const session = await SessionService.requireAdmin()
+    const session = await SessionService.optionalAuth()
+    if (!session || session.role !== "ADMIN") {
+      return { success: false, error: "Admin session required. Please refresh the page." }
+    }
     const file = formData.get("file") as File
     if (!file) throw new Error("No file uploaded")
 
@@ -178,7 +188,10 @@ export async function saveMediaMetadataAction(data: {
   providerId: string
 }) {
   try {
-    const session = await SessionService.requireAdmin()
+    const session = await SessionService.optionalAuth()
+    if (!session || session.role !== "ADMIN") {
+      return { success: false, error: "Admin session required." }
+    }
     
     await MediaService.createMedia({
       ...data,
@@ -186,6 +199,7 @@ export async function saveMediaMetadataAction(data: {
     }, session.id)
 
     revalidatePath("/admin/cms/media")
+    revalidatePath("/admin/media")
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to save media metadata" }
