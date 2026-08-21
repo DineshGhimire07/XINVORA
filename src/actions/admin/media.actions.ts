@@ -329,16 +329,46 @@ export async function getMediaLibraryItemsAction() {
       .innerJoin(products, eq(productImages.productId, products.id))
       .where(isNull(products.deletedAt))
 
-    // 3. Build exact URL lookup for product images
-    const productImageMap = new Map<string, { productId: string; productName: string }>()
-    for (const img of allProductImages) {
-      if (img.url) productImageMap.set(img.url.trim(), { productId: img.productId, productName: img.productName })
+    // Helper: extract unique asset key (Cloudinary public ID / filename without extension or version)
+    const getAssetKey = (url: string): string => {
+      if (!url) return ""
+      try {
+        const clean = url.trim().toLowerCase().split("?")[0].split("#")[0]
+        const parts = clean.split("/")
+        const last = parts[parts.length - 1]
+        const baseName = last.split(".")[0]
+        return baseName
+      } catch {
+        return url.trim().toLowerCase()
+      }
     }
 
-    // 4. Mark media library items as attached if their URL exists in product_images
+    // 3. Build lookup maps for exact URL and normalized asset key
+    const exactMap = new Map<string, { productId: string; productName: string; fullUrl: string }>()
+    const assetKeyMap = new Map<string, { productId: string; productName: string; fullUrl: string }>()
+
+    for (const img of allProductImages) {
+      if (!img.url) continue
+      const info = { productId: img.productId, productName: img.productName, fullUrl: img.url.trim() }
+      exactMap.set(img.url.trim(), info)
+      const key = getAssetKey(img.url)
+      if (key) assetKeyMap.set(key, info)
+    }
+
+    // 4. Mark media library items as attached if URL or asset key matches
     const mediaItemsWithAttachment = mediaItems.map((item) => {
-      const match = item.url ? productImageMap.get(item.url.trim()) : null
-      if (match) productImageMap.delete(item.url!.trim()) // remove so we don't re-add below
+      if (!item.url) return { ...item, attachedProductId: null, attachedProductName: null }
+
+      const exactMatch = exactMap.get(item.url.trim())
+      const keyMatch = !exactMatch ? assetKeyMap.get(getAssetKey(item.url)) : null
+      const match = exactMatch || keyMatch
+
+      if (match) {
+        exactMap.delete(item.url.trim())
+        const key = getAssetKey(item.url)
+        if (key) assetKeyMap.delete(key)
+      }
+
       return {
         ...item,
         attachedProductId: match ? match.productId : null,
@@ -349,24 +379,24 @@ export async function getMediaLibraryItemsAction() {
     // 5. For product images that exist in product_images but NOT in media_library,
     //    create synthetic entries so they appear in the "Attached" tab
     const syntheticAttached = []
-    for (const [url, info] of productImageMap.entries()) {
+    for (const [key, itemData] of assetKeyMap.entries()) {
       syntheticAttached.push({
-        id: `synth-${url.slice(-20)}`,
-        url,
-        title: url.split('/').pop()?.split('?')[0] || 'Product Image',
+        id: `synth-${key}`,
+        url: itemData.fullUrl,
+        title: `${itemData.productName} Image`,
         altText: null,
         caption: null,
         width: null,
         height: null,
         sizeBytes: null,
-        mimeType: 'image/jpeg',
+        mimeType: 'image/webp',
         provider: 'cloudinary',
         providerId: null,
         deletedAt: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        attachedProductId: info.productId,
-        attachedProductName: info.productName,
+        attachedProductId: itemData.productId,
+        attachedProductName: itemData.productName,
       })
     }
 
