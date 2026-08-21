@@ -304,19 +304,19 @@ function CMSHeroCarousel({ block }: { block: any }) {
         </AnimatePresence>
       </div>
 
-      {/* Manual Arrow Controls (only show if multiple slides) */}
+      {/* Manual Arrow Controls (hidden on mobile to prevent blocking mobile photos, visible on desktop md+) */}
       {slides.length > 1 && (
         <>
           <button
             onClick={handlePrev}
-            className="absolute left-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full border border-white/20 bg-black/10 text-white hover:bg-black/30 hover:border-white/40 transition-all active:scale-95 cursor-pointer"
+            className="hidden md:flex absolute left-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full border border-white/20 bg-black/10 text-white hover:bg-black/30 hover:border-white/40 transition-all active:scale-95 cursor-pointer items-center justify-center"
             aria-label="Previous Slide"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <button
             onClick={handleNext}
-            className="absolute right-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full border border-white/20 bg-black/10 text-white hover:bg-black/30 hover:border-white/40 transition-all active:scale-95 cursor-pointer"
+            className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full border border-white/20 bg-black/10 text-white hover:bg-black/30 hover:border-white/40 transition-all active:scale-95 cursor-pointer items-center justify-center"
             aria-label="Next Slide"
           >
             <ArrowRight className="w-5 h-5" />

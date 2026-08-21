@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Search, Plus, Trash2, GripVertical } from "lucide-react"
@@ -21,6 +21,29 @@ export default function ProductGridEditor({
   const [searchQuery, setSearchQuery] = useState("")
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [uploadingId, setUploadingId] = useState<string | null>(null)
+
+  // Map selected IDs back to product details (only those that actually exist in allProducts)
+  const selectedProducts = items
+    .map((item) => {
+      const p = allProducts.find((prod) => prod.id === item.productId)
+      if (!p) return null
+      return {
+        ...p,
+        customImageUrl: item.customImageUrl,
+      }
+    })
+    .filter(Boolean) as any[]
+
+  // Automatically prune stale/deleted product IDs from state
+  useEffect(() => {
+    if (allProducts.length > 0 && items.length > 0) {
+      const validItems = items.filter((item) => allProducts.some((p) => p.id === item.productId))
+      if (validItems.length !== items.length) {
+        setItems(validItems)
+        onChange(validItems)
+      }
+    }
+  }, [allProducts, items.length])
 
   const updateSelection = (newItems: typeof items) => {
     setItems(newItems)
@@ -100,18 +123,6 @@ export default function ProductGridEditor({
     return matchesSearch && notSelected
   })
 
-  // Map selected IDs back to product details
-  const selectedProducts = items
-    .map((item) => {
-      const p = allProducts.find((prod) => prod.id === item.productId)
-      if (!p) return null
-      return {
-        ...p,
-        customImageUrl: item.customImageUrl,
-      }
-    })
-    .filter(Boolean) as any[]
-
   return (
     <div className="space-y-6">
       <div>
@@ -189,7 +200,7 @@ export default function ProductGridEditor({
               Selected Grid Order
             </Label>
             <span className="text-[9px] tracking-widest uppercase font-bold text-text-secondary/60 bg-surface-secondary/50 px-2 py-0.5 border border-border/30">
-              {items.length} / 10 selected
+              {selectedProducts.length} / 10 selected
             </span>
           </div>
 

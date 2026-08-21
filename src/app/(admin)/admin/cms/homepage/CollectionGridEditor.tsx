@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Search, Plus, Trash2, GripVertical } from "lucide-react"
@@ -19,6 +19,22 @@ export default function CollectionGridEditor({
   const [selectedIds, setSelectedIds] = useState<string[]>(initialCollectionIds)
   const [searchQuery, setSearchQuery] = useState("")
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+
+  // Map selected IDs back to collection details (only those that actually exist in allCollections)
+  const selectedCollections = selectedIds
+    .map((id) => allCollections.find((c) => c.id === id))
+    .filter(Boolean) as any[]
+
+  // Automatically prune stale/deleted collection IDs from state
+  useEffect(() => {
+    if (allCollections.length > 0 && selectedIds.length > 0) {
+      const validIds = selectedIds.filter((id) => allCollections.some((c) => c.id === id))
+      if (validIds.length !== selectedIds.length) {
+        setSelectedIds(validIds)
+        onChange(validIds)
+      }
+    }
+  }, [allCollections, selectedIds.length])
 
   const updateSelection = (newIds: string[]) => {
     setSelectedIds(newIds)
@@ -70,11 +86,6 @@ export default function CollectionGridEditor({
     const notSelected = !selectedIds.includes(c.id)
     return matchesSearch && notSelected
   })
-
-  // Map selected IDs back to collection details
-  const selectedCollections = selectedIds
-    .map((id) => allCollections.find((c) => c.id === id))
-    .filter(Boolean) as any[]
 
   return (
     <div className="space-y-6">
@@ -153,7 +164,7 @@ export default function CollectionGridEditor({
               Selected Collections Order
             </Label>
             <span className="text-[9px] tracking-widest uppercase font-bold text-text-secondary/60 bg-surface-secondary/50 px-2 py-0.5 border border-border/30">
-              {selectedIds.length} / 4 selected
+              {selectedCollections.length} / 4 selected
             </span>
           </div>
 

@@ -216,7 +216,7 @@ export default function HeroBlockEditor({
 
                   <div className="flex flex-col gap-2">
                     <Label className="text-[9px] uppercase tracking-wider font-bold text-text-secondary">
-                      Mobile Image (9:16 recommended)
+                      Mobile Image (9:19.5 or 1170×2532 px recommended)
                     </Label>
                     <div className="relative border border-dashed border-border/50 bg-surface-secondary/10 hover:bg-surface-secondary/20 transition-colors py-2.5 px-3 flex items-center justify-center text-center cursor-pointer">
                       <input
