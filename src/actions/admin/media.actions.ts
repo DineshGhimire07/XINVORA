@@ -305,11 +305,30 @@ export async function getMediaLibraryItemsAction() {
     await SessionService.requireAdmin()
     const { db } = await import("@/db/client")
     const { mediaLibrary } = await import("@/db/schema/media")
-    const { isNull, desc } = await import("drizzle-orm")
+    const { productImages } = await import("@/db/schema/product-images")
+    const { products } = await import("@/db/schema/products")
+    const { isNull, desc, eq } = await import("drizzle-orm")
 
     const items = await db
-      .select()
+      .select({
+        id: mediaLibrary.id,
+        url: mediaLibrary.url,
+        title: mediaLibrary.title,
+        altText: mediaLibrary.altText,
+        caption: mediaLibrary.caption,
+        width: mediaLibrary.width,
+        height: mediaLibrary.height,
+        sizeBytes: mediaLibrary.sizeBytes,
+        mimeType: mediaLibrary.mimeType,
+        provider: mediaLibrary.provider,
+        providerId: mediaLibrary.providerId,
+        createdAt: mediaLibrary.createdAt,
+        attachedProductId: productImages.productId,
+        attachedProductName: products.name,
+      })
       .from(mediaLibrary)
+      .leftJoin(productImages, eq(mediaLibrary.url, productImages.url))
+      .leftJoin(products, eq(productImages.productId, products.id))
       .where(isNull(mediaLibrary.deletedAt))
       .orderBy(desc(mediaLibrary.createdAt))
 

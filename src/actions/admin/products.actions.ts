@@ -210,7 +210,8 @@ export async function getAdminProductsListAction() {
     await SessionService.requireAdmin()
     const { db } = await import("@/db/client")
     const { products } = await import("@/db/schema/products")
-    const { isNull, desc } = await import("drizzle-orm")
+    const { productImages } = await import("@/db/schema/product-images")
+    const { isNull, desc, eq, count } = await import("drizzle-orm")
 
     const list = await db
       .select({
@@ -218,10 +219,22 @@ export async function getAdminProductsListAction() {
         name: products.name,
         slug: products.slug,
         status: products.status,
+        imageCount: count(productImages.id),
       })
       .from(products)
+      .leftJoin(productImages, eq(products.id, productImages.productId))
       .where(isNull(products.deletedAt))
+      .groupBy(products.id, products.name, products.slug, products.status, products.createdAt)
       .orderBy(desc(products.createdAt))
+
+    // Sort: Products with 0 images or DRAFT status first, then products with existing images pushed to bottom
+    list.sort((a, b) => {
+      if (a.imageCount === 0 && b.imageCount > 0) return -1
+      if (a.imageCount > 0 && b.imageCount === 0) return 1
+      if (a.status === "DRAFT" && b.status !== "DRAFT") return -1
+      if (a.status !== "DRAFT" && b.status === "DRAFT") return 1
+      return a.imageCount - b.imageCount
+    })
 
     return { success: true, data: list }
   } catch (error: any) {

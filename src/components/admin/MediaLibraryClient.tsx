@@ -65,14 +65,27 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
     }
   }
 
+  const [attachmentFilter, setAttachmentFilter] = useState<"all" | "unattached" | "attached">("unattached")
+
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 4000)
   }
 
-  const filteredItems = items.filter(item =>
-    item.title.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredItems = items
+    .filter(item => {
+      const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase())
+      if (!matchesSearch) return false
+      if (attachmentFilter === "unattached") return !item.attachedProductId
+      if (attachmentFilter === "attached") return !!item.attachedProductId
+      return true
+    })
+    .sort((a, b) => {
+      // Unattached photos stay at the VERY TOP (-1), attached photos move to bottom (+1)
+      if (!a.attachedProductId && b.attachedProductId) return -1
+      if (a.attachedProductId && !b.attachedProductId) return 1
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
 
   useEffect(() => { setItems(initialItems) }, [initialItems])
 
@@ -388,6 +401,32 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
           <input type="text" placeholder="Search by filename..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
             className="w-full pl-8 pr-3 py-1.5 text-admin-xs bg-admin-content border border-admin-border rounded-admin-md text-admin-text-primary placeholder:text-admin-text-tertiary focus:outline-none focus:ring-1 focus:ring-admin-primary transition" />
         </div>
+
+        {/* ── Attachment Filter Tabs ── */}
+        <div className="flex items-center gap-1 bg-admin-content border border-admin-border p-0.5 rounded-admin-md text-[10px] font-bold">
+          <button
+            type="button"
+            onClick={() => setAttachmentFilter("unattached")}
+            className={`px-2.5 py-1 rounded transition-colors ${attachmentFilter === "unattached" ? "bg-admin-primary text-white" : "text-admin-text-secondary hover:text-admin-text-primary"}`}
+          >
+            New / Unassigned ({items.filter(i => !i.attachedProductId).length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setAttachmentFilter("all")}
+            className={`px-2.5 py-1 rounded transition-colors ${attachmentFilter === "all" ? "bg-admin-primary text-white" : "text-admin-text-secondary hover:text-admin-text-primary"}`}
+          >
+            All ({items.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setAttachmentFilter("attached")}
+            className={`px-2.5 py-1 rounded transition-colors ${attachmentFilter === "attached" ? "bg-admin-primary text-white" : "text-admin-text-secondary hover:text-admin-text-primary"}`}
+          >
+            Attached ({items.filter(i => !!i.attachedProductId).length})
+          </button>
+        </div>
+
         {selectionMode && (
           <button onClick={selectAll} className="text-admin-xs font-semibold text-admin-primary hover:underline whitespace-nowrap">
             {selected.size === filteredItems.length ? "Deselect All" : "Select All"}
@@ -518,6 +557,15 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
                   className={`group relative aspect-square rounded-admin-md overflow-hidden border transition-all cursor-pointer ${isSelected ? "border-admin-primary ring-2 ring-admin-primary/40" : "border-admin-border hover:border-admin-border-strong"}`}
                   onClick={() => selectionMode ? toggleSelect(item.id) : copyUrl(item.url)}>
                   <Image src={item.url} alt={item.altText || item.title || "Media"} fill className="object-cover" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 14vw" />
+
+                  {item.attachedProductName && !selectionMode && (
+                    <div
+                      className="absolute top-1.5 right-1.5 z-10 bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider truncate max-w-[85%] backdrop-blur-xs shadow-xs"
+                      title={`Attached to product: ${item.attachedProductName}`}
+                    >
+                      ✓ {item.attachedProductName}
+                    </div>
+                  )}
 
                   {selectionMode && (
                     <div className={`absolute top-2 left-2 w-5 h-5 rounded border-2 flex items-center justify-center z-10 ${isSelected ? "bg-admin-primary border-admin-primary" : "bg-white/80 border-admin-border"}`}>
