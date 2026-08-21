@@ -1,7 +1,6 @@
 export const PREVIEW_CONFIG = {
-  // Toggle this true/false to enable or disable the pre-launch preview mode globally.
-  // Can also be controlled via NEXT_PUBLIC_PREVIEW_MODE env variable.
-  enabled: process.env.NEXT_PUBLIC_PREVIEW_MODE !== "false", 
+  // Website is LIVE by default. Set NEXT_PUBLIC_PREVIEW_MODE=true to re-enable lock screen.
+  enabled: process.env.NEXT_PUBLIC_PREVIEW_MODE === "true", 
   
   accessKey: "79137913",
   cookieName: "xinvora_preview_access",

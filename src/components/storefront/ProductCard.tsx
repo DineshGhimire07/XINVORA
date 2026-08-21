@@ -109,7 +109,7 @@ export function ProductCard({
               fill
               sizes="(max-width: 768px) 50vw, 20vw"
               priority={priority}
-              className={objectContain ? "object-contain p-2" : "object-cover object-top"}
+              className="object-cover object-top"
             />
           </div>
         ) : images.length > 0 ? (
@@ -122,9 +122,7 @@ export function ProductCard({
                 fill
                 sizes="(max-width: 768px) 50vw, 25vw"
                 priority={priority}
-                className={`${
-                  objectContain ? "object-contain p-2" : "object-cover object-top"
-                } transition-all duration-700 ease-out ${
+                className={`object-cover object-top transition-all duration-700 ease-out ${
                   !disableHover && images[1] ? "opacity-100 group-hover:opacity-0" : ""
                 }`}
               />
@@ -134,9 +132,7 @@ export function ProductCard({
                   alt={images[1].altText || `${product.name} lifestyle`} 
                   fill
                   sizes="(max-width: 768px) 50vw, 25vw"
-                  className={`${
-                    objectContain ? "object-contain p-2" : "object-cover object-top"
-                  } absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out`}
+                  className="object-cover object-top absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out"
                 />
               )}
             </div>
@@ -150,7 +146,7 @@ export function ProductCard({
                   fill
                   sizes="(max-width: 768px) 50vw, 25vw"
                   priority={priority}
-                  className={objectContain ? "object-contain p-2" : "object-cover object-top"}
+                  className="object-cover object-top"
                 />
               </div>
             ) : (
@@ -166,7 +162,7 @@ export function ProductCard({
                       fill
                       sizes="50vw"
                       priority={priority && i === 0}
-                      className={objectContain ? "object-contain p-2" : "object-cover object-top"}
+                      className="object-cover object-top"
                     />
                   </div>
                 ))}

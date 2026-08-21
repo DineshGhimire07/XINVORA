@@ -167,7 +167,7 @@ function CMSProductGrid({ block, products = [] }: { block: any; products?: any[]
                 hideDiscountBadge={true}
                 overrideImage={product.customImageUrl}
                 disableHover={true}
-                objectContain={true}
+                objectContain={false}
                 inStock={inStock}
               />
             )

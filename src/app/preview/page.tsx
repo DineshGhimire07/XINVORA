@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { PREVIEW_CONFIG } from "@/config/preview"
 
@@ -8,6 +8,12 @@ export default function PreviewPage() {
   const [accessKey, setAccessKey] = useState("")
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    if (!PREVIEW_CONFIG.enabled) {
+      router.replace("/")
+    }
+  }, [router])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
