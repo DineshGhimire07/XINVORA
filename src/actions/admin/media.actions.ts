@@ -105,10 +105,14 @@ export async function uploadLocalFileAction(formData: FormData) {
           secure: true,
         })
 
-        // Upload processed buffer to Cloudinary
+        // Upload processed buffer to Cloudinary with WebP conversion & auto quality compression
         const uploadResult = await new Promise<any>((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
-            { folder: "xinvora_media" },
+            { 
+              folder: "xinvora_media",
+              format: "webp",
+              quality: "auto:good",
+            },
             (error, result) => {
               if (error) reject(error)
               else resolve(result)
@@ -117,10 +121,11 @@ export async function uploadLocalFileAction(formData: FormData) {
           stream.end(processedBuffer)
         })
 
+        const webpFilename = file.name.replace(/\.[^/.]+$/, "") + ".webp"
         const media = await MediaService.createMedia({
           url: uploadResult.secure_url,
-          title: file.name,
-          mimeType: file.type,
+          title: webpFilename,
+          mimeType: "image/webp",
           sizeBytes: uploadResult.bytes,
           width: uploadResult.width,
           height: uploadResult.height,
