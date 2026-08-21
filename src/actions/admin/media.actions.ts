@@ -326,18 +326,54 @@ export async function getMediaLibraryItemsAction() {
       .innerJoin(products, eq(productImages.productId, products.id))
       .where(isNull(products.deletedAt))
 
-    // Map normalized URLs to attached product info
-    const attachedMap = new Map<string, { productId: string; productName: string }>()
-    for (const img of attachedImages) {
-      if (img.url) {
-        const cleanUrl = img.url.trim().toLowerCase().replace(/^https?:\/\//, '')
-        attachedMap.set(cleanUrl, { productId: img.productId, productName: img.productName })
+    // Helper: extract the unique path portion of a URL (works for Cloudinary and local URLs)
+    // Strips protocol, host, and query params — keeps only the pathname
+    const getUrlPath = (url: string): string => {
+      try {
+        // Remove query params and strip to just path
+        const stripped = url.trim().split('?')[0].split('#')[0]
+        // Try parsing as a full URL to get pathname
+        const parsed = new URL(stripped)
+        return parsed.pathname.toLowerCase().trim()
+      } catch {
+        // If not parseable as URL (e.g., relative /uploads/...)
+        return url.trim().toLowerCase().split('?')[0]
       }
     }
 
+    // Build lookup maps for 3-strategy matching:
+    // 1. Exact URL match
+    // 2. Normalized (no protocol, no trailing slash) match
+    // 3. Path-only match (most robust for Cloudinary URL variations)
+    const exactMap = new Map<string, { productId: string; productName: string }>()
+    const normalizedMap = new Map<string, { productId: string; productName: string }>()
+    const pathMap = new Map<string, { productId: string; productName: string }>()
+
+    for (const img of attachedImages) {
+      if (!img.url) continue
+      const url = img.url.trim()
+      const normalized = url.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '')
+      const pathOnly = getUrlPath(url)
+      const info = { productId: img.productId, productName: img.productName }
+
+      exactMap.set(url, info)
+      normalizedMap.set(normalized, info)
+      if (pathOnly) pathMap.set(pathOnly, info)
+    }
+
     const result = items.map((item) => {
-      const cleanUrl = item.url ? item.url.trim().toLowerCase().replace(/^https?:\/\//, '') : ''
-      const match = attachedMap.get(cleanUrl)
+      if (!item.url) return { ...item, attachedProductId: null, attachedProductName: null }
+
+      const url = item.url.trim()
+      const normalized = url.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '')
+      const pathOnly = getUrlPath(url)
+
+      // Try all 3 strategies, most specific first
+      const match =
+        exactMap.get(url) ||
+        normalizedMap.get(normalized) ||
+        (pathOnly ? pathMap.get(pathOnly) : undefined)
+
       return {
         ...item,
         attachedProductId: match ? match.productId : null,
@@ -350,5 +386,7 @@ export async function getMediaLibraryItemsAction() {
     return { success: false, error: err.message }
   }
 }
+
+
 
 
