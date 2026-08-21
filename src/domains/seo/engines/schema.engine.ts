@@ -110,7 +110,7 @@ export class SEOSchemaEngine {
       name: entity.name,
       image: entity.images && entity.images.length > 0 ? entity.images : [`${baseUrl}/og-default.jpg`],
       description: entity.seoDescription || `Handcrafted ${entity.name} by XINVORA. Quiet luxury apparel.`,
-      sku: entity.id,
+      sku: entity.sku || entity.slug,
       brand: {
         "@type": "Brand",
         name: "XINVORA",

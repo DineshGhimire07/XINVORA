@@ -27,6 +27,15 @@ export class ProductSEOAdapter implements SEOEntityAdapter {
       if (prices.length > 0) lowestPrice = Math.min(...prices)
     }
 
+    let canonicalSku: string | undefined = undefined
+    if (product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
+      const activeVariant = product.variants.find((v: any) => v.isActive && v.sku)
+      canonicalSku = activeVariant?.sku || product.variants[0]?.sku
+    }
+    if (!canonicalSku && product.slug) {
+      canonicalSku = product.slug
+    }
+
     return {
       id: product.id,
       entityType: "PRODUCT",
@@ -43,6 +52,7 @@ export class ProductSEOAdapter implements SEOEntityAdapter {
       images: imagesList,
       price: lowestPrice,
       currency: "NPR",
+      sku: canonicalSku,
       categoryName: product.category?.name || undefined,
       raw: product,
     }

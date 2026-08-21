@@ -25,6 +25,7 @@ export interface NormalizedSEOEntity {
   images: Array<{ url: string; alt?: string | null }>
   price?: number
   currency?: string
+  sku?: string
   authorName?: string
   categoryName?: string
   raw: any
