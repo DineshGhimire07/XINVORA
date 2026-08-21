@@ -20,7 +20,9 @@ interface BannerItem {
     linkText?: string
     linkUrl: string
     isActive?: boolean
-    size?: "editorial" | "full" | "half" | "cinematic" | "landscape" | "classic" | "portrait"
+    size?: "editorial" | "full" | "natural" | "half" | "cinematic" | "landscape" | "classic" | "portrait"
+    fit?: "cover" | "contain" | "scale-down"
+    position?: "object-center" | "object-top" | "object-bottom" | "object-left" | "object-right"
   }
 }
 
@@ -145,42 +147,109 @@ export default function BannerBlockEditor({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Left Column: Media & Size */}
                   <div className="space-y-6">
-                    {/* Size Select */}
+                    {/* Size & Fit Controls */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                          Banner Height / Container Size
+                        </Label>
+                        <select
+                          value={data.size || "editorial"}
+                          onChange={(e) => updateBannerData(banner.id, { size: e.target.value as any })}
+                          className="w-full h-10 px-3 bg-surface border border-border focus:outline-none focus:ring-1 focus:ring-text-primary text-body-sm"
+                        >
+                          <option value="full">Full Screen Height (100dvh)</option>
+                          <option value="natural">Natural Image Height (Zero Crop)</option>
+                          <option value="half">Half Screen Height (50dvh)</option>
+                          <option value="editorial">Wide Editorial Aspect Ratio (32:10)</option>
+                          <option value="cinematic">Cinematic Aspect Ratio (21:9)</option>
+                          <option value="landscape">Standard Landscape (16:9)</option>
+                          <option value="classic">Classic Aspect Ratio (4:3)</option>
+                          <option value="portrait">Tall Portrait (3:4)</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                          Image Fit Mode (Cropping)
+                        </Label>
+                        <select
+                          value={data.fit || "cover"}
+                          onChange={(e) => updateBannerData(banner.id, { fit: e.target.value as any })}
+                          className="w-full h-10 px-3 bg-surface border border-border focus:outline-none focus:ring-1 focus:ring-text-primary text-body-sm"
+                        >
+                          <option value="cover">Cover (Fill Screen — Clips Overflow Edges)</option>
+                          <option value="contain">Contain (Fit Entire Image — 100% Zero Crop)</option>
+                          <option value="scale-down">Original Unscaled Image</option>
+                        </select>
+                      </div>
+                    </div>
+
                     <div className="space-y-1.5">
                       <Label className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                        Banner Size / Aspect Ratio
+                        Focal Point / Crop Alignment
                       </Label>
                       <select
-                        value={data.size || "editorial"}
-                        onChange={(e) => updateBannerData(banner.id, { size: e.target.value as any })}
+                        value={data.position || "object-center"}
+                        onChange={(e) => updateBannerData(banner.id, { position: e.target.value as any })}
                         className="w-full h-10 px-3 bg-surface border border-border focus:outline-none focus:ring-1 focus:ring-text-primary text-body-sm"
                       >
-                        <option value="full">Full Page Screen Height (100dvh)</option>
-                        <option value="half">Half Screen Height (50dvh)</option>
-                        <option value="editorial">Wide Editorial Aspect Ratio (32:10)</option>
-                        <option value="cinematic">Cinematic Aspect Ratio (21:9)</option>
-                        <option value="landscape">Standard Landscape (16:9)</option>
-                        <option value="classic">Classic Aspect Ratio (4:3)</option>
-                        <option value="portrait">Tall Portrait (3:4)</option>
+                        <option value="object-center">Center Focus</option>
+                        <option value="object-top">Top Focus (Show Head & Face)</option>
+                        <option value="object-bottom">Bottom Focus (Show Feet & Hemline)</option>
+                        <option value="object-left">Left Align</option>
+                        <option value="object-right">Right Align</option>
                       </select>
                     </div>
 
                     {/* Desktop Image */}
                     <div className="space-y-3">
-                      <Label className="text-body-xs font-bold uppercase tracking-wider text-text-secondary">
-                        Desktop Background Image
-                      </Label>
+                      <div className="flex justify-between items-center">
+                        <Label className="text-body-xs font-bold uppercase tracking-wider text-text-secondary">
+                          Desktop Background Image
+                        </Label>
+                        <span className="text-[10px] text-text-secondary/70 italic">
+                          Recommended: 1920×1080 px or 2560×1080 px
+                        </span>
+                      </div>
                       <div className="w-full aspect-[32/10] bg-surface-secondary border border-border rounded-sm overflow-hidden flex items-center justify-center relative">
                         {data.imageUrl ? (
-                          <img src={data.imageUrl} alt="Banner Desktop" className="w-full h-full object-cover" />
+                          <img src={data.imageUrl} alt="Banner Desktop" className={`w-full h-full ${data.fit === "contain" ? "object-contain bg-black" : "object-cover"}`} />
                         ) : (
                           <ImageIcon className="w-8 h-8 text-text-secondary/30" />
                         )}
                       </div>
                       
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        {/* Option A: Direct Upload (Skip Crop - Full Original Image) */}
                         <label className="cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 text-[10px] uppercase font-bold tracking-wider px-3.5 py-1.5 rounded-sm transition-colors select-none">
-                          {isUploading && croppingId === banner.id && cropType === "desktop" ? "Uploading..." : data.imageUrl ? "Change Image" : "Upload Image"}
+                          {isUploading ? "Uploading..." : "Upload Original (Zero Crop)"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={isUploading}
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0]
+                              if (file) {
+                                setIsUploading(true)
+                                try {
+                                  const url = await uploadImage(file)
+                                  updateBannerData(banner.id, { imageUrl: url })
+                                } catch (err) {
+                                  alert("Failed to upload image")
+                                } finally {
+                                  setIsUploading(false)
+                                  e.target.value = ""
+                                }
+                              }
+                            }}
+                          />
+                        </label>
+
+                        {/* Option B: Crop & Upload */}
+                        <label className="cursor-pointer bg-surface border border-border hover:bg-surface-secondary/40 text-text-primary text-[10px] uppercase font-bold tracking-wider px-3.5 py-1.5 rounded-sm transition-colors select-none">
+                          Crop & Upload
                           <input
                             type="file"
                             accept="image/*"
@@ -198,11 +267,12 @@ export default function BannerBlockEditor({
                             }}
                           />
                         </label>
+
                         {data.imageUrl && (
                           <button
                             type="button"
                             onClick={() => updateBannerData(banner.id, { imageUrl: null })}
-                            className="text-red-500 text-[10px] uppercase font-bold tracking-wider hover:underline"
+                            className="text-red-500 text-[10px] uppercase font-bold tracking-wider hover:underline ml-auto"
                           >
                             Remove
                           </button>
@@ -223,9 +293,36 @@ export default function BannerBlockEditor({
                         )}
                       </div>
                       
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        {/* Option A: Direct Upload (Zero Crop) */}
                         <label className="cursor-pointer bg-neutral-900 text-white hover:bg-neutral-800 text-[10px] uppercase font-bold tracking-wider px-3.5 py-1.5 rounded-sm transition-colors select-none">
-                          {isUploading && croppingId === banner.id && cropType === "mobile" ? "Uploading..." : data.imageMobileUrl ? "Change Mobile Image" : "Upload Mobile Image"}
+                          {isUploading ? "Uploading..." : "Upload Original (Zero Crop)"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={isUploading}
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0]
+                              if (file) {
+                                setIsUploading(true)
+                                try {
+                                  const url = await uploadImage(file)
+                                  updateBannerData(banner.id, { imageMobileUrl: url })
+                                } catch (err) {
+                                  alert("Failed to upload image")
+                                } finally {
+                                  setIsUploading(false)
+                                  e.target.value = ""
+                                }
+                              }
+                            }}
+                          />
+                        </label>
+
+                        {/* Option B: Crop & Upload */}
+                        <label className="cursor-pointer bg-surface border border-border hover:bg-surface-secondary/40 text-text-primary text-[10px] uppercase font-bold tracking-wider px-3.5 py-1.5 rounded-sm transition-colors select-none">
+                          Crop & Upload
                           <input
                             type="file"
                             accept="image/*"
@@ -243,11 +340,12 @@ export default function BannerBlockEditor({
                             }}
                           />
                         </label>
+
                         {data.imageMobileUrl && (
                           <button
                             type="button"
                             onClick={() => updateBannerData(banner.id, { imageMobileUrl: null })}
-                            className="text-red-500 text-[10px] uppercase font-bold tracking-wider hover:underline"
+                            className="text-red-500 text-[10px] uppercase font-bold tracking-wider hover:underline ml-auto"
                           >
                             Remove
                           </button>

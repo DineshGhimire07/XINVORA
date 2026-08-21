@@ -352,10 +352,12 @@ function CMSBannerBlock({ block }: { block: any }) {
 
   // Determine aspect ratios and height classes based on size configuration
   let containerClass = "relative block w-full aspect-[3/4] md:aspect-[32/10] overflow-hidden bg-neutral-900"
-  if (data.size === "full") {
-    containerClass = "relative block w-full h-[100dvh] overflow-hidden bg-neutral-900"
+  if (data.size === "natural") {
+    containerClass = "relative block w-full h-auto min-h-[300px] overflow-hidden bg-neutral-900"
+  } else if (data.size === "full") {
+    containerClass = "relative block w-full h-[100dvh] min-h-[500px] overflow-hidden bg-neutral-900"
   } else if (data.size === "half") {
-    containerClass = "relative block w-full h-[50dvh] overflow-hidden bg-neutral-900"
+    containerClass = "relative block w-full h-[50dvh] min-h-[350px] overflow-hidden bg-neutral-900"
   } else if (data.size === "cinematic") {
     containerClass = "relative block w-full aspect-[3/4] md:aspect-[21/9] overflow-hidden bg-neutral-900"
   } else if (data.size === "landscape") {
@@ -368,6 +370,9 @@ function CMSBannerBlock({ block }: { block: any }) {
     containerClass = "relative block w-full aspect-[3/4] md:aspect-[32/10] overflow-hidden bg-neutral-900"
   }
 
+  const fitClass = data.fit === "contain" ? "object-contain bg-black" : data.fit === "scale-down" ? "object-scale-down bg-black" : "object-cover"
+  const posClass = data.position || "object-center"
+
   const InnerContent = () => (
     <>
       <picture className="block w-full h-full">
@@ -376,28 +381,30 @@ function CMSBannerBlock({ block }: { block: any }) {
         )}
         <img
           src={data.imageUrl}
-          alt={data.title}
-          className="w-full h-full object-cover"
+          alt={data.title || "Banner"}
+          className={`w-full h-full ${fitClass} ${posClass}`}
         />
       </picture>
-      <div className="absolute inset-0 bg-black/25 group-hover:bg-black/35 transition-colors duration-500" />
+      <div className="absolute inset-0 bg-black/25 group-hover:bg-black/35 transition-colors duration-500 pointer-events-none" />
       
-      <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-16 z-10 text-white max-w-3xl">
+      <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-16 z-10 text-white max-w-3xl pointer-events-none">
         {data.eyebrow && (
           <span className="text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase mb-4 opacity-90 drop-shadow-md">
             {data.eyebrow}
           </span>
         )}
-        <h2 className="text-4xl md:text-6xl font-display font-light mb-4 drop-shadow-md leading-none uppercase">
-          {data.title}
-        </h2>
+        {data.title && (
+          <h2 className="text-4xl md:text-6xl font-display font-light mb-4 drop-shadow-md leading-none uppercase">
+            {data.title}
+          </h2>
+        )}
         {data.tagline && (
           <p className="text-body-sm md:text-body-base opacity-90 max-w-md mb-8 drop-shadow-md font-sans">
             {data.tagline}
           </p>
         )}
         {data.linkText && (
-          <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-widest group/link">
+          <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-widest group/link pointer-events-auto">
             <span>{data.linkText}</span>
             <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/link:translate-x-1" />
           </div>
