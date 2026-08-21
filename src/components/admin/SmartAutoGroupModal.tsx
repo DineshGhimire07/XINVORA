@@ -166,7 +166,7 @@ export function SmartAutoGroupModal({
         if (!res.success) {
           throw new Error(res.error || "Failed to create new products from auto-groups.")
         }
-        createdCount = res.data?.length || newProductsPayload.length
+        createdCount = newProductsPayload.length
       }
 
       // Execute attachment for existing matched products

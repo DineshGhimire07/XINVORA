@@ -19,6 +19,8 @@ interface MediaItem {
   width: number | null
   height: number | null
   createdAt: string
+  attachedProductId: string | null
+  attachedProductName: string | null
 }
 
 interface UploadingFile {
