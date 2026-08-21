@@ -9,7 +9,11 @@ export class SEORobotsEngine {
     const { baseUrl, environment = process.env.NODE_ENV || "development", customRules } = options
 
     if (customRules && customRules.trim().length > 0) {
-      return customRules.trim()
+      let rules = customRules.trim()
+      if (rules.includes("Sitemap:")) {
+        rules = rules.replace(/Sitemap:\s*https?:\/\/[^\s\n]+/g, `Sitemap: ${baseUrl}/sitemap.xml`)
+      }
+      return rules
     }
 
     const isStaging = environment === "staging" || environment === "preview"

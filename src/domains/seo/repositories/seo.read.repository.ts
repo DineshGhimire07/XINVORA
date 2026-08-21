@@ -121,7 +121,7 @@ export class SEOReadRepository {
       organizationName: "XINVORA",
       organizationLogo: "/logo.png",
       websiteName: "XINVORA Storefront",
-      robotsDefaults: "User-agent: *\nAllow: /\nDisallow: /admin/\nSitemap: https://www.xinvora.com.np/sitemap.xml",
+      robotsDefaults: "User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /api/\nDisallow: /checkout/\nDisallow: /account/\nDisallow: /cart\n\nSitemap: https://www.xinvora.com.np/sitemap.xml",
       canonicalRules: "ENFORCE_HTTPS_LOWERCASE",
       gscPropertyUrl: "",
       gscConnected: false,
