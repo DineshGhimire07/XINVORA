@@ -4,12 +4,12 @@ import { useState, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { DataTable } from "@/components/admin/ui/DataTable"
 import { formatCurrency } from "@/lib/utils"
-import { Search } from "lucide-react"
+import { Search, Trash2, CheckSquare, Square, X } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { DeleteProductButton } from "@/components/admin/DeleteProductButton"
-import { quickUpdateProductAction } from "@/actions/admin/products.actions"
+import { quickUpdateProductAction, bulkDeleteProductsAction } from "@/actions/admin/products.actions"
 
 interface ProductsClientProps {
   productsData: {
@@ -236,8 +236,80 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
   const searchParams = useSearchParams()
   const [searchInput, setSearchInput] = useState(currentSearch)
   const [isPending, startTransition] = useTransition()
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+
+  const allIds = productsData.items.map(p => p.id)
+  const allSelected = allIds.length > 0 && allIds.every(id => selectedIds.has(id))
+  const someSelected = selectedIds.size > 0
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(allIds))
+    }
+  }
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return
+    const confirmed = window.confirm(
+      `Permanently delete ${selectedIds.size} product${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`
+    )
+    if (!confirmed) return
+    setIsBulkDeleting(true)
+    const res = await bulkDeleteProductsAction(Array.from(selectedIds))
+    setIsBulkDeleting(false)
+    if (res.success) {
+      setSelectedIds(new Set())
+      router.refresh()
+    } else {
+      alert(res.error || 'Bulk delete failed')
+    }
+  }
 
   const columns = [
+    {
+      id: "select",
+      header: () => (
+        <button
+          onClick={toggleSelectAll}
+          className="flex items-center justify-center w-5 h-5 text-admin-text-secondary hover:text-admin-primary transition-colors"
+          title={allSelected ? "Deselect all" : "Select all"}
+        >
+          {allSelected ? (
+            <CheckSquare className="w-4 h-4 text-admin-primary" />
+          ) : (
+            <Square className="w-4 h-4" />
+          )}
+        </button>
+      ),
+      cell: ({ row }: any) => {
+        const id = row.original.id
+        const isSelected = selectedIds.has(id)
+        return (
+          <button
+            onClick={(e) => { e.stopPropagation(); toggleSelectOne(id) }}
+            className="flex items-center justify-center w-5 h-5 text-admin-text-secondary hover:text-admin-primary transition-colors"
+          >
+            {isSelected ? (
+              <CheckSquare className="w-4 h-4 text-admin-primary" />
+            ) : (
+              <Square className="w-4 h-4" />
+            )}
+          </button>
+        )
+      },
+    },
     {
       accessorKey: "name",
       header: "Product",
@@ -406,6 +478,30 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
 
   return (
     <div className="space-y-6">
+      {/* Bulk Delete Toolbar */}
+      {someSelected && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-admin-primary/10 border border-admin-primary/20 rounded-admin-lg animate-in slide-in-from-top-2 duration-200">
+          <span className="text-admin-sm font-semibold text-admin-primary">
+            {selectedIds.size} product{selectedIds.size > 1 ? 's' : ''} selected
+          </span>
+          <button
+            onClick={handleBulkDelete}
+            disabled={isBulkDeleting}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white text-[11px] font-bold uppercase tracking-wider rounded-admin-md hover:bg-red-600 disabled:opacity-60 transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            {isBulkDeleting ? 'Deleting...' : `Delete ${selectedIds.size}`}
+          </button>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="flex items-center gap-1 ml-auto text-admin-xs text-admin-text-secondary hover:text-admin-text-primary transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+            Clear selection
+          </button>
+        </div>
+      )}
+
       {/* Search & Tabs */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-admin-surface border border-admin-border p-4 rounded-admin-lg shadow-xs">
         <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
