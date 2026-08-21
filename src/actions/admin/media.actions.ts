@@ -309,71 +309,36 @@ export async function getMediaLibraryItemsAction() {
     const { products } = await import("@/db/schema/products")
     const { isNull, desc, eq } = await import("drizzle-orm")
 
-    const items = await db
+    // 1. Fetch all media library items
+    const mediaItems = await db
       .select()
       .from(mediaLibrary)
       .where(isNull(mediaLibrary.deletedAt))
       .orderBy(desc(mediaLibrary.createdAt))
 
-    // Fetch all active product images with product names
-    const attachedImages = await db
+    // 2. Fetch ALL product images with their product names
+    const allProductImages = await db
       .select({
         url: productImages.url,
         productId: productImages.productId,
         productName: products.name,
+        position: productImages.position,
+        createdAt: productImages.createdAt,
       })
       .from(productImages)
       .innerJoin(products, eq(productImages.productId, products.id))
       .where(isNull(products.deletedAt))
 
-    // Helper: extract the unique path portion of a URL (works for Cloudinary and local URLs)
-    // Strips protocol, host, and query params — keeps only the pathname
-    const getUrlPath = (url: string): string => {
-      try {
-        // Remove query params and strip to just path
-        const stripped = url.trim().split('?')[0].split('#')[0]
-        // Try parsing as a full URL to get pathname
-        const parsed = new URL(stripped)
-        return parsed.pathname.toLowerCase().trim()
-      } catch {
-        // If not parseable as URL (e.g., relative /uploads/...)
-        return url.trim().toLowerCase().split('?')[0]
-      }
+    // 3. Build exact URL lookup for product images
+    const productImageMap = new Map<string, { productId: string; productName: string }>()
+    for (const img of allProductImages) {
+      if (img.url) productImageMap.set(img.url.trim(), { productId: img.productId, productName: img.productName })
     }
 
-    // Build lookup maps for 3-strategy matching:
-    // 1. Exact URL match
-    // 2. Normalized (no protocol, no trailing slash) match
-    // 3. Path-only match (most robust for Cloudinary URL variations)
-    const exactMap = new Map<string, { productId: string; productName: string }>()
-    const normalizedMap = new Map<string, { productId: string; productName: string }>()
-    const pathMap = new Map<string, { productId: string; productName: string }>()
-
-    for (const img of attachedImages) {
-      if (!img.url) continue
-      const url = img.url.trim()
-      const normalized = url.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '')
-      const pathOnly = getUrlPath(url)
-      const info = { productId: img.productId, productName: img.productName }
-
-      exactMap.set(url, info)
-      normalizedMap.set(normalized, info)
-      if (pathOnly) pathMap.set(pathOnly, info)
-    }
-
-    const result = items.map((item) => {
-      if (!item.url) return { ...item, attachedProductId: null, attachedProductName: null }
-
-      const url = item.url.trim()
-      const normalized = url.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '')
-      const pathOnly = getUrlPath(url)
-
-      // Try all 3 strategies, most specific first
-      const match =
-        exactMap.get(url) ||
-        normalizedMap.get(normalized) ||
-        (pathOnly ? pathMap.get(pathOnly) : undefined)
-
+    // 4. Mark media library items as attached if their URL exists in product_images
+    const mediaItemsWithAttachment = mediaItems.map((item) => {
+      const match = item.url ? productImageMap.get(item.url.trim()) : null
+      if (match) productImageMap.delete(item.url!.trim()) // remove so we don't re-add below
       return {
         ...item,
         attachedProductId: match ? match.productId : null,
@@ -381,12 +346,35 @@ export async function getMediaLibraryItemsAction() {
       }
     })
 
+    // 5. For product images that exist in product_images but NOT in media_library,
+    //    create synthetic entries so they appear in the "Attached" tab
+    const syntheticAttached = []
+    for (const [url, info] of productImageMap.entries()) {
+      syntheticAttached.push({
+        id: `synth-${url.slice(-20)}`,
+        url,
+        title: url.split('/').pop()?.split('?')[0] || 'Product Image',
+        altText: null,
+        caption: null,
+        width: null,
+        height: null,
+        sizeBytes: null,
+        mimeType: 'image/jpeg',
+        provider: 'cloudinary',
+        providerId: null,
+        deletedAt: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        attachedProductId: info.productId,
+        attachedProductName: info.productName,
+      })
+    }
+
+    const result = [...mediaItemsWithAttachment, ...syntheticAttached]
+
     return { success: true, data: JSON.parse(JSON.stringify(result)) }
   } catch (err: any) {
     return { success: false, error: err.message }
   }
 }
-
-
-
 
