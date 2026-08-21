@@ -116,7 +116,7 @@ const defaultSettings = [
       googleVerification: "",
       facebookVerification: "",
       robots: "index, follow",
-      canonical: "https://xinvora.com.np"
+      canonical: "https://www.xinvora.com.np"
     }
   },
   {

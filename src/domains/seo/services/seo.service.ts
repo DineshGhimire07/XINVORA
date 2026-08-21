@@ -8,6 +8,8 @@ import { SEOSchemaEngine } from "../engines/schema.engine"
 import { SEORedirectEngine } from "../engines/redirect.engine"
 import { SEOAuditEngine } from "../engines/audit.engine"
 
+import { getSiteUrl } from "@/lib/seo/url.utils"
+
 export class SEOService {
   public static async getDashboardOverview() {
     const entities = await SEOReadRepository.getAllEntities()
@@ -92,7 +94,7 @@ export class SEOService {
     if (!entity) return null
 
     const report = SEOScoreEngine.calculateEntityScore(entity)
-    const schema = SEOSchemaEngine.generateJSONLD("https://xinvora.com.np", entity)
+    const schema = SEOSchemaEngine.generateJSONLD(getSiteUrl(), entity)
 
     return {
       entity,

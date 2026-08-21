@@ -8,13 +8,10 @@
 
 import type { SeoMeta } from "@/types/common"
 import { BRAND } from "./brand"
+import { getSiteUrl } from "@/lib/seo/url.utils"
 
-// ── Environment-aware URL ─────────────────────────────────────────────────────
-const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL ||
-  (process.env.NODE_ENV === "production"
-    ? "https://xinvora.com.np"
-    : "http://localhost:3000")
+// ── Environment-aware URL (Single Source of Truth) ─────────────────────────
+const APP_URL = getSiteUrl()
 
 // ── Site Config ───────────────────────────────────────────────────────────────
 export const SITE = {

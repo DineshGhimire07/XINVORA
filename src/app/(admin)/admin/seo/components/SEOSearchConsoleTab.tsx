@@ -26,7 +26,7 @@ interface SEOSearchConsoleTabProps {
 export function SEOSearchConsoleTab({ searchConsole }: SEOSearchConsoleTabProps) {
   const [dateRange, setDateRange] = useState<"7D" | "28D" | "90D">("28D")
   const [showConnectModal, setShowConnectModal] = useState(false)
-  const [propertyUrl, setPropertyUrl] = useState(searchConsole?.gscPropertyUrl || "https://xinvora.com.np")
+  const [propertyUrl, setPropertyUrl] = useState(searchConsole?.gscPropertyUrl || "https://www.xinvora.com.np")
   const [isSaving, setIsSaving] = useState(false)
 
   const isConnected = Boolean(searchConsole?.gscConnected || searchConsole?.gscPropertyUrl)

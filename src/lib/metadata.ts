@@ -28,12 +28,15 @@ export function buildMetadata(overrides: Partial<SeoMeta> = {}): Metadata {
     : { default: SITE.title, template: SITE.titleTemplate }
 
   const ogImage = seo.image || OG_CONFIG.defaultImage.url
+  const baseUrl = SITE.url.replace(/\/$/, "")
+  const rawCanonical = seo.canonical || baseUrl
+  const canonicalUrl = rawCanonical === baseUrl ? `${baseUrl}/` : rawCanonical
 
   return {
     title,
     description: seo.description,
     keywords: seo.keywords,
-    metadataBase: new URL(SITE.url),
+    metadataBase: new URL(baseUrl),
     robots: {
       index: !seo.noIndex,
       follow: !seo.noIndex,
@@ -48,7 +51,7 @@ export function buildMetadata(overrides: Partial<SeoMeta> = {}): Metadata {
     openGraph: {
       title: seo.title || SITE.title,
       description: seo.description,
-      url: seo.canonical || SITE.url,
+      url: canonicalUrl,
       siteName: SITE.name,
       locale: SITE.locale,
       type: "website",
@@ -70,9 +73,9 @@ export function buildMetadata(overrides: Partial<SeoMeta> = {}): Metadata {
       images: [ogImage],
     },
     alternates: {
-      canonical: seo.canonical || SITE.url,
+      canonical: canonicalUrl,
     },
-    authors: [{ name: BRAND.name, url: SITE.url }],
+    authors: [{ name: BRAND.name, url: baseUrl }],
     creator: BRAND.name,
     publisher: BRAND.name,
   }
@@ -83,21 +86,27 @@ export function buildMetadata(overrides: Partial<SeoMeta> = {}): Metadata {
  * Sets up title templates and default Open Graph.
  */
 export function buildRootMetadata(): Metadata {
+  const baseUrl = SITE.url.replace(/\/$/, "")
+  const rootUrl = `${baseUrl}/`
+
   return {
     title: {
       default: SITE.title,
       template: SITE.titleTemplate,
     },
     description: SITE.description,
-    metadataBase: new URL(SITE.url),
+    metadataBase: new URL(baseUrl),
     openGraph: {
       type: "website",
       locale: SITE.locale,
-      url: SITE.url,
+      url: rootUrl,
       siteName: SITE.name,
       title: SITE.title,
       description: SITE.description,
       images: [OG_CONFIG.defaultImage],
+    },
+    alternates: {
+      canonical: rootUrl,
     },
     twitter: {
       card: OG_CONFIG.twitterCardType,
@@ -107,16 +116,5 @@ export function buildRootMetadata(): Metadata {
       index: true,
       follow: true,
     },
-    // TODO: Enable in Brand Assets phase once assets are supplied in public/favicons/
-    // icons: {
-    //   icon: [
-    //     { url: "/favicons/favicon.ico", sizes: "any" },
-    //     { url: "/favicons/icon.svg", type: "image/svg+xml" },
-    //   ],
-    //   apple: [
-    //     { url: "/favicons/apple-touch-icon.png", sizes: "180x180" },
-    //   ],
-    // },
-    // manifest: "/favicons/site.webmanifest",
   }
 }

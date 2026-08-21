@@ -33,7 +33,10 @@ function getOptionalEnv(key: string, fallback?: string): string | undefined {
 // ── Public (client-safe) variables ────────────────────────────────────────────
 const publicEnv = {
   /** Base URL of the application */
-  APP_URL: getEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000"),
+  APP_URL: getEnv(
+    "NEXT_PUBLIC_APP_URL",
+    process.env.NODE_ENV === "production" ? "https://www.xinvora.com.np" : "http://localhost:3000"
+  ),
   /** Application name */
   APP_NAME: getEnv("NEXT_PUBLIC_APP_NAME", "XINVORA"),
   /** Google Analytics Measurement ID (optional) */
