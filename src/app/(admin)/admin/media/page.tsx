@@ -1,8 +1,6 @@
-import { db } from "@/db/client"
-import { mediaLibrary } from "@/db/schema/media"
-import { desc, isNull } from "drizzle-orm"
 import { SessionService } from "@/services/session.service"
 import { MediaLibraryClient } from "@/components/admin/MediaLibraryClient"
+import { getMediaLibraryItemsAction } from "@/actions/admin/media.actions"
 
 export const metadata = {
   title: "Media Library | XINVORA Admin",
@@ -11,14 +9,9 @@ export const metadata = {
 export default async function AdminMediaPage() {
   await SessionService.requireAdmin()
 
-  const mediaItems = await db
-    .select()
-    .from(mediaLibrary)
-    .where(isNull(mediaLibrary.deletedAt))
-    .orderBy(desc(mediaLibrary.createdAt))
-
-  // Serialize to strip Date objects
-  const serialized = JSON.parse(JSON.stringify(mediaItems))
+  // Use the action which includes product attachment info (attachedProductId + attachedProductName)
+  const result = await getMediaLibraryItemsAction()
+  const serialized = result.success ? result.data : []
 
   return <MediaLibraryClient initialItems={serialized} />
 }
