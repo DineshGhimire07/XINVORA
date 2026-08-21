@@ -7,7 +7,6 @@ import { useState, useTransition } from "react"
 import { addToCartAction } from "@/actions/cart.actions"
 import { toggleWishlistByProductIdAction } from "@/actions/wishlist.actions"
 import { ShoppingBag, Heart, Check } from "lucide-react"
-import { NotifyMeButton } from "@/components/storefront/NotifyMeButton"
 import { useHeaderState } from "@/providers/header-state-provider"
 import { cn } from "@/lib/utils"
 
@@ -183,11 +182,15 @@ export function LookProductCard({ product, compact = false }: LookProductCardPro
           )}
         </div>
 
-        {/* Add to Bag or Notify Me */}
+        {/* Add to Bag */}
         {!product.inStock ? (
-          <div className="w-full">
-            <NotifyMeButton productId={product.id} variant="inline" />
-          </div>
+          <button
+            type="button"
+            disabled
+            className="w-full flex items-center justify-center py-3 px-4 rounded-[6px] text-[10px] font-bold tracking-[0.25em] uppercase bg-surface-secondary text-text-secondary/60 cursor-not-allowed opacity-70"
+          >
+            Out of Stock
+          </button>
         ) : product.defaultVariantId ? (
           <form onSubmit={handleAddToCart} className="w-full">
             <button

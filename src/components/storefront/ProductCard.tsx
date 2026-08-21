@@ -6,7 +6,6 @@ import Image from "next/image"
 import { Heart } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toggleWishlistByProductIdAction } from "@/actions/wishlist.actions"
-import { NotifyMeButton } from "@/components/storefront/NotifyMeButton"
 import { useHeaderState } from "@/providers/header-state-provider"
 
 export interface ProductCardProps {
@@ -269,17 +268,6 @@ export function ProductCard({
                   )}
                 </span>
               )}
-            </div>
-          )}
-          {!inStock && (
-            <div 
-              onClick={(e) => { 
-                e.preventDefault(); 
-                e.stopPropagation(); 
-              }} 
-              className="mt-2.5 w-full relative z-30"
-            >
-              <NotifyMeButton productId={product.id} variant="inline" />
             </div>
           )}
         </div>
