@@ -690,8 +690,20 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
         imageUrls={attachModalUrls}
         onSuccess={(productName) => {
           showToast(`Successfully attached ${attachModalUrls.length} photo(s) to "${productName}"!`, "success")
+          // Optimistically update state so attached items slide to the bottom immediately
+          setItems(prev => prev.map(item => {
+            if (attachModalUrls.includes(item.url)) {
+              return {
+                ...item,
+                attachedProductId: "attached-id",
+                attachedProductName: productName
+              }
+            }
+            return item
+          }))
           setSelected(new Set())
           setSelectionMode(false)
+          router.refresh()
         }}
       />
     </div>
