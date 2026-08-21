@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { createProductAction, updateProductAction, archiveProductAction } from "@/actions/admin/products.actions"
 import { createMaterialAction } from "@/actions/admin/materials.actions"
@@ -9,6 +9,7 @@ import { createCategoryAction } from "@/actions/admin/categories.actions"
 import { MediaSelector } from "@/components/admin/MediaSelector"
 import AdminProductPicker from "@/components/admin/AdminProductPicker"
 import { cn } from "@/lib/utils"
+import { AiContentEngine } from "@/domains/seo/engines/ai-content.engine"
 
 export default function ProductEditor({
   product,
@@ -69,6 +70,19 @@ export default function ProductEditor({
   const [pairedIds, setPairedIds] = useState<string[]>(product?.pairedProductIds || [])
   const [sellingPrice, setSellingPrice] = useState<string>(product?.basePrice || "")
   const [originalPrice, setOriginalPrice] = useState<string>(product?.compareAtPrice || "")
+  const [seoTitle, setSeoTitle] = useState<string>(product?.seoTitle || "")
+  const [seoDesc, setSeoDesc] = useState<string>(product?.seoDescription || "")
+  const nameRef = useRef<HTMLInputElement>(null)
+  const categoryRef = useRef<HTMLSelectElement>(null)
+
+  const handleAutoGenSeo = () => {
+    const name = nameRef.current?.value || product?.name || ""
+    const cat = categoryRef.current?.options[categoryRef.current.selectedIndex]?.text || ""
+    if (!name.trim()) return
+    const gen = AiContentEngine.generateContent(name, cat)
+    setSeoTitle(gen.seoTitle)
+    setSeoDesc(gen.seoDescription)
+  }
 
   const handleAddCategory = async () => {
     if (!newCatName.trim() || isSavingCategory) return
@@ -252,6 +266,7 @@ export default function ProductEditor({
               <input
                 id="name"
                 name="name"
+                ref={nameRef}
                 defaultValue={product?.name}
                 required
                 className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
@@ -751,19 +766,31 @@ export default function ProductEditor({
 
         {/* Section 7: SEO Search Settings */}
         <div className="bg-admin-surface border border-admin-border rounded-admin-lg p-6 space-y-5 shadow-xs">
-          <h3 className="text-admin-base font-bold text-admin-text-primary border-b border-admin-border pb-3">
-            Search Engine Optimization (SEO)
-          </h3>
+          <div className="flex items-center justify-between border-b border-admin-border pb-3">
+            <h3 className="text-admin-base font-bold text-admin-text-primary">
+              Search Engine Optimization (SEO)
+            </h3>
+            <button
+              type="button"
+              onClick={handleAutoGenSeo}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider bg-admin-primary text-admin-primary-on rounded-admin-md hover:opacity-90 transition-opacity"
+            >
+              ✦ Auto-Generate Premium SEO
+            </button>
+          </div>
 
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="seoTitle" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
                 SEO Meta Title
+                <span className="ml-2 font-mono text-[10px] text-admin-text-tertiary">{seoTitle.length}/60</span>
               </label>
               <input
                 id="seoTitle"
                 name="seoTitle"
-                defaultValue={product?.seoTitle}
+                value={seoTitle}
+                onChange={(e) => setSeoTitle(e.target.value)}
+                placeholder="e.g. Black Crop Tee — Luxury Tops | XINVORA"
                 className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
               />
             </div>
@@ -771,14 +798,20 @@ export default function ProductEditor({
             <div className="flex flex-col gap-1.5">
               <label htmlFor="seoDescription" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
                 SEO Meta Description
+                <span className={cn("ml-2 font-mono text-[10px]", seoDesc.length > 160 ? "text-red-500" : seoDesc.length >= 140 ? "text-green-600" : "text-admin-text-tertiary")}>{seoDesc.length}/160</span>
               </label>
               <textarea
                 id="seoDescription"
                 name="seoDescription"
-                defaultValue={product?.seoDescription}
-                rows={2}
-                className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
+                value={seoDesc}
+                onChange={(e) => setSeoDesc(e.target.value)}
+                rows={3}
+                placeholder="Describe the product for Google in 140–160 characters..."
+                className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all resize-none"
               />
+              {seoDesc.length >= 140 && seoDesc.length <= 160 && (
+                <span className="text-[10px] text-green-600 font-semibold">✓ Perfect length for Google</span>
+              )}
             </div>
           </div>
         </div>

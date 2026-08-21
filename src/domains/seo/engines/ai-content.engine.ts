@@ -1,5 +1,3 @@
-import { products } from "@/db/schema"
-
 export interface GeneratedAiContent {
   slug: string
   shortDescription: string
@@ -12,11 +10,40 @@ export interface GeneratedAiContent {
   seoDescription: string
 }
 
+const LUXURY_OPENERS = [
+  "Exclusively crafted",
+  "Artisanally designed",
+  "Meticulously curated",
+  "Impeccably tailored",
+  "Masterfully constructed",
+]
+
+const LUXURY_ATTRS = [
+  "refined silhouette and couture-grade finish",
+  "sculptural drape and bespoke detailing",
+  "heritage craftsmanship and elevated aesthetic",
+  "precision cut and hand-finished seams",
+  "signature silhouette and premium construction",
+]
+
+const DELIVERY_PHRASES = [
+  "Free global express delivery.",
+  "Worldwide luxury delivery included.",
+  "Complimentary international shipping.",
+  "Ships worldwide — premium packaging guaranteed.",
+]
+
+function pickByHash(arr: string[], seed: string): string {
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
+  return arr[h % arr.length]
+}
+
 export class AiContentEngine {
   /**
    * Generates rich e-commerce content, craftsmanship details, care instructions,
    * size guides, and search-optimized (SEO) meta tags based on product title & category.
-   * 100% local, zero external API cost.
+   * 100% local, zero external API cost. Uses luxury/premium language throughout.
    */
   static generateContent(name: string, categoryName: string): GeneratedAiContent {
     const trimmedName = name.trim()
@@ -44,22 +71,25 @@ export class AiContentEngine {
     if (lowerName.includes("cashmere")) materialsDetected.push("Cashmere")
     const mainMaterial = materialsDetected[0] || "Premium Blend"
 
+    // Pick luxury descriptors deterministically from product name (unique per product)
+    const opener = pickByHash(LUXURY_OPENERS, trimmedName)
+    const attr = pickByHash(LUXURY_ATTRS, trimmedCat + trimmedName)
+    const delivery = pickByHash(DELIVERY_PHRASES, trimmedName + trimmedCat)
+
     // 3. Short Description Hook (30-250 chars)
-    let shortDescription = `Masterfully tailored ${trimmedName} crafted with ${mainMaterial.toLowerCase()} handle and sophisticated silhouette for effortless luxury.`
+    let shortDescription = `${opener} — the ${trimmedName} is a statement of quiet luxury. ${mainMaterial} construction meets ${attr} for those who demand effortless sophistication.`
+    if (shortDescription.length > 250) shortDescription = shortDescription.slice(0, 247) + "..."
     if (shortDescription.length < 30) {
-      shortDescription = `Elevate your wardrobe with the ${trimmedName} by XINVORA. Designed with tailored elegance and fluid drape.`
-    }
-    if (shortDescription.length > 250) {
-      shortDescription = shortDescription.slice(0, 247) + "..."
+      shortDescription = `Elevate your wardrobe with the ${trimmedName} by XINVORA — where ${attr} defines every stitch.`
     }
 
     // 4. Complete Description
-    const description = `Designed for contemporary sophistication, the ${trimmedName} embodies refined elegance and timeless appeal. Expertly fashioned from ${mainMaterial.toLowerCase()} fabric with meticulous attention to detail, this piece offers a flattering drape and seamless versatility. Ideal for formal gatherings, evening dinners, or elevated casual styling, it delivers unmatched comfort and distinct prestige.`
+    const description = `${opener} for the discerning wardrobe, the ${trimmedName} is a testament to XINVORA's commitment to understated opulence. Fashioned from ${mainMaterial.toLowerCase()} with ${attr}, this piece transcends trends and embodies enduring elegance. Whether styled for intimate gatherings, editorial moments, or elevated everyday wear, it delivers unrivalled presence and sartorial confidence.`
 
     // 5. Specs Accordion Details
-    let details = `Composition: ${mainMaterial}. Features tailored silhouette, concealed fastener, and hand-finished hems for structural integrity.`
+    let details = `Composition: ${mainMaterial}. Features ${attr}, concealed fastening, and hand-finished hems for structural integrity.`
     if (lowerCat.includes("bag") || lowerCat.includes("accessory")) {
-      details = `Material: ${mainMaterial}. Features structured silhouette, polished hardware finish, and organized interior compartments.`
+      details = `Material: ${mainMaterial}. Features ${attr}, polished hardware finish, and organized interior compartments.`
     }
 
     // 6. Care Guide Details
@@ -81,26 +111,33 @@ export class AiContentEngine {
     // 8. Virtual Try-On AI Prompt
     const virtualTryonPrompt = `I am uploading two images: a photo of myself and a photo of the ${trimmedName}. Please generate a realistic image of me wearing this piece, preserving my facial features and body pose while matching the garment's color, pattern, and tailored fit.`
 
-    // 9. SEO Title (Strictly Clamped 50-60 Characters for Google)
-    let rawTitle = `${trimmedName} - Luxury ${trimmedCat} | XINVORA`
-    if (rawTitle.length > 60) {
-      rawTitle = `${trimmedName} | XINVORA`
+    // 9. SEO Title — premium luxury copy, clamped 50–60 chars for Google
+    const titleVariants = [
+      `${trimmedName} — Luxury ${trimmedCat} | XINVORA`,
+      `${trimmedName} | Luxury ${trimmedCat} — XINVORA`,
+      `Shop ${trimmedName} | Premium ${trimmedCat} | XINVORA`,
+      `${trimmedName} | XINVORA Luxury`,
+    ]
+    let seoTitle = titleVariants[0]
+    for (const v of titleVariants) {
+      if (v.length >= 50 && v.length <= 60) { seoTitle = v; break }
     }
-    if (rawTitle.length < 50) {
-      rawTitle = `${trimmedName} - Luxury ${trimmedCat} Collection | XINVORA`
-    }
-    if (rawTitle.length > 60) {
-      rawTitle = rawTitle.slice(0, 57) + "..."
-    }
-    const seoTitle = rawTitle
+    if (seoTitle.length > 60) seoTitle = seoTitle.slice(0, 57) + "..."
 
-    // 10. SEO Meta Description (Strictly Clamped 140-160 Characters)
-    let seoDescription = `Discover the ${trimmedName} by XINVORA. Designed with tailored elegance and premium finish. Shop luxury ${lowerCat} with fast worldwide delivery.`
-    if (seoDescription.length < 140) {
-      seoDescription = `Discover the exquisite ${trimmedName} by XINVORA. Designed with tailored elegance, fluid movement, and premium finish. Shop luxury ${lowerCat} with fast worldwide delivery.`
+    // 10. SEO Meta Description — luxury premium copy, clamped 140–160 chars
+    const descVariants = [
+      `${opener} — the ${trimmedName} by XINVORA. Defined by ${attr}. Shop premium ${lowerCat} and arrive in quiet luxury. ${delivery}`,
+      `Discover the ${trimmedName} by XINVORA — ${attr}. A statement piece for the discerning wardrobe. ${delivery}`,
+      `The ${trimmedName} by XINVORA: ${attr}. Elevate your collection with this premium ${lowerCat} piece. ${delivery}`,
+    ]
+    let seoDescription = descVariants[0]
+    for (const v of descVariants) {
+      if (v.length >= 140 && v.length <= 160) { seoDescription = v; break }
     }
-    if (seoDescription.length > 160) {
-      seoDescription = seoDescription.slice(0, 157) + "..."
+    if (seoDescription.length > 160) seoDescription = seoDescription.slice(0, 157) + "..."
+    if (seoDescription.length < 140) {
+      seoDescription = `${opener} — the ${trimmedName} by XINVORA radiates ${attr}. A premium ${lowerCat} designed for those who dress with intention. ${delivery}`
+      if (seoDescription.length > 160) seoDescription = seoDescription.slice(0, 157) + "..."
     }
 
     return {
