@@ -17,11 +17,7 @@ import {
   priceBookEntries,
   cartItems,
   wishlistItems,
-  reviews,
   productOffSection,
-  recommendationSignals,
-  backInStockRequests,
-  productMetrics,
 } from "@/db/schema"
 import { eq, ne, and, inArray, sql, or } from "drizzle-orm"
 
@@ -438,18 +434,10 @@ export class AdminProductService {
       await tx.delete(productTags).where(eq(productTags.productId, id))
       // Delete product materials
       await tx.delete(productMaterials).where(eq(productMaterials.productId, id))
-      // Delete reviews
-      await tx.delete(reviews).where(eq(reviews.productId, id))
       // Delete product pairings (both as product AND as paired product)
       await tx.delete(productPairings).where(or(eq(productPairings.productId, id), eq(productPairings.pairedProductId, id)))
       // Delete product off section
       await tx.delete(productOffSection).where(eq(productOffSection.productId, id))
-      // Delete recommendation signals
-      await tx.delete(recommendationSignals).where(eq(recommendationSignals.productId, id))
-      // Delete back in stock requests
-      await tx.delete(backInStockRequests).where(eq(backInStockRequests.productId, id))
-      // Delete product metrics
-      await tx.delete(productMetrics).where(eq(productMetrics.productId, id))
 
       // 2. Delete product itself
       const [deletedProduct] = await tx.delete(products).where(eq(products.id, id)).returning()
