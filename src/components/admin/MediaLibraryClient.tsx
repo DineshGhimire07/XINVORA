@@ -562,10 +562,11 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
 
                   {item.attachedProductName && !selectionMode && (
                     <div
-                      className="absolute top-1.5 right-1.5 z-10 bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider truncate max-w-[85%] backdrop-blur-xs shadow-xs"
+                      className="absolute top-1.5 left-1.5 right-1.5 z-10 bg-green-600 text-white font-bold text-[9px] px-2 py-0.5 rounded shadow-md flex items-center gap-1.5 uppercase tracking-wider truncate"
                       title={`Attached to product: ${item.attachedProductName}`}
                     >
-                      ✓ {item.attachedProductName}
+                      <span className="w-3.5 h-3.5 rounded-full bg-white text-green-700 flex items-center justify-center text-[9px] font-black shrink-0 shadow-xs">✓</span>
+                      <span className="truncate">{item.attachedProductName}</span>
                     </div>
                   )}
 

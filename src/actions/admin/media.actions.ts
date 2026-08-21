@@ -310,29 +310,42 @@ export async function getMediaLibraryItemsAction() {
     const { isNull, desc, eq } = await import("drizzle-orm")
 
     const items = await db
-      .select({
-        id: mediaLibrary.id,
-        url: mediaLibrary.url,
-        title: mediaLibrary.title,
-        altText: mediaLibrary.altText,
-        caption: mediaLibrary.caption,
-        width: mediaLibrary.width,
-        height: mediaLibrary.height,
-        sizeBytes: mediaLibrary.sizeBytes,
-        mimeType: mediaLibrary.mimeType,
-        provider: mediaLibrary.provider,
-        providerId: mediaLibrary.providerId,
-        createdAt: mediaLibrary.createdAt,
-        attachedProductId: productImages.productId,
-        attachedProductName: products.name,
-      })
+      .select()
       .from(mediaLibrary)
-      .leftJoin(productImages, eq(mediaLibrary.url, productImages.url))
-      .leftJoin(products, eq(productImages.productId, products.id))
       .where(isNull(mediaLibrary.deletedAt))
       .orderBy(desc(mediaLibrary.createdAt))
 
-    return { success: true, data: JSON.parse(JSON.stringify(items)) }
+    // Fetch all active product images with product names
+    const attachedImages = await db
+      .select({
+        url: productImages.url,
+        productId: productImages.productId,
+        productName: products.name,
+      })
+      .from(productImages)
+      .innerJoin(products, eq(productImages.productId, products.id))
+      .where(isNull(products.deletedAt))
+
+    // Map normalized URLs to attached product info
+    const attachedMap = new Map<string, { productId: string; productName: string }>()
+    for (const img of attachedImages) {
+      if (img.url) {
+        const cleanUrl = img.url.trim().toLowerCase().replace(/^https?:\/\//, '')
+        attachedMap.set(cleanUrl, { productId: img.productId, productName: img.productName })
+      }
+    }
+
+    const result = items.map((item) => {
+      const cleanUrl = item.url ? item.url.trim().toLowerCase().replace(/^https?:\/\//, '') : ''
+      const match = attachedMap.get(cleanUrl)
+      return {
+        ...item,
+        attachedProductId: match ? match.productId : null,
+        attachedProductName: match ? match.productName : null,
+      }
+    })
+
+    return { success: true, data: JSON.parse(JSON.stringify(result)) }
   } catch (err: any) {
     return { success: false, error: err.message }
   }
