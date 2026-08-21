@@ -207,16 +207,17 @@ export async function hardDeleteProductAction(id: string) {
 
 export async function bulkDeleteProductsAction(ids: string[]) {
   try {
-    await SessionService.requireAdmin()
+    const session = await SessionService.requireAdmin()
     const results = await Promise.allSettled(
-      ids.map(id => AdminProductService.hardDeleteProduct(id, "bulk"))
+      ids.map(id => AdminProductService.hardDeleteProduct(id, session.id))
     )
+    const deleted = results.filter(r => r.status === "fulfilled").length
     const failed = results.filter(r => r.status === "rejected").length
     revalidatePath("/admin/products")
     revalidatePath("/")
     revalidatePath("/collections")
     revalidateTag("products", {})
-    return { success: true, deleted: ids.length - failed, failed }
+    return { success: true, deleted, failed }
   } catch (error: any) {
     return { success: false, error: extractDbError(error) }
   }

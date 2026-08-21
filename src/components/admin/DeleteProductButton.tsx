@@ -7,9 +7,10 @@ import { useRouter } from "next/navigation"
 interface DeleteProductButtonProps {
   productId: string
   productName: string
+  onDeleted?: () => void
 }
 
-export function DeleteProductButton({ productId, productName }: DeleteProductButtonProps) {
+export function DeleteProductButton({ productId, productName, onDeleted }: DeleteProductButtonProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
 
@@ -26,6 +27,7 @@ export function DeleteProductButton({ productId, productName }: DeleteProductBut
     try {
       const res = await hardDeleteProductAction(productId)
       if (res.success) {
+        if (onDeleted) onDeleted()
         router.refresh()
       } else {
         alert(`Error: ${res.error}`)

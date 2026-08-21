@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { DataTable } from "@/components/admin/ui/DataTable"
 import { formatCurrency } from "@/lib/utils"
@@ -238,8 +238,13 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
   const [isPending, startTransition] = useTransition()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [itemsList, setItemsList] = useState(productsData.items)
 
-  const allIds = productsData.items.map(p => p.id)
+  useEffect(() => {
+    setItemsList(productsData.items)
+  }, [productsData.items])
+
+  const allIds = itemsList.map(p => p.id)
   const allSelected = allIds.length > 0 && allIds.every(id => selectedIds.has(id))
   const someSelected = selectedIds.size > 0
 
@@ -262,14 +267,16 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return
+    const idsToDelete = Array.from(selectedIds)
     const confirmed = window.confirm(
-      `Permanently delete ${selectedIds.size} product${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`
+      `Permanently delete ${idsToDelete.length} product${idsToDelete.length > 1 ? 's' : ''}? This cannot be undone.`
     )
     if (!confirmed) return
     setIsBulkDeleting(true)
-    const res = await bulkDeleteProductsAction(Array.from(selectedIds))
+    const res = await bulkDeleteProductsAction(idsToDelete)
     setIsBulkDeleting(false)
     if (res.success) {
+      setItemsList(prev => prev.filter(p => !selectedIds.has(p.id)))
       setSelectedIds(new Set())
       router.refresh()
     } else {
@@ -430,7 +437,11 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
             >
               Edit
             </Link>
-            <DeleteProductButton productId={item.id} productName={item.name} />
+            <DeleteProductButton 
+              productId={item.id} 
+              productName={item.name} 
+              onDeleted={() => setItemsList(prev => prev.filter(p => p.id !== item.id))}
+            />
           </div>
         )
       },
@@ -537,7 +548,7 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
       <div className={cn("transition-opacity duration-150", isPending && "opacity-60")}>
         <DataTable
           columns={columns}
-          data={productsData.items}
+          data={itemsList}
           onRowClick={handleRowClick}
           emptyStateText="No products found."
         />
