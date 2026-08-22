@@ -79,14 +79,26 @@ function CMSCollectionGrid({ block, collections = [] }: { block: any; collection
               {/* Visual Card Image container */}
               <div className="relative w-full h-full bg-surface-secondary overflow-hidden select-none">
                 {hasCover ? (
-                  <Image
-                    src={collection.imageUrl}
-                    alt={collection.name}
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    priority={index < 2}
-                    className="object-cover transition-all duration-700 ease-out group-hover:scale-105"
-                  />
+                  <>
+                    {collection.imageMobileUrl && (
+                      <Image
+                        src={collection.imageMobileUrl}
+                        alt={collection.name}
+                        fill
+                        sizes="50vw"
+                        priority={index < 2}
+                        className="block md:hidden object-cover transition-all duration-700 ease-out group-hover:scale-105"
+                      />
+                    )}
+                    <Image
+                      src={collection.imageUrl}
+                      alt={collection.name}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      priority={index < 2}
+                      className={`${collection.imageMobileUrl ? "hidden md:block" : "block"} object-cover transition-all duration-700 ease-out group-hover:scale-105`}
+                    />
+                  </>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-[10px] text-text-secondary uppercase select-none font-semibold">
                     {collection.name}

@@ -25,12 +25,16 @@ export default function CollectionEditor({
   const [searchQuery, setSearchQuery] = useState("")
   const [imageUrl, setImageUrl] = useState<string | null>(collection?.imageUrl || null)
   const [isUploading, setIsUploading] = useState(false)
+  const [imageMobileUrl, setImageMobileUrl] = useState<string | null>(collection?.imageMobileUrl || null)
+  const [isUploadingMobile, setIsUploadingMobile] = useState(false)
   const [bannerUrl, setBannerUrl] = useState<string | null>(collection?.bannerUrl || null)
   const [isUploadingBanner, setIsUploadingBanner] = useState(false)
 
   // Cropping states
   const [coverSource, setCoverSource] = useState<string | null>(null)
   const [isCroppingCover, setIsCroppingCover] = useState(false)
+  const [mobileSource, setMobileSource] = useState<string | null>(null)
+  const [isCroppingMobile, setIsCroppingMobile] = useState(false)
   const [bannerSource, setBannerSource] = useState<string | null>(null)
   const [isCroppingBanner, setIsCroppingBanner] = useState(false)
 
@@ -103,92 +107,124 @@ export default function CollectionEditor({
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-admin-border pb-5">
+        <div>
+          <h1 className="text-admin-2xl font-bold font-display text-admin-text-primary tracking-tight">
+            {collection ? `Edit Collection: ${collection.name}` : "Create New Collection"}
+          </h1>
+          <p className="text-admin-sm text-admin-text-secondary mt-1">
+            Configure collection metadata, upload responsive editorial imagery, and assign products.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {collection && (
+            <>
+              <button
+                type="button"
+                onClick={handleArchive}
+                disabled={isLoading}
+                className="px-4 py-2 border border-admin-border bg-admin-surface text-admin-text-secondary hover:text-admin-text-primary hover:border-admin-border-strong text-admin-xs font-semibold rounded-admin-md transition-colors disabled:opacity-50"
+              >
+                Archive
+              </button>
+              <button
+                type="button"
+                onClick={handleHardDelete}
+                disabled={isLoading}
+                className="px-4 py-2 border border-admin-status-danger-border bg-admin-status-danger-bg text-admin-status-danger-text hover:bg-admin-status-danger-border/20 text-admin-xs font-semibold rounded-admin-md transition-colors disabled:opacity-50"
+              >
+                Delete
+              </button>
+            </>
+          )}
+          <button
+            type="submit"
+            form="collection-form"
+            disabled={isLoading || isUploading || isUploadingMobile || isUploadingBanner}
+            className="bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 px-5 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md transition-colors disabled:opacity-50"
+          >
+            {isLoading ? "Saving..." : collection ? "Save Changes" : "Create Collection"}
+          </button>
+        </div>
+      </div>
+
       {error && (
-        <div className="p-4 bg-admin-status-danger-bg/25 border border-admin-status-danger-text/30 text-admin-status-danger-text text-admin-sm rounded-admin-md font-medium">
+        <div className="p-4 bg-admin-status-danger-bg border border-admin-status-danger-border text-admin-status-danger-text text-admin-sm rounded-admin-md">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form id="collection-form" onSubmit={handleSubmit} className="space-y-6">
         {/* Section 1: Basic Information */}
-        <div className="bg-admin-surface border border-admin-border rounded-admin-lg p-6 space-y-5 shadow-xs">
+        <div className="bg-admin-surface border border-admin-border rounded-admin-lg p-6 space-y-6 shadow-xs">
           <h3 className="text-admin-base font-bold text-admin-text-primary border-b border-admin-border pb-3">
-            Collection Details
+            Collection Details & Imagery (3 Dedicated Uploads)
           </h3>
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="name" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
-              Collection Name *
-            </label>
-            <input
-              id="name"
-              name="name"
-              defaultValue={collection?.name}
-              required
-              className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
-            />
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="name" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+                Collection Name *
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                required
+                defaultValue={collection?.name}
+                className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
+              />
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="slug" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
-                Slug (URL) *
+                URL Slug *
               </label>
               <input
+                type="text"
                 id="slug"
                 name="slug"
+                required
                 defaultValue={collection?.slug}
-                required
-                className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="sortOrder" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
-                Sort Order
-              </label>
-              <input
-                id="sortOrder"
-                name="sortOrder"
-                type="number"
-                defaultValue={collection?.sortOrder ?? 0}
-                required
-                className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
+                className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all font-mono"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="parentId" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
-                Parent Collection
+                Parent Collection (Optional)
               </label>
               <select
                 id="parentId"
                 name="parentId"
                 defaultValue={collection?.parentId || ""}
-                className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong transition-colors"
+                className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
               >
-                <option value="">None (Top Level)</option>
-                {collections?.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
+                <option value="">None (Top-level Collection)</option>
+                {collections
+                  ?.filter((c) => c.id !== collection?.id)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
               </select>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="isActive" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
-                Status
+              <label htmlFor="sortOrder" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+                Sort Order Priority
               </label>
-              <select
-                id="isActive"
-                name="isActive"
-                defaultValue={collection?.isActive !== false ? "true" : "false"}
-                className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong transition-colors"
-              >
-                <option value="true">Active</option>
-                <option value="false">Inactive</option>
-              </select>
+              <input
+                type="number"
+                id="sortOrder"
+                name="sortOrder"
+                defaultValue={collection?.sortOrder || 0}
+                className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
+              />
             </div>
           </div>
 
@@ -200,57 +236,54 @@ export default function CollectionEditor({
               id="description"
               name="description"
               defaultValue={collection?.description}
-              rows={4}
+              rows={3}
               className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all leading-relaxed"
             />
           </div>
 
-          {/* Cover Photo Upload */}
-          <div className="flex flex-col gap-2.5 pt-2">
+          {/* ════════════════════════════════════════════════════════════════════════ */}
+          {/* UPLOAD 1: DESKTOP / LAPTOP EDITORIAL COVER                               */}
+          {/* ════════════════════════════════════════════════════════════════════════ */}
+          <div className="flex flex-col gap-2.5 pt-4 border-t border-admin-border/60">
             <div className="flex items-center justify-between">
-              <label className="text-admin-xs font-bold text-admin-text-primary uppercase tracking-wider">
-                1. Collection Editorial Cover Photo (4-Box Featured Grid)
+              <label className="text-admin-xs font-bold text-admin-text-primary uppercase tracking-wider flex items-center gap-2">
+                <span>💻 1. Desktop Cover Photo (Featured 4-Box Grid)</span>
               </label>
               <span className="text-[10px] bg-admin-primary/10 text-admin-primary font-bold px-2 py-0.5 rounded-sm">
-                Live Storefront Ratio: 1:2 Vertical
+                Desktop Ratio: 1:2 Vertical
               </span>
             </div>
             <input type="hidden" name="imageUrl" value={imageUrl || ""} />
 
             {/* Spec Guideline Card */}
-            <div className="p-3 bg-admin-content/80 border border-admin-border/70 rounded-admin-md grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-admin-text-secondary">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-admin-text-primary">💻 Desktop / Laptop:</span>
-                <span><strong className="text-admin-text-primary">1000 × 2000 px</strong> (1:2 vertical editorial)</span>
+            <div className="p-3 bg-admin-content/80 border border-admin-border/70 rounded-admin-md text-[11px] text-admin-text-secondary flex items-center justify-between">
+              <div>
+                <span className="font-bold text-admin-text-primary">Recommended Laptop / Desktop Size: </span>
+                <strong className="text-admin-text-primary">1000 × 2000 px</strong> (or 1200 × 2400 px Retina)
               </div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-admin-text-primary">📱 Mobile Phones:</span>
-                <span><strong className="text-admin-text-primary">800 × 1600 px</strong> (1:2 tall story portrait)</span>
-              </div>
+              <span className="text-[10px] font-mono text-admin-text-secondary/70">1:2 Editorial Aspect</span>
             </div>
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pt-1">
-              {/* Card Preview */}
               <div className="w-24 h-44 bg-admin-content border border-admin-border rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner">
                 {imageUrl ? (
                   <img
                     src={imageUrl}
-                    alt="Collection Cover"
+                    alt="Desktop Cover"
                     className="w-full h-full object-cover object-top"
                   />
                 ) : (
                   <div className="flex flex-col items-center gap-1.5 p-2 text-center text-admin-text-secondary/40">
                     <ImageIcon className="w-7 h-7" />
-                    <span className="text-[8px] uppercase font-bold tracking-wider">1:2 Ratio</span>
+                    <span className="text-[8px] uppercase font-bold tracking-wider">Desktop 1:2</span>
                   </div>
                 )}
               </div>
               
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-2.5 flex-1">
                 <div className="flex flex-wrap items-center gap-2.5">
-                  {/* Direct Upload (No Crop) */}
                   <label className="cursor-pointer bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 text-admin-xs font-semibold px-4 py-2 rounded-admin-md transition-colors select-none">
-                    {isUploading ? "Uploading..." : imageUrl ? "Replace Photo" : "Upload Ready Photo"}
+                    {isUploading ? "Uploading..." : imageUrl ? "Replace Desktop Photo" : "Upload Ready Photo"}
                     <input
                       type="file"
                       accept="image/*"
@@ -265,7 +298,7 @@ export default function CollectionEditor({
                             setImageUrl(url)
                           } catch (err) {
                             console.error(err)
-                            alert("Failed to upload image.")
+                            alert("Failed to upload desktop cover photo.")
                           } finally {
                             setIsUploading(false)
                             e.target.value = ""
@@ -275,7 +308,6 @@ export default function CollectionEditor({
                     />
                   </label>
 
-                  {/* Crop & Upload */}
                   <label className="cursor-pointer bg-admin-content border border-admin-border hover:border-admin-border-strong text-admin-text-primary text-admin-xs font-semibold px-3.5 py-2 rounded-admin-md transition-colors select-none">
                     Crop & Upload (1:2)
                     <input
@@ -318,17 +350,134 @@ export default function CollectionEditor({
                   )}
                 </div>
                 <p className="text-[10px] text-admin-text-secondary/80 leading-relaxed">
-                  Used directly for the 4-box full-height editorial collection cards on the homepage.
+                  Used directly for the 4-box full-height editorial collection cards on laptops & desktops.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Banner Photo Upload */}
-          <div className="flex flex-col gap-2.5 pt-4 border-t border-admin-border/50">
+          {/* ════════════════════════════════════════════════════════════════════════ */}
+          {/* UPLOAD 2: MOBILE PHONE EDITORIAL COVER                                   */}
+          {/* ════════════════════════════════════════════════════════════════════════ */}
+          <div className="flex flex-col gap-2.5 pt-4 border-t border-admin-border/60">
             <div className="flex items-center justify-between">
-              <label className="text-admin-xs font-bold text-admin-text-primary uppercase tracking-wider">
-                2. Collection Landscape Banner (Top Header on Collection Page)
+              <label className="text-admin-xs font-bold text-admin-text-primary uppercase tracking-wider flex items-center gap-2">
+                <span>📱 2. Mobile Phone Cover Photo (Featured 4-Box Grid)</span>
+              </label>
+              <span className="text-[10px] bg-admin-primary/10 text-admin-primary font-bold px-2 py-0.5 rounded-sm">
+                Mobile Ratio: 1:2 Story Portrait
+              </span>
+            </div>
+            <input type="hidden" name="imageMobileUrl" value={imageMobileUrl || ""} />
+
+            {/* Spec Guideline Card */}
+            <div className="p-3 bg-admin-content/80 border border-admin-border/70 rounded-admin-md text-[11px] text-admin-text-secondary flex items-center justify-between">
+              <div>
+                <span className="font-bold text-admin-text-primary">Recommended Mobile Size: </span>
+                <strong className="text-admin-text-primary">800 × 1600 px</strong> (or 750 × 1500 px)
+              </div>
+              <span className="text-[10px] font-mono text-admin-text-secondary/70">1:2 Mobile Portrait</span>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pt-1">
+              <div className="w-24 h-44 bg-admin-content border border-admin-border rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner">
+                {imageMobileUrl ? (
+                  <img
+                    src={imageMobileUrl}
+                    alt="Mobile Cover"
+                    className="w-full h-full object-cover object-top"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-1.5 p-2 text-center text-admin-text-secondary/40">
+                    <ImageIcon className="w-7 h-7" />
+                    <span className="text-[8px] uppercase font-bold tracking-wider">Mobile 1:2</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex flex-col gap-2.5 flex-1">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <label className="cursor-pointer bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 text-admin-xs font-semibold px-4 py-2 rounded-admin-md transition-colors select-none">
+                    {isUploadingMobile ? "Uploading..." : imageMobileUrl ? "Replace Mobile Photo" : "Upload Ready Photo"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={isUploadingMobile}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          setIsUploadingMobile(true)
+                          try {
+                            const url = await uploadImage(file)
+                            setImageMobileUrl(url)
+                          } catch (err) {
+                            console.error(err)
+                            alert("Failed to upload mobile cover photo.")
+                          } finally {
+                            setIsUploadingMobile(false)
+                            e.target.value = ""
+                          }
+                        }
+                      }}
+                    />
+                  </label>
+
+                  <label className="cursor-pointer bg-admin-content border border-admin-border hover:border-admin-border-strong text-admin-text-primary text-admin-xs font-semibold px-3.5 py-2 rounded-admin-md transition-colors select-none">
+                    Crop & Upload (1:2)
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={isUploadingMobile}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          const url = URL.createObjectURL(file)
+                          setMobileSource(url)
+                          setIsCroppingMobile(true)
+                          e.target.value = ""
+                        }
+                      }}
+                    />
+                  </label>
+
+                  {imageMobileUrl && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMobileSource(imageMobileUrl)
+                          setIsCroppingMobile(true)
+                        }}
+                        className="text-admin-primary text-admin-xs font-semibold hover:underline"
+                      >
+                        Recrop
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setImageMobileUrl(null)}
+                        className="text-admin-status-danger-text text-admin-xs font-semibold hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </>
+                  )}
+                </div>
+                <p className="text-[10px] text-admin-text-secondary/80 leading-relaxed">
+                  Mobile-optimized cover photo for the 4-box grid on smartphones. (Falls back to Desktop photo if left empty).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* ════════════════════════════════════════════════════════════════════════ */}
+          {/* UPLOAD 3: STOREFRONT LANDSCAPE BANNER                                    */}
+          {/* ════════════════════════════════════════════════════════════════════════ */}
+          <div className="flex flex-col gap-2.5 pt-4 border-t border-admin-border/60">
+            <div className="flex items-center justify-between">
+              <label className="text-admin-xs font-bold text-admin-text-primary uppercase tracking-wider flex items-center gap-2">
+                <span>🏪 3. Storefront Landscape Banner (Collection Page Top Header)</span>
               </label>
               <span className="text-[10px] bg-admin-primary/10 text-admin-primary font-bold px-2 py-0.5 rounded-sm">
                 Storefront Ratio: 32:10 Wide
@@ -338,13 +487,13 @@ export default function CollectionEditor({
 
             {/* Spec Guideline Card */}
             <div className="p-3 bg-admin-content/80 border border-admin-border/70 rounded-admin-md grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-admin-text-secondary">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-admin-text-primary">💻 Desktop / Laptop:</span>
-                <span><strong className="text-admin-text-primary">1920 × 600 px</strong> or <strong className="text-admin-text-primary">2560 × 800 px</strong> (32:10)</span>
+              <div>
+                <span className="font-bold text-admin-text-primary">💻 Desktop / Laptop: </span>
+                <strong className="text-admin-text-primary">1920 × 600 px</strong> (or 2560 × 800 px)
               </div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-admin-text-primary">📱 Mobile Phones:</span>
-                <span><strong className="text-admin-text-primary">800 × 340 px</strong> or <strong className="text-admin-text-primary">1080 × 460 px</strong> (21:9)</span>
+              <div>
+                <span className="font-bold text-admin-text-primary">📱 Mobile Phones: </span>
+                <strong className="text-admin-text-primary">800 × 340 px</strong> (or 1080 × 460 px)
               </div>
             </div>
             
@@ -364,9 +513,8 @@ export default function CollectionEditor({
                 )}
               </div>
               
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-2.5 flex-1">
                 <div className="flex flex-wrap items-center gap-2.5">
-                  {/* Direct Upload (No Crop) */}
                   <label className="cursor-pointer bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 text-admin-xs font-semibold px-4 py-2 rounded-admin-md transition-colors select-none">
                     {isUploadingBanner ? "Uploading..." : bannerUrl ? "Replace Banner" : "Upload Ready Banner"}
                     <input
@@ -393,7 +541,6 @@ export default function CollectionEditor({
                     />
                   </label>
 
-                  {/* Crop & Upload */}
                   <label className="cursor-pointer bg-admin-content border border-admin-border hover:border-admin-border-strong text-admin-text-primary text-admin-xs font-semibold px-3.5 py-2 rounded-admin-md transition-colors select-none">
                     Crop & Upload (32:10)
                     <input
@@ -460,7 +607,7 @@ export default function CollectionEditor({
                 setImageUrl(url)
               } catch (err) {
                 console.error(err)
-                alert("Failed to upload cropped cover image.")
+                alert("Failed to upload cropped desktop cover image.")
               } finally {
                 setIsUploading(false)
               }
@@ -471,6 +618,37 @@ export default function CollectionEditor({
                 URL.revokeObjectURL(coverSource)
               }
               setCoverSource(null)
+            }}
+          />
+        )}
+
+        {isCroppingMobile && mobileSource && (
+          <ImageCropperModal
+            imageSrc={mobileSource}
+            aspect={1 / 2}
+            onCropComplete={async (croppedFile) => {
+              setIsCroppingMobile(false)
+              if (mobileSource.startsWith("blob:")) {
+                URL.revokeObjectURL(mobileSource)
+              }
+              setMobileSource(null)
+              setIsUploadingMobile(true)
+              try {
+                const url = await uploadImage(croppedFile)
+                setImageMobileUrl(url)
+              } catch (err) {
+                console.error(err)
+                alert("Failed to upload cropped mobile cover image.")
+              } finally {
+                setIsUploadingMobile(false)
+              }
+            }}
+            onClose={() => {
+              setIsCroppingMobile(false)
+              if (mobileSource.startsWith("blob:")) {
+                URL.revokeObjectURL(mobileSource)
+              }
+              setMobileSource(null)
             }}
           />
         )}

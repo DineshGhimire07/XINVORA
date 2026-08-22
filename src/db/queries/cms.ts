@@ -169,7 +169,7 @@ export async function findCollectionsByIds(ids: string[]) {
       isNull(collections.deletedAt),
       inArray(collections.id, ids)
     ),
-    columns: { id: true, slug: true, name: true, imageUrl: true },
+    columns: { id: true, slug: true, name: true, imageUrl: true, imageMobileUrl: true },
   })
 
   // Order rows exactly as in the ids array parameter
