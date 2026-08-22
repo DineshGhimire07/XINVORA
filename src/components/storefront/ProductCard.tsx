@@ -99,7 +99,6 @@ export function ProductCard({
       <div className="relative w-full aspect-[3/4] bg-[#ECEBE7] overflow-hidden select-none">
         <Link 
           href={`/products/${product.slug}`}
-          prefetch={false}
           className="absolute inset-0 z-[5]"
           aria-label={product.name}
         />
