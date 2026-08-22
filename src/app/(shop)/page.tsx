@@ -35,6 +35,7 @@ import { CMSBlockRenderer } from "@/components/cms/BlockRenderer"
 import { findProductsByIds, findCollectionsByIds, findLookbookSlides, findRandomCatalogProducts } from "@/db/queries"
 import { ShopTheLookCarousel } from "@/components/storefront/ShopTheLookCarousel"
 import { ProductCard } from "@/components/storefront/ProductCard"
+import { optimizeCloudinaryUrl } from "@/lib/image-optimizer"
 
 export default async function HomePage() {
   const settingsQuery = await db.select().from(homepageSettings).limit(1)
@@ -96,8 +97,34 @@ export default async function HomePage() {
     }
   })
 
+  // Extract primary hero slide images for instant HTML preloading
+  const firstHeroSlide = (heroBlock?.data as any)?.slides?.[0]
+  const preloadHeroDesktop = firstHeroSlide?.imageDesktopUrl
+    ? optimizeCloudinaryUrl(firstHeroSlide.imageDesktopUrl, { width: 1920 })
+    : null
+  const preloadHeroMobile = firstHeroSlide?.imageMobileUrl
+    ? optimizeCloudinaryUrl(firstHeroSlide.imageMobileUrl, { width: 1080 })
+    : null
+
   return (
     <>
+      {/* Instant Hero Image Preload Links for 0ms First Paint */}
+      {preloadHeroDesktop && (
+        <link
+          rel="preload"
+          as="image"
+          href={preloadHeroDesktop}
+          media="(min-width: 768px)"
+        />
+      )}
+      {preloadHeroMobile && (
+        <link
+          rel="preload"
+          as="image"
+          href={preloadHeroMobile}
+          media="(max-width: 767px)"
+        />
+      )}
       {resolvedSectionOrder.map((sectionId: string) => {
         if (sectionId === "hero") {
           return <HeroSection key="hero" heroBlock={heroBlock} settings={settings} />
