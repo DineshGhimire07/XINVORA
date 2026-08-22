@@ -13,6 +13,7 @@ import { colors, sizes, materials } from "@/db/schema"
 import { findCollectionDetailBySlug } from "@/db/queries/collections"
 import { ChevronRight } from "lucide-react"
 import { inArray } from "drizzle-orm"
+import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
 
 export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
@@ -110,10 +111,14 @@ export default async function CollectionDetailPage(props: {
       {collection.bannerUrl ? (
         <Section id="collection-detail-hero" padding="none" className="relative w-full aspect-[21/9] md:aspect-[32/10] overflow-hidden bg-neutral-900 border-b border-neutral-100 flex items-center select-none">
           <Image
-            src={collection.bannerUrl}
+            src={optimizeCloudinaryUrl(collection.bannerUrl, { width: 1920 })}
             alt={collection.name}
             fill
+            sizes="100vw"
             priority
+            fetchPriority="high"
+            placeholder="blur"
+            blurDataURL={SHIMMER_BLUR_DATA_URL}
             className="object-cover object-center"
           />
         </Section>
@@ -133,11 +138,14 @@ export default async function CollectionDetailPage(props: {
             {collection.imageUrl && (
               <div className="relative w-full md:w-[450px] aspect-[16/9] border border-neutral-100 overflow-hidden bg-neutral-50 rounded-sm">
                 <Image
-                  src={collection.imageUrl}
+                  src={optimizeCloudinaryUrl(collection.imageUrl, { width: 900 })}
                   alt={collection.name}
                   fill
                   sizes="(max-width: 768px) 100vw, 450px"
                   priority
+                  fetchPriority="high"
+                  placeholder="blur"
+                  blurDataURL={SHIMMER_BLUR_DATA_URL}
                   className="object-cover"
                 />
               </div>

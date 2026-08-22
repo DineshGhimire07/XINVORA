@@ -28,16 +28,17 @@ const nextConfig: NextConfig = {
   // React Strict Mode — catches double-invocation bugs in development
   reactStrictMode: true,
 
-  // Image optimization — add CDN hostnames here as the project grows
+  // Image optimization — CDN hostnames, AVIF/WebP negotiation, and 1-year edge caching
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "placehold.co" },
     ],
-    deviceSizes: [375, 640, 768, 1024, 1280, 1440, 1920],
+    deviceSizes: [360, 480, 640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 31536000,
   },
 
   // Compiler optimizations

@@ -24,6 +24,7 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
 }
 
 import { ProductCard } from "@/components/storefront/ProductCard"
+import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
 
 export function CMSBlockRenderer({ block, products, collections }: { block: any; products?: any[]; collections?: any[] }) {
   if (!block || !block.type) return null
@@ -82,21 +83,29 @@ function CMSCollectionGrid({ block, collections = [] }: { block: any; collection
                   <>
                     {collection.imageMobileUrl && (
                       <Image
-                        src={collection.imageMobileUrl}
+                        src={optimizeCloudinaryUrl(collection.imageMobileUrl, { width: 800 })}
                         alt={collection.name}
                         fill
                         sizes="(max-width: 768px) 50vw, 25vw"
                         priority={index < 2}
+                        fetchPriority={index < 2 ? "high" : "auto"}
+                        loading={index < 2 ? "eager" : "lazy"}
+                        placeholder="blur"
+                        blurDataURL={SHIMMER_BLUR_DATA_URL}
                         className="block md:hidden object-cover object-top transition-all duration-700 ease-out group-hover:scale-105"
                       />
                     )}
                     {collection.imageUrl && (
                       <Image
-                        src={collection.imageUrl}
+                        src={optimizeCloudinaryUrl(collection.imageUrl, { width: 1200 })}
                         alt={collection.name}
                         fill
                         sizes="(max-width: 768px) 50vw, 25vw"
                         priority={index < 2}
+                        fetchPriority={index < 2 ? "high" : "auto"}
+                        loading={index < 2 ? "eager" : "lazy"}
+                        placeholder="blur"
+                        blurDataURL={SHIMMER_BLUR_DATA_URL}
                         className={`${collection.imageMobileUrl ? "hidden md:block" : "block"} object-cover object-top transition-all duration-700 ease-out group-hover:scale-105`}
                       />
                     )}
@@ -268,26 +277,38 @@ function CMSHeroCarousel({ block }: { block: any }) {
           >
             {(() => {
               const isZebraImage = desktopSrc?.includes("WA10263P65") || desktopSrc?.includes("16x9");
+              const isFirstSlide = currentIndex === 0;
+              const optDesktop = desktopSrc ? optimizeCloudinaryUrl(desktopSrc, { width: 1920 }) : null;
+              const optMobile = mobileSrc ? optimizeCloudinaryUrl(mobileSrc, { width: 1080 }) : null;
+
               return currentSlide.redirectUrl ? (
                 <Link href={currentSlide.redirectUrl} className="relative block w-full h-full cursor-pointer overflow-hidden">
                   <div className={isZebraImage ? "hero-crop-container" : "absolute inset-0 w-full h-full"}>
-                    {desktopSrc && (
+                    {optDesktop && (
                       <Image
-                        src={desktopSrc}
+                        src={optDesktop}
                         alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
                         fill
                         sizes="100vw"
-                        priority={currentIndex === 0}
+                        priority={isFirstSlide}
+                        fetchPriority={isFirstSlide ? "high" : "auto"}
+                        loading={isFirstSlide ? "eager" : "lazy"}
+                        placeholder="blur"
+                        blurDataURL={SHIMMER_BLUR_DATA_URL}
                         className="hidden md:block object-cover object-center max-w-none w-full h-full"
                       />
                     )}
-                    {mobileSrc && (
+                    {optMobile && (
                       <Image
-                        src={mobileSrc}
+                        src={optMobile}
                         alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
                         fill
                         sizes="100vw"
-                        priority={currentIndex === 0}
+                        priority={isFirstSlide}
+                        fetchPriority={isFirstSlide ? "high" : "auto"}
+                        loading={isFirstSlide ? "eager" : "lazy"}
+                        placeholder="blur"
+                        blurDataURL={SHIMMER_BLUR_DATA_URL}
                         className="block md:hidden object-cover object-center max-w-none w-full h-full"
                       />
                     )}
@@ -297,23 +318,31 @@ function CMSHeroCarousel({ block }: { block: any }) {
               ) : (
                 <div className="relative w-full h-full overflow-hidden">
                   <div className={isZebraImage ? "hero-crop-container" : "absolute inset-0 w-full h-full"}>
-                    {desktopSrc && (
+                    {optDesktop && (
                       <Image
-                        src={desktopSrc}
+                        src={optDesktop}
                         alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
                         fill
                         sizes="100vw"
-                        priority={currentIndex === 0}
+                        priority={isFirstSlide}
+                        fetchPriority={isFirstSlide ? "high" : "auto"}
+                        loading={isFirstSlide ? "eager" : "lazy"}
+                        placeholder="blur"
+                        blurDataURL={SHIMMER_BLUR_DATA_URL}
                         className="hidden md:block object-cover object-center max-w-none w-full h-full"
                       />
                     )}
-                    {mobileSrc && (
+                    {optMobile && (
                       <Image
-                        src={mobileSrc}
+                        src={optMobile}
                         alt={currentSlide.altText || `Hero Slide ${currentIndex + 1}`}
                         fill
                         sizes="100vw"
-                        priority={currentIndex === 0}
+                        priority={isFirstSlide}
+                        fetchPriority={isFirstSlide ? "high" : "auto"}
+                        loading={isFirstSlide ? "eager" : "lazy"}
+                        placeholder="blur"
+                        blurDataURL={SHIMMER_BLUR_DATA_URL}
                         className="block md:hidden object-cover object-center max-w-none w-full h-full"
                       />
                     )}
@@ -324,6 +353,21 @@ function CMSHeroCarousel({ block }: { block: any }) {
             })()}
           </motion.div>
         </AnimatePresence>
+
+        {/* Background Preloader for upcoming slides to eliminate slide-transition latency */}
+        <div className="hidden" aria-hidden="true">
+          {slides.map((s: any, idx: number) => {
+            if (idx === currentIndex) return null;
+            const d = s.imageUrlDesktop || s.imageUrl;
+            const m = s.imageUrlMobile || s.imageUrl;
+            return (
+              <React.Fragment key={idx}>
+                {d && <img src={optimizeCloudinaryUrl(d, { width: 1920 })} alt="" fetchPriority="low" loading="lazy" />}
+                {m && <img src={optimizeCloudinaryUrl(m, { width: 1080 })} alt="" fetchPriority="low" loading="lazy" />}
+              </React.Fragment>
+            );
+          })}
+        </div>
       </div>
 
       {/* Manual Arrow Controls (Ultra-Minimalist Subtle Chevrons on Desktop, Zero Background/Borders) */}
@@ -482,13 +526,14 @@ function CMSBannerBlock({ block }: { block: any }) {
     <>
       <picture className="absolute inset-0 block w-full h-full">
         {data.imageMobileUrl && (
-          <source media="(max-width: 767px)" srcSet={data.imageMobileUrl} />
+          <source media="(max-width: 767px)" srcSet={optimizeCloudinaryUrl(data.imageMobileUrl, { width: 1080 })} />
         )}
         <img
-          src={data.imageUrl}
+          src={optimizeCloudinaryUrl(data.imageUrl, { width: 1920 })}
           alt={data.title || "Banner"}
           className={`w-full h-full ${fitClass} ${posClass}`}
-          loading="eager"
+          loading="lazy"
+          decoding="async"
         />
       </picture>
       <div className="absolute inset-0 bg-black/25 group-hover:bg-black/35 transition-colors duration-500 pointer-events-none" />

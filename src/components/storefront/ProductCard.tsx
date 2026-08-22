@@ -33,6 +33,8 @@ export interface ProductCardProps {
   inStock?: boolean
 }
 
+import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
+
 export function ProductCard({
   product,
   itemColors,
@@ -104,11 +106,15 @@ export function ProductCard({
         {overrideImage ? (
           <div className="w-full h-full relative">
             <Image 
-              src={overrideImage} 
+              src={optimizeCloudinaryUrl(overrideImage, { width: 800 })} 
               alt={product.name} 
               fill
-              sizes="(max-width: 768px) 50vw, 20vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               priority={priority}
+              fetchPriority={priority ? "high" : "auto"}
+              loading={priority ? "eager" : "lazy"}
+              placeholder="blur"
+              blurDataURL={SHIMMER_BLUR_DATA_URL}
               className="object-cover object-top"
             />
           </div>
@@ -117,21 +123,27 @@ export function ProductCard({
             {/* Desktop Hover State — pointer-events-none so clicks pass to the Link below */}
             <div className="hidden md:block w-full h-full relative pointer-events-none">
               <Image 
-                src={images[0].url} 
+                src={optimizeCloudinaryUrl(images[0].url, { width: 800 })} 
                 alt={images[0].altText || product.name} 
                 fill
-                sizes="(max-width: 768px) 50vw, 25vw"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 priority={priority}
+                fetchPriority={priority ? "high" : "auto"}
+                loading={priority ? "eager" : "lazy"}
+                placeholder="blur"
+                blurDataURL={SHIMMER_BLUR_DATA_URL}
                 className={`object-cover object-top transition-all duration-700 ease-out ${
                   !disableHover && images[1] ? "opacity-100 group-hover:opacity-0" : ""
                 }`}
               />
               {!disableHover && images[1] && (
                 <Image 
-                  src={images[1].url} 
+                  src={optimizeCloudinaryUrl(images[1].url, { width: 800 })} 
                   alt={images[1].altText || `${product.name} lifestyle`} 
                   fill
-                  sizes="(max-width: 768px) 50vw, 25vw"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  loading="lazy"
+                  decoding="async"
                   className="object-cover object-top absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out"
                 />
               )}
@@ -141,11 +153,15 @@ export function ProductCard({
             {disableHover ? (
               <div className="flex md:hidden w-full h-full relative pointer-events-none">
                 <Image 
-                  src={images[0].url} 
+                  src={optimizeCloudinaryUrl(images[0].url, { width: 640 })} 
                   alt={images[0].altText || product.name} 
                   fill
-                  sizes="(max-width: 768px) 50vw, 25vw"
+                  sizes="(max-width: 640px) 50vw, 33vw"
                   priority={priority}
+                  fetchPriority={priority ? "high" : "auto"}
+                  loading={priority ? "eager" : "lazy"}
+                  placeholder="blur"
+                  blurDataURL={SHIMMER_BLUR_DATA_URL}
                   className="object-cover object-top"
                 />
               </div>
@@ -157,11 +173,16 @@ export function ProductCard({
                 {images.map((img, i) => (
                   <div key={i} className="relative w-full h-full shrink-0 snap-center">
                     <Image
-                      src={img.url}
+                      src={optimizeCloudinaryUrl(img.url, { width: 640 })}
                       alt={img.altText || `${product.name} ${i + 1}`}
                       fill
-                      sizes="50vw"
+                      sizes="(max-width: 640px) 50vw, 33vw"
                       priority={priority && i === 0}
+                      fetchPriority={priority && i === 0 ? "high" : "auto"}
+                      loading={priority && i === 0 ? "eager" : "lazy"}
+                      decoding="async"
+                      placeholder="blur"
+                      blurDataURL={SHIMMER_BLUR_DATA_URL}
                       className="object-cover object-top"
                     />
                   </div>

@@ -3,6 +3,8 @@
 import { useState, useRef } from "react"
 import Image from "next/image"
 
+import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
+
 interface ProductGalleryProps {
   images: { url: string; altText: string | null; position: number }[]
   productName: string
@@ -68,12 +70,16 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
           {galleryImages.map((img, idx) => (
             <div key={idx} className="relative w-full h-full flex-shrink-0 snap-start">
               <Image
-                src={img.url}
+                src={optimizeCloudinaryUrl(img.url, { width: 900 })}
                 alt={img.altText || `${productName} image ${idx + 1}`}
                 fill
                 sizes="100vw"
                 className="object-cover object-top"
                 priority={idx === 0}
+                fetchPriority={idx === 0 ? "high" : "auto"}
+                loading={idx === 0 ? "eager" : "lazy"}
+                placeholder="blur"
+                blurDataURL={SHIMMER_BLUR_DATA_URL}
               />
             </div>
           ))}
@@ -107,12 +113,16 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
           )}
 
           <Image
-            src={activeImage.url}
+            src={optimizeCloudinaryUrl(activeImage.url, { width: 1200 })}
             alt={activeImage.altText || `${productName} image ${activeIndex + 1}`}
             fill
             sizes="60vw"
             className="object-cover object-top transition-opacity duration-300"
             priority={activeIndex === 0}
+            fetchPriority={activeIndex === 0 ? "high" : "auto"}
+            loading={activeIndex === 0 ? "eager" : "lazy"}
+            placeholder="blur"
+            blurDataURL={SHIMMER_BLUR_DATA_URL}
             key={activeIndex}
           />
         </div>
@@ -129,10 +139,14 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
                 className="relative w-full h-full bg-surface border border-border overflow-hidden rounded-xs cursor-pointer transition-all duration-200 hover:opacity-80 focus:outline-none"
               >
                 <Image
-                  src={img.url}
+                  src={optimizeCloudinaryUrl(img.url, { width: 250 })}
                   alt={img.altText || `${productName} thumbnail ${originalIndex + 1}`}
                   fill
                   sizes="(max-width: 1024px) 15vw, 10vw"
+                  loading="lazy"
+                  decoding="async"
+                  placeholder="blur"
+                  blurDataURL={SHIMMER_BLUR_DATA_URL}
                   className="object-cover object-top"
                 />
               </button>

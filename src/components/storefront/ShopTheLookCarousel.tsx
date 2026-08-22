@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 import { LookProductCard } from "./LookProductCard"
+import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
 
 interface LookbookSlide {
   id: string
@@ -289,12 +290,16 @@ export function ShopTheLookCarousel({
                   }}
                 >
                   <Image
-                    src={slide.imageUrl}
+                    src={optimizeCloudinaryUrl(slide.imageUrl, { width: 800 })}
                     alt={slide.altText || "Look"}
                     fill
-                    sizes={`${baseW}px`}
+                    sizes="(max-width: 768px) 280px, 420px"
                     className="object-cover object-top"
                     priority={absDist <= 1}
+                    fetchPriority={absDist <= 1 ? "high" : "auto"}
+                    loading={absDist <= 1 ? "eager" : "lazy"}
+                    placeholder="blur"
+                    blurDataURL={SHIMMER_BLUR_DATA_URL}
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
                 </div>
