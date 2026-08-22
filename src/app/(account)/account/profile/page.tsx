@@ -2,6 +2,8 @@ import { SessionService } from "@/services/session.service"
 import { ProfileService } from "@/services/profile.service"
 import { ProfileForm } from "./ProfileForm"
 
+import { redirect } from "next/navigation"
+
 export const metadata = {
   title: "My Profile | XINVORA",
   description: "Manage your personal settings and contact info.",
@@ -10,6 +12,9 @@ export const metadata = {
 export default async function ProfilePage() {
   const session = await SessionService.requireAuth()
   const profile = await ProfileService.getOrCreateProfile(session.id)
+  if (!profile) {
+    redirect("/login")
+  }
 
   return (
     <div className="space-y-6">

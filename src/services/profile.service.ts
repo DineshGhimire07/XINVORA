@@ -23,7 +23,7 @@ export class ProfileService {
       .limit(1)
 
     if (!user) {
-      throw new Error("User not found")
+      return null
     }
 
     // 2. Fetch profile
@@ -63,7 +63,7 @@ export class ProfileService {
       .limit(1)
 
     if (!user) {
-      throw new Error("User not found")
+      return null
     }
 
     // 2. Fetch profile or create default

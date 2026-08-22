@@ -2,6 +2,8 @@ import { SessionService } from "@/services/session.service"
 import { ProfileService } from "@/services/profile.service"
 import { SettingsForm } from "./SettingsForm"
 
+import { redirect } from "next/navigation"
+
 export const metadata = {
   title: "Account Preferences | XINVORA",
   description: "Configure system preferences and notification settings.",
@@ -10,6 +12,9 @@ export const metadata = {
 export default async function SettingsPage() {
   const session = await SessionService.requireAuth()
   const profile = await ProfileService.getOrCreateProfile(session.id)
+  if (!profile) {
+    redirect("/login")
+  }
 
   return (
     <div className="space-y-6">

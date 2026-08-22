@@ -23,6 +23,8 @@ import {
   Headphones
 } from "lucide-react"
 
+import { redirect } from "next/navigation"
+
 export const metadata = {
   title: "My Dashboard | XINVORA",
   description: "XINVORA customer account center",
@@ -39,6 +41,10 @@ export default async function DashboardPage() {
     AddressService.getUserAddresses(session.id),
     NotificationService.getNotifications(session.id),
   ])
+
+  if (!profile) {
+    redirect("/login")
+  }
 
   const wishlistCount = wishlistIds.length
   const unreadNotificationsCount = notifications.filter((n: any) => !n.isRead).length

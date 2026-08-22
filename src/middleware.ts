@@ -16,8 +16,8 @@ export default auth((req) => {
     return NextResponse.redirect(target, { status: redirectMatch.statusCode || 301 })
   }
 
-  const isLoggedIn = !!req.auth
   const user = req.auth?.user
+  const isLoggedIn = !!user && !!user.id
 
   const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth")
   const isApiRoute = nextUrl.pathname.startsWith("/api")
@@ -50,7 +50,8 @@ export default auth((req) => {
   // Redirect authenticated users away from auth routes (login/register)
   if (isAuthRoute) {
     if (isLoggedIn) {
-      return NextResponse.redirect(new URL("/account", nextUrl))
+      const callbackUrl = nextUrl.searchParams.get("callbackUrl") || "/account"
+      return NextResponse.redirect(new URL(callbackUrl, nextUrl))
     }
     return NextResponse.next({ request: { headers: requestHeaders } })
   }
@@ -69,7 +70,9 @@ export default auth((req) => {
   // Protect Account routes
   if (isAccountRoute) {
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL("/login", nextUrl))
+      const loginUrl = new URL("/login", nextUrl)
+      loginUrl.searchParams.set("callbackUrl", nextUrl.pathname + nextUrl.search)
+      return NextResponse.redirect(loginUrl)
     }
     return NextResponse.next({ request: { headers: requestHeaders } })
   }
