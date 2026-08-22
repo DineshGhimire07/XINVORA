@@ -672,6 +672,7 @@ export default function ProductEditor({
             selectedImages={selectedImages}
             onChange={setSelectedImages}
             roleLabels={["Lifestyle", "Front Close-Up", "Front", "Back", "Detail", "Side"]}
+            initialRoles={product?.imageRoles}
           />
         </div>
 

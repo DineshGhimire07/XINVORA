@@ -248,6 +248,7 @@ export class ProductImageMetadataService {
       altText?: string | null
       altTextSource?: "auto" | "manual" | null
       position?: number
+      role?: string | null
     }[]
     template?: TemplateWithRoles | null
   }): GeneratedImageMetadata[] {
@@ -255,9 +256,18 @@ export class ProductImageMetadataService {
 
     return images.map((img, index) => {
       const position = typeof img.position === "number" && img.position > 0 ? img.position : index + 1
-      const roleResult = this.resolveImageRole(position, template)
-      const role = roleResult?.role || null
-      const roleLabel = roleResult?.label || null
+      
+      let role: string | null = null
+      let roleLabel: string | null = null
+
+      if (img.role && img.role !== "auto") {
+        role = img.role
+        roleLabel = this.getRoleLabel(img.role) || img.role
+      } else {
+        const roleResult = this.resolveImageRole(position, template)
+        role = roleResult?.role || null
+        roleLabel = roleResult?.label || null
+      }
 
       const isManual = img.altTextSource === "manual" && Boolean(img.altText && img.altText.trim())
       const autoAlt = this.generateImageAltText(productName, roleLabel, position)

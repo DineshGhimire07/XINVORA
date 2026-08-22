@@ -38,6 +38,7 @@ const productSchema = z.object({
   materialIds: z.array(z.string()).optional(),
   pairedProductIds: z.array(z.string()).optional(),
   sizeStocks: z.record(z.string(), z.number()).optional(),
+  imageRoles: z.record(z.string(), z.string()).optional(),
 })
 
 function extractDbError(error: any): string {
@@ -55,10 +56,15 @@ export async function createProductAction(formData: FormData) {
     const session = await SessionService.requireAdmin()
 
     const sizeStocks: Record<string, number> = {}
+    const imageRoles: Record<string, string> = {}
     for (const [key, val] of formData.entries()) {
       if (key.startsWith("sizeStock_")) {
         const sizeId = key.replace("sizeStock_", "")
         sizeStocks[sizeId] = Number(val) || 0
+      }
+      if (key.startsWith("imageRole_")) {
+        const identifier = key.replace("imageRole_", "")
+        imageRoles[identifier] = String(val).trim()
       }
     }
 
@@ -80,6 +86,7 @@ export async function createProductAction(formData: FormData) {
       compareAtPrice: formData.get("compareAtPrice"),
       stockQuantity: formData.get("stockQuantity") || "0",
       images: formData.getAll("images"),
+      imageRoles: imageRoles,
       seoTitle: formData.get("seoTitle") || undefined,
       seoDescription: formData.get("seoDescription") || undefined,
       seoKeywords: formData.get("seoKeywords") || undefined,
@@ -120,10 +127,15 @@ export async function updateProductAction(id: string, formData: FormData) {
     const session = await SessionService.requireAdmin()
 
     const sizeStocks: Record<string, number> = {}
+    const imageRoles: Record<string, string> = {}
     for (const [key, val] of formData.entries()) {
       if (key.startsWith("sizeStock_")) {
         const sizeId = key.replace("sizeStock_", "")
         sizeStocks[sizeId] = Number(val) || 0
+      }
+      if (key.startsWith("imageRole_")) {
+        const identifier = key.replace("imageRole_", "")
+        imageRoles[identifier] = String(val).trim()
       }
     }
 
@@ -145,6 +157,7 @@ export async function updateProductAction(id: string, formData: FormData) {
       compareAtPrice: formData.get("compareAtPrice"),
       stockQuantity: formData.get("stockQuantity") || "0",
       images: formData.getAll("images"),
+      imageRoles: imageRoles,
       seoTitle: formData.get("seoTitle") || undefined,
       seoDescription: formData.get("seoDescription") || undefined,
       seoKeywords: formData.get("seoKeywords") || undefined,
@@ -155,7 +168,7 @@ export async function updateProductAction(id: string, formData: FormData) {
     }
 
     const data = productSchema.parse(rawData)
-    
+
     // Ensure slug is URL-safe
     data.slug = data.slug
       .toLowerCase()

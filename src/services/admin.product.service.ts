@@ -46,6 +46,7 @@ export interface CreateProductInput {
   virtualTryonPrompt?: string | null
   shortDescription?: string | null
   sizeStocks?: Record<string, number>
+  imageRoles?: Record<string, string>
 }
 
 export type UpdateProductInput = Partial<CreateProductInput>
@@ -59,7 +60,7 @@ export class AdminProductService {
         throw new Error("Slug already in use.")
       }
 
-      const { basePrice, compareAtPrice, stockQuantity, images, collectionIds, materialIds, pairedProductIds, sizeStocks, ...productData } = data
+      const { basePrice, compareAtPrice, stockQuantity, images, imageRoles, collectionIds, materialIds, pairedProductIds, sizeStocks, ...productData } = data
       const finalShortDesc = productData.shortDescription || (productData.description ? productData.description.slice(0, 200) : "Concise summary of this product details.")
       const product = await insertProduct({
         ...productData,
@@ -86,11 +87,15 @@ export class AdminProductService {
         const generated = ProductImageMetadataService.generateMetadataForProduct({
           productName: product.name,
           productSlug: product.slug,
-          images: images.map((url: string, index: number) => ({
-            url,
-            position: index + 1,
-            altTextSource: "auto",
-          })),
+          images: images.map((url: string, index: number) => {
+            const explicitRole = imageRoles?.[url] || imageRoles?.[String(index)] || null
+            return {
+              url,
+              position: index + 1,
+              role: explicitRole && explicitRole !== "auto" ? explicitRole : undefined,
+              altTextSource: "auto",
+            }
+          }),
           template,
         })
         await tx.insert(productImages).values(
@@ -205,7 +210,7 @@ export class AdminProductService {
         }
       }
 
-      const { basePrice, compareAtPrice, stockQuantity, images, collectionIds, materialIds, pairedProductIds, sizeStocks, ...productData } = data
+      const { basePrice, compareAtPrice, stockQuantity, images, imageRoles, collectionIds, materialIds, pairedProductIds, sizeStocks, ...productData } = data
       const product = await updateProduct(id, productData, tx)
 
       // Update collections first so template resolution has current collection associations
@@ -243,10 +248,12 @@ export class AdminProductService {
           productName: product.name,
           productSlug: product.slug,
           images: images.map((url: string, index: number) => {
+            const explicitRole = imageRoles?.[url] || imageRoles?.[String(index)] || null
             const manualAlt = manualAltMap.get(url)
             return {
               url,
               position: index + 1,
+              role: explicitRole && explicitRole !== "auto" ? explicitRole : undefined,
               altText: manualAlt || null,
               altTextSource: manualAlt ? "manual" : "auto",
             }

@@ -76,9 +76,17 @@ export default async function AdminProductEditorPage(props: PageProps) {
       }
     }
 
+    const imageRolesMap: Record<string, string> = {}
+    imagesResult.forEach((img) => {
+      if (img.imageRole) {
+        imageRolesMap[img.url] = img.imageRole
+      }
+    })
+
     product = {
       ...result[0],
       images: imagesResult.map(i => i.url),
+      imageRoles: imageRolesMap,
       collectionIds: collectionsResult.map(c => c.collectionId),
       materialIds: materialsResult.map(m => m.materialId),
       pairedProductIds: pairingsResult.map(p => p.pairedProductId),
