@@ -25,9 +25,9 @@ function revalidateAll() {
   revalidatePath("/admin/off-section")
   revalidatePath("/")
   revalidatePath("/collections")
-  revalidateTag("products", {})
-  revalidateTag("collections", {})
-  revalidateTag("homepage-collections", {})
+  revalidateTag("products", "default")
+  revalidateTag("collections", "default")
+  revalidateTag("homepage-collections", "default")
 }
 
 export async function addToOffSectionAction(data: {

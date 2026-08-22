@@ -18,7 +18,8 @@ import {
   appearanceHomepageSettingsSchema,
   featuresSettingsSchema,
   paymentQRSettingsSchema,
-  aboutPageSettingsSchema
+  aboutPageSettingsSchema,
+  authPageSettingsSchema
 } from "@/validations/settings"
 
 // --- Server Actions ---
@@ -48,7 +49,8 @@ export async function updatePaymentQRSettingsAction(
     const validated = paymentQRSettingsSchema.parse(data)
     
     await AdminSettingsService.updateSetting("payment_qrs", validated, session.id)
-    revalidatePath("/", "layout")
+    revalidatePath("/admin/settings/store/payments")
+    revalidatePath("/checkout")
     
     return { success: true, data: validated }
   } catch (error: any) {
@@ -189,11 +191,7 @@ export async function updateFeaturesSettingsAction(
   }
 }
 
-export const authPageSettingsSchema = z.object({
-  heroImageUrl: z.string().min(1, "Hero image is required"),
-  headline: z.string().default("Luxury is found in the details."),
-  subheading: z.string().default("SPRING EDITORIAL 2026"),
-})
+
 
 export async function updateAuthPageSettingsAction(
   data: z.infer<typeof authPageSettingsSchema>

@@ -39,7 +39,7 @@ export async function createCollectionAction(formData: FormData) {
 
     await AdminCollectionService.createCollection(data, session.id)
 
-    revalidateTag("collections", {})
+    revalidateTag("collections", "default")
     revalidatePath("/admin/collections")
     return { success: true }
   } catch (error: any) {
@@ -68,7 +68,7 @@ export async function updateCollectionAction(id: string, formData: FormData) {
 
     await AdminCollectionService.updateCollection(id, data, session.id)
 
-    revalidateTag("collections", {})
+    revalidateTag("collections", "default")
     revalidatePath("/admin/collections")
     revalidatePath(`/admin/collections/${id}`)
     return { success: true }
@@ -81,7 +81,7 @@ export async function archiveCollectionAction(id: string) {
   try {
     const session = await SessionService.requireAdmin()
     await AdminCollectionService.deleteCollection(id, session.id)
-    revalidateTag("collections", {})
+    revalidateTag("collections", "default")
     revalidatePath("/admin/collections")
     revalidatePath("/collections")
     return { success: true }
@@ -94,7 +94,7 @@ export async function hardDeleteCollectionAction(id: string) {
   try {
     const session = await SessionService.requireAdmin()
     await AdminCollectionService.hardDeleteCollection(id, session.id)
-    revalidateTag("collections", {})
+    revalidateTag("collections", "default")
     revalidatePath("/admin/collections")
     revalidatePath("/collections")
     return { success: true }

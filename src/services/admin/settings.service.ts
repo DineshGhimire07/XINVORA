@@ -108,8 +108,8 @@ export class AdminSettingsService {
     })
 
     // Bust the cache for this setting key and the generic settings tag
-    revalidateTag(`settings-${key}`, {})
-    revalidateTag("settings", {})
+    revalidateTag(`settings-${key}`, "default")
+    revalidateTag("settings", "default")
   }
 
   /**

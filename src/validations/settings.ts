@@ -109,3 +109,9 @@ export const aboutPageSettingsSchema = z.object({
   futureImage: z.string(),
 })
 
+export const authPageSettingsSchema = z.object({
+  heroImageUrl: z.string().min(1, "Hero image is required"),
+  headline: z.string().default("Luxury is found in the details."),
+  subheading: z.string().default("SPRING EDITORIAL 2026"),
+})
+

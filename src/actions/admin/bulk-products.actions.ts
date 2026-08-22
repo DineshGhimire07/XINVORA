@@ -20,7 +20,7 @@ export async function bulkUploadProductsAction(items: BulkProductItemInput[]) {
 
     revalidatePath("/admin/products")
     revalidatePath("/admin/collections")
-    revalidateTag("products", {})
+    revalidateTag("products", "default")
 
     return {
       success: true,
@@ -222,7 +222,7 @@ export async function attachImagesToExistingProductsAction(
     }
 
     revalidatePath("/admin/products")
-    revalidateTag("products", {})
+    revalidateTag("products", "default")
 
     return { success: true }
   } catch (error: any) {
