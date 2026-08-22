@@ -23,9 +23,10 @@ const queryClient =
   globalForDb.__dbClient ??
   postgres(process.env.DATABASE_URL, {
     prepare: false,
-    max_lifetime: 30, // Recycles connections before Supabase pooler drops them
-    idle_timeout: 10,
-    connect_timeout: 10,
+    max: process.env.NODE_ENV === "production" ? 3 : 10, // Prevent Supabase pooler connection exhaustion in serverless
+    max_lifetime: 60 * 15, // 15 minutes max lifetime
+    idle_timeout: 5,       // Release idle connections after 5s
+    connect_timeout: 15,   // 15s connect timeout for Supabase Singapore pooler resilience
   })
 
 globalForDb.__dbClient = queryClient

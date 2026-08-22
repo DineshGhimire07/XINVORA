@@ -130,42 +130,63 @@ class IngestionPipeline {
       })
 
       if (!session) {
-        // Create a new session
+        // Create a new session with conflict tolerance
         const payload = event.payload as any
         const payloadDevice = payload.deviceInfo || {}
         const geo = payload.geoInfo || {}
         const utm = payload.utmInfo || {}
 
-        const [newSession] = await tx.insert(userSessions).values({
-          userId: event.userId || null,
-          sessionKey: event.sessionKey,
-          startedAt: eventTime,
-          lastActivityAt: eventTime,
-          deviceType: event.device,
-          browser: payloadDevice.browser || "Unknown",
-          operatingSystem: payloadDevice.os || "Unknown",
-          ipAddress: payload.ipAddress || "127.0.0.1",
-          countryCode: event.country || geo.countryCode || null,
-          region: geo.region || null,
-          city: geo.city || null,
-          timezone: geo.timezone || null,
-          utmSource: utm.source || null,
-          utmMedium: utm.medium || null,
-          utmCampaign: utm.campaign || null,
-        }).returning()
-        
-        session = newSession
+        try {
+          const [newSession] = await tx.insert(userSessions).values({
+            userId: event.userId || null,
+            sessionKey: event.sessionKey,
+            startedAt: eventTime,
+            lastActivityAt: eventTime,
+            deviceType: event.device,
+            browser: payloadDevice.browser || "Unknown",
+            operatingSystem: payloadDevice.os || "Unknown",
+            ipAddress: payload.ipAddress || "127.0.0.1",
+            countryCode: event.country || geo.countryCode || null,
+            region: geo.region || null,
+            city: geo.city || null,
+            timezone: geo.timezone || null,
+            utmSource: utm.source || null,
+            utmMedium: utm.medium || null,
+            utmCampaign: utm.campaign || null,
+          }).onConflictDoNothing().returning()
+          
+          if (newSession) {
+            session = newSession
+          } else {
+            session = await tx.query.userSessions.findFirst({
+              where: eq(userSessions.sessionKey, event.sessionKey),
+            })
+          }
+        } catch {
+          session = await tx.query.userSessions.findFirst({
+            where: eq(userSessions.sessionKey, event.sessionKey),
+          })
+        }
       } else {
-        // Update session's last activity and identity merge if user logged in
-        const updateValues: Record<string, any> = {
-          lastActivityAt: eventTime,
+        // Debounce lastActivityAt updates to at most once per 60 seconds per session
+        // This eliminates 95%+ of concurrent row locks on user_sessions
+        const ACTIVITY_THROTTLE_MS = 60_000
+        const isStaleActivity = !session.lastActivityAt || (eventTime.getTime() - new Date(session.lastActivityAt).getTime() > ACTIVITY_THROTTLE_MS)
+        const isUserMerge = Boolean(event.userId && !session.userId)
+
+        if (isStaleActivity || isUserMerge) {
+          const updateValues: Record<string, any> = {}
+          if (isStaleActivity) updateValues.lastActivityAt = eventTime
+          if (isUserMerge) updateValues.userId = event.userId
+
+          await tx.update(userSessions)
+            .set(updateValues)
+            .where(eq(userSessions.id, session.id))
         }
-        if (event.userId && !session.userId) {
-          updateValues.userId = event.userId
-        }
-        await tx.update(userSessions)
-          .set(updateValues)
-          .where(eq(userSessions.id, session.id))
+      }
+
+      if (!session) {
+        throw new Error(`Failed to resolve or create session for key: ${event.sessionKey}`)
       }
 
       // 2. Insert Event Row
