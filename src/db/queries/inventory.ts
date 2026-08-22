@@ -52,7 +52,7 @@ export async function findAdminInventoryPaginated(
     sortOrder?: "asc" | "desc"
   } = {}
 ) {
-  const { sql, desc, asc, and, ilike, isNull } = await import("drizzle-orm")
+  const { sql, desc, asc, and, or, ilike, isNull } = await import("drizzle-orm")
   const { products, variants, colors, sizes, productImages } = await import("../schema")
   
   const page = options.page || 1
@@ -88,7 +88,7 @@ export async function findAdminInventoryPaginated(
     .innerJoin(products, eq(variants.productId, products.id))
     .leftJoin(colors, eq(variants.colorId, colors.id))
     .leftJoin(sizes, eq(variants.sizeId, sizes.id))
-    .leftJoin(productImages, and(eq(productImages.productId, products.id), eq(productImages.position, 0)))
+    .leftJoin(productImages, and(eq(productImages.productId, products.id), or(eq(productImages.position, 1), eq(productImages.position, 0))))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
 
   // Sort settings

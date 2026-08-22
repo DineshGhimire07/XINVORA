@@ -52,10 +52,13 @@ export default function CollectionEditor({
   const [templateMessage, setTemplateMessage] = useState<string | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(collection?.imageUrl || null)
   const [isUploading, setIsUploading] = useState(false)
+  const [dragDesktop, setDragDesktop] = useState(false)
   const [imageMobileUrl, setImageMobileUrl] = useState<string | null>(collection?.imageMobileUrl || null)
   const [isUploadingMobile, setIsUploadingMobile] = useState(false)
+  const [dragMobile, setDragMobile] = useState(false)
   const [bannerUrl, setBannerUrl] = useState<string | null>(collection?.bannerUrl || null)
   const [isUploadingBanner, setIsUploadingBanner] = useState(false)
+  const [dragBanner, setDragBanner] = useState(false)
 
   // Cropping states
   const [coverSource, setCoverSource] = useState<string | null>(null)
@@ -357,7 +360,30 @@ export default function CollectionEditor({
               <span className="text-[10px] font-mono text-admin-text-secondary/70">1:2 Editorial Aspect</span>
             </div>
             
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pt-1">
+            <div
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragDesktop(true); }}
+              onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragDesktop(false); }}
+              onDrop={async (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setDragDesktop(false)
+                const file = e.dataTransfer.files?.[0]
+                if (file) {
+                  setIsUploading(true)
+                  try {
+                    const url = await uploadImage(file, { purpose: "collection" })
+                    setImageUrl(url)
+                  } catch (err) {
+                    alert("Failed to upload desktop cover photo.")
+                  } finally {
+                    setIsUploading(false)
+                  }
+                }
+              }}
+              className={`flex flex-col sm:flex-row items-start sm:items-center gap-5 p-3 rounded-admin-md border transition-all ${
+                dragDesktop ? "border-2 border-dashed border-admin-primary bg-admin-primary/10 ring-4 ring-admin-primary/20" : "border-transparent"
+              }`}
+            >
               <div className="w-24 h-44 bg-admin-content border border-admin-border rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner">
                 {imageUrl ? (
                   <img
@@ -387,7 +413,7 @@ export default function CollectionEditor({
                         if (file) {
                           setIsUploading(true)
                           try {
-                            const url = await uploadImage(file)
+                            const url = await uploadImage(file, { purpose: "collection" })
                             setImageUrl(url)
                           } catch (err) {
                             console.error(err)
@@ -443,7 +469,7 @@ export default function CollectionEditor({
                   )}
                 </div>
                 <p className="text-[10px] text-admin-text-secondary/80 leading-relaxed">
-                  Used directly for the 4-box full-height editorial collection cards on laptops & desktops.
+                  Used directly for the 4-box full-height editorial collection cards on laptops & desktops. Drag & drop image anywhere here to upload.
                 </p>
               </div>
             </div>
@@ -472,7 +498,30 @@ export default function CollectionEditor({
               <span className="text-[10px] font-mono text-admin-text-secondary/70">1:2 Mobile Portrait</span>
             </div>
             
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pt-1">
+            <div
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragMobile(true); }}
+              onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragMobile(false); }}
+              onDrop={async (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setDragMobile(false)
+                const file = e.dataTransfer.files?.[0]
+                if (file) {
+                  setIsUploadingMobile(true)
+                  try {
+                    const url = await uploadImage(file, { purpose: "collection" })
+                    setImageMobileUrl(url)
+                  } catch (err) {
+                    alert("Failed to upload mobile cover photo.")
+                  } finally {
+                    setIsUploadingMobile(false)
+                  }
+                }
+              }}
+              className={`flex flex-col sm:flex-row items-start sm:items-center gap-5 p-3 rounded-admin-md border transition-all ${
+                dragMobile ? "border-2 border-dashed border-admin-primary bg-admin-primary/10 ring-4 ring-admin-primary/20" : "border-transparent"
+              }`}
+            >
               <div className="w-24 h-44 bg-admin-content border border-admin-border rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner">
                 {imageMobileUrl ? (
                   <img
@@ -502,7 +551,7 @@ export default function CollectionEditor({
                         if (file) {
                           setIsUploadingMobile(true)
                           try {
-                            const url = await uploadImage(file)
+                            const url = await uploadImage(file, { purpose: "collection" })
                             setImageMobileUrl(url)
                           } catch (err) {
                             console.error(err)
@@ -558,7 +607,7 @@ export default function CollectionEditor({
                   )}
                 </div>
                 <p className="text-[10px] text-admin-text-secondary/80 leading-relaxed">
-                  Mobile-optimized cover photo for the 4-box grid on smartphones. (Falls back to Desktop photo if left empty).
+                  Mobile-optimized cover photo for the 4-box grid on smartphones. Drag & drop image anywhere here to upload.
                 </p>
               </div>
             </div>
@@ -590,7 +639,30 @@ export default function CollectionEditor({
               </div>
             </div>
             
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-5 pt-1">
+            <div
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragBanner(true); }}
+              onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragBanner(false); }}
+              onDrop={async (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setDragBanner(false)
+                const file = e.dataTransfer.files?.[0]
+                if (file) {
+                  setIsUploadingBanner(true)
+                  try {
+                    const url = await uploadImage(file, { purpose: "banner" })
+                    setBannerUrl(url)
+                  } catch (err) {
+                    alert("Failed to upload banner image.")
+                  } finally {
+                    setIsUploadingBanner(false)
+                  }
+                }
+              }}
+              className={`flex flex-col md:flex-row items-start md:items-center gap-5 p-3 rounded-admin-md border transition-all ${
+                dragBanner ? "border-2 border-dashed border-admin-primary bg-admin-primary/10 ring-4 ring-admin-primary/20" : "border-transparent"
+              }`}
+            >
               <div className="w-full md:w-80 h-24 bg-admin-content border border-admin-border rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner">
                 {bannerUrl ? (
                   <img
@@ -620,7 +692,7 @@ export default function CollectionEditor({
                         if (file) {
                           setIsUploadingBanner(true)
                           try {
-                            const url = await uploadImage(file)
+                            const url = await uploadImage(file, { purpose: "banner" })
                             setBannerUrl(url)
                           } catch (err) {
                             console.error(err)
@@ -676,7 +748,7 @@ export default function CollectionEditor({
                   )}
                 </div>
                 <p className="text-[10px] text-admin-text-secondary/80 leading-relaxed">
-                  Displays as the cinematic hero banner at the top of the individual collection page.
+                  Displays as the cinematic hero banner at the top of the individual collection page. Drag & drop image anywhere here to upload.
                 </p>
               </div>
             </div>

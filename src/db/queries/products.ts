@@ -6,7 +6,7 @@
  */
 
 import "server-only"
-import { eq, and, desc, asc, gt, inArray, count, ilike, min, sql, type SQL, isNull } from "drizzle-orm"
+import { eq, and, or, desc, asc, gt, inArray, count, ilike, min, sql, type SQL, isNull } from "drizzle-orm"
 import { db } from "../client"
 import {
   products,
@@ -562,7 +562,7 @@ export async function findAdminProductsPaginated(
     ? await db
         .select()
         .from(productImages)
-        .where(and(inArray(productImages.productId, itemIds), eq(productImages.position, 0)))
+        .where(and(inArray(productImages.productId, itemIds), or(eq(productImages.position, 1), eq(productImages.position, 0))))
     : []
 
   const itemsWithImages = items.map(item => ({

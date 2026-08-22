@@ -6,7 +6,7 @@
  */
 
 import "server-only"
-import { eq, and, ilike, sql, inArray, desc, isNull } from "drizzle-orm"
+import { eq, and, or, ilike, sql, inArray, desc, isNull } from "drizzle-orm"
 import { db } from "../client"
 import {
   productOffSection,
@@ -118,7 +118,7 @@ export async function findOffSectionProducts(
           .where(
             and(
               inArray(productImages.productId, productIds),
-              eq(productImages.position, 0)
+              or(eq(productImages.position, 1), eq(productImages.position, 0))
             )
           ),
         db

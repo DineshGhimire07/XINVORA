@@ -76,18 +76,27 @@ export async function uploadLocalFileAction(formData: FormData) {
     // Only run the 3:4 product garment padding pipeline for product catalog uploads
     const processedBuffer = skipPadding ? buffer : await processProductImage(buffer)
 
-    // Safely resolve width and height metadata
+    // Convert ANY uploaded format (PNG, JPG, JPEG, AVIF, HEIC, TIFF, etc.) directly into pristine WebP
+    let finalBuffer: Buffer = processedBuffer
     let width: number | undefined = undefined
     let height: number | undefined = undefined
     try {
       const sharpModule = await import("sharp").catch(() => null)
       if (sharpModule) {
         const sharp = sharpModule.default || sharpModule
-        const processedMetadata = await sharp(processedBuffer).metadata()
-        width = processedMetadata.width || undefined
-        height = processedMetadata.height || undefined
+        const imageInstance = sharp(processedBuffer)
+        const metadata = await imageInstance.metadata()
+        width = metadata.width || undefined
+        height = metadata.height || undefined
+
+        // Direct high-quality WebP conversion preserving sharp detail
+        finalBuffer = await sharp(processedBuffer)
+          .webp({ quality: 95, effort: 4 })
+          .toBuffer()
       }
-    } catch {}
+    } catch (sharpErr: any) {
+      console.warn("[uploadLocalFileAction] Sharp WebP conversion fallback:", sharpErr.message)
+    }
 
     // Check if Cloudinary is configured
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME
@@ -97,6 +106,8 @@ export async function uploadLocalFileAction(formData: FormData) {
 
     let uploadSuccess = false
     let mediaUrl = ""
+
+    const cleanTitle = file.name.replace(/\.[^/.]+$/, "") + ".webp"
 
     if (isCloudinaryConfigured) {
       try {
@@ -108,26 +119,26 @@ export async function uploadLocalFileAction(formData: FormData) {
           secure: true,
         })
 
-        // Upload pristine master buffer to Cloudinary without pre-baked lossy compression
+        // Upload master WebP buffer to Cloudinary
         const uploadResult = await new Promise<any>((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
             { 
               folder: "xinvora_media",
               resource_type: "image",
-              // Store pristine master image; delivery optimization is handled dynamically via edge URLs
+              format: "webp",
             },
             (error, result) => {
               if (error) reject(error)
               else resolve(result)
             }
           )
-          stream.end(processedBuffer)
+          stream.end(finalBuffer)
         })
 
         const media = await MediaService.createMedia({
           url: uploadResult.secure_url,
-          title: file.name,
-          mimeType: uploadResult.format ? `image/${uploadResult.format}` : (file.type || "image/webp"),
+          title: cleanTitle,
+          mimeType: "image/webp",
           sizeBytes: uploadResult.bytes,
           width: uploadResult.width,
           height: uploadResult.height,
@@ -155,25 +166,24 @@ export async function uploadLocalFileAction(formData: FormData) {
           await fs.promises.mkdir(uploadsDir, { recursive: true })
         }
 
-        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_")
-        const uniqueName = `${Date.now()}_${safeName}`
+        const safeBaseName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9.-]/g, "_")
+        const uniqueName = `${Date.now()}_${safeBaseName}.webp`
         const filePath = path.join(uploadsDir, uniqueName)
 
-        await fs.promises.writeFile(filePath, processedBuffer)
+        await fs.promises.writeFile(filePath, finalBuffer)
         fileUrl = `/uploads/${uniqueName}`
         providerId = uniqueName
       } catch (fsError: any) {
         console.warn("[uploadLocalFileAction] Read-only filesystem. Falling back to Data URL:", fsError.message)
-        const mimeType = file.type || "image/png"
-        fileUrl = `data:${mimeType};base64,${processedBuffer.toString("base64")}`
+        fileUrl = `data:image/webp;base64,${finalBuffer.toString("base64")}`
         providerId = `data_url_${Date.now()}`
       }
 
       const media = await MediaService.createMedia({
         url: fileUrl,
-        title: file.name,
-        mimeType: file.type,
-        sizeBytes: processedBuffer.length,
+        title: cleanTitle,
+        mimeType: "image/webp",
+        sizeBytes: finalBuffer.length,
         width,
         height,
         provider: 'local',
