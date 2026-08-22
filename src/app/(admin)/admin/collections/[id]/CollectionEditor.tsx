@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { 
   createCollectionAction, 
@@ -67,6 +67,10 @@ export default function CollectionEditor({
   const [isCroppingMobile, setIsCroppingMobile] = useState(false)
   const [bannerSource, setBannerSource] = useState<string | null>(null)
   const [isCroppingBanner, setIsCroppingBanner] = useState(false)
+
+  const desktopFileRef = useRef<HTMLInputElement>(null)
+  const mobileFileRef = useRef<HTMLInputElement>(null)
+  const bannerFileRef = useRef<HTMLInputElement>(null)
 
   const handleAddRole = () => {
     const nextPos = templateRoles.length + 1
@@ -362,6 +366,7 @@ export default function CollectionEditor({
             
             <div
               onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragDesktop(true); }}
+              onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setDragDesktop(true); }}
               onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragDesktop(false); }}
               onDrop={async (e) => {
                 e.preventDefault()
@@ -384,17 +389,26 @@ export default function CollectionEditor({
                 dragDesktop ? "border-2 border-dashed border-admin-primary bg-admin-primary/10 ring-4 ring-admin-primary/20" : "border-transparent"
               }`}
             >
-              <div className="w-24 h-44 bg-admin-content border border-admin-border rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner">
+              <div 
+                onClick={() => desktopFileRef.current?.click()}
+                title="Click or drag photo here to upload"
+                className="w-24 h-44 bg-admin-content border-2 border-dashed border-admin-border hover:border-admin-primary/80 rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner cursor-pointer group transition-all"
+              >
                 {imageUrl ? (
                   <img
                     src={imageUrl}
                     alt="Desktop Cover"
-                    className="w-full h-full object-cover object-top"
+                    className="w-full h-full object-cover object-top group-hover:opacity-85 transition-opacity"
                   />
                 ) : (
-                  <div className="flex flex-col items-center gap-1.5 p-2 text-center text-admin-text-secondary/40">
+                  <div className="flex flex-col items-center gap-1.5 p-2 text-center text-admin-text-secondary/60 group-hover:text-admin-primary transition-colors">
                     <ImageIcon className="w-7 h-7" />
-                    <span className="text-[8px] uppercase font-bold tracking-wider">Desktop 1:2</span>
+                    <span className="text-[8px] uppercase font-bold tracking-wider">Click or Drop 1:2</span>
+                  </div>
+                )}
+                {dragDesktop && (
+                  <div className="absolute inset-0 bg-admin-primary/20 backdrop-blur-xs flex items-center justify-center pointer-events-none">
+                    <span className="text-xs font-bold text-admin-primary">📥 Drop</span>
                   </div>
                 )}
               </div>
@@ -404,6 +418,7 @@ export default function CollectionEditor({
                   <label className="cursor-pointer bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 text-admin-xs font-semibold px-4 py-2 rounded-admin-md transition-colors select-none">
                     {isUploading ? "Uploading..." : imageUrl ? "Replace Desktop Photo" : "Upload Ready Photo"}
                     <input
+                      ref={desktopFileRef}
                       type="file"
                       accept="image/*"
                       className="hidden"
@@ -500,6 +515,7 @@ export default function CollectionEditor({
             
             <div
               onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragMobile(true); }}
+              onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setDragMobile(true); }}
               onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragMobile(false); }}
               onDrop={async (e) => {
                 e.preventDefault()
@@ -522,17 +538,26 @@ export default function CollectionEditor({
                 dragMobile ? "border-2 border-dashed border-admin-primary bg-admin-primary/10 ring-4 ring-admin-primary/20" : "border-transparent"
               }`}
             >
-              <div className="w-24 h-44 bg-admin-content border border-admin-border rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner">
+              <div 
+                onClick={() => mobileFileRef.current?.click()}
+                title="Click or drag photo here to upload"
+                className="w-24 h-44 bg-admin-content border-2 border-dashed border-admin-border hover:border-admin-primary/80 rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner cursor-pointer group transition-all"
+              >
                 {imageMobileUrl ? (
                   <img
                     src={imageMobileUrl}
                     alt="Mobile Cover"
-                    className="w-full h-full object-cover object-top"
+                    className="w-full h-full object-cover object-top group-hover:opacity-85 transition-opacity"
                   />
                 ) : (
-                  <div className="flex flex-col items-center gap-1.5 p-2 text-center text-admin-text-secondary/40">
+                  <div className="flex flex-col items-center gap-1.5 p-2 text-center text-admin-text-secondary/60 group-hover:text-admin-primary transition-colors">
                     <ImageIcon className="w-7 h-7" />
-                    <span className="text-[8px] uppercase font-bold tracking-wider">Mobile 1:2</span>
+                    <span className="text-[8px] uppercase font-bold tracking-wider">Click or Drop 1:2</span>
+                  </div>
+                )}
+                {dragMobile && (
+                  <div className="absolute inset-0 bg-admin-primary/20 backdrop-blur-xs flex items-center justify-center pointer-events-none">
+                    <span className="text-xs font-bold text-admin-primary">📥 Drop</span>
                   </div>
                 )}
               </div>
@@ -542,6 +567,7 @@ export default function CollectionEditor({
                   <label className="cursor-pointer bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 text-admin-xs font-semibold px-4 py-2 rounded-admin-md transition-colors select-none">
                     {isUploadingMobile ? "Uploading..." : imageMobileUrl ? "Replace Mobile Photo" : "Upload Ready Photo"}
                     <input
+                      ref={mobileFileRef}
                       type="file"
                       accept="image/*"
                       className="hidden"
@@ -641,6 +667,7 @@ export default function CollectionEditor({
             
             <div
               onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragBanner(true); }}
+              onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setDragBanner(true); }}
               onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragBanner(false); }}
               onDrop={async (e) => {
                 e.preventDefault()
@@ -663,17 +690,26 @@ export default function CollectionEditor({
                 dragBanner ? "border-2 border-dashed border-admin-primary bg-admin-primary/10 ring-4 ring-admin-primary/20" : "border-transparent"
               }`}
             >
-              <div className="w-full md:w-80 h-24 bg-admin-content border border-admin-border rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner">
+              <div 
+                onClick={() => bannerFileRef.current?.click()}
+                title="Click or drag banner photo here to upload"
+                className="w-full md:w-80 h-24 bg-admin-content border-2 border-dashed border-admin-border hover:border-admin-primary/80 rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner cursor-pointer group transition-all"
+              >
                 {bannerUrl ? (
                   <img
                     src={bannerUrl}
                     alt="Collection Banner"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover:opacity-85 transition-opacity"
                   />
                 ) : (
-                  <div className="flex flex-col items-center gap-1 text-center text-admin-text-secondary/40">
+                  <div className="flex flex-col items-center gap-1 text-center text-admin-text-secondary/60 group-hover:text-admin-primary transition-colors">
                     <ImageIcon className="w-7 h-7" />
-                    <span className="text-[8px] uppercase font-bold tracking-wider">32:10 Wide</span>
+                    <span className="text-[8px] uppercase font-bold tracking-wider">Click or Drop 32:10 Banner</span>
+                  </div>
+                )}
+                {dragBanner && (
+                  <div className="absolute inset-0 bg-admin-primary/20 backdrop-blur-xs flex items-center justify-center pointer-events-none">
+                    <span className="text-xs font-bold text-admin-primary">📥 Drop Banner</span>
                   </div>
                 )}
               </div>
@@ -683,6 +719,7 @@ export default function CollectionEditor({
                   <label className="cursor-pointer bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 text-admin-xs font-semibold px-4 py-2 rounded-admin-md transition-colors select-none">
                     {isUploadingBanner ? "Uploading..." : bannerUrl ? "Replace Banner" : "Upload Ready Banner"}
                     <input
+                      ref={bannerFileRef}
                       type="file"
                       accept="image/*"
                       className="hidden"
