@@ -28,12 +28,17 @@ export default async function AdminDashboardPage() {
     ordersByStatus,
     lowStockItems,
   ] = await Promise.all([
-    getDashboardStats(),
-    getSalesOverviewChart(),
-    getRecentOrders(),
-    getTopProducts(),
-    getOrdersByStatus(),
-    getLowStockAlert(),
+    getDashboardStats().catch(() => ({
+      revenue: { value: 0, change: "0%", isPositive: true },
+      orders: { value: 0, change: "0%", isPositive: true },
+      customers: { value: 0, change: "0%", isPositive: true },
+      aov: { value: 0, change: "0%", isPositive: true },
+    })),
+    getSalesOverviewChart().catch(() => []),
+    getRecentOrders().catch(() => []),
+    getTopProducts().catch(() => []),
+    getOrdersByStatus().catch(() => []),
+    getLowStockAlert().catch(() => []),
   ])
 
   return (
