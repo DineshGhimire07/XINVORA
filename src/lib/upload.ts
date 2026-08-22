@@ -1,16 +1,15 @@
 import { uploadLocalFileAction } from "@/actions/admin/media.actions"
-import { compressImageClient } from "@/lib/image-compressor"
 
 /**
- * Handles image uploading with automatic client-side compression (shrinks high-MB photos to ~200-500KB).
- * Supports Cloudinary direct upload and local storage fallback.
+ * Handles media uploading preserving pristine original master quality for Cloudinary.
+ * Delivery optimization (AVIF/WebP, responsive sizing, Retina DPR) is handled dynamically at edge.
  */
-export async function uploadImage(file: File): Promise<string> {
-  // Compress large photos to under 500KB before uploading
-  const compressedFile = await compressImageClient(file, 500 * 1024)
-
+export async function uploadImage(file: File, options?: { purpose?: "hero" | "banner" | "product" | "collection" }): Promise<string> {
   const formData = new FormData()
-  formData.append("file", compressedFile)
+  formData.append("file", file)
+  if (options?.purpose) {
+    formData.append("purpose", options.purpose)
+  }
 
   const uploadRes = await uploadLocalFileAction(formData)
   if (!uploadRes.success || !uploadRes.url) {

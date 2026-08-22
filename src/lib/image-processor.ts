@@ -69,7 +69,7 @@ export async function processProductImage(buffer: Buffer): Promise<Buffer> {
         right: padRight,
         background,
       })
-      .webp({ quality: 85, effort: 4 })
+      .webp({ quality: 98, effort: 4 })
       .toBuffer()
   } catch (error) {
     console.error("[Image Processor Error]:", error)

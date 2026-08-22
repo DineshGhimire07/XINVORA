@@ -29,13 +29,13 @@ export async function compressImageClient(file: File, maxSizeBytes: number = 500
       img.src = event.target?.result as string
 
       img.onload = () => {
-        const MAX_WIDTH = 1600
-        const MAX_HEIGHT = 2000
+        const MAX_WIDTH = 3840
+        const MAX_HEIGHT = 3840
 
         let width = img.width
         let height = img.height
 
-        // Downscale while preserving aspect ratio if dimensions exceed 1600x2000
+        // Downscale only if dimensions exceed 4K (3840px)
         if (width > MAX_WIDTH || height > MAX_HEIGHT) {
           const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height)
           width = Math.round(width * ratio)
@@ -56,11 +56,9 @@ export async function compressImageClient(file: File, maxSizeBytes: number = 500
         ctx.imageSmoothingQuality = "high"
 
         // Draw image onto canvas
-        ctx.fillStyle = "#FFFFFF"
-        ctx.fillRect(0, 0, width, height)
         ctx.drawImage(img, 0, 0, width, height)
 
-        const outputMime = "image/webp"
+        const outputMime = file.type || "image/webp"
 
         const attemptCompress = (quality: number) => {
           canvas.toBlob(
@@ -69,20 +67,17 @@ export async function compressImageClient(file: File, maxSizeBytes: number = 500
                 return resolve(file)
               }
 
-              // If compressed blob is under maxSizeBytes or quality floor reached (0.5), resolve as .webp
-              if (blob.size <= maxSizeBytes || quality <= 0.5) {
+              // If compressed blob is under maxSizeBytes or quality floor reached (0.85), resolve
+              if (blob.size <= maxSizeBytes || quality <= 0.85) {
                 const newFilename = file.name.replace(/\.[^/.]+$/, "") + ".webp"
                 const compressedFile = new File([blob], newFilename, {
                   type: outputMime,
                   lastModified: Date.now(),
                 })
-                console.log(
-                  `[WebP Converter] "${file.name}" (${(file.size / 1024 / 1024).toFixed(2)} MB, ${file.type}) -> "${newFilename}" (${(blob.size / 1024).toFixed(0)} KB, webp)`
-                )
                 resolve(compressedFile)
               } else {
-                // Try again with lower quality step
-                attemptCompress(Math.max(0.5, quality - 0.12))
+                // Try again with gentle step
+                attemptCompress(Math.max(0.85, quality - 0.05))
               }
             },
             outputMime,
@@ -90,8 +85,8 @@ export async function compressImageClient(file: File, maxSizeBytes: number = 500
           )
         }
 
-        // Start compression quality check at 0.85
-        attemptCompress(0.85)
+        // Start compression quality check at 0.95
+        attemptCompress(0.95)
       }
 
       img.onerror = () => resolve(file)
