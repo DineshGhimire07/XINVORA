@@ -205,29 +205,79 @@ export default function CollectionEditor({
             />
           </div>
 
-          <div className="flex flex-col gap-1.5 pt-2">
-            <label className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
-              Collection Cover Image
-            </label>
+          {/* Cover Photo Upload */}
+          <div className="flex flex-col gap-2.5 pt-2">
+            <div className="flex items-center justify-between">
+              <label className="text-admin-xs font-bold text-admin-text-primary uppercase tracking-wider">
+                1. Collection Editorial Cover Photo (4-Box Featured Grid)
+              </label>
+              <span className="text-[10px] bg-admin-primary/10 text-admin-primary font-bold px-2 py-0.5 rounded-sm">
+                Live Storefront Ratio: 1:2 Vertical
+              </span>
+            </div>
             <input type="hidden" name="imageUrl" value={imageUrl || ""} />
+
+            {/* Spec Guideline Card */}
+            <div className="p-3 bg-admin-content/80 border border-admin-border/70 rounded-admin-md grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-admin-text-secondary">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-admin-text-primary">💻 Desktop / Laptop:</span>
+                <span><strong className="text-admin-text-primary">1000 × 2000 px</strong> (1:2 vertical editorial)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-admin-text-primary">📱 Mobile Phones:</span>
+                <span><strong className="text-admin-text-primary">800 × 1600 px</strong> (1:2 tall story portrait)</span>
+              </div>
+            </div>
             
-            <div className="flex items-center gap-5">
-              <div className="w-24 h-24 bg-admin-content border border-admin-border rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pt-1">
+              {/* Card Preview */}
+              <div className="w-24 h-44 bg-admin-content border border-admin-border rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner">
                 {imageUrl ? (
                   <img
                     src={imageUrl}
                     alt="Collection Cover"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-top"
                   />
                 ) : (
-                  <ImageIcon className="w-8 h-8 text-admin-text-secondary/40" />
+                  <div className="flex flex-col items-center gap-1.5 p-2 text-center text-admin-text-secondary/40">
+                    <ImageIcon className="w-7 h-7" />
+                    <span className="text-[8px] uppercase font-bold tracking-wider">1:2 Ratio</span>
+                  </div>
                 )}
               </div>
               
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-2.5">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {/* Direct Upload (No Crop) */}
                   <label className="cursor-pointer bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 text-admin-xs font-semibold px-4 py-2 rounded-admin-md transition-colors select-none">
-                    {isUploading ? "Uploading..." : imageUrl ? "Change Cover Photo" : "Upload Cover Photo"}
+                    {isUploading ? "Uploading..." : imageUrl ? "Replace Photo" : "Upload Ready Photo"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={isUploading}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          setIsUploading(true)
+                          try {
+                            const url = await uploadImage(file)
+                            setImageUrl(url)
+                          } catch (err) {
+                            console.error(err)
+                            alert("Failed to upload image.")
+                          } finally {
+                            setIsUploading(false)
+                            e.target.value = ""
+                          }
+                        }
+                      }}
+                    />
+                  </label>
+
+                  {/* Crop & Upload */}
+                  <label className="cursor-pointer bg-admin-content border border-admin-border hover:border-admin-border-strong text-admin-text-primary text-admin-xs font-semibold px-3.5 py-2 rounded-admin-md transition-colors select-none">
+                    Crop & Upload (1:2)
                     <input
                       type="file"
                       accept="image/*"
@@ -244,6 +294,7 @@ export default function CollectionEditor({
                       }}
                     />
                   </label>
+
                   {imageUrl && (
                     <>
                       <button
@@ -266,21 +317,39 @@ export default function CollectionEditor({
                     </>
                   )}
                 </div>
-                <p className="text-[10px] text-admin-text-secondary/70">
-                  Recommended aspect ratio: 3:4. Crop tool will open on image select.
+                <p className="text-[10px] text-admin-text-secondary/80 leading-relaxed">
+                  Used directly for the 4-box full-height editorial collection cards on the homepage.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5 pt-2 border-t border-admin-border/50">
-            <label className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
-              Collection Landscape Banner Image (LinkedIn/YouTube banner style)
-            </label>
+          {/* Banner Photo Upload */}
+          <div className="flex flex-col gap-2.5 pt-4 border-t border-admin-border/50">
+            <div className="flex items-center justify-between">
+              <label className="text-admin-xs font-bold text-admin-text-primary uppercase tracking-wider">
+                2. Collection Landscape Banner (Top Header on Collection Page)
+              </label>
+              <span className="text-[10px] bg-admin-primary/10 text-admin-primary font-bold px-2 py-0.5 rounded-sm">
+                Storefront Ratio: 32:10 Wide
+              </span>
+            </div>
             <input type="hidden" name="bannerUrl" value={bannerUrl || ""} />
+
+            {/* Spec Guideline Card */}
+            <div className="p-3 bg-admin-content/80 border border-admin-border/70 rounded-admin-md grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-admin-text-secondary">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-admin-text-primary">💻 Desktop / Laptop:</span>
+                <span><strong className="text-admin-text-primary">1920 × 600 px</strong> or <strong className="text-admin-text-primary">2560 × 800 px</strong> (32:10)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-admin-text-primary">📱 Mobile Phones:</span>
+                <span><strong className="text-admin-text-primary">800 × 340 px</strong> or <strong className="text-admin-text-primary">1080 × 460 px</strong> (21:9)</span>
+              </div>
+            </div>
             
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-5">
-              <div className="w-full md:w-80 h-24 bg-admin-content border border-admin-border rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-5 pt-1">
+              <div className="w-full md:w-80 h-24 bg-admin-content border border-admin-border rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner">
                 {bannerUrl ? (
                   <img
                     src={bannerUrl}
@@ -288,14 +357,45 @@ export default function CollectionEditor({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <ImageIcon className="w-8 h-8 text-admin-text-secondary/40" />
+                  <div className="flex flex-col items-center gap-1 text-center text-admin-text-secondary/40">
+                    <ImageIcon className="w-7 h-7" />
+                    <span className="text-[8px] uppercase font-bold tracking-wider">32:10 Wide</span>
+                  </div>
                 )}
               </div>
               
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-2.5">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {/* Direct Upload (No Crop) */}
                   <label className="cursor-pointer bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 text-admin-xs font-semibold px-4 py-2 rounded-admin-md transition-colors select-none">
-                    {isUploadingBanner ? "Uploading..." : bannerUrl ? "Change Banner" : "Upload Banner Photo"}
+                    {isUploadingBanner ? "Uploading..." : bannerUrl ? "Replace Banner" : "Upload Ready Banner"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={isUploadingBanner}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          setIsUploadingBanner(true)
+                          try {
+                            const url = await uploadImage(file)
+                            setBannerUrl(url)
+                          } catch (err) {
+                            console.error(err)
+                            alert("Failed to upload banner image.")
+                          } finally {
+                            setIsUploadingBanner(false)
+                            e.target.value = ""
+                          }
+                        }
+                      }}
+                    />
+                  </label>
+
+                  {/* Crop & Upload */}
+                  <label className="cursor-pointer bg-admin-content border border-admin-border hover:border-admin-border-strong text-admin-text-primary text-admin-xs font-semibold px-3.5 py-2 rounded-admin-md transition-colors select-none">
+                    Crop & Upload (32:10)
                     <input
                       type="file"
                       accept="image/*"
@@ -312,6 +412,7 @@ export default function CollectionEditor({
                       }}
                     />
                   </label>
+
                   {bannerUrl && (
                     <>
                       <button
@@ -334,8 +435,8 @@ export default function CollectionEditor({
                     </>
                   )}
                 </div>
-                <p className="text-[10px] text-admin-text-secondary/70">
-                  Recommended size: 1200 x 400px (3:1 aspect ratio). Crop tool will open on image select.
+                <p className="text-[10px] text-admin-text-secondary/80 leading-relaxed">
+                  Displays as the cinematic hero banner at the top of the individual collection page.
                 </p>
               </div>
             </div>
@@ -346,7 +447,7 @@ export default function CollectionEditor({
         {isCroppingCover && coverSource && (
           <ImageCropperModal
             imageSrc={coverSource}
-            aspect={3 / 4}
+            aspect={1 / 2}
             onCropComplete={async (croppedFile) => {
               setIsCroppingCover(false)
               if (coverSource.startsWith("blob:")) {

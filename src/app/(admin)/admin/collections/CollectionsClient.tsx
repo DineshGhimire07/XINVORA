@@ -11,6 +11,8 @@ interface CollectionsClientProps {
     id: string
     name: string
     slug: string
+    imageUrl?: string | null
+    bannerUrl?: string | null
     isActive: boolean
     sortOrder: number
     productCount: number
@@ -21,6 +23,29 @@ export function CollectionsClient({ collections }: CollectionsClientProps) {
   const router = useRouter()
 
   const columns = [
+    {
+      accessorKey: "imageUrl",
+      header: "Photo",
+      cell: ({ row }: any) => {
+        const item = row.original
+        const photo = item.imageUrl || item.bannerUrl
+        return (
+          <div className="w-10 h-14 bg-admin-content border border-admin-border rounded-sm overflow-hidden flex items-center justify-center relative flex-shrink-0">
+            {photo ? (
+              <img
+                src={photo}
+                alt={item.name}
+                className="w-full h-full object-cover object-top"
+              />
+            ) : (
+              <span className="text-[8px] text-admin-text-secondary/50 font-bold uppercase tracking-wider">
+                No Img
+              </span>
+            )}
+          </div>
+        )
+      },
+    },
     {
       accessorKey: "name",
       header: "Collection",

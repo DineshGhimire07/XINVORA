@@ -18,6 +18,8 @@ export default async function AdminCollectionsPage() {
       id: collections.id,
       name: collections.name,
       slug: collections.slug,
+      imageUrl: collections.imageUrl,
+      bannerUrl: collections.bannerUrl,
       isActive: collections.isActive,
       sortOrder: collections.sortOrder,
       productCount: sql<number>`count(${productCollections.productId})::int`,
@@ -25,7 +27,7 @@ export default async function AdminCollectionsPage() {
     .from(collections)
     .leftJoin(productCollections, eq(collections.id, productCollections.collectionId))
     .where(isNull(collections.deletedAt))
-    .groupBy(collections.id, collections.name, collections.slug, collections.isActive, collections.sortOrder)
+    .groupBy(collections.id, collections.name, collections.slug, collections.imageUrl, collections.bannerUrl, collections.isActive, collections.sortOrder)
     .orderBy(desc(collections.createdAt))
 
   return (

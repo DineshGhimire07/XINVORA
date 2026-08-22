@@ -89,13 +89,27 @@ export default function CollectionGridEditor({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-[11px] font-bold tracking-widest uppercase text-text-primary">
-          Featured Collections Picker
-        </h3>
-        <p className="text-body-xs text-text-secondary/70 mt-1">
-          Select and arrange up to 4 collections. These will render live as a 4-box editorial layout.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h3 className="text-[11px] font-bold tracking-widest uppercase text-text-primary">
+            Featured Collections Picker
+          </h3>
+          <p className="text-body-xs text-text-secondary/70 mt-1">
+            Select and arrange up to 4 collections. These will render live as a 4-box full-height editorial layout.
+          </p>
+        </div>
+      </div>
+
+      {/* Recommended Photo Size Specs Callout */}
+      <div className="p-3.5 bg-surface-secondary/40 border border-border/40 rounded-none grid grid-cols-1 sm:grid-cols-2 gap-3 text-body-xs">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-text-primary">💻 Recommended Laptop / Desktop:</span>
+          <span><strong className="text-text-primary">1000 × 2000 px</strong> (1:2 vertical editorial)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-text-primary">📱 Recommended Mobile:</span>
+          <span><strong className="text-text-primary">800 × 1600 px</strong> (1:2 tall story portrait)</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -126,9 +140,9 @@ export default function CollectionGridEditor({
                     className="flex items-center justify-between p-2.5 hover:bg-surface-secondary/40 transition-colors cursor-pointer group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="relative w-10 h-10 bg-neutral-100 border border-border/20 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                      <div className="relative w-10 h-16 bg-neutral-100 border border-border/20 flex-shrink-0 flex items-center justify-center overflow-hidden">
                         {imageUrl ? (
-                          <img src={imageUrl} alt={c.name} className="object-cover w-full h-full" />
+                          <img src={imageUrl} alt={c.name} className="object-cover object-top w-full h-full" />
                         ) : (
                           <div className="text-[7px] uppercase font-bold text-text-secondary">No Image</div>
                         )}
@@ -200,10 +214,10 @@ export default function CollectionGridEditor({
                         <GripVertical className="w-4 h-4" />
                       </div>
 
-                      {/* Preview Thumbnail */}
-                      <div className="relative w-10 h-10 bg-neutral-100 border border-border/20 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                      {/* Preview Thumbnail (1:2 vertical editorial card preview) */}
+                      <div className="relative w-10 h-16 bg-neutral-100 border border-border/20 flex-shrink-0 flex items-center justify-center overflow-hidden">
                         {imageUrl ? (
-                          <img src={imageUrl} alt={c.name} className="object-cover w-full h-full" />
+                          <img src={imageUrl} alt={c.name} className="object-cover object-top w-full h-full" />
                         ) : (
                           <div className="text-[7px] uppercase font-bold text-text-secondary">No Image</div>
                         )}
