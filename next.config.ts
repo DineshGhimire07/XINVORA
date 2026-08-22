@@ -106,6 +106,16 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  async redirects() {
+    return [
+      {
+        source: "/home",
+        destination: "/",
+        permanent: true,
+      },
+    ];
+  },
+
   // Experimental features
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion"],

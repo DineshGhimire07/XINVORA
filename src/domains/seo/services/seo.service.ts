@@ -213,6 +213,7 @@ export class SEOService {
     else if (entityType === "collections") filtered = filtered.filter((e) => e.entityType === "COLLECTION")
     else if (entityType === "journal") filtered = filtered.filter((e) => e.entityType === "JOURNAL")
     else if (entityType === "cms") filtered = filtered.filter((e) => e.entityType === "CMS_PAGE")
+    else return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n</urlset>`
 
     return SEOSitemapEngine.generateEntitySitemapXML(baseUrl, filtered)
   }

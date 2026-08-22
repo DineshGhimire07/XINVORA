@@ -41,7 +41,271 @@ export class SEOReadRepository {
       const normalizedJournal = rawJournal.map((j) => journalSEOAdapter.normalize(j))
       const normalizedCMS = rawCMS.map((m) => cmsPageSEOAdapter.normalize(m))
 
-      return [...normalizedProducts, ...normalizedCollections, ...normalizedJournal, ...normalizedCMS]
+      // Core Static Shop & Legal Pages
+      const STATIC_CORE_PAGES: NormalizedSEOEntity[] = [
+        {
+          id: "static_home",
+          entityType: "CMS_PAGE",
+          name: "Home",
+          slug: "",
+          path: "/",
+          canonicalUrl: "/",
+          seoTitle: "XINVORA — Considered Objects for Quiet Living",
+          seoDescription: "XINVORA is a premium lifestyle brand creating considered objects for modern living. Elevate everyday living with thoughtful design, exceptional materials, and timeless craft.",
+          ogImage: null,
+          twitterImage: null,
+          isIndexed: true,
+          updatedAt: new Date(),
+          images: [],
+          raw: null,
+        },
+        {
+          id: "static_about",
+          entityType: "CMS_PAGE",
+          name: "About",
+          slug: "about",
+          path: "/about",
+          canonicalUrl: "/about",
+          seoTitle: "About Us | XINVORA",
+          seoDescription: "Learn more about the philosophy, materials, and artisan craft behind XINVORA.",
+          ogImage: null,
+          twitterImage: null,
+          isIndexed: true,
+          updatedAt: new Date(),
+          images: [],
+          raw: null,
+        },
+        {
+          id: "static_collections",
+          entityType: "CMS_PAGE",
+          name: "Collections",
+          slug: "collections",
+          path: "/collections",
+          canonicalUrl: "/collections",
+          seoTitle: "All Collections | XINVORA",
+          seoDescription: "Explore our curated lifestyle edits, premium leather pieces, and ready-to-wear collections.",
+          ogImage: null,
+          twitterImage: null,
+          isIndexed: true,
+          updatedAt: new Date(),
+          images: [],
+          raw: null,
+        },
+        {
+          id: "static_journal",
+          entityType: "CMS_PAGE",
+          name: "Journal",
+          slug: "journal",
+          path: "/journal",
+          canonicalUrl: "/journal",
+          seoTitle: "Editorial Journal | XINVORA",
+          seoDescription: "Stories on mindful aesthetics, artisanal fabrication, and contemporary lifestyle.",
+          ogImage: null,
+          twitterImage: null,
+          isIndexed: true,
+          updatedAt: new Date(),
+          images: [],
+          raw: null,
+        },
+        {
+          id: "static_looks",
+          entityType: "CMS_PAGE",
+          name: "Looks",
+          slug: "looks",
+          path: "/looks",
+          canonicalUrl: "/looks",
+          seoTitle: "Shop the Look | XINVORA",
+          seoDescription: "Curated looks. Effortless style. Discover complete outfits styled for every moment.",
+          ogImage: null,
+          twitterImage: null,
+          isIndexed: true,
+          updatedAt: new Date(),
+          images: [],
+          raw: null,
+        },
+        {
+          id: "static_contact",
+          entityType: "CMS_PAGE",
+          name: "Contact",
+          slug: "contact",
+          path: "/contact",
+          canonicalUrl: "/contact",
+          seoTitle: "Contact Us & Atelier Inquiries | XINVORA",
+          seoDescription: "Get in touch with our client concierge and atelier support team.",
+          ogImage: null,
+          twitterImage: null,
+          isIndexed: true,
+          updatedAt: new Date(),
+          images: [],
+          raw: null,
+        },
+        {
+          id: "static_faq",
+          entityType: "CMS_PAGE",
+          name: "FAQ",
+          slug: "faq",
+          path: "/faq",
+          canonicalUrl: "/faq",
+          seoTitle: "Client Services FAQ | XINVORA",
+          seoDescription: "Answers to frequently asked questions regarding orders, shipping, sizing, and care.",
+          ogImage: null,
+          twitterImage: null,
+          isIndexed: true,
+          updatedAt: new Date(),
+          images: [],
+          raw: null,
+        },
+        {
+          id: "static_privacy",
+          entityType: "CMS_PAGE",
+          name: "Privacy Policy",
+          slug: "privacy",
+          path: "/privacy",
+          canonicalUrl: "/privacy",
+          seoTitle: "Privacy Policy | XINVORA",
+          seoDescription: "Read the XINVORA privacy policy and data governance practices.",
+          ogImage: null,
+          twitterImage: null,
+          isIndexed: true,
+          updatedAt: new Date(),
+          images: [],
+          raw: null,
+        },
+        {
+          id: "static_terms",
+          entityType: "CMS_PAGE",
+          name: "Terms & Conditions",
+          slug: "terms",
+          path: "/terms",
+          canonicalUrl: "/terms",
+          seoTitle: "Terms & Conditions | XINVORA",
+          seoDescription: "XINVORA terms of service and commercial agreement.",
+          ogImage: null,
+          twitterImage: null,
+          isIndexed: true,
+          updatedAt: new Date(),
+          images: [],
+          raw: null,
+        },
+        {
+          id: "static_shipping",
+          entityType: "CMS_PAGE",
+          name: "Shipping",
+          slug: "shipping",
+          path: "/shipping",
+          canonicalUrl: "/shipping",
+          seoTitle: "Shipping & Delivery | XINVORA",
+          seoDescription: "Information regarding domestic delivery across Nepal and express fulfillment.",
+          ogImage: null,
+          twitterImage: null,
+          isIndexed: true,
+          updatedAt: new Date(),
+          images: [],
+          raw: null,
+        },
+        {
+          id: "static_returns",
+          entityType: "CMS_PAGE",
+          name: "Returns",
+          slug: "returns",
+          path: "/returns",
+          canonicalUrl: "/returns",
+          seoTitle: "Returns & Exchanges | XINVORA",
+          seoDescription: "Our policy on returns, exchanges, and client satisfaction guarantee.",
+          ogImage: null,
+          twitterImage: null,
+          isIndexed: true,
+          updatedAt: new Date(),
+          images: [],
+          raw: null,
+        },
+      ]
+
+      // Standalone Static Collection Hubs
+      const STATIC_COLLECTIONS: NormalizedSEOEntity[] = [
+        {
+          id: "static_col_bags",
+          entityType: "COLLECTION",
+          name: "The Bags Edit",
+          slug: "bags",
+          path: "/collections/bags",
+          canonicalUrl: "/collections/bags",
+          seoTitle: "The Bags Edit | XINVORA",
+          seoDescription: "Explore structural shapes, tactile leather grains, and minimal utility in the XINVORA Bags collection.",
+          ogImage: null,
+          twitterImage: null,
+          isIndexed: true,
+          updatedAt: new Date(),
+          images: [],
+          raw: null,
+        },
+        {
+          id: "static_col_limited",
+          entityType: "COLLECTION",
+          name: "Limited Collection",
+          slug: "limited",
+          path: "/collections/limited",
+          canonicalUrl: "/collections/limited",
+          seoTitle: "Limited Collection | XINVORA",
+          seoDescription: "Limited quantity handcrafted artisanal releases.",
+          ogImage: null,
+          twitterImage: null,
+          isIndexed: true,
+          updatedAt: new Date(),
+          images: [],
+          raw: null,
+        },
+        {
+          id: "static_col_limited_edition",
+          entityType: "COLLECTION",
+          name: "Limited Edition",
+          slug: "limited-edition",
+          path: "/collections/limited-edition",
+          canonicalUrl: "/collections/limited-edition",
+          seoTitle: "Limited Edition | XINVORA",
+          seoDescription: "Exclusive numbered limited edition garments and considered objects.",
+          ogImage: null,
+          twitterImage: null,
+          isIndexed: true,
+          updatedAt: new Date(),
+          images: [],
+          raw: null,
+        },
+      ]
+
+      // Merge and deduplicate CMS pages by path
+      const cmsMap = new Map<string, NormalizedSEOEntity>()
+      STATIC_CORE_PAGES.forEach((p) => cmsMap.set(p.path, p))
+      normalizedCMS.forEach((m) => {
+        if (m.path === "/") {
+          const existing = cmsMap.get("/")
+          if (existing) {
+            cmsMap.set("/", {
+              ...existing,
+              seoTitle: m.seoTitle || existing.seoTitle,
+              seoDescription: m.seoDescription || existing.seoDescription,
+              updatedAt: m.updatedAt || existing.updatedAt,
+            })
+          } else {
+            cmsMap.set("/", m)
+          }
+        } else {
+          cmsMap.set(m.path, m)
+        }
+      })
+      const finalCMS = Array.from(cmsMap.values())
+
+      // Merge and deduplicate Collections by path
+      const collectionsMap = new Map<string, NormalizedSEOEntity>()
+      normalizedCollections.forEach((c) => collectionsMap.set(c.path, c))
+      STATIC_COLLECTIONS.forEach((c) => {
+        if (!collectionsMap.has(c.path)) {
+          collectionsMap.set(c.path, c)
+        }
+      })
+      const finalCollections = Array.from(collectionsMap.values())
+
+      return [...normalizedProducts, ...finalCollections, ...normalizedJournal, ...finalCMS]
     } catch (err) {
       console.error("[SEOReadRepository.getAllEntities] Error:", err)
       return []

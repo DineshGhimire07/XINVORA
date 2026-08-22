@@ -17,18 +17,21 @@ export class CMSPageSEOAdapter implements SEOEntityAdapter {
       imagesList.push({ url: page.ogImage, alt: page.title || null })
     }
 
+    const cleanSlug = page.slug ? page.slug.replace(/^\//, "") : ""
+    const targetPath = (cleanSlug === "home" || cleanSlug === "") ? "/" : `/${cleanSlug}`
+
     return {
       id: page.id,
       entityType: "CMS_PAGE",
       name: page.title || page.name || "Untitled Page",
-      slug: page.slug,
-      path: `/${page.slug.replace(/^\//, "")}`,
+      slug: cleanSlug,
+      path: targetPath,
       seoTitle: page.seoTitle || page.title || null,
       seoDescription: page.seoDescription || page.metaDescription || null,
-      canonicalUrl: page.canonicalUrl || `/${page.slug.replace(/^\//, "")}`,
+      canonicalUrl: page.canonicalUrl || targetPath,
       ogImage: page.ogImage || null,
       twitterImage: page.ogImage || null,
-      isIndexed: page.isPublished !== false && page.robotsIndex !== false,
+      isIndexed: page.isPublished !== false && page.robotsIndex !== false && page.status !== "DRAFT" && page.status !== "ARCHIVED",
       updatedAt: page.updatedAt ? new Date(page.updatedAt) : new Date(),
       images: imagesList,
       raw: page,

@@ -8,9 +8,7 @@ export class SEOSitemapEngine {
       "sitemap-products.xml",
       "sitemap-collections.xml",
       "sitemap-journal.xml",
-      "sitemap-lookbooks.xml",
       "sitemap-cms.xml",
-      "sitemap-images.xml",
     ]
 
     const xmlItems = subSitemaps
