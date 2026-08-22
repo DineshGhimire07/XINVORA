@@ -113,53 +113,61 @@ function CMSCollectionGrid({ block, collections = [] }: { block: any; collection
 }
 
 function CMSProductGrid({ block, products = [] }: { block: any; products?: any[] }) {
-  const displayProducts = products.slice(0, 10)
+  // Allow up to 12 items for desktop, first 6 rendered on mobile
+  const displayProducts = products.slice(0, 12)
 
   if (displayProducts.length === 0) return null
 
   return (
-    <Section id="new-arrivals" padding="none" className="bg-background border-b border-border py-24 select-none">
-      <Container>
-        {/* Title Block Above Grid */}
-        <div className="flex flex-col justify-start select-none mb-14">
-          <span className="text-[10px] font-bold tracking-[0.4em] text-text-secondary uppercase select-none opacity-80 mb-3 pl-2">
-            New Season
-          </span>
-          <h2 className="text-[2.2rem] md:text-[2.8rem] font-display font-light text-text-primary tracking-[0.2em] uppercase leading-none whitespace-nowrap pl-2">
-            New Arrivals
-          </h2>
-        </div>
+    <Section id="new-arrivals" padding="none" className="bg-background select-none w-screen overflow-hidden">
+      {/* Title Block Above Grid — Full Width Flush Header */}
+      <div className="w-full px-4 sm:px-6 md:px-10 pt-8 md:pt-12 pb-4 md:pb-6 flex flex-col justify-start select-none">
+        <span className="text-[10px] md:text-xs font-bold tracking-[0.35em] text-text-secondary uppercase select-none opacity-80 mb-1.5">
+          New Season
+        </span>
+        <h2 className="text-[2rem] sm:text-[2.4rem] md:text-[3rem] font-display font-light text-text-primary tracking-[0.16em] uppercase leading-none whitespace-nowrap">
+          New Arrivals
+        </h2>
+      </div>
 
-        {/* Dynamic 5 columns x 2 rows Product Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-12">
-          {displayProducts.map((product: any, index: number) => {
-            const itemColors = Array.from(
-              new Map(
-                (product.variants || [])
-                  .filter((v: any) => v.color)
-                  .map((v: any) => [v.color!.id, v.color!])
-              ).values()
-            ) as any[]
+      {/* Full-bleed, Zero White Space Product Grid (Edge-to-Edge like Banners)
+          - Mobile: 2 columns full bleed, 6 items
+          - Tablet: 3 columns full bleed
+          - Desktop: 4 to 6 columns full bleed, up to 12 items
+          - Gap: 0 (seamless edge-to-edge full screen photos)
+      */}
+      <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-0">
+        {displayProducts.map((product: any, index: number) => {
+          const itemColors = Array.from(
+            new Map(
+              (product.variants || [])
+                .filter((v: any) => v.color)
+                .map((v: any) => [v.color!.id, v.color!])
+            ).values()
+          ) as any[]
 
-            const itemSizes = Array.from(
-              new Map(
-                (product.variants || [])
-                  .filter((v: any) => v.size)
-                  .map((v: any) => [v.size!.id, v.size!])
-              ).values()
-            ).sort((a: any, b: any) => a.name.localeCompare(b.name, undefined, { numeric: true })) as any[]
+          const itemSizes = Array.from(
+            new Map(
+              (product.variants || [])
+                .filter((v: any) => v.size)
+                .map((v: any) => [v.size!.id, v.size!])
+            ).values()
+          ).sort((a: any, b: any) => a.name.localeCompare(b.name, undefined, { numeric: true })) as any[]
 
-            const inStock = (product.variants || []).length > 0
-              ? (product.variants || []).some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)
-              : false
+          const inStock = (product.variants || []).length > 0
+            ? (product.variants || []).some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)
+            : false
 
-            return (
+          // On mobile (< md), only show first 6 items. Items 7-12 are visible on md+
+          const isHiddenOnMobile = index >= 6
+
+          return (
+            <div key={product.id} className={`w-full ${isHiddenOnMobile ? "hidden md:block" : "block"}`}>
               <ProductCard
-                key={product.id}
                 product={product}
                 itemColors={itemColors}
                 itemSizes={itemSizes}
-                priority={index < 5}
+                priority={index < 4}
                 isFirstInGrid={index === 0}
                 hideWishlist={true}
                 hidePrice={true}
@@ -170,10 +178,10 @@ function CMSProductGrid({ block, products = [] }: { block: any; products?: any[]
                 objectContain={false}
                 inStock={inStock}
               />
-            )
-          })}
-        </div>
-      </Container>
+            </div>
+          )
+        })}
+      </div>
     </Section>
   )
 }
@@ -304,22 +312,46 @@ function CMSHeroCarousel({ block }: { block: any }) {
         </AnimatePresence>
       </div>
 
-      {/* Manual Arrow Controls (hidden on mobile to prevent blocking mobile photos, visible on desktop md+) */}
+      {/* Manual Arrow Controls (Ultra-Minimalist Subtle Chevrons on Desktop, Zero Background/Borders) */}
       {slides.length > 1 && (
         <>
           <button
             onClick={handlePrev}
-            className="hidden md:flex absolute left-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full border border-white/20 bg-black/10 text-white hover:bg-black/30 hover:border-white/40 transition-all active:scale-95 cursor-pointer items-center justify-center"
+            className="group/hero-btn hidden md:flex absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-24 items-center justify-center text-white/50 hover:text-white transition-all duration-300 cursor-pointer bg-transparent border-0 select-none focus:outline-none"
             aria-label="Previous Slide"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="transition-transform duration-300 group-hover/hero-btn:-translate-x-1.5 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
           </button>
           <button
             onClick={handleNext}
-            className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full border border-white/20 bg-black/10 text-white hover:bg-black/30 hover:border-white/40 transition-all active:scale-95 cursor-pointer items-center justify-center"
+            className="group/hero-btn hidden md:flex absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-24 items-center justify-center text-white/50 hover:text-white transition-all duration-300 cursor-pointer bg-transparent border-0 select-none focus:outline-none"
             aria-label="Next Slide"
           >
-            <ArrowRight className="w-5 h-5" />
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="transition-transform duration-300 group-hover/hero-btn:translate-x-1.5 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+            >
+              <path d="m9 18 6-6-6-6" />
+            </svg>
           </button>
         </>
       )}
@@ -346,36 +378,95 @@ function CMSHeroCarousel({ block }: { block: any }) {
   )
 }
 
+function parseBannerDimension(val: string | undefined): { styleKey: "aspectRatio" | "height" | "none"; cssValue: string } {
+  if (!val || typeof val !== "string") return { styleKey: "none", cssValue: "" }
+  const trimmed = val.trim()
+  if (!trimmed) return { styleKey: "none", cssValue: "" }
+
+  // Aspect ratio check (e.g. "21/9", "21:9", "16/9", "3/4", "1/1", "4/5", "9/16", "32/10", "2.35/1")
+  if (trimmed.includes("/") || trimmed.includes(":")) {
+    const ratio = trimmed.replace(":", " / ")
+    return { styleKey: "aspectRatio", cssValue: ratio }
+  }
+
+  // Pure number e.g. "550" -> "550px"
+  if (/^\d+$/.test(trimmed)) {
+    return { styleKey: "height", cssValue: `${trimmed}px` }
+  }
+
+  // Value with CSS unit (e.g. 500px, 70vh, 80dvh, 35rem)
+  return { styleKey: "height", cssValue: trimmed }
+}
+
 function CMSBannerBlock({ block }: { block: any }) {
   const data = block.data
   if (!data || data.isActive === false || !data.imageUrl) return null
 
-  // Determine aspect ratios and height classes based on size configuration
-  let containerClass = "relative block w-full aspect-[3/4] md:aspect-[32/10] overflow-hidden bg-neutral-900"
-  if (data.size === "natural") {
-    containerClass = "relative block w-full h-auto min-h-[300px] overflow-hidden bg-neutral-900"
-  } else if (data.size === "full") {
-    containerClass = "relative block w-full h-[100dvh] min-h-[500px] overflow-hidden bg-neutral-900"
-  } else if (data.size === "half") {
-    containerClass = "relative block w-full h-[50dvh] min-h-[350px] overflow-hidden bg-neutral-900"
-  } else if (data.size === "cinematic") {
-    containerClass = "relative block w-full aspect-[3/4] md:aspect-[21/9] overflow-hidden bg-neutral-900"
-  } else if (data.size === "landscape") {
-    containerClass = "relative block w-full aspect-[3/4] md:aspect-[16/9] overflow-hidden bg-neutral-900"
-  } else if (data.size === "classic") {
-    containerClass = "relative block w-full aspect-[1/1] md:aspect-[4/3] overflow-hidden bg-neutral-900"
-  } else if (data.size === "portrait") {
-    containerClass = "relative block w-full aspect-[3/4] md:aspect-[3/4] overflow-hidden bg-neutral-900"
-  } else if (data.size === "editorial") {
-    containerClass = "relative block w-full aspect-[3/4] md:aspect-[32/10] overflow-hidden bg-neutral-900"
+  const desktopSize = data.size || "editorial"
+  const mobileSize = data.mobileSize || "auto"
+
+  // Mobile classes & styles
+  let mobileClass = "aspect-[3/4]"
+  if (mobileSize === "natural") {
+    mobileClass = "h-auto min-h-[250px]"
+  } else if (mobileSize === "full") {
+    mobileClass = "h-[100dvh] min-h-[500px]"
+  } else if (mobileSize === "half") {
+    mobileClass = "h-[50dvh] min-h-[300px]"
+  } else if (mobileSize === "story") {
+    mobileClass = "aspect-[9/16]"
+  } else if (mobileSize === "square") {
+    mobileClass = "aspect-[1/1]"
+  } else if (mobileSize === "standard-portrait") {
+    mobileClass = "aspect-[4/5]"
+  } else if (mobileSize === "portrait") {
+    mobileClass = "aspect-[3/4]"
+  } else if (mobileSize === "auto") {
+    // If auto, match desktop size behavior on mobile
+    if (desktopSize === "natural") mobileClass = "h-auto min-h-[250px]"
+    else if (desktopSize === "full") mobileClass = "h-[100dvh] min-h-[500px]"
+    else if (desktopSize === "half") mobileClass = "h-[50dvh] min-h-[300px]"
+    else if (desktopSize === "classic") mobileClass = "aspect-[1/1]"
+    else if (desktopSize === "portrait") mobileClass = "aspect-[3/4]"
+    else if (desktopSize === "square") mobileClass = "aspect-[1/1]"
+    else mobileClass = "aspect-[3/4]"
   }
+
+  // Desktop classes
+  let desktopClass = "md:aspect-[32/10]"
+  if (desktopSize === "natural") {
+    desktopClass = "md:h-auto md:min-h-[300px] md:aspect-auto"
+  } else if (desktopSize === "full") {
+    desktopClass = "md:h-[100dvh] md:min-h-[500px] md:aspect-auto"
+  } else if (desktopSize === "half") {
+    desktopClass = "md:h-[50dvh] md:min-h-[350px] md:aspect-auto"
+  } else if (desktopSize === "cinematic") {
+    desktopClass = "md:aspect-[21/9] md:h-auto"
+  } else if (desktopSize === "landscape") {
+    desktopClass = "md:aspect-[16/9] md:h-auto"
+  } else if (desktopSize === "classic") {
+    desktopClass = "md:aspect-[4/3] md:h-auto"
+  } else if (desktopSize === "square") {
+    desktopClass = "md:aspect-[1/1] md:h-auto"
+  } else if (desktopSize === "portrait") {
+    desktopClass = "md:aspect-[3/4] md:h-auto"
+  } else if (desktopSize === "editorial") {
+    desktopClass = "md:aspect-[32/10] md:h-auto"
+  }
+
+  const customDesktop = desktopSize === "custom" ? parseBannerDimension(data.customDesktopHeight) : null
+  const customMobile = mobileSize === "custom" ? parseBannerDimension(data.customMobileHeight) : null
 
   const fitClass = data.fit === "contain" ? "object-contain bg-black" : data.fit === "scale-down" ? "object-scale-down bg-black" : "object-cover"
   const posClass = data.position || "object-center"
 
+  const containerBaseClass = `relative block w-full overflow-hidden bg-neutral-900 ${mobileSize !== "custom" ? mobileClass : ""} ${desktopSize !== "custom" ? desktopClass : ""}`
+
+  const dynamicId = `banner-block-${block.id}`
+
   const InnerContent = () => (
     <>
-      <picture className="block w-full h-full">
+      <picture className="absolute inset-0 block w-full h-full">
         {data.imageMobileUrl && (
           <source media="(max-width: 767px)" srcSet={data.imageMobileUrl} />
         )}
@@ -383,6 +474,7 @@ function CMSBannerBlock({ block }: { block: any }) {
           src={data.imageUrl}
           alt={data.title || "Banner"}
           className={`w-full h-full ${fitClass} ${posClass}`}
+          loading="eager"
         />
       </picture>
       <div className="absolute inset-0 bg-black/25 group-hover:bg-black/35 transition-colors duration-500 pointer-events-none" />
@@ -414,13 +506,27 @@ function CMSBannerBlock({ block }: { block: any }) {
   )
 
   return (
-    <Section id={`banner-block-${block.id}`} padding="none" className="bg-background select-none w-screen overflow-hidden">
+    <Section id={dynamicId} padding="none" className="bg-background select-none w-screen overflow-hidden">
+      {(customMobile || customDesktop) && (
+        <style>{`
+          #${dynamicId} .banner-inner-box {
+            ${customMobile?.styleKey === 'height' ? `height: ${customMobile.cssValue} !important; min-height: ${customMobile.cssValue} !important;` : ''}
+            ${customMobile?.styleKey === 'aspectRatio' ? `aspect-ratio: ${customMobile.cssValue} !important;` : ''}
+          }
+          @media (min-width: 768px) {
+            #${dynamicId} .banner-inner-box {
+              ${customDesktop?.styleKey === 'height' ? `height: ${customDesktop.cssValue} !important; min-height: ${customDesktop.cssValue} !important; aspect-ratio: auto !important;` : ''}
+              ${customDesktop?.styleKey === 'aspectRatio' ? `aspect-ratio: ${customDesktop.cssValue} !important; height: auto !important; min-height: 0 !important;` : ''}
+            }
+          }
+        `}</style>
+      )}
       {data.linkUrl ? (
-        <Link href={data.linkUrl} className={`group ${containerClass}`}>
+        <Link href={data.linkUrl} className={`group banner-inner-box ${containerBaseClass}`}>
           <InnerContent />
         </Link>
       ) : (
-        <div className={containerClass}>
+        <div className={`banner-inner-box ${containerBaseClass}`}>
           <InnerContent />
         </div>
       )}

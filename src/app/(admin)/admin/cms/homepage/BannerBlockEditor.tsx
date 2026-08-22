@@ -20,7 +20,10 @@ interface BannerItem {
     linkText?: string
     linkUrl: string
     isActive?: boolean
-    size?: "editorial" | "full" | "natural" | "half" | "cinematic" | "landscape" | "classic" | "portrait"
+    size?: "editorial" | "full" | "natural" | "half" | "cinematic" | "landscape" | "classic" | "square" | "portrait" | "custom"
+    customDesktopHeight?: string
+    mobileSize?: "auto" | "portrait" | "standard-portrait" | "square" | "story" | "half" | "full" | "natural" | "custom"
+    customMobileHeight?: string
     fit?: "cover" | "contain" | "scale-down"
     position?: "object-center" | "object-top" | "object-bottom" | "object-left" | "object-right"
   }
@@ -68,6 +71,7 @@ export default function BannerBlockEditor({
         linkUrl: "/collections",
         isActive: true,
         size: "editorial",
+        mobileSize: "auto",
       },
     }
     const updated = [...activeBanners, newBanner]
@@ -147,28 +151,99 @@ export default function BannerBlockEditor({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Left Column: Media & Size */}
                   <div className="space-y-6">
-                    {/* Size & Fit Controls */}
+                    {/* Sizing Controls Header */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Desktop Sizing */}
                       <div className="space-y-1.5">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                          Banner Height / Container Size
+                          Desktop Size / Aspect Ratio
                         </Label>
                         <select
                           value={data.size || "editorial"}
                           onChange={(e) => updateBannerData(banner.id, { size: e.target.value as any })}
                           className="w-full h-10 px-3 bg-surface border border-border focus:outline-none focus:ring-1 focus:ring-text-primary text-body-sm"
                         >
-                          <option value="full">Full Screen Height (100dvh)</option>
-                          <option value="natural">Natural Image Height (Zero Crop)</option>
-                          <option value="half">Half Screen Height (50dvh)</option>
                           <option value="editorial">Wide Editorial Aspect Ratio (32:10)</option>
                           <option value="cinematic">Cinematic Aspect Ratio (21:9)</option>
                           <option value="landscape">Standard Landscape (16:9)</option>
                           <option value="classic">Classic Aspect Ratio (4:3)</option>
+                          <option value="square">Square Ratio (1:1)</option>
                           <option value="portrait">Tall Portrait (3:4)</option>
+                          <option value="half">Half Screen Height (50dvh)</option>
+                          <option value="full">Full Screen Height (100dvh)</option>
+                          <option value="natural">Natural Image Height (Zero Crop)</option>
+                          <option value="custom">⚙️ Custom Manual Size (px / vh / ratio)</option>
                         </select>
                       </div>
 
+                      {/* Mobile Sizing */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                          Mobile Size / Aspect Ratio
+                        </Label>
+                        <select
+                          value={data.mobileSize || "auto"}
+                          onChange={(e) => updateBannerData(banner.id, { mobileSize: e.target.value as any })}
+                          className="w-full h-10 px-3 bg-surface border border-border focus:outline-none focus:ring-1 focus:ring-text-primary text-body-sm"
+                        >
+                          <option value="auto">Auto (Match Desktop Ratio)</option>
+                          <option value="portrait">Tall Portrait (3:4)</option>
+                          <option value="standard-portrait">Standard Mobile Portrait (4:5)</option>
+                          <option value="square">Square Ratio (1:1)</option>
+                          <option value="story">Full Mobile Story (9:16)</option>
+                          <option value="half">Half Screen Height (50dvh)</option>
+                          <option value="full">Full Screen Height (100dvh)</option>
+                          <option value="natural">Natural Image Height (Zero Crop)</option>
+                          <option value="custom">⚙️ Custom Manual Size (px / vh / ratio)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Conditional Manual Custom Size Inputs */}
+                    {(data.size === "custom" || data.mobileSize === "custom") && (
+                      <div className="p-3.5 bg-surface border border-dashed border-border/80 rounded-sm space-y-3">
+                        {data.size === "custom" && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between items-center">
+                              <Label className="text-[10px] font-bold uppercase tracking-wider text-text-primary">
+                                Desktop Custom Height / Ratio
+                              </Label>
+                              <span className="text-[9px] text-text-secondary/80">
+                                e.g. 550px, 70vh, 21/9, 600
+                              </span>
+                            </div>
+                            <Input
+                              value={data.customDesktopHeight || ""}
+                              onChange={(e) => updateBannerData(banner.id, { customDesktopHeight: e.target.value })}
+                              placeholder="e.g. 550px or 21/9 or 70vh"
+                              className="h-8 text-xs font-mono"
+                            />
+                          </div>
+                        )}
+
+                        {data.mobileSize === "custom" && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between items-center">
+                              <Label className="text-[10px] font-bold uppercase tracking-wider text-text-primary">
+                                Mobile Custom Height / Ratio
+                              </Label>
+                              <span className="text-[9px] text-text-secondary/80">
+                                e.g. 380px, 60vh, 4/5, 400
+                              </span>
+                            </div>
+                            <Input
+                              value={data.customMobileHeight || ""}
+                              onChange={(e) => updateBannerData(banner.id, { customMobileHeight: e.target.value })}
+                              placeholder="e.g. 380px or 4/5 or 60vh"
+                              className="h-8 text-xs font-mono"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Fit and Focal Point Controls */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
                           Image Fit Mode (Cropping)
@@ -183,23 +258,23 @@ export default function BannerBlockEditor({
                           <option value="scale-down">Original Unscaled Image</option>
                         </select>
                       </div>
-                    </div>
 
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                        Focal Point / Crop Alignment
-                      </Label>
-                      <select
-                        value={data.position || "object-center"}
-                        onChange={(e) => updateBannerData(banner.id, { position: e.target.value as any })}
-                        className="w-full h-10 px-3 bg-surface border border-border focus:outline-none focus:ring-1 focus:ring-text-primary text-body-sm"
-                      >
-                        <option value="object-center">Center Focus</option>
-                        <option value="object-top">Top Focus (Show Head & Face)</option>
-                        <option value="object-bottom">Bottom Focus (Show Feet & Hemline)</option>
-                        <option value="object-left">Left Align</option>
-                        <option value="object-right">Right Align</option>
-                      </select>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                          Focal Point / Crop Alignment
+                        </Label>
+                        <select
+                          value={data.position || "object-center"}
+                          onChange={(e) => updateBannerData(banner.id, { position: e.target.value as any })}
+                          className="w-full h-10 px-3 bg-surface border border-border focus:outline-none focus:ring-1 focus:ring-text-primary text-body-sm"
+                        >
+                          <option value="object-center">Center Focus (Recommended — Centers Model & Content)</option>
+                          <option value="object-top">Top Focus (Aligns to Top Edge)</option>
+                          <option value="object-bottom">Bottom Focus (Aligns to Bottom Edge)</option>
+                          <option value="object-left">Left Align</option>
+                          <option value="object-right">Right Align</option>
+                        </select>
+                      </div>
                     </div>
 
                     {/* Desktop Image */}
@@ -214,7 +289,11 @@ export default function BannerBlockEditor({
                       </div>
                       <div className="w-full aspect-[32/10] bg-surface-secondary border border-border rounded-sm overflow-hidden flex items-center justify-center relative">
                         {data.imageUrl ? (
-                          <img src={data.imageUrl} alt="Banner Desktop" className={`w-full h-full ${data.fit === "contain" ? "object-contain bg-black" : "object-cover"}`} />
+                          <img
+                            src={data.imageUrl}
+                            alt="Banner Desktop"
+                            className={`w-full h-full ${data.fit === "contain" ? "object-contain bg-black" : data.fit === "scale-down" ? "object-scale-down bg-black" : "object-cover"} ${data.position || "object-center"}`}
+                          />
                         ) : (
                           <ImageIcon className="w-8 h-8 text-text-secondary/30" />
                         )}
@@ -287,7 +366,11 @@ export default function BannerBlockEditor({
                       </Label>
                       <div className="w-full aspect-[3/4] max-w-[120px] bg-surface-secondary border border-border rounded-sm overflow-hidden flex items-center justify-center relative">
                         {data.imageMobileUrl ? (
-                          <img src={data.imageMobileUrl} alt="Banner Mobile" className="w-full h-full object-cover" />
+                          <img
+                            src={data.imageMobileUrl}
+                            alt="Banner Mobile"
+                            className={`w-full h-full ${data.fit === "contain" ? "object-contain bg-black" : "object-cover"} ${data.position || "object-center"}`}
+                          />
                         ) : (
                           <ImageIcon className="w-6 h-6 text-text-secondary/30" />
                         )}
@@ -414,9 +497,25 @@ export default function BannerBlockEditor({
       {croppingId && cropSource && (() => {
         const activeBanner = activeBanners.find((b) => b.id === croppingId)
         const getCropAspect = () => {
-          if (cropType === "mobile") return 3 / 4
-          if (!activeBanner) return 32 / 10
+          if (cropType === "mobile") {
+            const mSize = activeBanner?.data.mobileSize || "auto"
+            if (mSize === "square") return 1 / 1
+            if (mSize === "story") return 9 / 16
+            if (mSize === "standard-portrait") return 4 / 5
+            if (mSize === "portrait") return 3 / 4
+            if (mSize === "custom" && activeBanner?.data.customMobileHeight) {
+              const val = activeBanner.data.customMobileHeight.trim()
+              if (val.includes("/") || val.includes(":")) {
+                const parts = val.replace(":", "/").split("/").map(Number)
+                if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]) && parts[1] !== 0) {
+                  return parts[0] / parts[1]
+                }
+              }
+            }
+            return 3 / 4
+          }
           
+          if (!activeBanner) return 32 / 10
           const size = activeBanner.data.size || "editorial"
           switch (size) {
             case "full":
@@ -429,8 +528,21 @@ export default function BannerBlockEditor({
               return 16 / 9
             case "classic":
               return 4 / 3
+            case "square":
+              return 1 / 1
             case "portrait":
               return 3 / 4
+            case "custom":
+              if (activeBanner.data.customDesktopHeight) {
+                const val = activeBanner.data.customDesktopHeight.trim()
+                if (val.includes("/") || val.includes(":")) {
+                  const parts = val.replace(":", "/").split("/").map(Number)
+                  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]) && parts[1] !== 0) {
+                    return parts[0] / parts[1]
+                  }
+                }
+              }
+              return 21 / 9
             case "editorial":
             default:
               return 32 / 10

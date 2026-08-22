@@ -32,6 +32,12 @@ export interface BannerBlockData {
   linkText?: string
   linkUrl: string
   isActive?: boolean
+  size?: "editorial" | "full" | "natural" | "half" | "cinematic" | "landscape" | "classic" | "square" | "portrait" | "custom"
+  customDesktopHeight?: string
+  mobileSize?: "auto" | "portrait" | "standard-portrait" | "square" | "story" | "half" | "full" | "natural" | "custom"
+  customMobileHeight?: string
+  fit?: "cover" | "contain" | "scale-down"
+  position?: "object-center" | "object-top" | "object-bottom" | "object-left" | "object-right"
 }
 
 export type BlockType =

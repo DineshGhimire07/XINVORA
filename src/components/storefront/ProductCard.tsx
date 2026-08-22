@@ -92,7 +92,7 @@ export function ProductCard({
   }
   
   return (
-    <div className="group flex flex-col gap-2.5 text-left w-full relative">
+    <div className={`group flex flex-col text-left w-full relative ${hideName && hidePrice ? "" : "gap-2.5"}`}>
       {/* Visual Card Image container */}
       <div className="relative w-full aspect-[3/4] bg-[#ECEBE7] overflow-hidden select-none">
         <Link 
@@ -229,7 +229,7 @@ export function ProductCard({
       </div>
 
       {/* Product details row */}
-      {(!hideName || !hidePrice || !inStock) && (
+      {(!hideName || !hidePrice) && (
         <div className="flex flex-col gap-1 px-0.5 pt-1.5 mb-2">
           {(!hideName || !hidePrice) && (
             <div className="flex items-center justify-between text-[10px] tracking-wider text-text-primary">

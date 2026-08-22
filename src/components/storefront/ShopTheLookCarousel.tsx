@@ -209,14 +209,26 @@ export function ShopTheLookCarousel({
       )}
 
       {/* ── Sliding Track ── */}
-      <div className="relative">
-        {/* Left Arrow */}
+      <div className="relative group/track">
+        {/* Left Arrow (Ultra-Minimalist Editorial Chevron on Desktop, Hidden on Mobile) */}
         <button
           onClick={prev}
           aria-label="Previous look"
-          className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center rounded-full bg-surface/80 md:bg-surface backdrop-blur-xs text-text-primary hover:bg-surface-elevated border border-border shadow-xs hover:shadow-md transition-all cursor-pointer active:scale-90 w-9 h-9 md:w-12 md:h-12"
+          className="group/btn hidden md:flex absolute left-2 lg:left-6 top-1/2 -translate-y-1/2 z-30 items-center justify-center w-12 h-20 text-neutral-800/40 hover:text-neutral-900 transition-all duration-300 cursor-pointer bg-transparent border-0 select-none focus:outline-none"
         >
-          <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 text-text-primary" />
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="transition-transform duration-300 group-hover/btn:-translate-x-1 drop-shadow-xs"
+          >
+            <path d="m15 18-6-6 6-6" />
+          </svg>
         </button>
 
         {/* Sliding Area */}
@@ -291,13 +303,25 @@ export function ShopTheLookCarousel({
           </div>
         </div>
 
-        {/* Right Arrow */}
+        {/* Right Arrow (Ultra-Minimalist Editorial Chevron on Desktop, Hidden on Mobile) */}
         <button
           onClick={next}
           aria-label="Next look"
-          className="absolute right-3 md:right-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center rounded-full bg-surface/80 md:bg-surface backdrop-blur-xs text-text-primary hover:bg-surface-elevated border border-border shadow-xs hover:shadow-md transition-all cursor-pointer active:scale-90 w-9 h-9 md:w-12 md:h-12"
+          className="group/btn hidden md:flex absolute right-2 lg:right-6 top-1/2 -translate-y-1/2 z-30 items-center justify-center w-12 h-20 text-neutral-800/40 hover:text-neutral-900 transition-all duration-300 cursor-pointer bg-transparent border-0 select-none focus:outline-none"
         >
-          <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-text-primary" />
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="transition-transform duration-300 group-hover/btn:translate-x-1 drop-shadow-xs"
+          >
+            <path d="m9 18 6-6-6-6" />
+          </svg>
         </button>
       </div>
 

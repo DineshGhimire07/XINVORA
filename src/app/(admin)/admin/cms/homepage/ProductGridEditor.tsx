@@ -52,8 +52,8 @@ export default function ProductGridEditor({
 
   const handleAddProduct = (id: string) => {
     if (items.some((item) => item.productId === id)) return
-    if (items.length >= 10) {
-      alert("You can select a maximum of 10 products for the storefront arrivals grid.")
+    if (items.length >= 12) {
+      alert("You can select a maximum of 12 products (Desktop renders up to 12, Mobile renders the first 6).")
       return
     }
     updateSelection([...items, { productId: id, customImageUrl: null }])
@@ -130,7 +130,7 @@ export default function ProductGridEditor({
           Arrivals Grid Picker
         </h3>
         <p className="text-body-xs text-text-secondary/70 mt-1">
-          Select and arrange up to 10 products. These will render live on the storefront arrivals section.
+          Select and arrange up to 12 products (Desktop renders all 12, Mobile renders the first 6).
         </p>
       </div>
 

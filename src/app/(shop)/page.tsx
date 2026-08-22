@@ -8,6 +8,7 @@
  * to keep the markup prepared for content integration in Phase 3B.
  */
 
+import * as React from "react"
 import { Section } from "@/components/shared/section"
 import { Container } from "@/components/shared/container"
 import { HeroSlider } from "@/components/shop/HeroSlider"
@@ -31,8 +32,9 @@ import { db } from "@/db/client"
 
 import { CMSBlockRenderer } from "@/components/cms/BlockRenderer"
 
-import { findProductsByIds, findCollectionsByIds, findLookbookSlides } from "@/db/queries"
+import { findProductsByIds, findCollectionsByIds, findLookbookSlides, findRandomCatalogProducts } from "@/db/queries"
 import { ShopTheLookCarousel } from "@/components/storefront/ShopTheLookCarousel"
+import { ProductCard } from "@/components/storefront/ProductCard"
 
 export default async function HomePage() {
   const settingsQuery = await db.select().from(homepageSettings).limit(1)
@@ -135,6 +137,8 @@ export default async function HomePage() {
         }
         return null
       })}
+      {/* ── 7. Mixed Collection Showcase Section (Always at the last of homepage) ── */}
+      <RandomCollectionShowcaseSection />
     </>
   )
 }
@@ -281,45 +285,42 @@ function NewArrivalsSection({ settings }: { settings?: any }) {
   const items = Array.isArray(customItems) && customItems.length > 0 ? customItems : defaultItems
 
   return (
-    <Section id="new-arrivals" padding="none" className="bg-surface-warm border-b border-border py-24 select-none">
-      <Container>
-        {/* Title Block Above Grid */}
-        <div className="flex flex-col justify-start select-none mb-14">
-          <span className="text-[10px] font-bold tracking-[0.4em] text-text-secondary uppercase select-none opacity-80 mb-3 pl-2">
-            New Season
-          </span>
-          <h2 className="text-[2.2rem] md:text-[2.8rem] font-display font-light text-text-primary tracking-[0.2em] uppercase leading-none whitespace-nowrap pl-2">
-            New Arrivals
-          </h2>
-        </div>
+    <Section id="new-arrivals" padding="none" className="bg-surface-warm select-none w-screen overflow-hidden">
+      {/* Title Block Above Grid */}
+      <div className="w-full px-4 sm:px-6 md:px-10 pt-8 md:pt-12 pb-4 md:pb-6 flex flex-col justify-start select-none">
+        <span className="text-[10px] md:text-xs font-bold tracking-[0.35em] text-text-secondary uppercase select-none opacity-80 mb-1.5">
+          New Season
+        </span>
+        <h2 className="text-[2rem] sm:text-[2.4rem] md:text-[3rem] font-display font-light text-text-primary tracking-[0.16em] uppercase leading-none whitespace-nowrap">
+          New Arrivals
+        </h2>
+      </div>
 
-        {/* 4-column dynamic grid on desktop, 2-column on mobile */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-1.5 gap-y-10 w-full px-0">
-
-          {/* Product Grid Items */}
-          {items.map((item) => (
-            <Link 
-              key={item.id} 
-              href={item.slug ? `/products/${item.slug}` : "/collections"} 
-              className="group flex flex-col relative pointer-events-auto gap-3.5"
-            >
-              {/* Aspect Ratio 3:4 container - edge-to-edge full bleed display */}
-              <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-100 flex items-center justify-center">
-                <Image
-                  src={item.image}
-                  alt={item.name}
-                  fill
-                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className="object-cover object-top select-none pointer-events-none transition-transform duration-700 ease-out group-hover:scale-105"
-                />
-              </div>
-
-
-            </Link>
-          ))}
-
-        </div>
-      </Container>
+      {/* Full-bleed, Zero White Space Product Grid */}
+      <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-0">
+        {items.slice(0, 12).map((item, index) => {
+          const isHiddenOnMobile = index >= 6
+          return (
+            <div key={item.id} className={`w-full ${isHiddenOnMobile ? "hidden md:block" : "block"}`}>
+              <Link 
+                href={item.slug ? `/products/${item.slug}` : "/collections"} 
+                className="group flex flex-col relative pointer-events-auto w-full"
+              >
+                {/* Aspect Ratio 3:4 container - edge-to-edge full bleed display */}
+                <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-100 flex items-center justify-center">
+                  <Image
+                    src={item.image}
+                    alt={item.name}
+                    fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                    className="object-cover object-top select-none pointer-events-none transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                </div>
+              </Link>
+            </div>
+          )
+        })}
+      </div>
     </Section>
   )
 }
@@ -349,6 +350,79 @@ function NewsletterSection() {
           <NewsletterForm />
         </Stack>
       </Container>
+    </Section>
+  )
+}
+
+// ── 7. Mixed Collection Showcase Section (At Last of Homepage) ───────────────
+async function RandomCollectionShowcaseSection() {
+  const randomProducts = await findRandomCatalogProducts(24)
+  if (!randomProducts || randomProducts.length === 0) return null
+
+  return (
+    <Section id="mixed-collection-showcase" padding="none" className="bg-background select-none w-screen overflow-hidden">
+      {/* Title Header */}
+      <div className="w-full px-4 sm:px-6 md:px-10 pt-12 md:pt-16 pb-6 md:pb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 select-none">
+        <div>
+          <span className="text-[10px] md:text-xs font-bold tracking-[0.35em] text-text-secondary uppercase select-none opacity-80 mb-1.5 block">
+            The Complete Edit
+          </span>
+          <h2 className="text-[2rem] sm:text-[2.4rem] md:text-[3rem] font-display font-light text-text-primary tracking-[0.16em] uppercase leading-none whitespace-nowrap">
+            Collection
+          </h2>
+        </div>
+        <Link
+          href="/collections"
+          className="text-[11px] font-bold uppercase tracking-[0.25em] text-text-primary hover:text-text-secondary flex items-center gap-2 transition-colors pb-1"
+        >
+          <span>Explore All Collections</span>
+          <span className="text-sm">→</span>
+        </Link>
+      </div>
+
+      {/* Full-bleed, Zero White Space Product Grid (4 items per row on Desktop, 2 on Mobile) */}
+      <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-0">
+        {randomProducts.map((product, index) => {
+          const itemColors = Array.from(
+            new Map(
+              (product.variants || [])
+                .filter((v: any) => v.color)
+                .map((v: any) => [v.color!.id, v.color!])
+            ).values()
+          ) as any[]
+
+          const itemSizes = Array.from(
+            new Map(
+              (product.variants || [])
+                .filter((v: any) => v.size)
+                .map((v: any) => [v.size!.id, v.size!])
+            ).values()
+          ).sort((a: any, b: any) => a.name.localeCompare(b.name, undefined, { numeric: true })) as any[]
+
+          const inStock = (product.variants || []).length > 0
+            ? (product.variants || []).some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)
+            : false
+
+          return (
+            <div key={product.id} className="w-full">
+              <ProductCard
+                product={product as any}
+                itemColors={itemColors}
+                itemSizes={itemSizes}
+                priority={index < 4}
+                isFirstInGrid={index === 0}
+                hideWishlist={false}
+                hidePrice={false}
+                hideName={false}
+                hideDiscountBadge={false}
+                disableHover={false}
+                objectContain={false}
+                inStock={inStock}
+              />
+            </div>
+          )
+        })}
+      </div>
     </Section>
   )
 }

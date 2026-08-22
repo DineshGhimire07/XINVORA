@@ -72,6 +72,94 @@ export async function findProductsByIds(ids: string[]) {
     })
 }
 
+export async function findRandomCatalogProducts(limit = 24) {
+  const items = await db.query.products.findMany({
+    where: and(
+      eq(products.status, "PUBLISHED"),
+      isNull(products.deletedAt)
+    ),
+    with: {
+      productImages: {
+        orderBy: (img, { asc }) => [asc(img.position)],
+        columns: { url: true, altText: true },
+      },
+      variants: {
+        where: (v, { eq, and, isNull }) => and(eq(v.isActive, true), isNull(v.deletedAt)),
+        with: {
+          color: true,
+          size: true,
+          inventory: true,
+        },
+      },
+    },
+    columns: { id: true, slug: true, name: true },
+  })
+
+  if (items.length === 0) return []
+
+  // Fetch prices for items
+  const productIds = items.map((i) => i.id)
+  let prices: any[] = []
+  if (productIds.length > 0) {
+    prices = await db
+      .select({
+        productId: variants.productId,
+        price: priceBookEntries.price,
+        compareAtPrice: priceBookEntries.compareAtPrice,
+      })
+      .from(variants)
+      .innerJoin(priceBookEntries, eq(variants.id, priceBookEntries.variantId))
+      .innerJoin(
+        priceBooks,
+        and(eq(priceBookEntries.priceBookId, priceBooks.id), eq(priceBooks.isDefault, true))
+      )
+      .where(
+        and(
+          inArray(variants.productId, productIds),
+          isNull(variants.deletedAt),
+          eq(variants.isActive, true)
+        )
+      )
+  }
+
+  // Fetch Off Section overlay
+  const { findOffSectionByProductIds } = await import("./off-section")
+  const offSectionMap =
+    productIds.length > 0 ? await findOffSectionByProductIds(productIds) : new Map()
+
+  const itemsWithPrices = items.map((item) => {
+    const itemPrices = prices.filter((p) => p.productId === item.id)
+    const lowestPrice =
+      itemPrices.length > 0 ? Math.min(...itemPrices.map((p) => p.price)) : null
+    const compareAtPrice =
+      itemPrices.length > 0
+        ? Math.min(
+            ...itemPrices
+              .map((p) => p.compareAtPrice)
+              .filter((p): p is number => p !== null)
+          )
+        : null
+    const offData = offSectionMap.get(item.id)
+
+    return {
+      ...item,
+      lowestPrice,
+      compareAtPrice:
+        compareAtPrice === Infinity || compareAtPrice === null ? null : compareAtPrice,
+      offSection: offData ?? null,
+    }
+  })
+
+  // Fisher-Yates shuffle to mix products across all collections randomly
+  const shuffled = [...itemsWithPrices]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+
+  return shuffled.slice(0, limit)
+}
+
 export async function findCollectionsByIds(ids: string[]) {
   if (!ids || ids.length === 0) return []
 
