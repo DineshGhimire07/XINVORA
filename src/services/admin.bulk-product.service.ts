@@ -15,6 +15,7 @@ import {
   productImages
 } from "@/db/schema"
 import { eq, sql, ilike } from "drizzle-orm"
+import { ProductImageMetadataService } from "@/domains/seo/services/product-image-metadata.service"
 
 export interface BulkProductItemInput {
   name: string
@@ -278,13 +279,31 @@ export class AdminBulkProductService {
             })
             .returning()
 
-          // 5. Create Images if provided
+          // 5. Create Images if provided with deterministic template resolution & metadata generation
           if (item.images && item.images.length > 0) {
-            await tx.insert(productImages).values(
-              item.images.map((url, idx) => ({
-                productId: newProduct.id,
+            const template = await ProductImageMetadataService.resolveProductImageTemplate(
+              newProduct,
+              [],
+              tx
+            )
+            const generated = ProductImageMetadataService.generateMetadataForProduct({
+              productName: newProduct.name,
+              productSlug: newProduct.slug,
+              images: item.images.map((url, idx) => ({
                 url: url.trim(),
-                position: idx
+                position: idx + 1,
+                altTextSource: "auto",
+              })),
+              template,
+            })
+            await tx.insert(productImages).values(
+              generated.map((img) => ({
+                productId: newProduct.id,
+                url: img.url,
+                position: img.position,
+                altText: img.altText,
+                altTextSource: img.altTextSource,
+                imageRole: img.imageRole,
               }))
             )
           }

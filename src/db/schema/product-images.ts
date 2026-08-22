@@ -6,6 +6,8 @@ export const productImages = pgTable("product_images", {
   productId: uuid("product_id").references(() => products.id, { onDelete: "cascade" }).notNull(),
   url: varchar("url", { length: 1024 }).notNull(),
   altText: varchar("alt_text", { length: 255 }),
+  altTextSource: varchar("alt_text_source", { length: 20 }).default("auto").notNull(), // "auto" | "manual"
+  imageRole: varchar("image_role", { length: 50 }), // Synchronized semantic role: e.g. "lifestyle", "front_closeup", "front", "back"
   position: integer("position").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [

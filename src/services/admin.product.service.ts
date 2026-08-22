@@ -19,7 +19,8 @@ import {
   wishlistItems,
   productOffSection,
 } from "@/db/schema"
-import { eq, ne, and, inArray, sql, or } from "drizzle-orm"
+import { eq, ne, and, inArray, sql, or, asc } from "drizzle-orm"
+import { ProductImageMetadataService } from "@/domains/seo/services/product-image-metadata.service"
 
 export interface CreateProductInput {
   name: string
@@ -65,13 +66,41 @@ export class AdminProductService {
         shortDescription: finalShortDesc
       }, tx)
 
-      // Handle images
-      if (images && images.length > 0) {
-        await tx.insert(productImages).values(
-          images.map((url: string, index: number) => ({
+      // Handle collections
+      if (collectionIds && collectionIds.length > 0) {
+        await tx.insert(productCollections).values(
+          collectionIds.map((cId: string) => ({
             productId: product.id,
+            collectionId: cId,
+          }))
+        )
+      }
+
+      // Handle images with deterministic template resolution & metadata generation
+      if (images && images.length > 0) {
+        const template = await ProductImageMetadataService.resolveProductImageTemplate(
+          product,
+          collectionIds,
+          tx
+        )
+        const generated = ProductImageMetadataService.generateMetadataForProduct({
+          productName: product.name,
+          productSlug: product.slug,
+          images: images.map((url: string, index: number) => ({
             url,
-            position: index,
+            position: index + 1,
+            altTextSource: "auto",
+          })),
+          template,
+        })
+        await tx.insert(productImages).values(
+          generated.map((img) => ({
+            productId: product.id,
+            url: img.url,
+            position: img.position,
+            altText: img.altText,
+            altTextSource: img.altTextSource,
+            imageRole: img.imageRole,
           }))
         )
       }
@@ -81,16 +110,6 @@ export class AdminProductService {
       const priceBookId = defaultPriceBook[0]?.id
       if (!priceBookId) {
         throw new Error("Default price book not found.")
-      }
-
-      // Handle collections
-      if (collectionIds && collectionIds.length > 0) {
-        await tx.insert(productCollections).values(
-          collectionIds.map((cId: string) => ({
-            productId: product.id,
-            collectionId: cId,
-          }))
-        )
       }
 
       // Handle materials
@@ -118,51 +137,49 @@ export class AdminProductService {
       const activeSizes = Object.keys(sizeStocks || {}).filter(sizeId => (sizeStocks || {})[sizeId] > 0)
       
       if (activeSizes.length > 0) {
-        const variantRows = activeSizes.map(sizeId => ({
-          productId: product.id,
-          sku: `${product.slug}-${sizeId.slice(0, 4)}-${crypto.randomUUID().slice(0, 8)}`,
-          sizeId,
-        }))
+        const newVariants = await tx.insert(variants).values(
+          activeSizes.map(sizeId => ({
+            productId: product.id,
+            sku: `${product.slug}-${sizeId.slice(0, 4)}`.toUpperCase(),
+            sizeId,
+          }))
+        ).returning()
 
-        const insertedVariants = await tx.insert(variants).values(variantRows).returning()
+        // Batch insert price book entries and inventory
+        await tx.insert(priceBookEntries).values(
+          newVariants.map(variant => ({
+            priceBookId,
+            variantId: variant.id,
+            price: Math.round(Number(basePrice) * 100),
+            compareAtPrice: compareAtPrice ? Math.round(Number(compareAtPrice) * 100) : null,
+          }))
+        )
 
-          const inventoryRows = insertedVariants.map(v => {
-            const quantity = (sizeStocks || {})[v.sizeId!] || 0
-            return {
-              variantId: v.id,
-              quantity,
-              status: (quantity > 0 ? "IN_STOCK" : "OUT_OF_STOCK") as "IN_STOCK" | "OUT_OF_STOCK"
-            }
-          })
-        await tx.insert(inventory).values(inventoryRows)
-
-        const priceRows = insertedVariants.map(v => ({
-          priceBookId: priceBookId,
-          variantId: v.id,
-          price: Math.round(Number(basePrice) * 100),
-          compareAtPrice: compareAtPrice ? Math.round(Number(compareAtPrice) * 100) : null,
-        }))
-        await tx.insert(priceBookEntries).values(priceRows)
+        await tx.insert(inventory).values(
+          newVariants.map(variant => ({
+            variantId: variant.id,
+            quantity: (sizeStocks || {})[variant.sizeId!] || 0,
+            lowStockThreshold: 2,
+          }))
+        )
       } else {
-        // Create single fallback base variant
-        const uniqueSuffix = crypto.randomUUID().slice(0, 8)
-        const [variant] = await tx.insert(variants).values({
+        // Fallback: create default non-sized variant
+        const [defaultVariant] = await tx.insert(variants).values({
           productId: product.id,
-          sku: `${product.slug}-base-${uniqueSuffix}`,
+          sku: `${product.slug}-DEFAULT`.toUpperCase(),
         }).returning()
 
-        const quantity = Number(stockQuantity) || 0
-        await tx.insert(inventory).values({
-          variantId: variant.id,
-          quantity,
-          status: quantity > 0 ? "IN_STOCK" : "OUT_OF_STOCK"
-        })
-
         await tx.insert(priceBookEntries).values({
-          priceBookId: priceBookId,
-          variantId: variant.id,
+          priceBookId,
+          variantId: defaultVariant.id,
           price: Math.round(Number(basePrice) * 100),
           compareAtPrice: compareAtPrice ? Math.round(Number(compareAtPrice) * 100) : null,
+        })
+
+        await tx.insert(inventory).values({
+          variantId: defaultVariant.id,
+          quantity: Number(stockQuantity) || 0,
+          lowStockThreshold: 2,
         })
       }
 
@@ -180,36 +197,70 @@ export class AdminProductService {
 
   static async updateProduct(id: string, data: UpdateProductInput, adminUserId: string) {
     return await db.transaction(async (tx) => {
-      // Validate slug uniqueness on update
+      // Validate slug uniqueness if changed
       if (data.slug) {
         const existing = await findProductBySlug(data.slug)
         if (existing && existing.id !== id) {
-          throw new Error("Slug already in use.")
+          throw new Error("Slug already in use by another product.")
         }
       }
 
       const { basePrice, compareAtPrice, stockQuantity, images, collectionIds, materialIds, pairedProductIds, sizeStocks, ...productData } = data
       const product = await updateProduct(id, productData, tx)
 
-      // Update images
-      await tx.delete(productImages).where(eq(productImages.productId, id))
-      if (images && images.length > 0) {
-        await tx.insert(productImages).values(
-          images.map((url: string, index: number) => ({
-            productId: id,
-            url,
-            position: index,
-          }))
-        )
-      }
-
-      // Update collections
+      // Update collections first so template resolution has current collection associations
       await tx.delete(productCollections).where(eq(productCollections.productId, id))
       if (collectionIds && collectionIds.length > 0) {
         await tx.insert(productCollections).values(
           collectionIds.map((cId: string) => ({
             productId: id,
             collectionId: cId,
+          }))
+        )
+      }
+
+      // Query existing image records to preserve any manual alt text (altTextSource = 'manual')
+      const existingImages = await tx.query.productImages.findMany({
+        where: eq(productImages.productId, id),
+        orderBy: [asc(productImages.position)],
+      })
+      const manualAltMap = new Map<string, string>()
+      existingImages.forEach((img: any) => {
+        if (img.altTextSource === "manual" && img.altText) {
+          manualAltMap.set(img.url, img.altText)
+        }
+      })
+
+      // Update images
+      await tx.delete(productImages).where(eq(productImages.productId, id))
+      if (images && images.length > 0) {
+        const template = await ProductImageMetadataService.resolveProductImageTemplate(
+          product,
+          collectionIds,
+          tx
+        )
+        const generated = ProductImageMetadataService.generateMetadataForProduct({
+          productName: product.name,
+          productSlug: product.slug,
+          images: images.map((url: string, index: number) => {
+            const manualAlt = manualAltMap.get(url)
+            return {
+              url,
+              position: index + 1,
+              altText: manualAlt || null,
+              altTextSource: manualAlt ? "manual" : "auto",
+            }
+          }),
+          template,
+        })
+        await tx.insert(productImages).values(
+          generated.map((img) => ({
+            productId: id,
+            url: img.url,
+            position: img.position,
+            altText: img.altText,
+            altTextSource: img.altTextSource,
+            imageRole: img.imageRole,
           }))
         )
       }

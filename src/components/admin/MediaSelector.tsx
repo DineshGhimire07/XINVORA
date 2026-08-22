@@ -5,7 +5,17 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { MediaUploader } from "@/components/admin/MediaUploader"
 
-export function MediaSelector({ mediaItems, selectedImages, onChange }: { mediaItems: any[], selectedImages: string[], onChange: (images: string[]) => void }) {
+export function MediaSelector({
+  mediaItems,
+  selectedImages,
+  onChange,
+  roleLabels,
+}: {
+  mediaItems: any[]
+  selectedImages: string[]
+  onChange: (images: string[]) => void
+  roleLabels?: string[]
+}) {
   const [isOpen, setIsOpen] = useState(false)
 
   const toggleImage = (url: string) => {
@@ -39,20 +49,26 @@ export function MediaSelector({ mediaItems, selectedImages, onChange }: { mediaI
             <span className="font-bold text-admin-text-secondary uppercase tracking-wider">
               Selected Product Photos ({selectedImages.length})
             </span>
-            <span className="text-[10px] text-amber-600 font-semibold">
-              ★ #1 photo is your Storefront Cover Image. Use Move Left / Right to reorder.
+            <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
+              ★ Roles follow position: #1 Cover, #2, #3, etc. Use ◀ Left / Right ▶ to reorder.
             </span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
-            {selectedImages.map((url, i) => (
-              <div key={i} className="flex flex-col gap-1">
-                <div className={`relative aspect-square border-2 group overflow-hidden bg-admin-content/20 rounded-admin-md ${i === 0 ? "border-amber-500 ring-2 ring-amber-500/20" : "border-admin-border"}`}>
-                  <Image src={url} alt="Selected" fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" />
-                  
-                  <span className={`absolute top-1.5 left-1.5 px-2 py-0.5 text-[9px] font-black uppercase rounded shadow-xs ${i === 0 ? "bg-amber-500 text-white" : "bg-black/70 text-white"}`}>
-                    {i === 0 ? "★ #1 Cover" : `#${i + 1}`}
-                  </span>
+            {selectedImages.map((url, i) => {
+              const roleLabel = roleLabels?.[i]
+              const badgeText = i === 0
+                ? `★ #1 ${roleLabel || "Cover"}`
+                : `#${i + 1} ${roleLabel || `Photo ${i + 1}`}`
+
+              return (
+                <div key={i} className="flex flex-col gap-1">
+                  <div className={`relative aspect-square border-2 group overflow-hidden bg-admin-content/20 rounded-admin-md ${i === 0 ? "border-amber-500 ring-2 ring-amber-500/20" : "border-admin-border"}`}>
+                    <Image src={url} alt="Selected" fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" />
+                    
+                    <span className={`absolute top-1.5 left-1.5 px-2 py-0.5 text-[9px] font-black uppercase rounded shadow-xs truncate max-w-[85%] ${i === 0 ? "bg-amber-500 text-white" : "bg-black/75 text-white"}`}>
+                      {badgeText}
+                    </span>
 
                   <button 
                     type="button" 
@@ -83,7 +99,7 @@ export function MediaSelector({ mediaItems, selectedImages, onChange }: { mediaI
                   </button>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         </div>
       )}

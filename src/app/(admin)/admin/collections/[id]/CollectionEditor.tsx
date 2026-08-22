@@ -2,8 +2,15 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createCollectionAction, updateCollectionAction, archiveCollectionAction, hardDeleteCollectionAction } from "@/actions/admin/collections.actions"
-import { Search, Image as ImageIcon } from "lucide-react"
+import { 
+  createCollectionAction, 
+  updateCollectionAction, 
+  archiveCollectionAction, 
+  hardDeleteCollectionAction,
+  saveCollectionTemplateAction 
+} from "@/actions/admin/collections.actions"
+import { SUPPORTED_IMAGE_ROLES } from "@/db/schema/collection-image-templates"
+import { Search, Image as ImageIcon, Plus, Trash2, ArrowUp, ArrowDown, Sparkles, Camera } from "lucide-react"
 import { uploadImage } from "@/lib/upload"
 import ImageCropperModal from "./ImageCropperModal"
 
@@ -12,17 +19,37 @@ export default function CollectionEditor({
   collections,
   allProducts = [],
   initialProductIds = [],
+  initialTemplate,
 }: {
   collection?: any
   collections?: any[]
   allProducts?: any[]
   initialProductIds?: string[]
+  initialTemplate?: any
 }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>(initialProductIds)
   const [searchQuery, setSearchQuery] = useState("")
+
+  // Photography Sequence Template State
+  const [templateName, setTemplateName] = useState(
+    initialTemplate?.name || (collection?.name ? `${collection.name} Photography Template` : "Standard Photography Template")
+  )
+  const [templateActive, setTemplateActive] = useState<boolean>(initialTemplate?.isActive ?? true)
+  const [templateRoles, setTemplateRoles] = useState<{ position: number; role: string; label: string }[]>(
+    initialTemplate?.roles && initialTemplate.roles.length > 0
+      ? initialTemplate.roles
+      : [
+          { position: 1, role: "lifestyle", label: "Lifestyle" },
+          { position: 2, role: "front_closeup", label: "Front Close-Up" },
+          { position: 3, role: "front", label: "Front" },
+          { position: 4, role: "back", label: "Back" },
+        ]
+  )
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false)
+  const [templateMessage, setTemplateMessage] = useState<string | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(collection?.imageUrl || null)
   const [isUploading, setIsUploading] = useState(false)
   const [imageMobileUrl, setImageMobileUrl] = useState<string | null>(collection?.imageMobileUrl || null)
@@ -38,6 +65,64 @@ export default function CollectionEditor({
   const [bannerSource, setBannerSource] = useState<string | null>(null)
   const [isCroppingBanner, setIsCroppingBanner] = useState(false)
 
+  const handleAddRole = () => {
+    const nextPos = templateRoles.length + 1
+    const defaultRole = SUPPORTED_IMAGE_ROLES[0]
+    setTemplateRoles([
+      ...templateRoles,
+      { position: nextPos, role: defaultRole.role, label: defaultRole.label }
+    ])
+  }
+
+  const handleRemoveRole = (index: number) => {
+    const next = templateRoles.filter((_, idx) => idx !== index)
+    setTemplateRoles(next.map((r, i) => ({ ...r, position: i + 1 })))
+  }
+
+  const handleMoveRole = (index: number, direction: "up" | "down") => {
+    const targetIndex = direction === "up" ? index - 1 : index + 1
+    if (targetIndex < 0 || targetIndex >= templateRoles.length) return
+    const next = [...templateRoles]
+    const temp = next[index]
+    next[index] = next[targetIndex]
+    next[targetIndex] = temp
+    setTemplateRoles(next.map((r, i) => ({ ...r, position: i + 1 })))
+  }
+
+  const handleRoleChange = (index: number, newRoleKey: string) => {
+    const found = SUPPORTED_IMAGE_ROLES.find(r => r.role === newRoleKey)
+    const label = found ? found.label : newRoleKey
+    const next = [...templateRoles]
+    next[index] = { ...next[index], role: newRoleKey, label }
+    setTemplateRoles(next)
+  }
+
+  const handleSaveTemplateExplicit = async () => {
+    if (!collection?.id) {
+      alert("Please save the collection first before saving the photography template.")
+      return
+    }
+    setIsSavingTemplate(true)
+    setTemplateMessage(null)
+    try {
+      const res = await saveCollectionTemplateAction(collection.id, {
+        name: templateName,
+        isActive: templateActive,
+        roles: templateRoles.map((r, i) => ({ position: i + 1, role: r.role, label: r.label })),
+      })
+      if (res.success) {
+        setTemplateMessage("✓ Photography template saved & product image roles resynchronized!")
+        setTimeout(() => setTemplateMessage(null), 4000)
+      } else {
+        alert(res.error || "Failed to save template")
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to save template")
+    } finally {
+      setIsSavingTemplate(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
@@ -51,6 +136,14 @@ export default function CollectionEditor({
     let result
     if (collection) {
       result = await updateCollectionAction(collection.id, formData)
+      if (result.success) {
+        // Also save template configuration
+        await saveCollectionTemplateAction(collection.id, {
+          name: templateName,
+          isActive: templateActive,
+          roles: templateRoles.map((r, i) => ({ position: i + 1, role: r.role, label: r.label })),
+        }).catch(console.error)
+      }
     } else {
       result = await createCollectionAction(formData)
     }
@@ -585,6 +678,155 @@ export default function CollectionEditor({
                 <p className="text-[10px] text-admin-text-secondary/80 leading-relaxed">
                   Displays as the cinematic hero banner at the top of the individual collection page.
                 </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Photography Sequence Template Section */}
+        <div className="bg-admin-surface border border-admin-border rounded-admin-lg p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-admin-border pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <Camera className="w-5 h-5 text-admin-primary" />
+                <h2 className="text-admin-base font-semibold text-admin-text-primary">
+                  Photography Sequence & SEO Image Roles
+                </h2>
+              </div>
+              <p className="text-admin-xs text-admin-text-secondary mt-1">
+                Configure the standardized photography template for products in this collection. Products deterministically inherit semantic image roles and SEO alt text from this sequence.
+              </p>
+            </div>
+            
+            {collection?.id && (
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleSaveTemplateExplicit}
+                  disabled={isSavingTemplate}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-admin-xs font-bold uppercase tracking-wider bg-admin-primary text-admin-primary-on hover:bg-admin-primary/90 rounded-admin-md transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {isSavingTemplate ? "Syncing..." : "Save & Sync Roles"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {templateMessage && (
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-admin-xs font-semibold rounded-admin-md">
+              {templateMessage}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-admin-xs font-bold text-admin-text-primary uppercase tracking-wider">
+                  Ordered Photography Sequence ({templateRoles.length} Roles)
+                </label>
+                <button
+                  type="button"
+                  onClick={handleAddRole}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-admin-primary hover:underline uppercase tracking-wider cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add Role
+                </button>
+              </div>
+
+              <div className="space-y-2.5">
+                {templateRoles.map((roleItem, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-3 p-3 bg-admin-content/40 border border-admin-border rounded-admin-md"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-admin-surface border border-admin-border flex items-center justify-center font-bold text-admin-xs text-admin-text-secondary flex-shrink-0">
+                      #{idx + 1}
+                    </div>
+
+                    <div className="flex-1">
+                      <select
+                        value={roleItem.role}
+                        onChange={(e) => handleRoleChange(idx, e.target.value)}
+                        className="w-full bg-admin-surface border border-admin-border rounded-admin-md px-3 py-1.5 text-admin-sm text-admin-text-primary focus:outline-none focus:ring-1 focus:ring-admin-primary"
+                      >
+                        {SUPPORTED_IMAGE_ROLES.map((r) => (
+                          <option key={r.role} value={r.role}>
+                            {r.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => handleMoveRole(idx, "up")}
+                        className="p-1.5 text-admin-text-secondary hover:text-admin-text-primary disabled:opacity-30 rounded hover:bg-admin-surface cursor-pointer"
+                        title="Move Up"
+                      >
+                        <ArrowUp className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === templateRoles.length - 1}
+                        onClick={() => handleMoveRole(idx, "down")}
+                        className="p-1.5 text-admin-text-secondary hover:text-admin-text-primary disabled:opacity-30 rounded hover:bg-admin-surface cursor-pointer"
+                        title="Move Down"
+                      >
+                        <ArrowDown className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={templateRoles.length <= 1}
+                        onClick={() => handleRemoveRole(idx)}
+                        className="p-1.5 text-admin-status-danger-text hover:bg-red-500/10 rounded disabled:opacity-30 cursor-pointer"
+                        title="Delete Role"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Live SEO Metadata Preview */}
+            <div className="bg-admin-content/30 border border-admin-border rounded-admin-md p-4 space-y-3 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-1.5 text-admin-xs font-bold text-admin-text-primary uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  Live SEO Preview
+                </div>
+                <p className="text-[10px] text-admin-text-secondary mt-1">
+                  Simulated metadata for a product in this collection:
+                </p>
+
+                <div className="mt-3 space-y-2 text-[11px]">
+                  {templateRoles.map((r, i) => (
+                    <div key={i} className="p-2 bg-admin-surface border border-admin-border/60 rounded text-admin-text-secondary">
+                      <div className="font-semibold text-admin-text-primary text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                        Image #{i + 1} ➔ {r.label}
+                      </div>
+                      <div className="truncate text-admin-text-primary font-medium mt-0.5">
+                        {collection?.name || "Silk Corset"} Top - {r.label}
+                      </div>
+                      <div className="text-[9px] text-admin-text-secondary/70 truncate font-mono">
+                        {(collection?.slug || "silk-corset")}-top-{r.role.replace(/_/g, "-")}.webp
+                      </div>
+                    </div>
+                  ))}
+                  {templateRoles.length === 0 && (
+                    <div className="text-admin-text-secondary text-center py-4 text-[11px]">
+                      No roles configured. Products will use fallback "Photo N".
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="text-[9px] text-admin-text-secondary/80 border-t border-admin-border/60 pt-2.5">
+                🔒 100% Deterministic — Zero AI guessing. Position determines the exact role.
               </div>
             </div>
           </div>

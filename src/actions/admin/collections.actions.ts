@@ -93,6 +93,40 @@ export async function archiveCollectionAction(id: string) {
   }
 }
 
+export async function getCollectionTemplateAction(collectionId: string) {
+  try {
+    await SessionService.requireAdmin()
+    const template = await AdminCollectionService.getCollectionTemplate(collectionId)
+    return { success: true, data: template }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to fetch collection template" }
+  }
+}
+
+export async function saveCollectionTemplateAction(
+  collectionId: string,
+  templateData: {
+    name: string
+    description?: string
+    isActive?: boolean
+    roles: { position: number; role: string; label: string }[]
+  }
+) {
+  try {
+    const session = await SessionService.requireAdmin()
+    const template = await AdminCollectionService.saveCollectionTemplate(collectionId, templateData, session.id)
+
+    revalidateTag("collections", "default")
+    revalidatePath(`/admin/collections/${collectionId}`)
+    revalidatePath("/admin/products")
+    revalidatePath("/products")
+
+    return { success: true, data: template }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to save collection template" }
+  }
+}
+
 export async function hardDeleteCollectionAction(id: string) {
   try {
     const session = await SessionService.requireAdmin()

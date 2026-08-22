@@ -71,7 +71,7 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
             <div key={idx} className="relative w-full h-full flex-shrink-0 snap-start">
               <Image
                 src={optimizeCloudinaryUrl(img.url, { width: 900 })}
-                alt={img.altText || `${productName} image ${idx + 1}`}
+                alt={img.altText || `${productName} - Photo ${idx + 1}`}
                 fill
                 sizes="100vw"
                 className="object-cover object-top"
@@ -114,7 +114,7 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
 
           <Image
             src={optimizeCloudinaryUrl(activeImage.url, { width: 1200 })}
-            alt={activeImage.altText || `${productName} image ${activeIndex + 1}`}
+            alt={activeImage.altText || `${productName} - Photo ${activeIndex + 1}`}
             fill
             sizes="60vw"
             className="object-cover object-top transition-opacity duration-300"
@@ -140,7 +140,7 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
               >
                 <Image
                   src={optimizeCloudinaryUrl(img.url, { width: 250 })}
-                  alt={img.altText || `${productName} thumbnail ${originalIndex + 1}`}
+                  alt={img.altText || `${productName} - Photo ${originalIndex + 1}`}
                   fill
                   sizes="(max-width: 1024px) 15vw, 10vw"
                   loading="lazy"

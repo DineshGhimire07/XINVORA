@@ -25,6 +25,8 @@ export const products = pgTable("products", {
   shortDescription: text("short_description"),
   categoryId: uuid("category_id").references(() => categories.id, { onDelete: "restrict" }).notNull(),
   brandId: uuid("brand_id").references(() => brands.id, { onDelete: "set null" }),
+  primaryCollectionId: uuid("primary_collection_id"), // Explicit primary collection for photography/SEO mapping
+  imageRoleTemplateId: uuid("image_role_template_id"), // Explicit product-level template override
   status: productStatusEnum("status").default("DRAFT").notNull(),
   seoTitle: varchar("seo_title", { length: 255 }),
   seoDescription: text("seo_description"),
@@ -35,6 +37,8 @@ export const products = pgTable("products", {
 }, (table) => [
   // Critical index for the PLP — "list all products in category X"
   index("products_category_id_idx").on(table.categoryId),
+  index("products_primary_collection_id_idx").on(table.primaryCollectionId),
+  index("products_image_role_template_id_idx").on(table.imageRoleTemplateId),
   // Index on status for admin filtering (only PUBLISHED products in storefront)
   index("products_status_idx").on(table.status),
   // GIN trigram indexes for performant full-text search

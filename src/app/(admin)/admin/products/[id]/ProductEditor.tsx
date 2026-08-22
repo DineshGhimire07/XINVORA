@@ -671,6 +671,7 @@ export default function ProductEditor({
             mediaItems={mediaItems || []}
             selectedImages={selectedImages}
             onChange={setSelectedImages}
+            roleLabels={["Lifestyle", "Front Close-Up", "Front", "Back", "Detail", "Side"]}
           />
         </div>
 

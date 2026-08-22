@@ -1,4 +1,5 @@
 import { SessionService } from "@/services/session.service"
+import { AdminCollectionService } from "@/services/admin.collection.service"
 import { notFound } from "next/navigation"
 import CollectionEditor from "./CollectionEditor"
 import { db } from "@/db/client"
@@ -66,6 +67,7 @@ export default async function AdminCollectionEditorPage(props: PageProps) {
     : db.select().from(collections).where(isNull(collections.deletedAt))
   
   const parentCollections = await collectionsQuery
+  const template = collection ? await AdminCollectionService.getCollectionTemplate(collection.id) : null
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -74,7 +76,7 @@ export default async function AdminCollectionEditorPage(props: PageProps) {
           {collection ? "Edit Collection" : "New Collection"}
         </h1>
         <p className="text-admin-sm text-admin-text-secondary mt-1">
-          Configure collection details, hierarchy, SEO settings, and select associated products.
+          Configure collection details, hierarchy, SEO settings, photography sequence template, and select associated products.
         </p>
       </div>
 
@@ -83,6 +85,7 @@ export default async function AdminCollectionEditorPage(props: PageProps) {
         collections={parentCollections}
         allProducts={activeProducts}
         initialProductIds={selectedProductIds}
+        initialTemplate={template}
       />
     </div>
   )

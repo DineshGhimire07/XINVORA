@@ -15,6 +15,7 @@ import { inventory } from "./inventory"
 import { variantImages } from "./variant-images"
 import { colors } from "./colors"
 import { collections } from "./collections"
+import { collectionImageRoleTemplates, collectionImageRoles } from "./collection-image-templates"
 import { sizes } from "./sizes"
 import { nepalProvinces } from "./nepal-provinces"
 import { nepalDistricts } from "./nepal-districts"
@@ -26,6 +27,7 @@ import { orderItems } from "./order-items"
 import { orderActivity } from "./order-activity"
 import { productOffSection } from "./product-off-section"
 import { journalCategories, journalTags, journalPostTags, journalPosts, journalRevisions, journalViews } from "./journal"
+
 export const collectionsRelations = relations(collections, ({ one, many }) => ({
   parent: one(collections, {
     fields: [collections.parentId],
@@ -36,7 +38,24 @@ export const collectionsRelations = relations(collections, ({ one, many }) => ({
     relationName: "collection_hierarchy",
   }),
   productCollections: many(productCollections),
+  imageRoleTemplates: many(collectionImageRoleTemplates),
 }))
+
+export const collectionImageRoleTemplatesRelations = relations(collectionImageRoleTemplates, ({ one, many }) => ({
+  collection: one(collections, {
+    fields: [collectionImageRoleTemplates.collectionId],
+    references: [collections.id],
+  }),
+  roles: many(collectionImageRoles),
+}))
+
+export const collectionImageRolesRelations = relations(collectionImageRoles, ({ one }) => ({
+  template: one(collectionImageRoleTemplates, {
+    fields: [collectionImageRoles.templateId],
+    references: [collectionImageRoleTemplates.id],
+  }),
+}))
+
 export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(categories, {
     fields: [products.categoryId],
@@ -45,6 +64,14 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   brand: one(brands, {
     fields: [products.brandId],
     references: [brands.id],
+  }),
+  primaryCollection: one(collections, {
+    fields: [products.primaryCollectionId],
+    references: [collections.id],
+  }),
+  imageRoleTemplate: one(collectionImageRoleTemplates, {
+    fields: [products.imageRoleTemplateId],
+    references: [collectionImageRoleTemplates.id],
   }),
   variants: many(variants),
   productImages: many(productImages),
