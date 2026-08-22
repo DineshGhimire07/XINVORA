@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, integer, jsonb, timestamp, index } from "drizzle-orm/pg-core"
+import { pgTable, uuid, varchar, integer, jsonb, timestamp, index, text } from "drizzle-orm/pg-core"
 import { users } from "./users"
 import { orderStatusEnum, paymentStatusEnum, currencyEnum } from "./enums"
 
@@ -32,7 +32,7 @@ export const orders = pgTable("orders", {
   // Payment info
   paymentProvider: varchar("payment_provider", { length: 100 }),
   paymentIntentId: varchar("payment_intent_id", { length: 255 }),
-  paymentProofUrl: varchar("payment_proof_url", { length: 1000 }),
+  paymentProofUrl: text("payment_proof_url"), // text (no length limit) — supports both URLs and base64 data URLs
   notes: varchar("notes", { length: 1000 }),
   invoicePrintedAt: timestamp("invoice_printed_at"),
   

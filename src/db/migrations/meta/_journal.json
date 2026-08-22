@@ -78,6 +78,13 @@
       "when": 1784485592993,
       "tag": "0010_far_zeigeist",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1753180800000,
+      "tag": "0011_cookie_consent",
+      "breakpoints": true
     }
   ]
 }

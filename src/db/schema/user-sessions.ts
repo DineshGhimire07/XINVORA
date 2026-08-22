@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, timestamp, index, uniqueIndex } from "drizzle-orm/pg-core"
+import { pgTable, uuid, varchar, timestamp, index } from "drizzle-orm/pg-core"
 import { users } from "./users"
 import { deviceTypeEnum } from "./enums"
 
@@ -29,5 +29,7 @@ export const userSessions = pgTable("user_sessions", {
 }, (table) => [
   index("session_user_idx").on(table.userId),
   index("session_started_idx").on(table.startedAt),
-  uniqueIndex("session_key_uidx").on(table.sessionKey),
+  // NOTE: sessionKey uniqueness is enforced by the .unique() column constraint above.
+  // A separate uniqueIndex("session_key_uidx") was previously defined here and created
+  // a duplicate index in the database. Removed in fix/prod-stability-audit-2026-08-22.
 ])

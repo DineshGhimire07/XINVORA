@@ -10,6 +10,26 @@ const QUEUE_FLUSH_INTERVAL_MS = 2000
 const MAX_BATCH_SIZE = 50
 const MAX_RETRIES = 3
 
+/**
+ * Maximum wall-clock time (in ms) allowed for a single analytics event attempt.
+ *
+ * Implemented as `SET LOCAL statement_timeout` inside the Drizzle transaction,
+ * which instructs the PostgreSQL server to cancel any statement that runs longer
+ * than this value. This is a genuine server-side cancellation — NOT a
+ * Promise.race() that abandons a still-running DB transaction.
+ *
+ * Why SET LOCAL (not SET):
+ *   SET LOCAL applies only to the current transaction and is automatically
+ *   rolled back when the transaction ends, leaving the connection clean for
+ *   the next caller from the shared pool.
+ *
+ * Why this is safe with postgres-js / Drizzle:
+ *   Drizzle's db.transaction() acquires a single connection from the pool,
+ *   opens a BEGIN block, and commits/rolls-back on exit. SET LOCAL runs
+ *   within that same BEGIN block so it is scoped correctly.
+ */
+const EVENT_ATTEMPT_TIMEOUT_MS = 5000
+
 class IngestionPipeline {
   private queue: AnalyticsQueue
   private isProcessing = false
@@ -95,6 +115,13 @@ class IngestionPipeline {
     const eventTime = event.createdAt ? new Date(event.createdAt) : new Date()
 
     await db.transaction(async (tx) => {
+      // Bound this entire transaction on the PostgreSQL server side.
+      // If any statement inside takes longer than EVENT_ATTEMPT_TIMEOUT_MS the
+      // server cancels the statement and raises an error, which propagates out
+      // of the transaction and is caught by the retry loop in processBatch().
+      // SET LOCAL ensures the timeout is scoped to this transaction only and
+      // does not persist on the pooled connection after commit/rollback.
+      await tx.execute(sql`SET LOCAL statement_timeout = ${EVENT_ATTEMPT_TIMEOUT_MS}`)
       // 1. Resolve or Create Session
       let session = await tx.query.userSessions.findFirst({
         where: eq(userSessions.sessionKey, event.sessionKey),
@@ -292,13 +319,25 @@ class IngestionPipeline {
   }
 }
 
-// Global Ingestion Pipeline Singleton
+// ── Global Ingestion Pipeline Singleton ────────────────────────────────────
+//
+// We must store the singleton on globalThis in ALL environments, not only in
+// development. Without this, every warm serverless module re-evaluation
+// (e.g. Vercel function re-import after a code-split boundary or a hot-path
+// import chain) would create a new IngestionPipeline instance and a new
+// setInterval worker. Multiple concurrent workers compete to update the same
+// user_sessions rows, producing the 16–105 s lock-wait times observed in
+// production Supabase logs.
+//
+// This pattern is identical to the one already used by src/db/client.ts.
 const globalForIngestion = globalThis as unknown as {
   __ingestionPipeline: IngestionPipeline | undefined
 }
 
-export const IngestionService = globalForIngestion.__ingestionPipeline ?? new IngestionPipeline()
+export const IngestionService =
+  globalForIngestion.__ingestionPipeline ?? new IngestionPipeline()
 
-if (process.env.NODE_ENV !== "production") {
-  globalForIngestion.__ingestionPipeline = IngestionService
-}
+// Store in globalThis for ALL environments (production + development).
+// Previously this was guarded with `!== "production"`, meaning production
+// deployments never cached the singleton and always created a new worker.
+globalForIngestion.__ingestionPipeline = IngestionService
