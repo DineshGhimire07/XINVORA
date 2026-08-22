@@ -101,7 +101,8 @@ export async function searchProducts(
           columns: { id: true, slug: true, name: true },
         },
         productImages: {
-          where: (img, { eq }) => eq(img.position, 0),
+          where: (img, { inArray }) => inArray(img.position, [1, 0]),
+          orderBy: (img, { asc }) => [asc(img.position)],
           limit: 1,
           columns: { url: true, altText: true, position: true },
         },

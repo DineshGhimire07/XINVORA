@@ -197,27 +197,31 @@ export async function attachImagesToExistingProductsAction(
     const { db } = await import("@/db/client")
     const { productImages } = await import("@/db/schema/product-images")
     const { eq } = await import("drizzle-orm")
+    const { ProductImageMetadataService } = await import("@/domains/seo/services/product-image-metadata.service")
 
     for (const att of attachments) {
-      // Find current max position
+      // Find current max position (1-indexed)
       const existing = await db
         .select()
         .from(productImages)
         .where(eq(productImages.productId, att.productId))
 
-      let maxPos = existing.reduce((max, img) => Math.max(max, img.position || 0), -1)
+      let maxPos = existing.reduce((max, img) => Math.max(max, img.position || 0), 0)
 
       const newRows = att.imageUrls.map((url) => {
         maxPos++
         return {
           productId: att.productId,
           url: url.trim(),
-          position: maxPos
+          position: maxPos,
+          altTextSource: "auto" as const,
         }
       })
 
       if (newRows.length > 0) {
         await db.insert(productImages).values(newRows)
+        // Automatically sync roles and SEO metadata for newly attached images
+        await ProductImageMetadataService.syncProductImagesMetadata(att.productId)
       }
     }
 

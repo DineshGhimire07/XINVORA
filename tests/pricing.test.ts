@@ -34,6 +34,16 @@ describe("PricingService", () => {
     expect(discount).toBe(500)
   })
 
+  it("caps fixed amount discount if it exceeds subtotal", () => {
+    const coupon = {
+      discountType: "FIXED_AMOUNT" as const,
+      discountValue: 2500,
+    }
+    const subtotal = 1000
+    const discount = PricingService.calculateDiscountAmount(coupon, subtotal)
+    expect(discount).toBe(1000)
+  })
+
   it("calculates shipping costs in paisa based on total item count", () => {
     expect(PricingService.calculateTieredShipping(1)).toBe(20000)
   })

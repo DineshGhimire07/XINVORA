@@ -15,13 +15,16 @@ export class PricingService {
    * Respects maximum discount constraints for percentage-based coupons.
    */
   static calculateDiscountAmount(coupon: any, subtotal: number): number {
+    if (!coupon || subtotal <= 0) return 0
+
     if (coupon.discountType === "FIXED_AMOUNT") {
-      return coupon.discountValue
+      return Math.min(coupon.discountValue, subtotal)
     } else if (coupon.discountType === "PERCENTAGE") {
       const rawDiscount = Math.floor(subtotal * (coupon.discountValue / 100))
-      return coupon.maxDiscountAmount 
+      const capped = coupon.maxDiscountAmount 
         ? Math.min(rawDiscount, coupon.maxDiscountAmount)
         : rawDiscount
+      return Math.min(capped, subtotal)
     }
     return 0
   }
