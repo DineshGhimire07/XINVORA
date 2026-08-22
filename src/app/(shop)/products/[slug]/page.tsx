@@ -43,8 +43,9 @@ export async function generateMetadata({
   const product = await findProductBySlug(slug)
   if (!product) return buildMetadata({ title: "Product Not Found" })
   return buildMetadata({
-    title: product.name,
-    description: product.description || `Discover the ${product.name} at XINVORA.`,
+    title: product.seoTitle || product.name,
+    description: product.seoDescription || product.shortDescription || product.description || `Discover the ${product.name} at XINVORA.`,
+    keywords: product.seoKeywords ? product.seoKeywords.split(",").map((k) => k.trim()).filter(Boolean) : undefined,
   })
 }
 

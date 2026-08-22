@@ -8,6 +8,7 @@ export interface GeneratedAiContent {
   virtualTryonPrompt: string
   seoTitle: string
   seoDescription: string
+  seoKeywords: string
 }
 
 const LUXURY_OPENERS = [
@@ -140,6 +141,25 @@ export class AiContentEngine {
       if (seoDescription.length > 160) seoDescription = seoDescription.slice(0, 157) + "..."
     }
 
+    // 11. SEO Keywords & Search Tags
+    const baseKeywords = [
+      trimmedName.toLowerCase(),
+      `${trimmedName.toLowerCase()} nepal`,
+      `buy ${trimmedName.toLowerCase()} online`,
+      `luxury ${lowerCat}`,
+      `${lowerCat} in nepal`,
+      `designer ${lowerCat}`,
+      `xinvora ${lowerCat}`,
+      "xinvora nepal",
+      "nepal luxury fashion",
+      "contemporary clothing kathmandu"
+    ]
+    if (materialsDetected.length > 0) {
+      baseKeywords.push(`${materialsDetected[0].toLowerCase()} ${lowerCat}`)
+      baseKeywords.push(`luxury ${materialsDetected[0].toLowerCase()} clothing`)
+    }
+    const seoKeywords = Array.from(new Set(baseKeywords)).join(", ")
+
     return {
       slug,
       shortDescription,
@@ -150,6 +170,7 @@ export class AiContentEngine {
       virtualTryonPrompt,
       seoTitle,
       seoDescription,
+      seoKeywords,
     }
   }
 }

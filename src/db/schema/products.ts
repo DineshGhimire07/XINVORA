@@ -28,6 +28,7 @@ export const products = pgTable("products", {
   status: productStatusEnum("status").default("DRAFT").notNull(),
   seoTitle: varchar("seo_title", { length: 255 }),
   seoDescription: text("seo_description"),
+  seoKeywords: text("seo_keywords"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   deletedAt: timestamp("deleted_at"),

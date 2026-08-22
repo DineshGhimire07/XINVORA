@@ -72,6 +72,7 @@ export default function ProductEditor({
   const [originalPrice, setOriginalPrice] = useState<string>(product?.compareAtPrice || "")
   const [seoTitle, setSeoTitle] = useState<string>(product?.seoTitle || "")
   const [seoDesc, setSeoDesc] = useState<string>(product?.seoDescription || "")
+  const [seoKeywords, setSeoKeywords] = useState<string>(product?.seoKeywords || "")
   const nameRef = useRef<HTMLInputElement>(null)
   const categoryRef = useRef<HTMLSelectElement>(null)
 
@@ -82,6 +83,7 @@ export default function ProductEditor({
     const gen = AiContentEngine.generateContent(name, cat)
     setSeoTitle(gen.seoTitle)
     setSeoDesc(gen.seoDescription)
+    setSeoKeywords(gen.seoKeywords)
   }
 
   const handleAddCategory = async () => {
@@ -811,6 +813,38 @@ export default function ProductEditor({
               />
               {seoDesc.length >= 140 && seoDesc.length <= 160 && (
                 <span className="text-[10px] text-green-600 font-semibold">✓ Perfect length for Google</span>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="seoKeywords" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+                SEO Keywords & Search Tags
+                <span className="ml-2 text-admin-text-tertiary font-normal lowercase">(comma-separated)</span>
+              </label>
+              <input
+                id="seoKeywords"
+                type="text"
+                name="seoKeywords"
+                value={seoKeywords}
+                onChange={(e) => setSeoKeywords(e.target.value)}
+                placeholder="e.g. silk wrap dress, luxury evening dress, buy dress online nepal, party wear"
+                className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
+              />
+              {seoKeywords && (
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {seoKeywords.split(",").map((k, i) => {
+                    const tag = k.trim()
+                    if (!tag) return null
+                    return (
+                      <span
+                        key={i}
+                        className="inline-flex items-center px-2 py-0.5 bg-admin-content border border-admin-border text-admin-text-secondary text-[11px] rounded-full"
+                      >
+                        #{tag}
+                      </span>
+                    )
+                  })}
+                </div>
               )}
             </div>
           </div>

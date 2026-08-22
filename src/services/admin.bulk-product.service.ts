@@ -33,6 +33,7 @@ export interface BulkProductItemInput {
   virtualTryonPrompt?: string | null
   seoTitle?: string | null
   seoDescription?: string | null
+  seoKeywords?: string | null
   images?: string[]
   status?: "DRAFT" | "PUBLISHED" | "ARCHIVED"
 }
@@ -228,6 +229,10 @@ export class AdminBulkProductService {
             ? item.seoDescription.trim()
             : aiGenerated.seoDescription
 
+          const finalSeoKeywords = item.seoKeywords && item.seoKeywords.trim()
+            ? item.seoKeywords.trim()
+            : aiGenerated.seoKeywords
+
           // 2. Resolve Category & Brand IDs
           const categoryId = await resolveCategory(item.categoryName)
           const brandId = await resolveBrand(item.brandName)
@@ -268,7 +273,8 @@ export class AdminBulkProductService {
               brandId: brandId,
               status: productStatus,
               seoTitle: finalSeoTitle,
-              seoDescription: finalSeoDescription
+              seoDescription: finalSeoDescription,
+              seoKeywords: finalSeoKeywords
             })
             .returning()
 
