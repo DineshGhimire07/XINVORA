@@ -70,8 +70,11 @@ export async function uploadLocalFileAction(formData: FormData) {
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    // Run the automatic trimming and padding pipeline
-    const processedBuffer = await processProductImage(buffer)
+    const isProductCatalog = formData.get("purpose") === "product" || formData.get("autoPad") === "true"
+    const skipPadding = formData.get("skipPadding") === "true" || !isProductCatalog
+
+    // Only run the 3:4 product garment padding pipeline for product catalog uploads
+    const processedBuffer = skipPadding ? buffer : await processProductImage(buffer)
 
     // Safely resolve width and height metadata
     let width: number | undefined = undefined
