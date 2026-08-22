@@ -12,6 +12,7 @@ export interface OptimizeImageOptions {
   quality?: "auto" | "auto:good" | "auto:eco" | "auto:best" | number
   format?: "auto" | "webp" | "avif" | "jpg"
   crop?: "limit" | "fill" | "thumb" | "crop"
+  dpr?: "auto" | number
 }
 
 /**
@@ -44,9 +45,14 @@ export function optimizeCloudinaryUrl(
     quality = "auto:good",
     format = "auto",
     crop = "limit",
+    dpr,
   } = options
 
   const transforms: string[] = [`f_${format}`, `q_${quality}`]
+
+  if (dpr) {
+    transforms.push(`dpr_${dpr}`)
+  }
 
   if (width) {
     transforms.push(`w_${width}`)

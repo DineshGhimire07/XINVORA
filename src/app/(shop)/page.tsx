@@ -100,10 +100,10 @@ export default async function HomePage() {
   // Extract primary hero slide images for instant HTML preloading
   const firstHeroSlide = (heroBlock?.data as any)?.slides?.[0]
   const preloadHeroDesktop = firstHeroSlide?.imageDesktopUrl
-    ? optimizeCloudinaryUrl(firstHeroSlide.imageDesktopUrl, { width: 1920 })
+    ? optimizeCloudinaryUrl(firstHeroSlide.imageDesktopUrl, { width: 2560, quality: "auto:best", dpr: "auto" })
     : null
   const preloadHeroMobile = firstHeroSlide?.imageMobileUrl
-    ? optimizeCloudinaryUrl(firstHeroSlide.imageMobileUrl, { width: 1080 })
+    ? optimizeCloudinaryUrl(firstHeroSlide.imageMobileUrl, { width: 1200, quality: "auto:best", dpr: "auto" })
     : null
 
   return (

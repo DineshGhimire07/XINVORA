@@ -278,8 +278,8 @@ function CMSHeroCarousel({ block }: { block: any }) {
             {(() => {
               const isZebraImage = desktopSrc?.includes("WA10263P65") || desktopSrc?.includes("16x9");
               const isFirstSlide = currentIndex === 0;
-              const optDesktop = desktopSrc ? optimizeCloudinaryUrl(desktopSrc, { width: 1920 }) : null;
-              const optMobile = mobileSrc ? optimizeCloudinaryUrl(mobileSrc, { width: 1080 }) : null;
+              const optDesktop = desktopSrc ? optimizeCloudinaryUrl(desktopSrc, { width: 2560, quality: "auto:best", dpr: "auto" }) : null;
+              const optMobile = mobileSrc ? optimizeCloudinaryUrl(mobileSrc, { width: 1200, quality: "auto:best", dpr: "auto" }) : null;
 
               return currentSlide.redirectUrl ? (
                 <Link href={currentSlide.redirectUrl} className="relative block w-full h-full cursor-pointer overflow-hidden">
@@ -358,12 +358,12 @@ function CMSHeroCarousel({ block }: { block: any }) {
         <div className="hidden" aria-hidden="true">
           {slides.map((s: any, idx: number) => {
             if (idx === currentIndex) return null;
-            const d = s.imageUrlDesktop || s.imageUrl;
-            const m = s.imageUrlMobile || s.imageUrl;
+            const d = s.imageDesktopUrl || s.imageUrlDesktop || s.imageUrl;
+            const m = s.imageMobileUrl || s.imageUrlMobile || s.imageUrl;
             return (
               <React.Fragment key={idx}>
-                {d && <img src={optimizeCloudinaryUrl(d, { width: 1920 })} alt="" fetchPriority="low" loading="lazy" />}
-                {m && <img src={optimizeCloudinaryUrl(m, { width: 1080 })} alt="" fetchPriority="low" loading="lazy" />}
+                {d && <img src={optimizeCloudinaryUrl(d, { width: 2560, quality: "auto:best", dpr: "auto" })} alt="" fetchPriority="low" loading="lazy" />}
+                {m && <img src={optimizeCloudinaryUrl(m, { width: 1200, quality: "auto:best", dpr: "auto" })} alt="" fetchPriority="low" loading="lazy" />}
               </React.Fragment>
             );
           })}
