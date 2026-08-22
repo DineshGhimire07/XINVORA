@@ -6,6 +6,7 @@ import { bulkUploadProductsAction, generateAiProductContentAction } from "@/acti
 import { getMediaLibraryItemsAction } from "@/actions/admin/media.actions"
 import { SmartAutoGroupModal } from "@/components/admin/SmartAutoGroupModal"
 import { BulkProductItemInput, BulkImportResult } from "@/services/admin.bulk-product.service"
+import { AiContentEngine } from "@/domains/seo/engines/ai-content.engine"
 import { cn } from "@/lib/utils"
 
 export default function BulkUploadClient() {
@@ -39,12 +40,12 @@ export default function BulkUploadClient() {
 
   // 1. Download Sample CSV Template
   const handleDownloadTemplate = () => {
-    const csvHeader = "Product Name,Category,Price,Sizes,Original Price,Badge,Brand,Short Description,Description\n"
+    const csvHeader = "Product Name,Category,Price,Sizes,Original Price,Badge,Brand,Short Description,Description,SEO Title,SEO Description\n"
     const sampleRows = [
-      `"Aurora Silk Wrap Dress","Dresses",150.00,"S:10, M:15, L:20, XL:5",200.00,"LIMITED EDITION","XINVORA","",""`,
-      `"Free Size Kaftan Dress","Dresses",120.00,"Free Size (Fits XS-M):25",,"NEW","XINVORA","",""`,
-      `"Boutique Kimono Dress","Dresses",160.00,"XS-M:1",,,"XINVORA","",""`,
-      `"Classic Cotton Shirt","Tops",85.00,"S:10, M:10, L:10",100.00,,"XINVORA","",""`
+      `"Aurora Silk Wrap Dress","Dresses",150.00,"S:10, M:15, L:20, XL:5",200.00,"LIMITED EDITION","XINVORA","","","Aurora Silk Wrap Dress | Exclusive Luxury Dresses - XINVORA","Shop the Aurora Silk Wrap Dress crafted from 100% mulberry silk with signature drape and tailored fit."`,
+      `"Free Size Kaftan Dress","Dresses",120.00,"Free Size (Fits XS-M):25",,"NEW","XINVORA","","","Free Size Kaftan Dress | Contemporary Bohemian Fashion - XINVORA","Discover the Free Size Kaftan Dress in premium breathable linen for effortless luxury styling."`,
+      `"Boutique Kimono Dress","Dresses",160.00,"XS-M:1",,,"XINVORA","","","Boutique Kimono Dress | Artisan Evening Wear - XINVORA","Handcrafted Kimono Dress with sculptural silhouette and bespoke embroidery detailing."`,
+      `"Classic Cotton Shirt","Tops",85.00,"S:10, M:10, L:10",100.00,,"XINVORA","","","Classic Cotton Shirt | Premium Tops Collection - XINVORA","Elevate your everyday wardrobe with our crisp tailored Classic Cotton Shirt in pure organic cotton."`
     ].join("\n")
 
     const blob = new Blob([csvHeader + sampleRows], { type: "text/csv;charset=utf-8;" })
@@ -115,7 +116,9 @@ export default function BulkUploadClient() {
     const badgeIdx = headers.findIndex((h) => h.includes("badge") || h.includes("tag"))
     const brandIdx = headers.findIndex((h) => h.includes("brand"))
     const shortDescIdx = headers.findIndex((h) => h.includes("short"))
-    const descIdx = headers.findIndex((h) => h.includes("description") && !h.includes("short"))
+    const descIdx = headers.findIndex((h) => h.includes("description") && !h.includes("short") && !h.includes("seo"))
+    const seoTitleIdx = headers.findIndex((h) => h.includes("seo title") || h.includes("meta title") || h.includes("seo_title") || h === "seo" || h === "title tag")
+    const seoDescIdx = headers.findIndex((h) => h.includes("seo desc") || h.includes("meta desc") || h.includes("seo_description") || h.includes("meta description"))
 
     const parsedItems: BulkProductItemInput[] = []
 
@@ -132,8 +135,13 @@ export default function BulkUploadClient() {
       const brandName = brandIdx !== -1 ? cells[brandIdx] || null : null
       const shortDescription = shortDescIdx !== -1 ? cells[shortDescIdx] || null : null
       const description = descIdx !== -1 ? cells[descIdx] || null : null
+      const seoTitle = seoTitleIdx !== -1 ? cells[seoTitleIdx] || null : null
+      const seoDescription = seoDescIdx !== -1 ? cells[seoDescIdx] || null : null
 
       if (name) {
+        // Auto-generate instant SEO title & description if not provided in CSV
+        const aiFallback = AiContentEngine.generateContent(name, categoryName || "Apparel")
+
         parsedItems.push({
           name,
           categoryName: categoryName || "Apparel",
@@ -142,8 +150,10 @@ export default function BulkUploadClient() {
           sizes,
           badge,
           brandName,
-          shortDescription,
-          description,
+          shortDescription: shortDescription || aiFallback.shortDescription,
+          description: description || aiFallback.description,
+          seoTitle: seoTitle || aiFallback.seoTitle,
+          seoDescription: seoDescription || aiFallback.seoDescription,
           status: "DRAFT"
         })
       }
@@ -221,6 +231,27 @@ export default function BulkUploadClient() {
       } else {
         setErrorMsg(res.error || "Failed to process bulk upload.")
       }
+    })
+  }
+
+  // Generate AI SEO and content for a single row
+  const handleGenerateRowAi = (index: number) => {
+    const item = items[index]
+    if (!item.name.trim()) {
+      alert("Please enter a product name first.")
+      return
+    }
+    const ai = AiContentEngine.generateContent(item.name, item.categoryName || "Apparel")
+    setItems((prev) => {
+      const next = [...prev]
+      next[index] = {
+        ...next[index],
+        shortDescription: ai.shortDescription,
+        description: ai.description,
+        seoTitle: ai.seoTitle,
+        seoDescription: ai.seoDescription,
+      }
+      return next
     })
   }
 
@@ -437,15 +468,17 @@ export default function BulkUploadClient() {
               <table className="w-full text-left text-admin-xs border-collapse">
                 <thead className="sticky top-0 bg-admin-content border-b border-admin-border font-bold uppercase tracking-wider text-admin-text-secondary z-10">
                   <tr>
-                    <th className="p-3 w-12 text-center">#</th>
-                    <th className="p-3 min-w-[180px]">Product Name *</th>
-                    <th className="p-3 min-w-[120px]">Category *</th>
-                    <th className="p-3 w-28">Price (NPR) *</th>
-                    <th className="p-3 min-w-[150px]">Sizes & Stock</th>
-                    <th className="p-3 min-w-[220px]">Short Description</th>
-                    <th className="p-3 min-w-[180px]">SEO Meta Title</th>
-                    <th className="p-3 w-20 text-center">Status</th>
-                    <th className="p-3 w-12 text-center">Action</th>
+                    <th className="p-3 w-10 text-center">#</th>
+                    <th className="p-3 min-w-[170px]">Product Name *</th>
+                    <th className="p-3 min-w-[110px]">Category *</th>
+                    <th className="p-3 w-24">Price (NPR) *</th>
+                    <th className="p-3 min-w-[140px]">Sizes & Stock</th>
+                    <th className="p-3 min-w-[180px]">Short Description</th>
+                    <th className="p-3 min-w-[170px]">SEO Meta Title</th>
+                    <th className="p-3 min-w-[200px]">SEO Meta Description</th>
+                    <th className="p-3 w-20 text-center">AI SEO</th>
+                    <th className="p-3 w-16 text-center">Status</th>
+                    <th className="p-3 w-10 text-center">Del</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-admin-border/60">
@@ -505,15 +538,13 @@ export default function BulkUploadClient() {
 
                         {/* Short Description */}
                         <td className="p-2">
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={item.shortDescription || ""}
-                              onChange={(e) => updateItemField(idx, "shortDescription", e.target.value)}
-                              placeholder="Auto-generated if left blank"
-                              className="w-full px-2.5 py-1.5 bg-admin-content border border-admin-border rounded-admin-sm text-admin-text-secondary text-[11px] focus:outline-none focus:border-admin-border-strong truncate"
-                            />
-                          </div>
+                          <input
+                            type="text"
+                            value={item.shortDescription || ""}
+                            onChange={(e) => updateItemField(idx, "shortDescription", e.target.value)}
+                            placeholder="Auto-generated if left blank"
+                            className="w-full px-2.5 py-1.5 bg-admin-content border border-admin-border rounded-admin-sm text-admin-text-secondary text-[11px] focus:outline-none focus:border-admin-border-strong truncate"
+                          />
                         </td>
 
                         {/* SEO Title */}
@@ -525,6 +556,29 @@ export default function BulkUploadClient() {
                             placeholder="Auto-generated SEO Title"
                             className="w-full px-2.5 py-1.5 bg-admin-content border border-admin-border rounded-admin-sm text-admin-text-secondary text-[11px] focus:outline-none focus:border-admin-border-strong truncate"
                           />
+                        </td>
+
+                        {/* SEO Description */}
+                        <td className="p-2">
+                          <input
+                            type="text"
+                            value={item.seoDescription || ""}
+                            onChange={(e) => updateItemField(idx, "seoDescription", e.target.value)}
+                            placeholder="Auto-generated SEO Description"
+                            className="w-full px-2.5 py-1.5 bg-admin-content border border-admin-border rounded-admin-sm text-admin-text-secondary text-[11px] focus:outline-none focus:border-admin-border-strong truncate"
+                          />
+                        </td>
+
+                        {/* Per-row AI Generate Button */}
+                        <td className="p-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleGenerateRowAi(idx)}
+                            className="px-2.5 py-1 bg-purple-600/10 hover:bg-purple-600 text-purple-600 hover:text-white border border-purple-600/30 rounded-admin-sm text-[10px] font-bold uppercase transition-colors"
+                            title="Auto-generate AI Description and SEO for this row"
+                          >
+                            ✨ AI
+                          </button>
                         </td>
 
                         {/* Status */}
