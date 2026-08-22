@@ -121,7 +121,9 @@ class IngestionPipeline {
       // of the transaction and is caught by the retry loop in processBatch().
       // SET LOCAL ensures the timeout is scoped to this transaction only and
       // does not persist on the pooled connection after commit/rollback.
-      await tx.execute(sql`SET LOCAL statement_timeout = ${EVENT_ATTEMPT_TIMEOUT_MS}`)
+      // Note: PostgreSQL SET/SET LOCAL does not support query parameter binding ($1),
+      // so sql.raw is required.
+      await tx.execute(sql.raw(`SET LOCAL statement_timeout = ${EVENT_ATTEMPT_TIMEOUT_MS}`))
       // 1. Resolve or Create Session
       let session = await tx.query.userSessions.findFirst({
         where: eq(userSessions.sessionKey, event.sessionKey),
