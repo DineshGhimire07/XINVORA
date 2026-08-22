@@ -65,19 +65,19 @@ function CMSCollectionGrid({ block, collections = [] }: { block: any; collection
   if (displayCollections.length === 0) return null
 
   return (
-    <Section id="featured-collections" padding="none" className="bg-background select-none">
-      {/* 4-box Editorial Collection Grid - full screen height, no gap, full bleed */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 h-[100dvh] w-full">
+    <Section id="featured-collections" padding="none" className="bg-neutral-950 select-none w-screen overflow-hidden p-0 m-0 border-0">
+      {/* 4-box Editorial Collection Grid - full screen height, zero gap, zero borders */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 h-[100dvh] w-full p-0 m-0 border-0">
         {displayCollections.map((collection: any, index: number) => {
-          const hasCover = !!collection.imageUrl
+          const hasCover = !!collection.imageUrl || !!collection.imageMobileUrl
           return (
             <Link
               key={collection.id}
               href={`/collections/${collection.slug}`}
-              className="group flex flex-col relative w-full h-full overflow-hidden"
+              className="group flex flex-col relative w-full h-full overflow-hidden p-0 m-0 border-0 bg-neutral-950"
             >
               {/* Visual Card Image container */}
-              <div className="relative w-full h-full bg-surface-secondary overflow-hidden select-none">
+              <div className="relative w-full h-full bg-neutral-950 overflow-hidden select-none p-0 m-0 border-0">
                 {hasCover ? (
                   <>
                     {collection.imageMobileUrl && (
@@ -85,19 +85,21 @@ function CMSCollectionGrid({ block, collections = [] }: { block: any; collection
                         src={collection.imageMobileUrl}
                         alt={collection.name}
                         fill
-                        sizes="50vw"
+                        sizes="(max-width: 768px) 50vw, 25vw"
                         priority={index < 2}
-                        className="block md:hidden object-cover transition-all duration-700 ease-out group-hover:scale-105"
+                        className="block md:hidden object-cover object-top transition-all duration-700 ease-out group-hover:scale-105"
                       />
                     )}
-                    <Image
-                      src={collection.imageUrl}
-                      alt={collection.name}
-                      fill
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                      priority={index < 2}
-                      className={`${collection.imageMobileUrl ? "hidden md:block" : "block"} object-cover transition-all duration-700 ease-out group-hover:scale-105`}
-                    />
+                    {collection.imageUrl && (
+                      <Image
+                        src={collection.imageUrl}
+                        alt={collection.name}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        priority={index < 2}
+                        className={`${collection.imageMobileUrl ? "hidden md:block" : "block"} object-cover object-top transition-all duration-700 ease-out group-hover:scale-105`}
+                      />
+                    )}
                   </>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-[10px] text-text-secondary uppercase select-none font-semibold">
@@ -109,7 +111,7 @@ function CMSCollectionGrid({ block, collections = [] }: { block: any; collection
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500" />
 
                 {/* Text Overlay Bottom Left */}
-                <div className="absolute bottom-8 left-8 right-8 flex items-center justify-between text-white z-10">
+                <div className="absolute bottom-6 md:bottom-8 left-6 md:left-8 right-6 md:right-8 flex items-center justify-between text-white z-10">
                   <span className="text-[11px] font-bold tracking-[0.2em] uppercase drop-shadow-md">
                     {collection.name}
                   </span>

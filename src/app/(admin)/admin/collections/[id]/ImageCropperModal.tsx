@@ -13,11 +13,12 @@ interface ImageCropperModalProps {
 }
 
 const PRESETS = [
-  { label: "9:16 (Phone)", value: 9 / 16 },
+  { label: "1:2 (Editorial 4-Box)", value: 1 / 2 },
+  { label: "9:16 (Phone Story)", value: 9 / 16 },
+  { label: "32:10 (Banner)", value: 32 / 10 },
   { label: "3:4 (Portrait)", value: 3 / 4 },
   { label: "1:1 (Square)", value: 1 / 1 },
   { label: "16:9 (Landscape)", value: 16 / 9 },
-  { label: "32:10 (Wide)", value: 32 / 10 },
 ]
 
 export default function ImageCropperModal({
@@ -29,7 +30,7 @@ export default function ImageCropperModal({
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [currentAspect, setCurrentAspect] = useState<number>(initialAspect)
-  const [objectFit, setObjectFit] = useState<"contain" | "cover">("contain")
+  const [objectFit, setObjectFit] = useState<"contain" | "cover">("cover")
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
   const [isSaving, setIsSaving] = useState(false)
 
