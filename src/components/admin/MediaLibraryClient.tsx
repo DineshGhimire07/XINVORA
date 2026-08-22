@@ -646,8 +646,15 @@ export function MediaLibraryClient({ initialItems }: { initialItems: MediaItem[]
                         </div>
                       </td>
                       <td className="px-3 py-2 max-w-xs">
-                        <p className="font-medium text-admin-text-primary truncate">{item.title}</p>
-                        <p className="text-admin-text-tertiary truncate text-[10px] mt-0.5">{item.url.slice(0, 55)}...</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="font-semibold text-admin-text-primary truncate">{item.title}</p>
+                          {(item as any).imageRole && (
+                            <span className="px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-[9px] font-bold uppercase rounded">
+                              {(item as any).imageRole.replace(/_/g, " ")}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-admin-text-tertiary truncate text-[10px] mt-0.5 font-mono">{item.url.slice(0, 55)}...</p>
                       </td>
                       <td className="px-3 py-2 text-admin-text-secondary whitespace-nowrap">{formatSize(item.sizeBytes)}</td>
                       <td className="px-3 py-2 text-admin-text-secondary whitespace-nowrap">{item.width && item.height ? `${item.width}×${item.height}` : "—"}</td>

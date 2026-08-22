@@ -323,13 +323,15 @@ export async function getMediaLibraryItemsAction() {
       .where(isNull(mediaLibrary.deletedAt))
       .orderBy(desc(mediaLibrary.createdAt))
 
-    // 2. Fetch ALL product images with their product names
+    // 2. Fetch ALL product images with their product names, roles, and alt texts
     const allProductImages = await db
       .select({
         url: productImages.url,
         productId: productImages.productId,
         productName: products.name,
         position: productImages.position,
+        imageRole: productImages.imageRole,
+        altText: productImages.altText,
         createdAt: productImages.createdAt,
       })
       .from(productImages)
@@ -351,12 +353,19 @@ export async function getMediaLibraryItemsAction() {
     }
 
     // 3. Build lookup maps for exact URL and normalized asset key
-    const exactMap = new Map<string, { productId: string; productName: string; fullUrl: string }>()
-    const assetKeyMap = new Map<string, { productId: string; productName: string; fullUrl: string }>()
+    const exactMap = new Map<string, { productId: string; productName: string; fullUrl: string; imageRole: string | null; altText: string | null; position: number }>()
+    const assetKeyMap = new Map<string, { productId: string; productName: string; fullUrl: string; imageRole: string | null; altText: string | null; position: number }>()
 
     for (const img of allProductImages) {
       if (!img.url) continue
-      const info = { productId: img.productId, productName: img.productName, fullUrl: img.url.trim() }
+      const info = {
+        productId: img.productId,
+        productName: img.productName,
+        fullUrl: img.url.trim(),
+        imageRole: img.imageRole || null,
+        altText: img.altText || null,
+        position: img.position || 1,
+      }
       exactMap.set(img.url.trim(), info)
       const key = getAssetKey(img.url)
       if (key) assetKeyMap.set(key, info)
@@ -364,7 +373,7 @@ export async function getMediaLibraryItemsAction() {
 
     // 4. Mark media library items as attached if URL or asset key matches
     const mediaItemsWithAttachment = mediaItems.map((item) => {
-      if (!item.url) return { ...item, attachedProductId: null, attachedProductName: null }
+      if (!item.url) return { ...item, attachedProductId: null, attachedProductName: null, imageRole: null, position: null }
 
       const exactMatch = exactMap.get(item.url.trim())
       const keyMatch = !exactMatch ? assetKeyMap.get(getAssetKey(item.url)) : null
@@ -376,8 +385,16 @@ export async function getMediaLibraryItemsAction() {
         if (key) assetKeyMap.delete(key)
       }
 
+      const displayTitle = match
+        ? (match.altText || `${match.productName} - Photo ${match.position}`)
+        : item.title
+
       return {
         ...item,
+        title: displayTitle,
+        altText: match?.altText || item.altText || null,
+        imageRole: match?.imageRole || null,
+        position: match?.position || null,
         attachedProductId: match ? match.productId : null,
         attachedProductName: match ? match.productName : null,
       }
@@ -390,8 +407,10 @@ export async function getMediaLibraryItemsAction() {
       syntheticAttached.push({
         id: `synth-${key}`,
         url: itemData.fullUrl,
-        title: `${itemData.productName} Image`,
-        altText: null,
+        title: itemData.altText || `${itemData.productName} - Photo ${itemData.position}`,
+        altText: itemData.altText || null,
+        imageRole: itemData.imageRole || null,
+        position: itemData.position || null,
         caption: null,
         width: null,
         height: null,
