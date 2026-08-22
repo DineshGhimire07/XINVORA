@@ -136,6 +136,28 @@ export const productImagesRelations = relations(productImages, ({ one }) => ({
   }),
 }))
 
+export const productCollectionsRelations = relations(productCollections, ({ one }) => ({
+  product: one(products, {
+    fields: [productCollections.productId],
+    references: [products.id],
+  }),
+  collection: one(collections, {
+    fields: [productCollections.collectionId],
+    references: [collections.id],
+  }),
+}))
+
+export const productTagsRelations = relations(productTags, ({ one }) => ({
+  product: one(products, {
+    fields: [productTags.productId],
+    references: [products.id],
+  }),
+  tag: one(productTags, {
+    fields: [productTags.tagId],
+    references: [productTags.tagId],
+  }),
+}))
+
 export const inventoryRelations = relations(inventory, ({ one }) => ({
   variant: one(variants, {
     fields: [inventory.variantId],

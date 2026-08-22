@@ -287,25 +287,42 @@ export class ProductImageMetadataService {
     productId: string,
     tx: any = db
   ): Promise<void> {
-    const product = await tx.query.products.findFirst({
-      where: eq(products.id, productId),
-      with: {
-        productImages: {
-          orderBy: [asc(productImages.position)],
-        },
-        productCollections: true,
-      },
-    })
+    const [product] = await tx
+      .select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        primaryCollectionId: products.primaryCollectionId,
+        imageRoleTemplateId: products.imageRoleTemplateId,
+      })
+      .from(products)
+      .where(eq(products.id, productId))
+      .limit(1)
 
-    if (!product || !product.productImages || product.productImages.length === 0) {
+    if (!product) {
       return
     }
 
-    const collectionIds = product.productCollections.map((pc: any) => pc.collectionId)
+    const existingImages = await tx
+      .select()
+      .from(productImages)
+      .where(eq(productImages.productId, productId))
+      .orderBy(asc(productImages.position))
+
+    if (!existingImages || existingImages.length === 0) {
+      return
+    }
+
+    const linkedCollections = await tx
+      .select({ collectionId: productCollections.collectionId })
+      .from(productCollections)
+      .where(eq(productCollections.productId, productId))
+
+    const collectionIds = linkedCollections.map((pc: any) => pc.collectionId)
     const template = await this.resolveProductImageTemplate(product, collectionIds, tx)
 
-    for (let index = 0; index < product.productImages.length; index++) {
-      const img = product.productImages[index]
+    for (let index = 0; index < existingImages.length; index++) {
+      const img = existingImages[index]
       const position = index + 1 // Position is always strictly 1-indexed based on order
       const roleResult = this.resolveImageRole(position, template)
       const role = roleResult?.role || null
