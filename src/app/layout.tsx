@@ -18,6 +18,7 @@ import { Providers } from "@/providers/providers"
 import { buildRootMetadata } from "@/lib/metadata"
 import { cn } from "@/lib/utils"
 import { SkipToContent } from "@/components/shared/skip-to-content"
+import { PWARegister } from "@/components/pwa/PWARegister"
 import NextTopLoader from "nextjs-toploader"
 import "@/app/globals.css"
 
@@ -73,6 +74,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        {/* PWA / iOS Safari meta tags */}
+        <meta name="application-name" content="XINVORA" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="XINVORA" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png" />
+        <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body
         suppressHydrationWarning
@@ -93,6 +102,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             shadow={false}
           />
           <SkipToContent />
+          <PWARegister />
           <main id="main-content" className="flex min-h-[100svh] flex-col w-full overflow-x-hidden">
             {children}
           </main>
