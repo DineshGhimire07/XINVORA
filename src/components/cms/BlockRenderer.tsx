@@ -460,65 +460,110 @@ function CMSBannerBlock({ block }: { block: any }) {
   const data = block.data
   if (!data || data.isActive === false || !data.imageUrl) return null
 
-  const desktopSize = data.size || "editorial"
-  const mobileSize = data.mobileSize || "auto"
+  // Normalize Desktop Settings
+  const desktopSizeMode =
+    data.desktopSizeMode || (data.size === "half" ? "50dvh" : data.size === "custom" ? "custom" : "ratio")
+  const desktopRatio =
+    data.desktopRatio ||
+    (data.size === "cinematic"
+      ? "21:9"
+      : data.size === "landscape"
+      ? "16:9"
+      : data.size === "classic"
+      ? "4:3"
+      : data.size === "square"
+      ? "1:1"
+      : data.size === "portrait"
+      ? "3:4"
+      : "32:10")
+  const desktopFit = data.desktopFit || (data.fit === "contain" ? "contain" : data.fit === "fill" ? "fill" : "cover")
+  const desktopFocalPoint =
+    data.desktopFocalPoint ||
+    (data.position === "object-left"
+      ? "left"
+      : data.position === "object-right"
+      ? "right"
+      : data.position?.startsWith("object-") && data.position !== "object-center"
+      ? "custom"
+      : "center")
+  const desktopCustomFocal = data.desktopCustomFocalPoint || data.position?.replace("object-", "") || ""
 
-  // Mobile classes & styles
-  let mobileClass = "aspect-[3/4]"
-  if (mobileSize === "natural") {
-    mobileClass = "h-auto min-h-[250px]"
-  } else if (mobileSize === "full") {
-    mobileClass = "h-[100dvh] min-h-[500px]"
-  } else if (mobileSize === "half") {
-    mobileClass = "h-[50dvh] min-h-[300px]"
-  } else if (mobileSize === "story") {
-    mobileClass = "aspect-[9/16]"
-  } else if (mobileSize === "square") {
-    mobileClass = "aspect-[1/1]"
-  } else if (mobileSize === "standard-portrait") {
-    mobileClass = "aspect-[4/5]"
-  } else if (mobileSize === "portrait") {
-    mobileClass = "aspect-[3/4]"
-  } else if (mobileSize === "auto") {
-    // If auto, match desktop size behavior on mobile
-    if (desktopSize === "natural") mobileClass = "h-auto min-h-[250px]"
-    else if (desktopSize === "full") mobileClass = "h-[100dvh] min-h-[500px]"
-    else if (desktopSize === "half") mobileClass = "h-[50dvh] min-h-[300px]"
-    else if (desktopSize === "classic") mobileClass = "aspect-[1/1]"
-    else if (desktopSize === "portrait") mobileClass = "aspect-[3/4]"
-    else if (desktopSize === "square") mobileClass = "aspect-[1/1]"
-    else mobileClass = "aspect-[3/4]"
+  // Normalize Mobile Settings
+  const mobileSizeMode = data.mobileSizeMode || (data.mobileSize === "custom" ? "custom" : "ratio")
+  const mobileRatio =
+    data.mobileRatio ||
+    (data.mobileSize === "square"
+      ? "1:1"
+      : data.mobileSize === "story"
+      ? "9:16"
+      : data.mobileSize === "portrait"
+      ? "3:4"
+      : "4:5")
+  const mobileFit = data.mobileFit || (data.fit === "contain" ? "contain" : data.fit === "fill" ? "fill" : "cover")
+  const mobileFocalPoint = data.mobileFocalPoint || "center"
+  const mobileCustomFocal = data.mobileCustomFocalPoint || ""
+
+  // Compute Mobile Sizing Class
+  let mobileClass = "aspect-[4/5]"
+  if (mobileSizeMode === "ratio") {
+    if (mobileRatio === "1:1") mobileClass = "aspect-[1/1]"
+    else if (mobileRatio === "9:16") mobileClass = "aspect-[9/16]"
+    else if (mobileRatio === "3:4") mobileClass = "aspect-[3/4]"
+    else if (mobileRatio === "16:9") mobileClass = "aspect-[16/9]"
+    else mobileClass = "aspect-[4/5]"
   }
 
-  // Desktop classes
+  // Compute Desktop Sizing Class
   let desktopClass = "md:aspect-[32/10]"
-  if (desktopSize === "natural") {
-    desktopClass = "md:h-auto md:min-h-[300px] md:aspect-auto"
-  } else if (desktopSize === "full") {
-    desktopClass = "md:h-[100dvh] md:min-h-[500px] md:aspect-auto"
-  } else if (desktopSize === "half") {
+  if (desktopSizeMode === "50dvh") {
     desktopClass = "md:h-[50dvh] md:min-h-[350px] md:aspect-auto"
-  } else if (desktopSize === "cinematic") {
-    desktopClass = "md:aspect-[21/9] md:h-auto"
-  } else if (desktopSize === "landscape") {
-    desktopClass = "md:aspect-[16/9] md:h-auto"
-  } else if (desktopSize === "classic") {
-    desktopClass = "md:aspect-[4/3] md:h-auto"
-  } else if (desktopSize === "square") {
-    desktopClass = "md:aspect-[1/1] md:h-auto"
-  } else if (desktopSize === "portrait") {
-    desktopClass = "md:aspect-[3/4] md:h-auto"
-  } else if (desktopSize === "editorial") {
-    desktopClass = "md:aspect-[32/10] md:h-auto"
+  } else if (desktopSizeMode === "ratio") {
+    if (desktopRatio === "21:9") desktopClass = "md:aspect-[21/9] md:h-auto"
+    else if (desktopRatio === "16:9") desktopClass = "md:aspect-[16/9] md:h-auto"
+    else if (desktopRatio === "4:3") desktopClass = "md:aspect-[4/3] md:h-auto"
+    else if (desktopRatio === "1:1") desktopClass = "md:aspect-[1/1] md:h-auto"
+    else if (desktopRatio === "3:4") desktopClass = "md:aspect-[3/4] md:h-auto"
+    else desktopClass = "md:aspect-[32/10] md:h-auto"
   }
 
-  const customDesktop = desktopSize === "custom" ? parseBannerDimension(data.customDesktopHeight) : null
-  const customMobile = mobileSize === "custom" ? parseBannerDimension(data.customMobileHeight) : null
+  // Custom Dimensions
+  const customDesktop =
+    desktopSizeMode === "custom" ? parseBannerDimension(data.desktopCustomSize || data.customDesktopHeight) : null
+  const customMobile =
+    mobileSizeMode === "custom" ? parseBannerDimension(data.mobileCustomSize || data.customMobileHeight) : null
 
-  const fitClass = data.fit === "contain" ? "object-contain bg-black" : data.fit === "scale-down" ? "object-scale-down bg-black" : "object-cover"
-  const posClass = data.position || "object-center"
+  // Fit Classes
+  const mobileFitClass =
+    mobileFit === "contain" ? "object-contain bg-black" : mobileFit === "fill" ? "object-fill" : "object-cover"
+  const desktopFitClass =
+    desktopFit === "contain"
+      ? "md:object-contain md:bg-black"
+      : desktopFit === "fill"
+      ? "md:object-fill"
+      : "md:object-cover"
 
-  const containerBaseClass = `relative block w-full overflow-hidden bg-neutral-900 ${mobileSize !== "custom" ? mobileClass : ""} ${desktopSize !== "custom" ? desktopClass : ""}`
+  // Focal Point Classes
+  const mobilePosClass =
+    mobileFocalPoint === "left"
+      ? "object-left"
+      : mobileFocalPoint === "right"
+      ? "object-right"
+      : mobileFocalPoint === "custom" && mobileCustomFocal
+      ? `object-[${mobileCustomFocal}]`
+      : "object-center"
+
+  const desktopPosClass =
+    desktopFocalPoint === "left"
+      ? "md:object-left"
+      : desktopFocalPoint === "right"
+      ? "md:object-right"
+      : desktopFocalPoint === "custom" && desktopCustomFocal
+      ? `md:object-[${desktopCustomFocal}]`
+      : "md:object-center"
+
+  const containerBaseClass = `relative block w-full overflow-hidden bg-neutral-900 ${
+    mobileSizeMode !== "custom" ? mobileClass : ""
+  } ${desktopSizeMode !== "custom" ? desktopClass : ""}`
 
   const dynamicId = `banner-block-${block.id}`
 
@@ -526,18 +571,21 @@ function CMSBannerBlock({ block }: { block: any }) {
     <>
       <picture className="absolute inset-0 block w-full h-full">
         {data.imageMobileUrl && (
-          <source media="(max-width: 767px)" srcSet={optimizeCloudinaryUrl(data.imageMobileUrl, { width: 1080 })} />
+          <source
+            media="(max-width: 767px)"
+            srcSet={optimizeCloudinaryUrl(data.imageMobileUrl, { width: 1080 })}
+          />
         )}
         <img
           src={optimizeCloudinaryUrl(data.imageUrl, { width: 1920 })}
           alt={data.title || "Banner"}
-          className={`w-full h-full ${fitClass} ${posClass}`}
+          className={`w-full h-full ${mobileFitClass} ${desktopFitClass} ${mobilePosClass} ${desktopPosClass}`}
           loading="lazy"
           decoding="async"
         />
       </picture>
       <div className="absolute inset-0 bg-black/25 group-hover:bg-black/35 transition-colors duration-500 pointer-events-none" />
-      
+
       <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-16 z-10 text-white max-w-3xl pointer-events-none">
         {data.eyebrow && (
           <span className="text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase mb-4 opacity-90 drop-shadow-md">
@@ -569,13 +617,25 @@ function CMSBannerBlock({ block }: { block: any }) {
       {(customMobile || customDesktop) && (
         <style>{`
           #${dynamicId} .banner-inner-box {
-            ${customMobile?.styleKey === 'height' ? `height: ${customMobile.cssValue} !important; min-height: ${customMobile.cssValue} !important;` : ''}
-            ${customMobile?.styleKey === 'aspectRatio' ? `aspect-ratio: ${customMobile.cssValue} !important;` : ''}
+            ${
+              customMobile?.styleKey === "height"
+                ? `height: ${customMobile.cssValue} !important; min-height: ${customMobile.cssValue} !important;`
+                : ""
+            }
+            ${customMobile?.styleKey === "aspectRatio" ? `aspect-ratio: ${customMobile.cssValue} !important;` : ""}
           }
           @media (min-width: 768px) {
             #${dynamicId} .banner-inner-box {
-              ${customDesktop?.styleKey === 'height' ? `height: ${customDesktop.cssValue} !important; min-height: ${customDesktop.cssValue} !important; aspect-ratio: auto !important;` : ''}
-              ${customDesktop?.styleKey === 'aspectRatio' ? `aspect-ratio: ${customDesktop.cssValue} !important; height: auto !important; min-height: 0 !important;` : ''}
+              ${
+                customDesktop?.styleKey === "height"
+                  ? `height: ${customDesktop.cssValue} !important; min-height: ${customDesktop.cssValue} !important; aspect-ratio: auto !important;`
+                  : ""
+              }
+              ${
+                customDesktop?.styleKey === "aspectRatio"
+                  ? `aspect-ratio: ${customDesktop.cssValue} !important; height: auto !important; min-height: 0 !important;`
+                  : ""
+              }
             }
           }
         `}</style>
