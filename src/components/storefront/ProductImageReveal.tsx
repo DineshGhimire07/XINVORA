@@ -112,11 +112,11 @@ export function ProductImageReveal({
         className="w-full h-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory overscroll-x-contain"
         style={{
           /*
-           * touch-action: pan-x — tells Android/iOS this element handles horizontal swipes.
-           * Vertical touches are NOT consumed here and naturally propagate to the page scroll.
-           * This is the correct pattern for a horizontal carousel inside a vertically-scrolling page.
+           * touch-action: pan-x pan-y — allows the browser to handle BOTH directions.
+           * The browser automatically routes: horizontal gesture → this scroll container,
+           * vertical gesture → parent page scroll. Works in browser AND PWA standalone mode.
            */
-          touchAction: "pan-x",
+          touchAction: "pan-x pan-y",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
         }}
