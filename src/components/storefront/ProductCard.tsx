@@ -34,6 +34,7 @@ export interface ProductCardProps {
 }
 
 import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
+import { ProductImageReveal } from "./ProductImageReveal"
 
 export function ProductCard({
   product,
@@ -97,41 +98,39 @@ export function ProductCard({
     <div className={`group flex flex-col text-left w-full relative ${hideName && hidePrice ? "" : "gap-2.5"}`}>
       {/* Visual Card Image container */}
       <div className="relative w-full aspect-[3/4] bg-[#ECEBE7] overflow-hidden select-none">
-        <Link 
-          href={`/products/${product.slug}`}
-          className="absolute inset-0 z-[5]"
-          aria-label={product.name}
-        />
-        {overrideImage ? (
-          <div className="w-full h-full relative">
+        {/* Desktop Presentation (md+): Smooth hover swap between first and second photo */}
+        <div className="hidden md:block w-full h-full relative">
+          <Link 
+            href={`/products/${product.slug}`}
+            className="absolute inset-0 z-[5]"
+            aria-label={product.name}
+          />
+          {overrideImage ? (
             <Image 
               src={optimizeCloudinaryUrl(overrideImage, { width: 800 })} 
               alt={product.name} 
               fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              sizes="(max-width: 1024px) 33vw, 25vw"
               priority={priority}
               fetchPriority={priority ? "high" : "auto"}
               loading={priority ? "eager" : "lazy"}
               placeholder="blur"
               blurDataURL={SHIMMER_BLUR_DATA_URL}
-              className="object-cover object-top"
+              className="object-cover object-top pointer-events-none"
             />
-          </div>
-        ) : images.length > 0 ? (
-          <>
-            {/* Desktop Hover State — pointer-events-none so clicks pass to the Link below */}
-            <div className="hidden md:block w-full h-full relative pointer-events-none">
+          ) : images.length > 0 ? (
+            <>
               <Image 
                 src={optimizeCloudinaryUrl(images[0].url, { width: 800 })} 
                 alt={images[0].altText || product.name} 
                 fill
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                sizes="(max-width: 1024px) 33vw, 25vw"
                 priority={priority}
                 fetchPriority={priority ? "high" : "auto"}
                 loading={priority ? "eager" : "lazy"}
                 placeholder="blur"
                 blurDataURL={SHIMMER_BLUR_DATA_URL}
-                className={`object-cover object-top transition-all duration-700 ease-out ${
+                className={`object-cover object-top pointer-events-none transition-all duration-700 ease-out ${
                   !disableHover && images[1] ? "opacity-100 group-hover:opacity-0" : ""
                 }`}
               />
@@ -140,17 +139,51 @@ export function ProductCard({
                   src={optimizeCloudinaryUrl(images[1].url, { width: 800 })} 
                   alt={images[1].altText || `${product.name} lifestyle`} 
                   fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  sizes="(max-width: 1024px) 33vw, 25vw"
                   loading="lazy"
                   decoding="async"
-                  className="object-cover object-top absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out"
+                  className="object-cover object-top pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out"
                 />
               )}
+            </>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-[10px] text-text-secondary uppercase select-none">
+              No Image
             </div>
+          )}
+        </div>
 
-            {/* Mobile Scrollable Carousel */}
-            {disableHover ? (
-              <div className="flex md:hidden w-full h-full relative pointer-events-none">
+        {/* Mobile Presentation (< md): Swipeable gallery for dot-eligible cards, static otherwise */}
+        <div className="block md:hidden w-full h-full relative">
+          {!overrideImage && !disableHover && images.length > 1 ? (
+            <ProductImageReveal
+              productId={product.id}
+              productSlug={product.slug}
+              productName={product.name}
+              images={images}
+              priority={priority}
+            />
+          ) : (
+            <>
+              <Link 
+                href={`/products/${product.slug}`}
+                className="absolute inset-0 z-[5]"
+                aria-label={product.name}
+              />
+              {overrideImage ? (
+                <Image 
+                  src={optimizeCloudinaryUrl(overrideImage, { width: 640 })} 
+                  alt={product.name} 
+                  fill
+                  sizes="(max-width: 640px) 50vw, 33vw"
+                  priority={priority}
+                  fetchPriority={priority ? "high" : "auto"}
+                  loading={priority ? "eager" : "lazy"}
+                  placeholder="blur"
+                  blurDataURL={SHIMMER_BLUR_DATA_URL}
+                  className="object-cover object-top pointer-events-none"
+                />
+              ) : images.length > 0 ? (
                 <Image 
                   src={optimizeCloudinaryUrl(images[0].url, { width: 640 })} 
                   alt={images[0].altText || product.name} 
@@ -161,48 +194,16 @@ export function ProductCard({
                   loading={priority ? "eager" : "lazy"}
                   placeholder="blur"
                   blurDataURL={SHIMMER_BLUR_DATA_URL}
-                  className="object-cover object-top"
+                  className="object-cover object-top pointer-events-none"
                 />
-              </div>
-            ) : (
-              <div 
-                className="flex md:hidden w-full h-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory touch-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-                onClick={() => router.push(`/products/${product.slug}`)}
-              >
-                {images.map((img, i) => (
-                  <div key={i} className="relative w-full h-full shrink-0 snap-center">
-                    <Image
-                      src={optimizeCloudinaryUrl(img.url, { width: 640 })}
-                      alt={img.altText || `${product.name} ${i + 1}`}
-                      fill
-                      sizes="(max-width: 640px) 50vw, 33vw"
-                      priority={priority && i === 0}
-                      fetchPriority={priority && i === 0 ? "high" : "auto"}
-                      loading={priority && i === 0 ? "eager" : "lazy"}
-                      decoding="async"
-                      placeholder="blur"
-                      blurDataURL={SHIMMER_BLUR_DATA_URL}
-                      className="object-cover object-top"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {/* Slide Indicator for mobile */}
-            {!disableHover && images.length > 1 && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex md:hidden gap-1.5 z-10 pointer-events-none">
-                {images.map((_, i) => (
-                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/60 shadow-sm" />
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-[10px] text-text-secondary uppercase select-none">
-            No Image
-          </div>
-        )}
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-[10px] text-text-secondary uppercase select-none">
+                  No Image
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
         {/* Sold Out / In Bag badge */}
         {!inStock ? (
