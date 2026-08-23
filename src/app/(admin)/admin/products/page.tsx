@@ -46,6 +46,12 @@ export default async function AdminProductsPage(props: PageProps) {
         </div>
         <div className="flex items-center gap-3">
           <a
+            href="/admin/products/ai-photography"
+            className="inline-flex items-center gap-1.5 justify-center bg-admin-surface border border-admin-border text-admin-text-primary hover:bg-admin-content-hover px-4 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md transition-colors"
+          >
+            📸 AI Photography
+          </a>
+          <a
             href="/admin/products/bulk-upload"
             className="inline-flex items-center justify-center bg-admin-surface border border-admin-border text-admin-text-primary hover:bg-admin-content-hover px-4 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md transition-colors"
           >

@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Package,
   ShoppingBag,
+  Camera,
   Layers,
   Users,
   Percent,
@@ -45,6 +46,7 @@ const navItems: NavItem[] = [
     icon: ShoppingBag,
     items: [
       { name: "All Products", href: "/admin/products" },
+      { name: "AI Photography", href: "/admin/products/ai-photography" },
       { name: "Bulk Import", href: "/admin/products/bulk-upload" },
       { name: "Media Library", href: "/admin/media" },
       { name: "Categories", href: "/admin/categories" },
@@ -53,6 +55,7 @@ const navItems: NavItem[] = [
       { name: "Attributes", href: "/admin/attributes" },
     ],
   },
+  { name: "Photography Studio", href: "/admin/products/ai-photography", icon: Camera },
   { name: "Collections", href: "/admin/collections", icon: Layers },
   {
     name: "Customers",

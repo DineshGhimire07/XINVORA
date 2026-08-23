@@ -27,6 +27,7 @@ import { orderItems } from "./order-items"
 import { orderActivity } from "./order-activity"
 import { productOffSection } from "./product-off-section"
 import { journalCategories, journalTags, journalPostTags, journalPosts, journalRevisions, journalViews } from "./journal"
+import { productAiIdentities, aiPromptTemplates, aiPromptVersions } from "./ai-photography"
 
 export const collectionsRelations = relations(collections, ({ one, many }) => ({
   parent: one(collections, {
@@ -83,6 +84,7 @@ export const productsRelations = relations(products, ({ one, many }) => ({
     fields: [products.id],
     references: [productOffSection.productId],
   }),
+  aiIdentities: many(productAiIdentities),
 }))
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
@@ -381,6 +383,28 @@ export const journalViewsRelations = relations(journalViews, ({ one }) => ({
   post: one(journalPosts, {
     fields: [journalViews.postId],
     references: [journalPosts.id],
+  }),
+}))
+
+export const productAiIdentitiesRelations = relations(productAiIdentities, ({ one }) => ({
+  product: one(products, {
+    fields: [productAiIdentities.productId],
+    references: [products.id],
+  }),
+  variant: one(variants, {
+    fields: [productAiIdentities.variantId],
+    references: [variants.id],
+  }),
+}))
+
+export const aiPromptTemplatesRelations = relations(aiPromptTemplates, ({ many }) => ({
+  versions: many(aiPromptVersions),
+}))
+
+export const aiPromptVersionsRelations = relations(aiPromptVersions, ({ one }) => ({
+  template: one(aiPromptTemplates, {
+    fields: [aiPromptVersions.templateId],
+    references: [aiPromptTemplates.id],
   }),
 }))
 

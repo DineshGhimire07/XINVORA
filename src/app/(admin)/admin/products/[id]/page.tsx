@@ -32,9 +32,15 @@ export default async function AdminProductEditorPage(props: PageProps) {
 
   const { id } = await props.params
 
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
   let product: any = null
 
   if (id !== "create" && id !== "new") {
+    if (!UUID_REGEX.test(id)) {
+      notFound()
+    }
+
     const result = await db.select().from(products).where(eq(products.id, id)).limit(1)
     if (result.length === 0) {
       notFound()
@@ -110,7 +116,7 @@ export default async function AdminProductEditorPage(props: PageProps) {
 
   // Serialize all DB data to strip Date instances (prevents Next.js RPC digest error in production)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const serialize = (data: any) => JSON.parse(JSON.stringify(data))
+  const serialize = (data: any) => (data ? JSON.parse(JSON.stringify(data)) : null)
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
