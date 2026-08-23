@@ -236,7 +236,12 @@
     font-size: 16px;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    scroll-behavior: smooth;
+    /* IMPORTANT: do NOT use scroll-behavior: smooth on html/body.
+       On mobile Safari/Chrome, smooth scrolling on the root element interacts
+       badly with the collapsing/expanding address bar and causes the up-down
+       jitter glitch when changing scroll direction. Use auto here; smooth
+       scrolling for anchor links can be applied per-element via CSS or JS. */
+    scroll-behavior: auto;
     /* Zero margin/padding — full-bleed elements must start at exact viewport edge */
     margin: 0;
     padding: 0;

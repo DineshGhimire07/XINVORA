@@ -23,23 +23,21 @@ export function ProductImageReveal({
   const containerRef = React.useRef<HTMLDivElement>(null)
   const dotsContainerRef = React.useRef<HTMLDivElement>(null)
   const activeIndexRef = React.useRef(0)
-  const wasOffscreenRef = React.useRef(false)
 
-  // Direct DOM dot class updater - avoids React re-renders during scrolling
+  // Direct DOM dot class updater — zero React re-renders
   const updateDots = React.useCallback((newIndex: number) => {
     if (!dotsContainerRef.current) return
     const dots = dotsContainerRef.current.children
     for (let i = 0; i < dots.length; i++) {
       const dot = dots[i] as HTMLElement
-      if (i === newIndex) {
-        dot.className = "w-3 h-1.5 bg-white shadow-sm transition-all duration-300 rounded-full"
-      } else {
-        dot.className = "w-1.5 h-1.5 bg-white/60 shadow-sm transition-all duration-300 rounded-full"
-      }
+      dot.className =
+        i === newIndex
+          ? "w-3 h-1.5 bg-white shadow-sm transition-all duration-300 rounded-full"
+          : "w-1.5 h-1.5 bg-white/60 shadow-sm transition-all duration-300 rounded-full"
     }
   }, [])
 
-  // Synchronize active dot from scroll position with passive rAF
+  // Dot sync via passive rAF scroll listener on the scroll track
   React.useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -51,10 +49,7 @@ export function ProductImageReveal({
         if (!el) return
         const slideWidth = el.clientWidth
         if (slideWidth <= 0) return
-        const newIndex = Math.max(
-          0,
-          Math.min(images.length - 1, Math.round(el.scrollLeft / slideWidth))
-        )
+        const newIndex = Math.max(0, Math.min(images.length - 1, Math.round(el.scrollLeft / slideWidth)))
         if (newIndex !== activeIndexRef.current) {
           activeIndexRef.current = newIndex
           updateDots(newIndex)
@@ -72,53 +67,60 @@ export function ProductImageReveal({
   const resetToStart = React.useCallback(() => {
     const el = containerRef.current
     if (!el) return
+    // Set scrollLeft directly — works even when snap is active
     el.scrollLeft = 0
-    try {
-      el.scrollTo({ left: 0 })
-    } catch {
-      // Ignore
-    }
     activeIndexRef.current = 0
     updateDots(0)
   }, [updateDots])
 
-  // Reset back to front image silently when scrolled off-screen and on re-entry
+  // Reset when card is FULLY off-screen. Use a high threshold to avoid
+  // triggering during normal scroll (card partially visible = keep position)
   React.useEffect(() => {
     const el = containerRef.current
     if (!el || typeof IntersectionObserver === "undefined") return
 
+    // Observe the parent card element, not the scroll track
+    const cardEl = el.closest("[data-product-card]") as Element | null
+    const target = cardEl ?? el
+
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) {
-            wasOffscreenRef.current = true
-            resetToStart()
-          } else if (wasOffscreenRef.current) {
-            wasOffscreenRef.current = false
-            resetToStart()
-          }
-        })
+        const entry = entries[0]
+        // Only reset when the card is 100% invisible (completely off-screen)
+        if (!entry.isIntersecting && activeIndexRef.current !== 0) {
+          resetToStart()
+        }
       },
-      { threshold: [0, 0.05] }
+      { threshold: 0 } // fires when 0% is visible (fully off-screen)
     )
 
-    observer.observe(el)
+    observer.observe(target)
     return () => observer.disconnect()
   }, [resetToStart])
 
   return (
-    <div className="relative w-full h-full overflow-hidden select-none">
-      {/* 100% Native, zero-jank horizontal swipe container prioritizing vertical scroll */}
+    // Outer wrapper: touch-action pan-y allows vertical page scroll to pass through normally
+    <div className="relative w-full h-full overflow-hidden select-none" style={{ touchAction: "pan-y" }}>
+      {/*
+        Scroll track: NO touchAction override here.
+        The browser must be free to detect horizontal swipes on this element.
+        overflow-x: auto + snap-x gives native, buttery horizontal swipe.
+      */}
       <div
         ref={containerRef}
-        className="w-full h-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory overscroll-x-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="w-full h-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory overscroll-x-contain"
         style={{
-          touchAction: "pan-y",
           WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
         }}
       >
         {images.map((img, i) => (
-          <div key={i} className="relative min-w-full w-full h-full shrink-0 snap-center snap-always">
+          <div
+            key={i}
+            className="relative shrink-0 snap-center snap-always"
+            style={{ minWidth: "100%", width: "100%", height: "100%" }}
+          >
             <Link
               href={`/products/${productSlug}`}
               className="absolute inset-0 z-10 block w-full h-full"
@@ -143,7 +145,7 @@ export function ProductImageReveal({
         ))}
       </div>
 
-      {/* Real-time Synchronized Dot Indicators */}
+      {/* Dot indicators — updated directly via DOM, never via React state */}
       <div
         ref={dotsContainerRef}
         className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 pointer-events-none"
@@ -152,9 +154,7 @@ export function ProductImageReveal({
           <div
             key={i}
             className={`transition-all duration-300 rounded-full ${
-              i === 0
-                ? "w-3 h-1.5 bg-white shadow-sm"
-                : "w-1.5 h-1.5 bg-white/60 shadow-sm"
+              i === 0 ? "w-3 h-1.5 bg-white shadow-sm" : "w-1.5 h-1.5 bg-white/60 shadow-sm"
             }`}
           />
         ))}

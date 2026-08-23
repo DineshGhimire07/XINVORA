@@ -97,7 +97,7 @@ export function ProductCard({
   const [isDesktopHovered, setIsDesktopHovered] = React.useState(false)
   
   return (
-    <div className={`group flex flex-col text-left w-full relative ${hideName && hidePrice ? "" : "gap-2.5"}`}>
+    <div data-product-card className={`group flex flex-col text-left w-full relative ${hideName && hidePrice ? "" : "gap-2.5"}`}>
       {/* Visual Card Image container */}
       <div className="relative w-full aspect-[3/4] bg-[#ECEBE7] overflow-hidden select-none">
         {/* Desktop Presentation (md+): Smooth hover swap between first and second photo */}
