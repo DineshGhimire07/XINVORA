@@ -93,7 +93,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             shadow={false}
           />
           <SkipToContent />
-          <main id="main-content" className="flex min-h-[100dvh] flex-col w-screen overflow-x-hidden">
+          <main id="main-content" className="flex min-h-[100dvh] flex-col w-full overflow-x-hidden">
             {children}
           </main>
         </Providers>

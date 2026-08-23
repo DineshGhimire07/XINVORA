@@ -312,7 +312,7 @@ function NewArrivalsSection({ settings }: { settings?: any }) {
   const items = Array.isArray(customItems) && customItems.length > 0 ? customItems : defaultItems
 
   return (
-    <Section id="new-arrivals" padding="none" className="bg-surface-warm select-none w-screen overflow-hidden">
+    <Section id="new-arrivals" padding="none" className="bg-surface-warm select-none w-full overflow-hidden">
       {/* Title Block Above Grid */}
       <div className="w-full px-4 sm:px-6 md:px-10 pt-8 md:pt-12 pb-4 md:pb-6 flex flex-col justify-start select-none">
         <span className="text-[10px] md:text-xs font-bold tracking-[0.35em] text-text-secondary uppercase select-none opacity-80 mb-1.5">
@@ -387,7 +387,7 @@ async function RandomCollectionShowcaseSection() {
   if (!randomProducts || randomProducts.length === 0) return null
 
   return (
-    <Section id="mixed-collection-showcase" padding="none" className="bg-background select-none w-screen overflow-hidden">
+    <Section id="mixed-collection-showcase" padding="none" className="bg-background select-none w-full overflow-hidden">
       {/* Title Header */}
       <div className="w-full px-4 sm:px-6 md:px-10 pt-12 md:pt-16 pb-6 md:pb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 select-none">
         <div>

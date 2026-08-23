@@ -94,12 +94,18 @@ export function ProductCard({
     })
   }
   
+  const [isDesktopHovered, setIsDesktopHovered] = React.useState(false)
+  
   return (
     <div className={`group flex flex-col text-left w-full relative ${hideName && hidePrice ? "" : "gap-2.5"}`}>
       {/* Visual Card Image container */}
       <div className="relative w-full aspect-[3/4] bg-[#ECEBE7] overflow-hidden select-none">
         {/* Desktop Presentation (md+): Smooth hover swap between first and second photo */}
-        <div className="hidden md:block w-full h-full relative">
+        <div 
+          className="hidden md:block w-full h-full relative"
+          onMouseEnter={() => setIsDesktopHovered(true)}
+          onMouseLeave={() => setIsDesktopHovered(false)}
+        >
           <Link 
             href={`/products/${product.slug}`}
             className="absolute inset-0 z-[5]"
@@ -130,8 +136,8 @@ export function ProductCard({
                 loading={priority ? "eager" : "lazy"}
                 placeholder="blur"
                 blurDataURL={SHIMMER_BLUR_DATA_URL}
-                className={`object-cover object-top pointer-events-none transition-all duration-700 ease-out ${
-                  !disableHover && images[1] ? "opacity-100 group-hover:opacity-0" : ""
+                className={`object-cover object-top pointer-events-none transition-opacity duration-500 ease-out ${
+                  !disableHover && images[1] && isDesktopHovered ? "opacity-0" : "opacity-100"
                 }`}
               />
               {!disableHover && images[1] && (
@@ -142,7 +148,9 @@ export function ProductCard({
                   sizes="(max-width: 1024px) 33vw, 25vw"
                   loading="lazy"
                   decoding="async"
-                  className="object-cover object-top pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out"
+                  className={`object-cover object-top pointer-events-none absolute inset-0 transition-opacity duration-500 ease-out ${
+                    isDesktopHovered ? "opacity-100" : "opacity-0"
+                  }`}
                 />
               )}
             </>

@@ -21,91 +21,109 @@ export function ProductImageReveal({
   priority = false,
 }: ProductImageRevealProps) {
   const containerRef = React.useRef<HTMLDivElement>(null)
-  const [activeIndex, setActiveIndex] = React.useState(0)
+  const dotsContainerRef = React.useRef<HTMLDivElement>(null)
   const activeIndexRef = React.useRef(0)
-  const rafIdRef = React.useRef<number | null>(null)
+  const wasOffscreenRef = React.useRef(false)
 
-  // Synchronize active dot from scroll position with passive rAF debounce
-  const handleScroll = React.useCallback(() => {
-    if (!containerRef.current) return
-
-    if (rafIdRef.current) {
-      cancelAnimationFrame(rafIdRef.current)
-    }
-
-    rafIdRef.current = requestAnimationFrame(() => {
-      if (!containerRef.current) return
-      const container = containerRef.current
-      const slideWidth = container.clientWidth
-      if (slideWidth <= 0) return
-
-      const scrollLeft = container.scrollLeft
-      const newIndex = Math.max(
-        0,
-        Math.min(images.length - 1, Math.round(scrollLeft / slideWidth))
-      )
-
-      if (newIndex !== activeIndexRef.current) {
-        activeIndexRef.current = newIndex
-        setActiveIndex(newIndex)
+  // Direct DOM dot class updater - avoids React re-renders during scrolling
+  const updateDots = React.useCallback((newIndex: number) => {
+    if (!dotsContainerRef.current) return
+    const dots = dotsContainerRef.current.children
+    for (let i = 0; i < dots.length; i++) {
+      const dot = dots[i] as HTMLElement
+      if (i === newIndex) {
+        dot.className = "w-3 h-1.5 bg-white shadow-sm transition-all duration-300 rounded-full"
+      } else {
+        dot.className = "w-1.5 h-1.5 bg-white/60 shadow-sm transition-all duration-300 rounded-full"
       }
-    })
-  }, [images.length])
+    }
+  }, [])
 
+  // Synchronize active dot from scroll position with passive rAF
   React.useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    el.addEventListener("scroll", handleScroll, { passive: true })
-    return () => {
-      el.removeEventListener("scroll", handleScroll)
-      if (rafIdRef.current) {
-        cancelAnimationFrame(rafIdRef.current)
-      }
-    }
-  }, [handleScroll])
 
-  // Reset back to front image (index 0) whenever product leaves the viewport
+    let rafId: number | null = null
+    const onScroll = () => {
+      if (rafId) cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        if (!el) return
+        const slideWidth = el.clientWidth
+        if (slideWidth <= 0) return
+        const newIndex = Math.max(
+          0,
+          Math.min(images.length - 1, Math.round(el.scrollLeft / slideWidth))
+        )
+        if (newIndex !== activeIndexRef.current) {
+          activeIndexRef.current = newIndex
+          updateDots(newIndex)
+        }
+      })
+    }
+
+    el.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      el.removeEventListener("scroll", onScroll)
+      if (rafId) cancelAnimationFrame(rafId)
+    }
+  }, [images.length, updateDots])
+
+  const resetToStart = React.useCallback(() => {
+    const el = containerRef.current
+    if (!el) return
+    el.scrollLeft = 0
+    try {
+      el.scrollTo({ left: 0 })
+    } catch {
+      // Ignore
+    }
+    activeIndexRef.current = 0
+    updateDots(0)
+  }, [updateDots])
+
+  // Reset back to front image silently when scrolled off-screen and on re-entry
   React.useEffect(() => {
     const el = containerRef.current
     if (!el || typeof IntersectionObserver === "undefined") return
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const [entry] = entries
-        // When card is scrolled completely out of view, silently reset to first image
-        if (!entry.isIntersecting) {
-          if (el.scrollLeft !== 0) {
-            el.scrollLeft = 0
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
+            wasOffscreenRef.current = true
+            resetToStart()
+          } else if (wasOffscreenRef.current) {
+            wasOffscreenRef.current = false
+            resetToStart()
           }
-          if (activeIndexRef.current !== 0) {
-            activeIndexRef.current = 0
-            setActiveIndex(0)
-          }
-        }
+        })
       },
-      { threshold: 0 }
+      { threshold: [0, 0.05] }
     )
 
     observer.observe(el)
     return () => observer.disconnect()
-  }, [])
+  }, [resetToStart])
 
   return (
     <div className="relative w-full h-full overflow-hidden select-none">
       {/* 100% Native, zero-jank horizontal swipe container prioritizing vertical scroll */}
       <div
         ref={containerRef}
-        className="w-full h-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory touch-pan-y overscroll-x-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="w-full h-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory overscroll-x-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         style={{
+          touchAction: "pan-y",
           WebkitOverflowScrolling: "touch",
         }}
       >
         {images.map((img, i) => (
-          <div key={i} className="relative w-full h-full shrink-0 snap-center snap-always">
+          <div key={i} className="relative min-w-full w-full h-full shrink-0 snap-center snap-always">
             <Link
               href={`/products/${productSlug}`}
-              className="absolute inset-0 z-10"
+              className="absolute inset-0 z-10 block w-full h-full"
               aria-label={`${productName} view ${i + 1}`}
+              draggable={false}
             />
             <Image
               src={optimizeCloudinaryUrl(img.url, { width: 640 })}
@@ -119,18 +137,22 @@ export function ProductImageReveal({
               placeholder="blur"
               blurDataURL={SHIMMER_BLUR_DATA_URL}
               className="object-cover object-top pointer-events-none select-none"
+              draggable={false}
             />
           </div>
         ))}
       </div>
 
       {/* Real-time Synchronized Dot Indicators */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 pointer-events-none">
+      <div
+        ref={dotsContainerRef}
+        className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 pointer-events-none"
+      >
         {images.map((_, i) => (
           <div
             key={i}
             className={`transition-all duration-300 rounded-full ${
-              i === activeIndex
+              i === 0
                 ? "w-3 h-1.5 bg-white shadow-sm"
                 : "w-1.5 h-1.5 bg-white/60 shadow-sm"
             }`}
