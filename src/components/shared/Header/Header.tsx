@@ -161,10 +161,19 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
 
   return (
     <header
-      className="fixed top-0 left-0 w-full z-50 flex flex-col border-b bg-transparent backdrop-blur-[2px] text-text-primary border-transparent"
-      style={{ paddingTop: "env(safe-area-inset-top)" }}
+      className="fixed top-0 left-0 w-full z-50 flex flex-col border-b border-transparent"
+      style={{
+        /* Frosted glass covering both status bar zone + nav bar */
+        background: "rgba(248, 245, 240, 0.72)",
+        backdropFilter: "blur(20px) saturate(180%)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
+      }}
     >
-      <div className="h-[56px] md:h-[64px] grid grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 md:px-8 lg:px-10 w-full relative">
+      {/* Status bar blur zone — fills exactly the iOS safe area height */}
+      <div style={{ height: "env(safe-area-inset-top)" }} aria-hidden="true" />
+
+      {/* Actual nav content, sits cleanly below the status bar */}
+      <div className="h-[52px] md:h-[60px] grid grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 md:px-8 lg:px-10 w-full relative">
         
         {/* LEFT NAV */}
         <nav className="hidden md:flex items-center gap-10 h-full">

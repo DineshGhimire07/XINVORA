@@ -77,7 +77,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* PWA / iOS Safari meta tags */}
         <meta name="application-name" content="XINVORA" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="XINVORA" />
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png" />
