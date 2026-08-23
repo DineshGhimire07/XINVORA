@@ -161,9 +161,10 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
 
   return (
     <header
-      className="fixed top-0 left-0 w-full z-50 h-[56px] md:h-[64px] flex items-center border-b bg-transparent backdrop-blur-[2px] text-text-primary border-transparent"
+      className="fixed top-0 left-0 w-full z-50 flex flex-col border-b bg-transparent backdrop-blur-[2px] text-text-primary border-transparent"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 md:px-8 lg:px-10 w-full h-full relative">
+      <div className="h-[56px] md:h-[64px] grid grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 md:px-8 lg:px-10 w-full relative">
         
         {/* LEFT NAV */}
         <nav className="hidden md:flex items-center gap-10 h-full">
