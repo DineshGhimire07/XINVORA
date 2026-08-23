@@ -60,8 +60,8 @@ export async function submitCheckoutAction(
       }
     }
 
-    // Call unified createOrder
-    const order = await CheckoutService.createOrder(session.id, submission)
+    // Call unified createOrder with preloaded cart
+    const order = await CheckoutService.createOrder(session.id, submission, cart)
 
     // Rely on automatic client routing invalidation after action completion
 

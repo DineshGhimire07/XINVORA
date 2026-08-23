@@ -73,6 +73,7 @@ const inputClass = cn(
 interface NepalDeliveryFormProps {
   provinces: NepalProvince[]
   savedAddress?: any
+  allDistricts?: NepalDistrict[]
   initialDistricts?: NepalDistrict[]
   initialMunicipalities?: NepalMunicipality[]
   onSuccess?: (data: NepalDeliveryFormValues) => void
@@ -82,22 +83,26 @@ interface NepalDeliveryFormProps {
 export function NepalDeliveryForm({
   provinces,
   savedAddress,
+  allDistricts = [],
   initialDistricts = [],
   initialMunicipalities = [],
   onSuccess,
   initialData,
 }: NepalDeliveryFormProps) {
   const router = useRouter()
-  const [districts, setDistricts] = useState<NepalDistrict[]>(initialDistricts)
+  const [districts, setDistricts] = useState<NepalDistrict[]>(
+    initialDistricts.length > 0
+      ? initialDistricts
+      : allDistricts.length > 0 && savedAddress?.provinceId
+      ? allDistricts.filter((d) => d.provinceId === savedAddress.provinceId)
+      : []
+  )
   const [municipalities, setMunicipalities] = useState<NepalMunicipality[]>(initialMunicipalities)
   const [loadingDistricts, setLoadingDistricts] = useState(false)
   const [loadingMunicipalities, setLoadingMunicipalities] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const idempotencyKeyRef = React.useRef<string | null>(null)
-
-  // Use refs to track if the values are seeded from mount so we don't trigger cascade wipes
-  const isInitialMountRef = React.useRef(true)
   
   if (!idempotencyKeyRef.current) {
     idempotencyKeyRef.current = typeof crypto !== "undefined" && crypto.randomUUID
@@ -106,13 +111,13 @@ export function NepalDeliveryForm({
   }
 
   // Display names for preview (initial values based on savedAddress names if available)
-  const [provinceName, setProvinceName] = useState(savedAddress?.province?.name || "")
-  const [districtName, setDistrictName] = useState(savedAddress?.district?.name || "")
-  const [municipalityName, setMunicipalityName] = useState(savedAddress?.municipality?.name || "")
+  const [provinceName, setProvinceName] = useState(savedAddress?.province?.name || savedAddress?.provinceName || "")
+  const [districtName, setDistrictName] = useState(savedAddress?.district?.name || savedAddress?.districtName || "")
+  const [municipalityName, setMunicipalityName] = useState(savedAddress?.municipality?.name || savedAddress?.municipalityName || "")
 
   // Ward count from selected municipality (pre-seed if initialMunicipalities has it)
   const matchedMuni = initialMunicipalities.find((m) => m.id === savedAddress?.municipalityId)
-  const [totalWards, setTotalWards] = useState(matchedMuni?.totalWards || 9)
+  const [totalWards, setTotalWards] = useState(matchedMuni?.totalWards || savedAddress?.municipality?.totalWards || 9)
 
   const {
     register,
@@ -137,9 +142,9 @@ export function NepalDeliveryForm({
       latitude: savedAddress?.latitude || undefined,
       longitude: savedAddress?.longitude || undefined,
       saveAddress: false,
-      provinceName: savedAddress?.province?.name || "",
-      districtName: savedAddress?.district?.name || "",
-      municipalityName: savedAddress?.municipality?.name || "",
+      provinceName: savedAddress?.province?.name || savedAddress?.provinceName || "",
+      districtName: savedAddress?.district?.name || savedAddress?.districtName || "",
+      municipalityName: savedAddress?.municipality?.name || savedAddress?.municipalityName || "",
     },
   })
 
@@ -148,80 +153,118 @@ export function NepalDeliveryForm({
   const selectedDistrictId = watch("districtId")
   const selectedMunicipalityId = watch("municipalityId")
 
-  // On initial render finish, turn off the mount guard ref
-  useEffect(() => {
-    isInitialMountRef.current = false
-  }, [])
+  // Track previous selections using refs to avoid wiping preloaded values on mount
+  const prevProvinceIdRef = React.useRef(savedAddress?.provinceId || "")
+  const prevDistrictIdRef = React.useRef(savedAddress?.districtId || "")
+  const prevMunicipalityIdRef = React.useRef(savedAddress?.municipalityId || "")
 
-  // Auto-set default province (Bagmati Province) if none selected so districts are 100% pre-loaded
+  // Auto-set default province (Bagmati Province) if none selected and no saved address
   useEffect(() => {
-    if (!selectedProvinceId && provinces.length > 0) {
+    if (!selectedProvinceId && provinces.length > 0 && !savedAddress?.provinceId) {
       const defaultProvince = provinces.find((p) => p.name.includes("Bagmati")) || provinces[0]
       if (defaultProvince) {
         setValue("provinceId", defaultProvince.id)
         setValue("provinceName", defaultProvince.name)
         setProvinceName(defaultProvince.name)
+        prevProvinceIdRef.current = defaultProvince.id
+        if (allDistricts.length > 0) {
+          setDistricts(allDistricts.filter((d) => d.provinceId === defaultProvince.id))
+        }
       }
     }
-  }, [selectedProvinceId, provinces, setValue])
+  }, [selectedProvinceId, provinces, savedAddress, allDistricts, setValue])
 
-  // Fetch districts when province changes
+  // Instant in-memory filter for districts when province changes (0ms delay)
   useEffect(() => {
-    // Mount safety check: If it's initial mount and we already have districts, skip resetting/fetching
-    if (isInitialMountRef.current && districts.length > 0) {
-      return
-    }
-
     if (!selectedProvinceId) {
-      setDistricts([])
-      setMunicipalities([])
-      setValue("districtId", "")
-      setValue("municipalityId", "")
-      setValue("wardNumber", undefined as any)
-      setDistrictName("")
-      setMunicipalityName("")
-      return
-    }
-    setLoadingDistricts(true)
-    fetch(`/api/nepal/districts?provinceId=${selectedProvinceId}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setDistricts(data)
+      if (prevProvinceIdRef.current !== "") {
+        setDistricts([])
         setMunicipalities([])
         setValue("districtId", "")
         setValue("municipalityId", "")
         setValue("wardNumber", undefined as any)
         setDistrictName("")
         setMunicipalityName("")
+        prevProvinceIdRef.current = ""
+      }
+      return
+    }
+
+    // If province hasn't changed from saved/initial state, do not wipe preloaded child values!
+    if (selectedProvinceId === prevProvinceIdRef.current && districts.length > 0) {
+      return
+    }
+
+    const provinceChanged = selectedProvinceId !== prevProvinceIdRef.current
+    prevProvinceIdRef.current = selectedProvinceId
+
+    // 0ms Instant In-Memory Filter if allDistricts is available
+    if (allDistricts.length > 0) {
+      const matchedDistricts = allDistricts.filter((d) => d.provinceId === selectedProvinceId)
+      setDistricts(matchedDistricts)
+      if (provinceChanged) {
+        setMunicipalities([])
+        setValue("districtId", "")
+        setValue("municipalityId", "")
+        setValue("wardNumber", undefined as any)
+        setDistrictName("")
+        setMunicipalityName("")
+      }
+      return
+    }
+
+    // Fallback to fetch if allDistricts wasn't provided
+    setLoadingDistricts(true)
+    fetch(`/api/nepal/districts?provinceId=${selectedProvinceId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setDistricts(data)
+        if (provinceChanged) {
+          setMunicipalities([])
+          setValue("districtId", "")
+          setValue("municipalityId", "")
+          setValue("wardNumber", undefined as any)
+          setDistrictName("")
+          setMunicipalityName("")
+        }
       })
       .finally(() => setLoadingDistricts(false))
-  }, [selectedProvinceId, setValue])
+  }, [selectedProvinceId, allDistricts, districts.length, setValue])
 
-  // Fetch municipalities when district changes
+  // Fetch municipalities when district genuinely changes
   useEffect(() => {
-    // Mount safety check: If it's initial mount and we already have municipalities, skip resetting/fetching
-    if (isInitialMountRef.current && municipalities.length > 0) {
+    if (!selectedDistrictId) {
+      if (prevDistrictIdRef.current !== "") {
+        setMunicipalities([])
+        setValue("municipalityId", "")
+        setValue("wardNumber", undefined as any)
+        setMunicipalityName("")
+        prevDistrictIdRef.current = ""
+      }
       return
     }
 
-    if (!selectedDistrictId) {
-      setMunicipalities([])
-      setValue("municipalityId", "")
-      setValue("wardNumber", undefined as any)
-      setMunicipalityName("")
+    // If district hasn't changed from saved/initial state, do not wipe preloaded child values!
+    if (selectedDistrictId === prevDistrictIdRef.current && municipalities.length > 0) {
       return
     }
+
+    const districtChanged = selectedDistrictId !== prevDistrictIdRef.current
+    prevDistrictIdRef.current = selectedDistrictId
+
     setLoadingMunicipalities(true)
     fetch(`/api/nepal/municipalities?districtId=${selectedDistrictId}`)
       .then((r) => r.json())
       .then((data) => {
         setMunicipalities(data)
-        setValue("municipalityId", "")
-        setValue("wardNumber", undefined as any)
-        setMunicipalityName("")
+        if (districtChanged) {
+          setValue("municipalityId", "")
+          setValue("wardNumber", undefined as any)
+          setMunicipalityName("")
+        }
       })
       .finally(() => setLoadingMunicipalities(false))
-  }, [selectedDistrictId, setValue])
+  }, [selectedDistrictId, municipalities.length, setValue])
 
   // Update ward count when municipality changes
   useEffect(() => {
@@ -229,8 +272,10 @@ export function NepalDeliveryForm({
     const muni = municipalities.find((m) => m.id === selectedMunicipalityId)
     if (muni) {
       setTotalWards(muni.totalWards)
-      // Only clear wardNumber if NOT on initial mount
-      if (!isInitialMountRef.current && watchedValues.wardNumber !== savedAddress?.wardNumber) {
+      const muniChanged = selectedMunicipalityId !== prevMunicipalityIdRef.current
+      prevMunicipalityIdRef.current = selectedMunicipalityId
+
+      if (muniChanged) {
         setValue("wardNumber", undefined as any)
       }
       setValue("municipalityName", muni.name)

@@ -10,26 +10,7 @@ import type { ActionResult } from "@/types/actions"
 import { type TimingEntry, printTimingSummary } from "@/lib/perf"
 import { invalidateCartCache } from "@/db/queries/cart"
 
-import crypto from "crypto"
-
-const CART_SECRET = process.env.NEXTAUTH_SECRET || "fallback_cart_signing_secret_key_12345"
-
-function signSessionId(id: string): string {
-  const signature = crypto.createHmac("sha256", CART_SECRET).update(id).digest("hex")
-  return `${id}.${signature}`
-}
-
-function verifyAndExtractSessionId(signedValue: string | undefined): string | null {
-  if (!signedValue) return null
-  const parts = signedValue.split(".")
-  if (parts.length !== 2) return null
-  const [id, signature] = parts
-  const expectedSignature = crypto.createHmac("sha256", CART_SECRET).update(id).digest("hex")
-  if (signature === expectedSignature) {
-    return id
-  }
-  return null
-}
+import { signSessionId, verifyAndExtractSessionId } from "@/lib/cookies/cart-session"
 
 /**
  * Gets or creates the guest cart session ID from cookies.

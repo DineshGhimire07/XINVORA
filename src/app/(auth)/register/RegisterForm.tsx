@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import {
   Mail,
@@ -19,6 +19,9 @@ import {
 
 export function RegisterForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("returnUrl") || "/"
+
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
@@ -50,8 +53,8 @@ export function RegisterForm() {
     startTransition(async () => {
       const result = await registerAction(null, formData)
       if (result.success) {
-        // Successful registration & auto-login: Seamlessly redirect directly to Homepage
-        router.push("/")
+        // Successful registration & auto-login: Seamlessly redirect directly to callbackUrl
+        router.push(callbackUrl)
         router.refresh()
       } else {
         if (result.error?.fieldErrors) {
@@ -256,7 +259,7 @@ export function RegisterForm() {
         type="button"
         variant="outline"
         disabled={isPending}
-        onClick={() => signIn("google", { callbackUrl: "/" })}
+        onClick={() => signIn("google", { callbackUrl })}
         className="w-full h-11 sm:h-12 border border-neutral-200 hover:bg-white bg-white/80 text-neutral-800 rounded-md sm:rounded-lg transition-all duration-300 active:scale-[0.99] flex items-center justify-center gap-2.5 shadow-2xs"
       >
         <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -274,7 +277,7 @@ export function RegisterForm() {
       <div className="pt-1 text-center text-xs sm:text-sm text-neutral-600">
         Already have an account?{" "}
         <Link
-          href="/login"
+          href={callbackUrl !== "/" ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}` : "/login"}
           className="text-neutral-900 font-bold hover:text-[#8C6D58] transition-colors underline underline-offset-4"
         >
           Sign In &rarr;

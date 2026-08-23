@@ -153,8 +153,12 @@ export class CheckoutService {
    * sequentially, eliminating N sequential round trips while the transaction
    * is held open.
    */
-  static async createOrder(userId: string, submission: CheckoutSubmission) {
-    // BUG FIX #8: Service-level validation guardrail to ensure COD address completeness
+  static async createOrder(
+    userId: string,
+    submission: CheckoutSubmission,
+    preloadedCart?: Awaited<ReturnType<typeof getCart>>
+  ) {
+    // Service-level validation guardrail to ensure COD address completeness
     const parsed = CheckoutSubmissionSchema.safeParse(submission)
     if (!parsed.success) {
       throw new Error("Invalid delivery address details: " + Object.keys(parsed.error.flatten().fieldErrors).join(", "))
@@ -162,10 +166,8 @@ export class CheckoutService {
 
     const orderNumber = OrderNumberService.generateOrderNumber()
 
-    // 1. Fetch initial cart ONCE outside the transaction.
-    //    Reused as the "pre-lock snapshot" for mismatch detection AND passed
-    //    into calculateTotals() so the cart is not fetched a second time.
-    const initialCart = await getCart(userId, null)
+    // 1. Reuse preloaded cart or fetch ONCE outside the transaction.
+    const initialCart = preloadedCart || (await getCart(userId, null))
     if (!initialCart || initialCart.items.length === 0) {
       throw new Error("Cart is empty")
     }

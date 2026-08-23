@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Mail, Lock, Eye, EyeOff, Loader2, ShieldCheck, LockIcon, ShieldAlert } from "lucide-react"
 
 export function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("returnUrl") || "/"
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -31,8 +34,8 @@ export function LoginForm() {
     startTransition(async () => {
       const result = await loginAction(null, formData)
       if (result.success) {
-        // Successful login: immediately redirect to Homepage
-        router.push("/")
+        // Successful login: redirect directly to target (e.g. /checkout for Buy Now)
+        router.push(callbackUrl)
         router.refresh()
       } else {
         // Failed login: Preserve email, clear only password
@@ -53,6 +56,11 @@ export function LoginForm() {
         <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-light text-neutral-900 tracking-tight">
           Welcome Back
         </h1>
+        {callbackUrl.includes("checkout") && (
+          <p className="text-xs text-[#8C6D58] font-medium mt-1">
+            Sign in to complete your order checkout
+          </p>
+        )}
       </div>
 
       {/* Login Form */}
@@ -173,7 +181,7 @@ export function LoginForm() {
         type="button"
         variant="outline"
         disabled={isPending}
-        onClick={() => signIn("google", { callbackUrl: "/" })}
+        onClick={() => signIn("google", { callbackUrl })}
         className="w-full h-11 sm:h-12 border border-neutral-200 hover:bg-white bg-white/80 text-neutral-800 rounded-md sm:rounded-lg transition-all duration-300 active:scale-[0.99] flex items-center justify-center gap-2.5 shadow-2xs"
       >
         <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -191,7 +199,7 @@ export function LoginForm() {
       <div className="pt-1 text-center text-xs sm:text-sm text-neutral-600">
         New to XINVORA?{" "}
         <Link
-          href="/register"
+          href={callbackUrl !== "/" ? `/register?callbackUrl=${encodeURIComponent(callbackUrl)}` : "/register"}
           className="text-neutral-900 font-bold hover:text-[#8C6D58] transition-colors underline underline-offset-4"
         >
           Create an account &rarr;

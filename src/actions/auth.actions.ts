@@ -34,6 +34,24 @@ export async function registerAction(
       redirect: false,
     })
 
+    // Merge Guest Cart for newly registered user
+    try {
+      const user = await SessionService.optionalAuth()
+      const cookieStore = await cookies()
+      const rawSessionCookie = cookieStore.get("cart_session")?.value
+      const { verifyAndExtractSessionId } = await import("@/lib/cookies/cart-session")
+      const sessionId = verifyAndExtractSessionId(rawSessionCookie) || rawSessionCookie
+
+      if (user && sessionId) {
+        await CartService.mergeGuestCart(sessionId, user.id)
+        cookieStore.delete("cart_session")
+        const { invalidateCartCache } = await import("@/db/queries/cart")
+        invalidateCartCache(user.id, null)
+      }
+    } catch (mergeErr) {
+      console.warn("[registerAction] Guest cart merge warning:", mergeErr)
+    }
+
     return {
       success: true,
       data: {
@@ -75,13 +93,17 @@ export async function loginAction(
     // Merge Guest Cart
     const user = await SessionService.optionalAuth()
     const cookieStore = await cookies()
-    const sessionId = cookieStore.get("cart_session")?.value
+    const rawSessionCookie = cookieStore.get("cart_session")?.value
+    const { verifyAndExtractSessionId } = await import("@/lib/cookies/cart-session")
+    const sessionId = verifyAndExtractSessionId(rawSessionCookie) || rawSessionCookie
     
     let skippedCount = 0
     if (user && sessionId) {
       const mergeResult = await CartService.mergeGuestCart(sessionId, user.id)
       skippedCount = mergeResult?.skippedCount || 0
       cookieStore.delete("cart_session")
+      const { invalidateCartCache } = await import("@/db/queries/cart")
+      invalidateCartCache(user.id, null)
     }
 
     // Sync Guest Consent to DB for logged in user

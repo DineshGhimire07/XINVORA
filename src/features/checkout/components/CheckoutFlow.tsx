@@ -19,6 +19,7 @@ interface CheckoutFlowProps {
     shippingCost: number
     total: number
   }
+  allDistricts?: any[]
   initialDistricts?: any[]
   initialMunicipalities?: any[]
   initialPaymentQrs?: any
@@ -28,6 +29,7 @@ export function CheckoutFlow({
   provinces,
   savedAddress,
   totals,
+  allDistricts = [],
   initialDistricts = [],
   initialMunicipalities = [],
   initialPaymentQrs,
@@ -96,6 +98,7 @@ export function CheckoutFlow({
                 <NepalDeliveryForm
                   provinces={provinces}
                   savedAddress={savedAddress}
+                  allDistricts={allDistricts}
                   initialDistricts={initialDistricts}
                   initialMunicipalities={initialMunicipalities}
                   onSuccess={handleAddressSuccess}

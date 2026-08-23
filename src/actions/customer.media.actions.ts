@@ -50,7 +50,7 @@ export async function uploadCustomerLocalFileAction(formData: FormData) {
       console.warn("[uploadCustomerLocalFileAction] Read-only filesystem encountered. Falling back to Data URL:", fsError.message)
       const arrayBuffer = await file.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
-      const mimeType = file.type || "image/png"
+      const mimeType = file.type || "image/webp"
       const base64Data = buffer.toString("base64")
       const dataUrl = `data:${mimeType};base64,${base64Data}`
 

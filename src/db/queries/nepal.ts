@@ -40,6 +40,21 @@ export const getProvinces = unstable_cache(
   { revalidate: 86400, tags: ["nepal-provinces", "nepal"] }
 )
 
+export const getAllDistricts = unstable_cache(
+  async (): Promise<NepalDistrict[]> => {
+    return db
+      .select({
+        id: nepalDistricts.id,
+        provinceId: nepalDistricts.provinceId,
+        name: nepalDistricts.name,
+      })
+      .from(nepalDistricts)
+      .orderBy(asc(nepalDistricts.name))
+  },
+  ["nepal-all-districts"],
+  { revalidate: 86400, tags: ["nepal-districts", "nepal"] }
+)
+
 // Districts are keyed per province — static geographic data, cache forever (24h TTL)
 const _districtsByProvinceCacheMap = new Map<string, () => Promise<NepalDistrict[]>>()
 

@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { buildMetadata } from "@/lib/metadata"
 import { AdminSettingsService } from "@/services/admin/settings.service"
 import { AuthLayout } from "@/components/auth/AuthLayout"
@@ -20,7 +21,9 @@ export default async function LoginPage() {
 
   return (
     <AuthLayout settings={authSettings}>
-      <LoginForm />
+      <Suspense fallback={<div className="h-64 flex items-center justify-center text-xs text-neutral-400">Loading form...</div>}>
+        <LoginForm />
+      </Suspense>
     </AuthLayout>
   )
 }

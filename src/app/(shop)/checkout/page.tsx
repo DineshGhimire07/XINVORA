@@ -1,13 +1,15 @@
 import { Suspense } from "react"
 import { SessionService } from "@/services/session.service"
 import { getCart } from "@/db/queries/cart"
-import { getProvinces, getDistrictsByProvince, getMunicipalitiesByDistrict } from "@/db/queries/nepal"
+import { getProvinces, getAllDistricts, getMunicipalitiesByDistrict } from "@/db/queries/nepal"
 import { redirect } from "next/navigation"
 import { Container } from "@/components/shared/container"
 import { Section } from "@/components/shared/section"
 import { buildMetadata } from "@/lib/metadata"
 import { db } from "@/db/client"
 import { addresses } from "@/db/schema/addresses"
+import { users } from "@/db/schema/users"
+import { orders } from "@/db/schema/orders"
 import { eq, desc } from "drizzle-orm"
 
 import { CheckoutFlow } from "@/features/checkout/components/CheckoutFlow"
@@ -27,9 +29,10 @@ async function CheckoutFlowWithData({
   sessionId: string
   totals: any
 }) {
-  // Tier B fetches — provinces + saved address + payment QRs all in parallel for instant step-2 transition
-  const [provinces, savedAddress, paymentQrsRes] = await Promise.all([
+  // Tier B fetches — provinces + all districts + saved address + user profile + latest order + payment QRs all in parallel
+  const [provinces, allDistricts, savedAddress, userRecord, latestOrder, paymentQrsRes] = await Promise.all([
     getProvinces(),
+    getAllDistricts(),
     db.query.addresses.findFirst({
       where: eq(addresses.userId, sessionId),
       orderBy: desc(addresses.createdAt),
@@ -39,33 +42,72 @@ async function CheckoutFlowWithData({
         municipality: true,
       },
     }),
+    db.query.users.findFirst({
+      where: eq(users.id, sessionId),
+    }),
+    db.query.orders.findFirst({
+      where: eq(orders.userId, sessionId),
+      orderBy: desc(orders.createdAt),
+    }),
     getPaymentQrsAction(),
   ])
 
   const initialPaymentQrs = paymentQrsRes.success ? paymentQrsRes.data : null
 
-  // Pre-fetch districts/municipalities for saved address or default Bagmati province
-  let initialDistricts: any[] = []
-  let initialMunicipalities: any[] = []
+  // 1. Synthesize historical address data from latest order or saved address
+  const s = (latestOrder?.shippingAddress as any) || (savedAddress as any) || {}
+  const userFullName = [userRecord?.firstName, userRecord?.lastName].filter(Boolean).join(" ")
 
-  const targetProvinceId = savedAddress?.provinceId || provinces.find((p) => p.name.includes("Bagmati"))?.id || provinces[0]?.id
-  if (targetProvinceId) {
-    if (savedAddress?.districtId) {
-      ;[initialDistricts, initialMunicipalities] = await Promise.all([
-        getDistrictsByProvince(targetProvinceId),
-        getMunicipalitiesByDistrict(savedAddress.districtId),
-      ])
-    } else {
-      initialDistricts = await getDistrictsByProvince(targetProvinceId)
-    }
+  // 2. Resolve Province
+  const resolvedProvince = provinces.find((p) => p.id === s.provinceId) ||
+    provinces.find((p) => s.provinceName && p.name.toLowerCase().includes(String(s.provinceName).toLowerCase())) ||
+    provinces.find((p) => p.name.includes("Bagmati")) ||
+    provinces[0]
+
+  // 3. Resolve District
+  const provinceDistricts = allDistricts.filter((d) => d.provinceId === resolvedProvince?.id)
+  const resolvedDistrict = allDistricts.find((d) => d.id === s.districtId) ||
+    allDistricts.find((d) => s.districtName && d.name.toLowerCase() === String(s.districtName).toLowerCase()) ||
+    provinceDistricts[0]
+
+  // 4. Pre-fetch Municipalities for the resolved district
+  let initialMunicipalities: any[] = []
+  if (resolvedDistrict?.id) {
+    initialMunicipalities = await getMunicipalitiesByDistrict(resolvedDistrict.id)
   }
+
+  // 5. Pre-match Municipality
+  const matchedMuni = initialMunicipalities.find((m) => m.id === s.municipalityId) ||
+    initialMunicipalities.find((m) => s.municipalityName && m.name.toLowerCase() === String(s.municipalityName).toLowerCase()) ||
+    initialMunicipalities[0]
+
+  const effectiveAddress = {
+    fullName: s.fullName || userFullName || "",
+    phone: s.phone || "",
+    provinceId: resolvedProvince?.id || "",
+    provinceName: resolvedProvince?.name || "",
+    districtId: resolvedDistrict?.id || "",
+    districtName: resolvedDistrict?.name || "",
+    municipalityId: matchedMuni?.id || s.municipalityId || "",
+    municipalityName: matchedMuni?.name || s.municipalityName || "",
+    wardNumber: s.wardNumber ? Number(s.wardNumber) : undefined,
+    tole: s.tole || "",
+    street: s.street || "",
+    landmark: s.landmark || "",
+    latitude: s.latitude || undefined,
+    longitude: s.longitude || undefined,
+    province: resolvedProvince ? { name: resolvedProvince.name } : null,
+    district: resolvedDistrict ? { name: resolvedDistrict.name } : null,
+    municipality: matchedMuni ? { name: matchedMuni.name, totalWards: matchedMuni.totalWards } : null,
+  } as any
 
   return (
     <CheckoutFlow
       provinces={provinces}
-      savedAddress={savedAddress}
+      savedAddress={effectiveAddress}
       totals={totals}
-      initialDistricts={initialDistricts}
+      allDistricts={allDistricts}
+      initialDistricts={provinceDistricts}
       initialMunicipalities={initialMunicipalities}
       initialPaymentQrs={initialPaymentQrs}
     />
