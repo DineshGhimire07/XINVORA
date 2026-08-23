@@ -99,8 +99,8 @@ export function ProductImageReveal({
   }, [resetToStart])
 
   return (
-    // Outer wrapper: touch-action pan-y lets vertical page scrolling pass through
-    <div className="relative w-full h-full overflow-hidden select-none" style={{ touchAction: "pan-y" }}>
+    // Outer wrapper: NO touch-action override — let all touches propagate naturally to the page
+    <div className="relative w-full h-full overflow-hidden select-none">
       {/*
         Scroll track: NO touchAction override.
         The browser detects horizontal swipes on this element naturally via overflow-x scroll.
@@ -111,6 +111,12 @@ export function ProductImageReveal({
         ref={containerRef}
         className="w-full h-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory overscroll-x-contain"
         style={{
+          /*
+           * touch-action: pan-x — tells Android/iOS this element handles horizontal swipes.
+           * Vertical touches are NOT consumed here and naturally propagate to the page scroll.
+           * This is the correct pattern for a horizontal carousel inside a vertically-scrolling page.
+           */
+          touchAction: "pan-x",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
         }}
