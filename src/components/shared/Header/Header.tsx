@@ -161,18 +161,26 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
 
   return (
     <header
-      className="fixed top-0 left-0 w-full z-50 flex flex-col border-b border-transparent"
+      className="fixed top-0 left-0 w-full z-50 flex flex-col"
       style={{
-        background: "rgba(248, 245, 240, 0.08)",
-        backdropFilter: "blur(8px) saturate(140%)",
-        WebkitBackdropFilter: "blur(8px) saturate(140%)",
+        backdropFilter: "blur(24px) saturate(160%)",
+        WebkitBackdropFilter: "blur(24px) saturate(160%)",
       }}
     >
-      {/* Status bar safe zone — transparent, just lets the blur show through */}
-      <div style={{ height: "env(safe-area-inset-top)" }} aria-hidden="true" />
+      {/* Status bar blur zone — same blur, slight tint so it covers time/battery clearly */}
+      <div
+        style={{
+          height: "env(safe-area-inset-top)",
+          background: "rgba(20, 18, 16, 0.28)",
+        }}
+        aria-hidden="true"
+      />
 
-      {/* Actual nav content */}
-      <div className="h-[52px] md:h-[60px] grid grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 md:px-8 lg:px-10 w-full relative">
+      {/* Nav content row */}
+      <div
+        className="h-[52px] md:h-[60px] grid grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 md:px-8 lg:px-10 w-full relative"
+        style={{ background: "rgba(20, 18, 16, 0.18)" }}
+      >
         
         {/* LEFT NAV */}
         <nav className="hidden md:flex items-center gap-10 h-full">
