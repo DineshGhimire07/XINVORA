@@ -11,6 +11,8 @@ export interface ProductImageRevealProps {
   productName: string
   images: { url: string; altText: string | null }[]
   priority?: boolean
+  /** Whether to show the pill-dot indicators. Default true. Pass false to hide them. */
+  showDots?: boolean
 }
 
 export function ProductImageReveal({
@@ -19,6 +21,7 @@ export function ProductImageReveal({
   productName,
   images,
   priority = false,
+  showDots = true,
 }: ProductImageRevealProps) {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const dotsContainerRef = React.useRef<HTMLDivElement>(null)
@@ -67,31 +70,28 @@ export function ProductImageReveal({
   const resetToStart = React.useCallback(() => {
     const el = containerRef.current
     if (!el) return
-    // Set scrollLeft directly — works even when snap is active
     el.scrollLeft = 0
     activeIndexRef.current = 0
     updateDots(0)
   }, [updateDots])
 
-  // Reset when card is FULLY off-screen. Use a high threshold to avoid
-  // triggering during normal scroll (card partially visible = keep position)
+  // Reset when card is FULLY off-screen — observe the parent [data-product-card]
   React.useEffect(() => {
     const el = containerRef.current
     if (!el || typeof IntersectionObserver === "undefined") return
 
-    // Observe the parent card element, not the scroll track
     const cardEl = el.closest("[data-product-card]") as Element | null
     const target = cardEl ?? el
 
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0]
-        // Only reset when the card is 100% invisible (completely off-screen)
+        // Only reset when completely invisible AND we're not already on image 0
         if (!entry.isIntersecting && activeIndexRef.current !== 0) {
           resetToStart()
         }
       },
-      { threshold: 0 } // fires when 0% is visible (fully off-screen)
+      { threshold: 0 }
     )
 
     observer.observe(target)
@@ -99,18 +99,18 @@ export function ProductImageReveal({
   }, [resetToStart])
 
   return (
-    // Outer wrapper: touch-action pan-y allows vertical page scroll to pass through normally
+    // Outer wrapper: touch-action pan-y lets vertical page scrolling pass through
     <div className="relative w-full h-full overflow-hidden select-none" style={{ touchAction: "pan-y" }}>
       {/*
-        Scroll track: NO touchAction override here.
-        The browser must be free to detect horizontal swipes on this element.
-        overflow-x: auto + snap-x gives native, buttery horizontal swipe.
+        Scroll track: NO touchAction override.
+        The browser detects horizontal swipes on this element naturally via overflow-x scroll.
+        Do NOT set -webkit-overflow-scrolling: touch — it is deprecated and causes
+        momentum scroll conflicts with vertical page scroll on modern iOS.
       */}
       <div
         ref={containerRef}
         className="w-full h-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory overscroll-x-contain"
         style={{
-          WebkitOverflowScrolling: "touch",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
         }}
@@ -145,20 +145,22 @@ export function ProductImageReveal({
         ))}
       </div>
 
-      {/* Dot indicators — updated directly via DOM, never via React state */}
-      <div
-        ref={dotsContainerRef}
-        className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 pointer-events-none"
-      >
-        {images.map((_, i) => (
-          <div
-            key={i}
-            className={`transition-all duration-300 rounded-full ${
-              i === 0 ? "w-3 h-1.5 bg-white shadow-sm" : "w-1.5 h-1.5 bg-white/60 shadow-sm"
-            }`}
-          />
-        ))}
-      </div>
+      {/* Dot indicators — only rendered when showDots=true */}
+      {showDots && (
+        <div
+          ref={dotsContainerRef}
+          className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 pointer-events-none"
+        >
+          {images.map((_, i) => (
+            <div
+              key={i}
+              className={`transition-all duration-300 rounded-full ${
+                i === 0 ? "w-3 h-1.5 bg-white shadow-sm" : "w-1.5 h-1.5 bg-white/60 shadow-sm"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

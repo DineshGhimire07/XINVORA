@@ -200,6 +200,7 @@ function CMSProductGrid({ block, products = [] }: { block: any; products?: any[]
                 disableHover={false}
                 objectContain={false}
                 inStock={inStock}
+                hideDots={true}
               />
             </div>
           )

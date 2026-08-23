@@ -31,6 +31,8 @@ export interface ProductCardProps {
   disableHover?: boolean
   objectContain?: boolean
   inStock?: boolean
+  /** Hide the dot indicators on the mobile swipe reveal (used in New Arrivals grid) */
+  hideDots?: boolean
 }
 
 import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
@@ -51,6 +53,7 @@ export function ProductCard({
   disableHover = false,
   objectContain = false,
   inStock = true,
+  hideDots = false,
 }: ProductCardProps) {
   const router = useRouter()
   const { cartItemMap } = useHeaderState()
@@ -170,6 +173,7 @@ export function ProductCard({
               productName={product.name}
               images={images}
               priority={priority}
+              showDots={!hideDots}
             />
           ) : (
             <>
