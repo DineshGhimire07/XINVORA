@@ -102,64 +102,46 @@ const _findCollectionDetailCached = unstable_cache(
     material: string,
     limit: number
   ) => {
-    let collection = await db.query.collections.findFirst({
-      where: and(eq(collections.slug, slug), eq(collections.isActive, true)),
-    })
+    // Single query for the collection — no writes inside a cached read path
+    // (writes cause ShareLock contention when multiple concurrent cache misses fire)
+    const slugToLookup =
+      slug === "limited-edition" ? "limited" : slug
 
-    if (!collection && (slug === "limited" || slug === "limited-edition")) {
-      const existingAny = await db.query.collections.findFirst({
-        where: eq(collections.slug, "limited"),
-      })
-      if (!existingAny) {
-        const [newCol] = await db
-          .insert(collections)
-          .values({
-            slug: "limited",
-            name: "Limited Edition",
-            description: "Rare pieces in very limited quantities. Once it's gone, it's gone.",
-            isActive: true,
-          })
-          .returning()
-        collection = newCol
-      } else {
-        collection = existingAny
-      }
-    }
+    const collection = await db.query.collections.findFirst({
+      where: and(eq(collections.slug, slugToLookup), eq(collections.isActive, true)),
+    })
 
     if (!collection) return null
 
-    // Fetch child collections
-    const children = await db.query.collections.findMany({
-      where: and(eq(collections.parentId, collection.id), eq(collections.isActive, true)),
-      orderBy: [desc(collections.sortOrder)],
-    })
-
-    // Fetch parent collection
-    let parent = null
-    if (collection.parentId) {
-      parent = await db.query.collections.findFirst({
-        where: eq(collections.id, collection.parentId),
-      })
-    }
-
-    // Fetch products with filters
-    const productsResult = await findProducts({
-      collectionSlug: slug,
-      colorSlugs: color ? [color] : undefined,
-      sizeSlugs: size ? [size] : undefined,
-      materialSlugs: material ? [material] : undefined,
-      sort: sort as any,
-      limit: limit || 24,
-    })
+    // Fetch child collections, parent, and products in parallel to reduce latency
+    const [children, parent, productsResult] = await Promise.all([
+      db.query.collections.findMany({
+        where: and(eq(collections.parentId, collection.id), eq(collections.isActive, true)),
+        orderBy: [desc(collections.sortOrder)],
+      }),
+      collection.parentId
+        ? db.query.collections.findFirst({
+            where: eq(collections.id, collection.parentId),
+          })
+        : Promise.resolve(null),
+      findProducts({
+        collectionSlug: slugToLookup,
+        colorSlugs: color ? [color] : undefined,
+        sizeSlugs: size ? [size] : undefined,
+        materialSlugs: material ? [material] : undefined,
+        sort: sort as any,
+        limit: limit || 24,
+      }),
+    ])
 
     return {
       collection,
       children,
-      parent,
+      parent: parent ?? null,
       productsResult,
     }
   },
-  ["collection-detail-v4"],
+  ["collection-detail-v5"],
   { tags: ["collections"], revalidate: 1800 }
 )
 
