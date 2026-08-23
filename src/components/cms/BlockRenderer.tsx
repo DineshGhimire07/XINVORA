@@ -68,7 +68,7 @@ function CMSCollectionGrid({ block, collections = [] }: { block: any; collection
   return (
     <Section id="featured-collections" padding="none" className="bg-neutral-950 select-none w-full overflow-hidden p-0 m-0 border-0">
       {/* 4-box Editorial Collection Grid - full screen height, zero gap, zero borders */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 h-[100dvh] w-full p-0 m-0 border-0">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 h-[100svh] w-full p-0 m-0 border-0">
         {displayCollections.map((collection: any, index: number) => {
           const hasCover = !!collection.imageUrl || !!collection.imageMobileUrl
           return (
@@ -261,7 +261,7 @@ function CMSHeroCarousel({ block }: { block: any }) {
     <Section
       id="homepage-hero-carousel"
       padding="none"
-      className="relative h-[100dvh] w-full flex flex-col bg-background overflow-hidden select-none"
+      className="relative h-[100svh] w-full flex flex-col bg-background overflow-hidden select-none"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
