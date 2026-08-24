@@ -19,6 +19,7 @@ import { findHomepageCollections, getFilterAttributes, findVariantCardMapByProdu
 import type { CatalogFilterParams, SortField } from "@/db/queries/types"
 import { db } from "@/db/client"
 import { inArray } from "drizzle-orm"
+import { PDPBackButton } from "@/components/storefront/PDPBackButton"
 
 export const metadata = buildMetadata({
   title: "Collections",
@@ -74,6 +75,7 @@ export default async function CollectionsPage({
           {/* 1. Collection Hero */}
           <Section id="collections-hero" padding="md" className="bg-background">
             <Container>
+              <PDPBackButton fallbackUrl="/" label="Back" className="mb-4 -ml-1" />
               <div className="flex flex-col items-start text-left max-w-[32rem] gap-6">
                 <span className="text-overline text-accent tracking-overline uppercase select-none">
                   {collectionSlug

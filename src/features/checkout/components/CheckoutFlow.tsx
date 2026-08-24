@@ -10,6 +10,9 @@ import { getPaymentQrsAction } from "@/actions/checkout.actions"
 import { useAnalytics } from "@/features/analytics/ingestion/tracking-provider"
 import { AnalyticsEvent } from "@/features/analytics/events/registry"
 
+import { PDPBackButton } from "@/components/storefront/PDPBackButton"
+import { ArrowLeft } from "lucide-react"
+
 interface CheckoutFlowProps {
   provinces: any[]
   savedAddress?: any
@@ -87,6 +90,20 @@ export function CheckoutFlow({
     <div className="flex flex-col lg:flex-row min-h-screen w-full">
       <div className="flex-1 bg-surface pt-32 pb-16 lg:pb-24 px-6 lg:px-12 xl:px-24">
         <div className="max-w-2xl mx-auto lg:ml-auto lg:mr-16 w-full">
+          {/* Back Button */}
+          {step === 1 ? (
+            <PDPBackButton fallbackUrl="/cart" label="Back to Bag" className="mb-4 -ml-1" />
+          ) : (
+            <button
+              onClick={goBack}
+              className="inline-flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors py-2 px-1 group text-xs uppercase tracking-widest font-mono select-none cursor-pointer mb-4 -ml-1"
+              aria-label="Back to delivery details"
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              <span className="font-medium text-[11px] tracking-wider">Back to Delivery</span>
+            </button>
+          )}
+
           {/* Header */}
           <div className="mb-10 lg:mb-12">
             <p className="text-[10px] font-bold tracking-[0.2em] text-accent uppercase mb-2">

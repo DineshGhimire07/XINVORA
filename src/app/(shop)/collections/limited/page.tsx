@@ -11,6 +11,7 @@ import { collections, productCollections } from "@/db/schema"
 import { or, eq } from "drizzle-orm"
 import { findProducts } from "@/db/queries/products"
 import { getFilterAttributes, findVariantCardMapByProductIds } from "@/db/queries/collections"
+import { PDPBackButton } from "@/components/storefront/PDPBackButton"
 
 export const metadata: Metadata = buildMetadata({
   title: "Limited Edition | XINVORA",
@@ -82,6 +83,20 @@ export default async function LimitedCollectionPage(props: {
 
   return (
     <main className="flex-1 bg-background pt-[72px] md:pt-20">
+      {/* 1. Breadcrumbs & Back Navigation */}
+      <div className="bg-white py-3 border-b border-neutral-100">
+        <Container className="flex items-center gap-3">
+          <PDPBackButton fallbackUrl="/collections" label="Back" className="!mb-0 !py-0 text-text-secondary hover:text-text-primary" />
+          <div className="h-3 w-px bg-neutral-200 hidden sm:block" />
+          <div className="hidden sm:flex items-center gap-2 text-[10px] uppercase tracking-widest text-text-secondary">
+            <Link href="/" className="hover:text-text-primary transition-colors">Home</Link>
+            <span className="text-neutral-300">/</span>
+            <Link href="/collections" className="hover:text-text-primary transition-colors">Collections</Link>
+            <span className="text-neutral-300">/</span>
+            <span className="text-text-primary font-medium">Limited Edition</span>
+          </div>
+        </Container>
+      </div>
 
       {/* ── Unique LIMITED Hero ── */}
       {limitedCollection?.bannerUrl || limitedCollection?.bannerMobileUrl ? (
