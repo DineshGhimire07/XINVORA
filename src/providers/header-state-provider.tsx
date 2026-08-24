@@ -31,13 +31,17 @@ export function HeaderStateProvider({ children }: { children: React.ReactNode })
     account: null,
   })
   const [isLoading, setIsLoading] = useState(true)
+  const stateRef = React.useRef(state)
+  stateRef.current = state
 
   const fetchState = useCallback(async () => {
     try {
       const res = await fetch("/api/commerce/header-state")
       if (res.ok) {
         const data = await res.json()
-        setState(data)
+        if (JSON.stringify(data) !== JSON.stringify(stateRef.current)) {
+          setState(data)
+        }
       }
     } catch (error) {
       console.error("Failed to fetch header state:", error)
