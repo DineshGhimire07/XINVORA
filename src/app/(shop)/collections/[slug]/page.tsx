@@ -64,24 +64,9 @@ export default async function CollectionDetailPage(props: {
     notFound()
   }
 
-  const { collection, children, parent, productsResult } = data
+  const { collection, children, parent, productsResult, variantCardMap } = data
   const products = productsResult.items
   const isEmptyState = products.length === 0
-
-  // Batch query all variants for the current listing to get colors and sizes
-  const productIds = products.map((p) => p.id)
-  const productVariants =
-    productIds.length > 0
-      ? await db.query.variants.findMany({
-          where: (v, { and, inArray, isNull, eq }) =>
-            and(inArray(v.productId, productIds), isNull(v.deletedAt), eq(v.isActive, true)),
-          with: {
-            color: true,
-            size: true,
-            inventory: true,
-          },
-        })
-      : []
 
   return (
     <main className="flex-1 bg-background pt-[72px] md:pt-20">
@@ -197,38 +182,21 @@ export default async function CollectionDetailPage(props: {
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-1.5 gap-y-10 w-full px-0">
             {products.map((product, index) => {
-              // Extract colors and sizes from variants batch query
-              const itemVariants = productVariants.filter((v) => v.productId === product.id)
-              
-              const itemColors = Array.from(
-                new Map(
-                  itemVariants
-                    .filter((v) => v.color)
-                    .map((v) => [v.color!.id, v.color!])
-                ).values()
-              )
-
-              const itemSizes = Array.from(
-                new Map(
-                  itemVariants
-                    .filter((v) => v.size)
-                    .map((v) => [v.size!.id, v.size!])
-                ).values()
-              ).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
-
-              const inStock = itemVariants.length > 0
-                ? itemVariants.some((v) => v.inventory ? v.inventory.quantity > 0 : true)
-                : false
+              const cardData = variantCardMap?.[product.id] || {
+                colors: [],
+                sizes: [],
+                inStock: true,
+              }
 
               return (
                 <ProductCard 
                   key={product.id}
                   product={product as any}
-                  itemColors={itemColors}
-                  itemSizes={itemSizes}
+                  itemColors={cardData.colors}
+                  itemSizes={cardData.sizes}
                   priority={index < 4}
                   isFirstInGrid={index === 0}
-                  inStock={inStock}
+                  inStock={cardData.inStock}
                 />
               )
             })}

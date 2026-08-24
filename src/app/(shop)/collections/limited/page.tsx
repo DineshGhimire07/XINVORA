@@ -10,7 +10,7 @@ import { db } from "@/db/client"
 import { collections, productCollections } from "@/db/schema"
 import { or, eq } from "drizzle-orm"
 import { findProducts } from "@/db/queries/products"
-import { getFilterAttributes } from "@/db/queries/collections"
+import { getFilterAttributes, findVariantCardMapByProductIds } from "@/db/queries/collections"
 
 export const metadata: Metadata = buildMetadata({
   title: "Limited Edition | XINVORA",
@@ -59,24 +59,18 @@ export default async function LimitedCollectionPage(props: {
     products = result.items
   }
 
-  // 4. Batch query variants + lookup tables
+  // 4. Batch query variant card info + lookup tables
   const productIds = products.map((p) => p.id)
-  const [productVariants, { allColors, allSizes, allMaterials }] = await Promise.all([
+  const [variantCardMap, { allColors, allSizes, allMaterials }] = await Promise.all([
     productIds.length > 0
-      ? db.query.variants.findMany({
-          where: (v, { and, inArray, isNull, eq }) =>
-            and(inArray(v.productId, productIds), isNull(v.deletedAt), eq(v.isActive, true)),
-          with: { color: true, size: true, inventory: true },
-        })
-      : Promise.resolve([]),
+      ? findVariantCardMapByProductIds(JSON.stringify(productIds))
+      : Promise.resolve({} as Record<string, any>),
     getFilterAttributes(),
   ])
 
   // 5. Sort: in-stock products first, sold-out automatically move to the end
   const isProductInStock = (productId: string) =>
-    (productVariants as any[])
-      .filter((v: any) => v.productId === productId)
-      .some((v: any) => v.inventory && v.inventory.quantity > 0)
+    variantCardMap[productId]?.inStock ?? true
 
   products.sort((a, b) => {
     const aInStock = isProductInStock(a.id) ? 0 : 1
@@ -152,33 +146,21 @@ export default async function LimitedCollectionPage(props: {
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-1.5 gap-y-10 w-full px-0">
             {products.map((product, index) => {
-              const variants = (productVariants as any[]).filter((v: any) => v.productId === product.id)
-
-              const itemColors = Array.from(
-                new Map(
-                  variants.filter((v: any) => v.color).map((v: any) => [v.color!.id, v.color!])
-                ).values()
-              ) as { id: string; hexCode: string }[]
-
-              const itemSizes = (Array.from(
-                new Map(
-                  variants.filter((v: any) => v.size).map((v: any) => [v.size!.id, v.size!])
-                ).values()
-              ) as any[]).sort((a: any, b: any) => a.name.localeCompare(b.name, undefined, { numeric: true })) as { id: string; name: string }[]
-
-              const inStock = variants.length > 0
-                ? variants.some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)
-                : false
+              const cardData = variantCardMap?.[product.id] || {
+                colors: [],
+                sizes: [],
+                inStock: true,
+              }
 
               return (
                 <ProductCard
                   key={product.id}
                   product={product}
-                  itemColors={itemColors}
-                  itemSizes={itemSizes}
+                  itemColors={cardData.colors}
+                  itemSizes={cardData.sizes}
                   priority={index < 4}
                   isFirstInGrid={index === 0}
-                  inStock={inStock}
+                  inStock={cardData.inStock}
                 />
               )
             })}

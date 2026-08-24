@@ -15,7 +15,7 @@ import { buildMetadata } from "@/lib/metadata"
 import Link from "next/link"
 import Image from "next/image"
 import { findProducts } from "@/db/queries"
-import { findHomepageCollections, getFilterAttributes } from "@/db/queries/collections"
+import { findHomepageCollections, getFilterAttributes, findVariantCardMapByProductIds } from "@/db/queries/collections"
 import type { CatalogFilterParams, SortField } from "@/db/queries/types"
 import { db } from "@/db/client"
 import { inArray } from "drizzle-orm"
@@ -60,19 +60,11 @@ export default async function CollectionsPage({
   const products = paginatedProducts.items
   const isEmptyState = products.length === 0 && !cursor
 
-  // Batch query all variants for the current listing to get colors and sizes
+  // Batch query variant card info (cached with single JOIN query)
   const productIds = products.map((p) => p.id)
-  let productVariants: any[] = []
-  if (productIds.length > 0) {
-    productVariants = await db.query.variants.findMany({
-      where: (v) => inArray(v.productId, productIds),
-      with: {
-        color: true,
-        size: true,
-        inventory: true,
-      },
-    })
-  } // Only show empty state if first page has no results
+  const variantCardMap = productIds.length > 0
+    ? await findVariantCardMapByProductIds(JSON.stringify(productIds))
+    : {}
 
   return (
     <main className="flex-1 bg-background pt-20 md:pt-28">
@@ -162,38 +154,21 @@ export default async function CollectionsPage({
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-1.5 gap-y-10 w-full px-0">
                 {products.map((product, index) => {
-                  // Extract colors and sizes from variants batch query
-                  const itemVariants = productVariants.filter((v) => v.productId === product.id)
-                  
-                  const itemColors = Array.from(
-                    new Map(
-                      itemVariants
-                        .filter((v) => v.color)
-                        .map((v) => [v.color!.id, v.color!])
-                    ).values()
-                  )
-
-                  const itemSizes = Array.from(
-                    new Map(
-                      itemVariants
-                        .filter((v) => v.size)
-                        .map((v) => [v.size!.id, v.size!])
-                    ).values()
-                  ).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
-
-                  const inStock = itemVariants.length > 0
-                    ? itemVariants.some((v) => v.inventory ? v.inventory.quantity > 0 : true)
-                    : false
+                  const cardData = variantCardMap?.[product.id] || {
+                    colors: [],
+                    sizes: [],
+                    inStock: true,
+                  }
 
                   return (
                     <ProductCard 
                       key={product.id}
                       product={product as any}
-                      itemColors={itemColors}
-                      itemSizes={itemSizes}
+                      itemColors={cardData.colors}
+                      itemSizes={cardData.sizes}
                       priority={index < 4}
                       isFirstInGrid={index === 0}
-                      inStock={inStock}
+                      inStock={cardData.inStock}
                     />
                   )
                 })}

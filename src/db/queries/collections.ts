@@ -9,11 +9,84 @@
  */
 
 import "server-only"
-import { eq, and, desc } from "drizzle-orm"
+import { eq, and, desc, inArray, isNull } from "drizzle-orm"
 import { db } from "../client"
-import { collections } from "../schema"
+import { collections, variants, colors, sizes, inventory } from "../schema"
 import type { CollectionWithProducts } from "./types"
 import { findProductsByCollectionId, findProducts } from "./products"
+
+export type VariantCardInfo = {
+  colors: { id: string; hexCode: string }[]
+  sizes: { id: string; name: string }[]
+  inStock: boolean
+}
+
+async function _findVariantCardMapInternal(productIds: string[]): Promise<Record<string, VariantCardInfo>> {
+  if (!productIds || productIds.length === 0) return {}
+
+  const rows = await db
+    .select({
+      productId: variants.productId,
+      colorId: colors.id,
+      colorName: colors.name,
+      colorHex: colors.hexCode,
+      sizeId: sizes.id,
+      sizeName: sizes.name,
+      inventoryQuantity: inventory.quantity,
+    })
+    .from(variants)
+    .leftJoin(colors, eq(variants.colorId, colors.id))
+    .leftJoin(sizes, eq(variants.sizeId, sizes.id))
+    .leftJoin(inventory, eq(variants.id, inventory.variantId))
+    .where(
+      and(
+        inArray(variants.productId, productIds),
+        isNull(variants.deletedAt),
+        eq(variants.isActive, true)
+      )
+    )
+
+  const cardMap: Record<string, VariantCardInfo> = {}
+  for (const pid of productIds) {
+    const pRows = rows.filter((r) => r.productId === pid)
+    const colMap = new Map<string, { id: string; hexCode: string }>()
+    const sizeMap = new Map<string, { id: string; name: string }>()
+    let hasStock = false
+
+    for (const r of pRows) {
+      if (r.colorId && r.colorHex && !colMap.has(r.colorId)) {
+        colMap.set(r.colorId, { id: r.colorId, hexCode: r.colorHex })
+      }
+      if (r.sizeId && r.sizeName && !sizeMap.has(r.sizeId)) {
+        sizeMap.set(r.sizeId, { id: r.sizeId, name: r.sizeName })
+      }
+      if (r.inventoryQuantity === null || r.inventoryQuantity > 0) {
+        hasStock = true
+      }
+    }
+
+    const sortedSizes = Array.from(sizeMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { numeric: true })
+    )
+
+    cardMap[pid] = {
+      colors: Array.from(colMap.values()),
+      sizes: sortedSizes,
+      inStock: pRows.length === 0 || hasStock,
+    }
+  }
+
+  return cardMap
+}
+
+export const findVariantCardMapByProductIds = unstable_cache(
+  async (productIdsStr: string) => {
+    const productIds = JSON.parse(productIdsStr) as string[]
+    return _findVariantCardMapInternal(productIds)
+  },
+  ["variant-card-map-v1"],
+  { tags: ["products", "inventory"], revalidate: 1800 }
+)
 
 async function _findActiveCollectionsInternal() {
   return db.query.collections.findMany({
@@ -134,15 +207,19 @@ const _findCollectionDetailCached = unstable_cache(
       }),
     ])
 
+    const productIds = productsResult.items.map((p) => p.id)
+    const variantCardMap = await _findVariantCardMapInternal(productIds)
+
     return {
       collection,
       children,
       parent: parent ?? null,
       productsResult,
+      variantCardMap,
     }
   },
-  ["collection-detail-v5"],
-  { tags: ["collections"], revalidate: 1800 }
+  ["collection-detail-v6"],
+  { tags: ["collections", "products"], revalidate: 1800 }
 )
 
 const cachedCollectionDetail = cache(
