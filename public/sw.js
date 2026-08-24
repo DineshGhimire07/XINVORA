@@ -8,13 +8,12 @@
  * - API calls: Network-only (never cache API data)
  */
 
-const CACHE_VERSION = "xinvora-v1"
+const CACHE_VERSION = "xinvora-v3"
 const STATIC_CACHE = `${CACHE_VERSION}-static`
 const PAGE_CACHE = `${CACHE_VERSION}-pages`
 
-// Assets to pre-cache on install (app shell)
+// Only pre-cache the offline fallback — NOT the homepage (it's ISR/CMS content that changes)
 const PRECACHE_ASSETS = [
-  "/",
   "/offline",
 ]
 
