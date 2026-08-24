@@ -9,35 +9,26 @@ import { CollectionFilterToolbar } from "@/components/storefront/CollectionFilte
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { db } from "@/db/client"
-import { colors, sizes, materials } from "@/db/schema"
-import { findCollectionDetailBySlug } from "@/db/queries/collections"
+import { findCollectionDetailBySlug, getFilterAttributes } from "@/db/queries/collections"
 import { ChevronRight } from "lucide-react"
-import { inArray } from "drizzle-orm"
+import { inArray, and, eq } from "drizzle-orm"
+import { collections } from "@/db/schema"
 import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
 import { CollectionViewTracker } from "@/features/analytics/components/CollectionViewTracker"
 
 export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{
-    sort?: string
-    color?: string
-    size?: string
-    material?: string
-  }>
 }): Promise<Metadata> {
   const { slug } = await props.params
-  const searchParams = await props.searchParams
-  const data = await findCollectionDetailBySlug(slug, {
-    sort: searchParams.sort,
-    color: searchParams.color,
-    size: searchParams.size,
-    material: searchParams.material,
-    limit: 48,
+  const slugToLookup = slug === "limited-edition" ? "limited" : slug
+  const collection = await db.query.collections.findFirst({
+    where: and(eq(collections.slug, slugToLookup), eq(collections.isActive, true)),
+    columns: { name: true, seoTitle: true, description: true, seoDescription: true },
   })
-  if (!data) return buildMetadata({ title: "Collection Not Found" })
+  if (!collection) return buildMetadata({ title: "Collection Not Found" })
   return buildMetadata({
-    title: data.collection.seoTitle || data.collection.name,
-    description: data.collection.seoDescription || data.collection.description || "Browse our lifestyle collection.",
+    title: collection.seoTitle || collection.name,
+    description: collection.seoDescription || collection.description || "Browse our lifestyle collection.",
   })
 }
 
@@ -54,13 +45,20 @@ export default async function CollectionDetailPage(props: {
   const { slug } = await props.params
   const searchParams = await props.searchParams
 
-  const data = await findCollectionDetailBySlug(slug, {
+  const dataPromise = findCollectionDetailBySlug(slug, {
     sort: searchParams.sort,
     color: searchParams.color,
     size: searchParams.size,
     material: searchParams.material,
     limit: 48,
   })
+
+  const attributesPromise = getFilterAttributes()
+
+  const [data, { allColors, allSizes, allMaterials }] = await Promise.all([
+    dataPromise,
+    attributesPromise,
+  ])
 
   if (!data) {
     notFound()
@@ -72,21 +70,18 @@ export default async function CollectionDetailPage(props: {
 
   // Batch query all variants for the current listing to get colors and sizes
   const productIds = products.map((p) => p.id)
-  const [productVariants, allColors, allSizes, allMaterials] = await Promise.all([
+  const productVariants =
     productIds.length > 0
-      ? db.query.variants.findMany({
-          where: (v) => inArray(v.productId, productIds),
+      ? await db.query.variants.findMany({
+          where: (v, { and, inArray, isNull, eq }) =>
+            and(inArray(v.productId, productIds), isNull(v.deletedAt), eq(v.isActive, true)),
           with: {
             color: true,
             size: true,
             inventory: true,
           },
         })
-      : Promise.resolve([]),
-    db.select().from(colors),
-    db.select().from(sizes),
-    db.select().from(materials),
-  ])
+      : []
 
   return (
     <main className="flex-1 bg-background pt-[72px] md:pt-20">

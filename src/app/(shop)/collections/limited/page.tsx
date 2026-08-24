@@ -7,9 +7,10 @@ import { ProductCard } from "@/components/storefront/ProductCard"
 import { CollectionFilterToolbar } from "@/components/storefront/CollectionFilterToolbar"
 import type { Metadata } from "next"
 import { db } from "@/db/client"
-import { colors, sizes, materials, collections, productCollections } from "@/db/schema"
-import { inArray, or, eq } from "drizzle-orm"
+import { collections, productCollections } from "@/db/schema"
+import { or, eq } from "drizzle-orm"
 import { findProducts } from "@/db/queries/products"
+import { getFilterAttributes } from "@/db/queries/collections"
 
 export const metadata: Metadata = buildMetadata({
   title: "Limited Edition | XINVORA",
@@ -60,23 +61,22 @@ export default async function LimitedCollectionPage(props: {
 
   // 4. Batch query variants + lookup tables
   const productIds = products.map((p) => p.id)
-  const [productVariants, allColors, allSizes, allMaterials] = await Promise.all([
+  const [productVariants, { allColors, allSizes, allMaterials }] = await Promise.all([
     productIds.length > 0
       ? db.query.variants.findMany({
-          where: (v) => inArray(v.productId, productIds),
+          where: (v, { and, inArray, isNull, eq }) =>
+            and(inArray(v.productId, productIds), isNull(v.deletedAt), eq(v.isActive, true)),
           with: { color: true, size: true, inventory: true },
         })
       : Promise.resolve([]),
-    db.select().from(colors),
-    db.select().from(sizes),
-    db.select().from(materials),
+    getFilterAttributes(),
   ])
 
   // 5. Sort: in-stock products first, sold-out automatically move to the end
   const isProductInStock = (productId: string) =>
-    productVariants
-      .filter((v) => v.productId === productId)
-      .some((v) => v.inventory && v.inventory.quantity > 0)
+    (productVariants as any[])
+      .filter((v: any) => v.productId === productId)
+      .some((v: any) => v.inventory && v.inventory.quantity > 0)
 
   products.sort((a, b) => {
     const aInStock = isProductInStock(a.id) ? 0 : 1
@@ -152,22 +152,22 @@ export default async function LimitedCollectionPage(props: {
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-1.5 gap-y-10 w-full px-0">
             {products.map((product, index) => {
-              const variants = productVariants.filter((v) => v.productId === product.id)
+              const variants = (productVariants as any[]).filter((v: any) => v.productId === product.id)
 
               const itemColors = Array.from(
                 new Map(
-                  variants.filter((v) => v.color).map((v) => [v.color!.id, v.color!])
+                  variants.filter((v: any) => v.color).map((v: any) => [v.color!.id, v.color!])
                 ).values()
-              )
+              ) as { id: string; hexCode: string }[]
 
-              const itemSizes = Array.from(
+              const itemSizes = (Array.from(
                 new Map(
-                  variants.filter((v) => v.size).map((v) => [v.size!.id, v.size!])
+                  variants.filter((v: any) => v.size).map((v: any) => [v.size!.id, v.size!])
                 ).values()
-              ).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+              ) as any[]).sort((a: any, b: any) => a.name.localeCompare(b.name, undefined, { numeric: true })) as { id: string; name: string }[]
 
               const inStock = variants.length > 0
-                ? variants.some((v) => v.inventory ? v.inventory.quantity > 0 : true)
+                ? variants.some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)
                 : false
 
               return (

@@ -200,3 +200,17 @@ const _findHomepageCollectionsCached = unstable_cache(
 export async function findHomepageCollections(limit = 4) {
   return _findHomepageCollectionsCached(limit)
 }
+
+export const getFilterAttributes = unstable_cache(
+  async () => {
+    const { colors, sizes, materials } = await import("../schema")
+    const [allColors, allSizes, allMaterials] = await Promise.all([
+      db.select().from(colors),
+      db.select().from(sizes),
+      db.select().from(materials),
+    ])
+    return { allColors, allSizes, allMaterials }
+  },
+  ["filter-attributes"],
+  { tags: ["attributes"], revalidate: 3600 }
+)

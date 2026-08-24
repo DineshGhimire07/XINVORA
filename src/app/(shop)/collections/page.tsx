@@ -15,11 +15,10 @@ import { buildMetadata } from "@/lib/metadata"
 import Link from "next/link"
 import Image from "next/image"
 import { findProducts } from "@/db/queries"
-import { findHomepageCollections } from "@/db/queries/collections"
+import { findHomepageCollections, getFilterAttributes } from "@/db/queries/collections"
 import type { CatalogFilterParams, SortField } from "@/db/queries/types"
 import { db } from "@/db/client"
 import { inArray } from "drizzle-orm"
-import { colors, sizes, materials } from "@/db/schema"
 
 export const metadata = buildMetadata({
   title: "Collections",
@@ -52,12 +51,10 @@ export default async function CollectionsPage({
   }
 
   // Fetch Data concurrently
-  const [paginatedProducts, adminCollections, allColors, allSizes, allMaterials] = await Promise.all([
+  const [paginatedProducts, adminCollections, { allColors, allSizes, allMaterials }] = await Promise.all([
     findProducts(filterParams),
     findHomepageCollections(50),          // all active collections, dynamic
-    db.select().from(colors),
-    db.select().from(sizes),
-    db.select().from(materials),
+    getFilterAttributes(),
   ])
 
   const products = paginatedProducts.items

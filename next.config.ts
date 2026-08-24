@@ -98,6 +98,11 @@ const nextConfig: NextConfig = {
         destination: "/",
         permanent: true,
       },
+      {
+        source: "/collection",
+        destination: "/collections",
+        permanent: true,
+      },
     ];
   },
 
