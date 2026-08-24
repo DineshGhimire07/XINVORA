@@ -12,6 +12,8 @@ import { CookieScriptLoader } from "@/components/cookies/CookieScriptLoader"
 import { CookieBanner } from "@/components/cookies/CookieBanner"
 import { CookieModal } from "@/components/cookies/CookieModal"
 
+export const dynamic = "force-dynamic"
+
 interface AccountLayoutProps {
   children: React.ReactNode
 }

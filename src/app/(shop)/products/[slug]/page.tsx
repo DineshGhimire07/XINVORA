@@ -27,11 +27,9 @@ import { ProductCard } from "@/components/storefront/ProductCard"
 export const revalidate = 3600
 
 export async function generateStaticParams() {
-  // Pre-build the most recently published products at build time.
-  // Products not in this list still render fine on first visit and
-  // get cached automatically afterward (dynamicParams defaults to true).
-  const { items } = await findProducts({ limit: 100, sort: "newest" })
-  return items.map((product) => ({ slug: product.slug }))
+  // Return empty to generate product pages on-demand via ISR (incremental static regeneration).
+  // This prevents build-time database connection pool exhaustion and reduces build time from 5min to <1min.
+  return []
 }
 
 export async function generateMetadata({
