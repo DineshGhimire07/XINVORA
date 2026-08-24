@@ -490,19 +490,6 @@ export function ProductVariantSelector({
             Out of Stock
           </span>
         </div>
-      ) : activeVariant?.inventory && activeVariant.inventory.quantity <= 5 ? (
-        <div className="flex items-center justify-center py-1 select-none">
-          <span className="text-[12px] font-medium text-red-500 tracking-wide">
-            Only {activeVariant.inventory.quantity} {activeVariant.inventory.quantity === 1 ? "item" : "items"} available in stock
-          </span>
-        </div>
-      ) : activeVariant?.inventory && activeVariant.inventory.quantity > 5 ? (
-        <div className="flex items-center gap-2 select-none">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          <span className="text-[11px] font-semibold tracking-wider text-emerald-700 uppercase">
-            In Stock ({activeVariant.inventory.quantity} available)
-          </span>
-        </div>
       ) : null}
 
       {/* Validation Error Message */}
