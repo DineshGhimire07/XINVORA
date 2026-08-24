@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import Image from "next/image"
 
 import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
@@ -12,12 +13,28 @@ interface ProductGalleryProps {
 }
 
 export function ProductGallery({ images, productName, badge }: ProductGalleryProps) {
-  const [activeIndex, setActiveIndex] = useState(0)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const searchParams = useSearchParams()
+  const photoParam = searchParams.get("photo")
+  const parsedIndex = photoParam ? Math.max(0, parseInt(photoParam, 10) - 1) : 0
 
   // Desktop: main display capped at first 5 (photos 6 & 7 reserved for editorial pair below)
   // Mobile: swipe gallery contains all images up to 7
   const galleryImages = images && images.length > 0 ? images.slice(0, 7) : []
+  const initialIndex = parsedIndex < galleryImages.length ? parsedIndex : 0
+
+  const [activeIndex, setActiveIndex] = useState(initialIndex)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Scroll to requested photo on initial mount if non-zero
+  useEffect(() => {
+    if (initialIndex > 0 && scrollRef.current) {
+      const container = scrollRef.current
+      const width = container.offsetWidth
+      if (width > 0) {
+        container.scrollLeft = initialIndex * width
+      }
+    }
+  }, [initialIndex])
 
   if (galleryImages.length === 0) {
     return (

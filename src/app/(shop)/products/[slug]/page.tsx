@@ -158,11 +158,13 @@ export default async function ProductDetailPage({
             
             {/* ── Left Column: Product Gallery + Editorial Pair ── */}
             <div className="md:col-span-7 flex flex-col gap-4">
-              <ProductGallery 
-                images={product.productImages} 
-                productName={product.name} 
-                badge={product.badge}
-              />
+              <React.Suspense fallback={null}>
+                <ProductGallery 
+                  images={product.productImages} 
+                  productName={product.name} 
+                  badge={product.badge}
+                />
+              </React.Suspense>
               <ProductEditorialPair
                 images={product.productImages}
                 productName={product.name}
