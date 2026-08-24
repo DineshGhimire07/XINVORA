@@ -119,11 +119,13 @@ export function buildRootMetadata(): Metadata {
     icons: {
       icon: [
         { url: "/favicon.ico", sizes: "32x32" },
-        { url: "/icon.png", type: "image/png", sizes: "512x512" },
+        { url: "/favicons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+        { url: "/icons/icon-512.png", type: "image/png", sizes: "512x512" },
       ],
       apple: [
-        { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+        { url: "/favicons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
       ],
     },
   }
 }
+

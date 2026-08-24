@@ -81,47 +81,45 @@ export function CookieProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (e) {}
 
-    // 2. Fetch initial consent and settings from server API
-    fetch("/api/cookies/consent")
-      .then((res) => res.json())
-      .then((res) => {
-        if (res.success && res.data) {
-          const { consent, requiresReconsent, settings: fetchedSettings } = res.data
-          if (fetchedSettings) setSettings(fetchedSettings)
+    // 2. Only fetch from server API if no client-side consent was found
+    if (!clientConsentFound) {
+      fetch("/api/cookies/consent")
+        .then((res) => res.json())
+        .then((res) => {
+          if (res.success && res.data) {
+            const { consent, requiresReconsent, settings: fetchedSettings } = res.data
+            if (fetchedSettings) setSettings(fetchedSettings)
 
-          if (consent && !requiresReconsent) {
-            setConsentState({
-              necessary: true,
-              analytics: consent.analytics,
-              marketing: consent.marketing,
-              personalization: consent.personalization,
-              policyVersion: consent.policyVersion,
-              isConsentGiven: true,
-              consentGivenAt: consent.timestamp,
-              method: consent.method,
-              source: consent.source,
-            })
-            setIsBannerOpen(false)
-          } else if (!consent && clientConsentFound && !requiresReconsent) {
-            setIsBannerOpen(false)
+            if (consent && !requiresReconsent) {
+              setConsentState({
+                necessary: true,
+                analytics: consent.analytics,
+                marketing: consent.marketing,
+                personalization: consent.personalization,
+                policyVersion: consent.policyVersion,
+                isConsentGiven: true,
+                consentGivenAt: consent.timestamp,
+                method: consent.method,
+                source: consent.source,
+              })
+              setIsBannerOpen(false)
+            } else {
+              setIsBannerOpen(true)
+            }
           } else {
             setIsBannerOpen(true)
           }
-        } else {
-          if (!clientConsentFound) {
-            setIsBannerOpen(true)
-          }
-        }
-      })
-      .catch((err) => {
-        console.error("[CookieProvider] Failed to fetch consent state:", err)
-        if (!clientConsentFound) {
+        })
+        .catch((err) => {
+          console.error("[CookieProvider] Failed to fetch consent state:", err)
           setIsBannerOpen(true)
-        }
-      })
-      .finally(() => {
-        setIsLoaded(true)
-      })
+        })
+        .finally(() => {
+          setIsLoaded(true)
+        })
+    } else {
+      setIsLoaded(true)
+    }
   }, [])
 
   const acceptAll = async () => {
