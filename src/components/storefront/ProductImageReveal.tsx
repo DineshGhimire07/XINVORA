@@ -15,8 +15,6 @@ export interface ProductImageRevealProps {
   showDots?: boolean
 }
 
-const activeSlideMemory = new Map<string, number>()
-
 export function ProductImageReveal({
   productId: _productId,
   productSlug,
@@ -27,8 +25,7 @@ export function ProductImageReveal({
 }: ProductImageRevealProps) {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const dotsContainerRef = React.useRef<HTMLDivElement>(null)
-  const initialIndex = activeSlideMemory.get(productSlug) || 0
-  const activeIndexRef = React.useRef(initialIndex)
+  const activeIndexRef = React.useRef(0)
 
   // Direct DOM dot class updater — zero React re-renders during swipe
   const updateDots = React.useCallback((newIndex: number) => {
@@ -42,18 +39,6 @@ export function ProductImageReveal({
           : "w-1.5 h-1.5 bg-white/60 shadow-sm transition-all duration-300 rounded-full"
     }
   }, [])
-
-  // Restore remembered slide position on mount
-  React.useEffect(() => {
-    const el = containerRef.current
-    if (!el || initialIndex <= 0) return
-
-    const slideWidth = el.clientWidth
-    if (slideWidth > 0) {
-      el.scrollLeft = initialIndex * slideWidth
-      updateDots(initialIndex)
-    }
-  }, [initialIndex, updateDots])
 
   // Dot sync via passive rAF scroll listener on the scroll track
   React.useEffect(() => {
@@ -71,7 +56,6 @@ export function ProductImageReveal({
         const newIndex = Math.max(0, Math.min(images.length - 1, Math.round(el.scrollLeft / slideWidth)))
         if (newIndex !== activeIndexRef.current) {
           activeIndexRef.current = newIndex
-          activeSlideMemory.set(productSlug, newIndex)
           updateDots(newIndex)
         }
       })
@@ -82,7 +66,7 @@ export function ProductImageReveal({
       el.removeEventListener("scroll", onScroll)
       if (rafId) cancelAnimationFrame(rafId)
     }
-  }, [images, productSlug, updateDots])
+  }, [images, updateDots])
 
   return (
     <div className="relative w-full h-full overflow-hidden select-none">
@@ -103,7 +87,7 @@ export function ProductImageReveal({
               style={{ minWidth: "100%", width: "100%", height: "100%" }}
             >
               <Link
-                href={idx > 0 ? `/products/${productSlug}?photo=${idx + 1}` : `/products/${productSlug}`}
+                href={`/products/${productSlug}`}
                 className="absolute inset-0 z-10 block w-full h-full"
                 aria-label={`${productName} view ${idx + 1}`}
                 draggable={false}
@@ -143,5 +127,6 @@ export function ProductImageReveal({
     </div>
   )
 }
+
 
 
