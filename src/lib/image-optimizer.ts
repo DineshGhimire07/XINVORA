@@ -43,7 +43,7 @@ export function optimizeCloudinaryUrl(
     width,
     height,
     quality = "auto:good",
-    format = "auto",
+    format = "webp",
     crop = "limit",
     dpr,
   } = options
