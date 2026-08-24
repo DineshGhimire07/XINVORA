@@ -20,28 +20,24 @@ import Link from "next/link"
 
 import Image from "next/image"
 import { NewsletterForm } from "@/features/newsletter/components/NewsletterForm"
-import { getHomepageCMS } from "@/db/queries"
 
 export const metadata = buildMetadata({
   title: "Home",
   description: "XINVORA is a premium lifestyle brand creating considered objects for modern living. Elevate everyday living with thoughtful design, exceptional materials, and timeless craft.",
 })
 
-import { homepageSettings } from "@/db/schema/cms"
-import { db } from "@/db/client"
-
+import { getHomepageCMS, getHomepageSettings } from "@/db/queries/cms"
 import { CMSBlockRenderer } from "@/components/cms/BlockRenderer"
-
 import { findProductsByIds, findCollectionsByIds, findLookbookSlides, findRandomCatalogProducts } from "@/db/queries"
 import { ShopTheLookCarousel } from "@/components/storefront/ShopTheLookCarousel"
 import { ProductCard } from "@/components/storefront/ProductCard"
 import { optimizeCloudinaryUrl } from "@/lib/image-optimizer"
 
 export default async function HomePage() {
-  const settingsQuery = await db.select().from(homepageSettings).limit(1)
-  const settings = settingsQuery.length > 0 ? settingsQuery[0] : null
-  
-  const homepageCMS = await getHomepageCMS()
+  const [settings, homepageCMS] = await Promise.all([
+    getHomepageSettings(),
+    getHomepageCMS(),
+  ])
   let heroBlock = null
   let productGridBlock = null
   let collectionGridBlock = null

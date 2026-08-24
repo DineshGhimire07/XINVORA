@@ -1,9 +1,10 @@
 import { db } from "@/db/client"
-import { cmsPages, cmsSections, cmsBlocks } from "@/db/schema/cms"
+import { cmsPages, cmsSections, cmsBlocks, homepageSettings } from "@/db/schema/cms"
 import { products, variants, priceBooks, priceBookEntries, collections } from "@/db/schema"
-import { eq, and, isNull, inArray } from "drizzle-orm"
+import { eq, and, isNull, inArray, desc } from "drizzle-orm"
+import { unstable_cache } from "next/cache"
 
-export async function findProductsByIds(ids: string[]) {
+async function _findProductsByIdsInternal(ids: string[]) {
   if (!ids || ids.length === 0) return []
 
   const items = await db.query.products.findMany({
@@ -72,7 +73,21 @@ export async function findProductsByIds(ids: string[]) {
     })
 }
 
-export async function findRandomCatalogProducts(limit = 24) {
+const _findProductsByIdsCached = unstable_cache(
+  async (idsStr: string) => {
+    const ids = JSON.parse(idsStr) as string[]
+    return _findProductsByIdsInternal(ids)
+  },
+  ["products-by-ids-v2"],
+  { tags: ["products"], revalidate: 1800 }
+)
+
+export async function findProductsByIds(ids: string[]) {
+  if (!ids || ids.length === 0) return []
+  return _findProductsByIdsCached(JSON.stringify(ids))
+}
+
+async function _findRandomCatalogProductsInternal(limit = 24) {
   const items = await db.query.products.findMany({
     where: and(
       eq(products.status, "PUBLISHED"),
@@ -150,7 +165,7 @@ export async function findRandomCatalogProducts(limit = 24) {
     }
   })
 
-  // Fisher-Yates shuffle to mix products across all collections randomly
+  // Fisher-Yates shuffle to mix products across all collections (cached per hour for stable browsing sessions)
   const shuffled = [...itemsWithPrices]
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
@@ -160,7 +175,17 @@ export async function findRandomCatalogProducts(limit = 24) {
   return shuffled.slice(0, limit)
 }
 
-export async function findCollectionsByIds(ids: string[]) {
+const _findRandomCatalogProductsCached = unstable_cache(
+  async (limit: number) => _findRandomCatalogProductsInternal(limit),
+  ["random-catalog-products-v2"],
+  { tags: ["products"], revalidate: 3600 }
+)
+
+export async function findRandomCatalogProducts(limit = 24) {
+  return _findRandomCatalogProductsCached(limit)
+}
+
+async function _findCollectionsByIdsInternal(ids: string[]) {
   if (!ids || ids.length === 0) return []
 
   const items = await db.query.collections.findMany({
@@ -181,9 +206,22 @@ export async function findCollectionsByIds(ids: string[]) {
   })
 }
 
-export async function getHomepageCMS() {
-  // Try to find the homepage record
-  let page = await db.query.cmsPages.findFirst({
+const _findCollectionsByIdsCached = unstable_cache(
+  async (idsStr: string) => {
+    const ids = JSON.parse(idsStr) as string[]
+    return _findCollectionsByIdsInternal(ids)
+  },
+  ["collections-by-ids-v2"],
+  { tags: ["collections"], revalidate: 1800 }
+)
+
+export async function findCollectionsByIds(ids: string[]) {
+  if (!ids || ids.length === 0) return []
+  return _findCollectionsByIdsCached(JSON.stringify(ids))
+}
+
+async function _getHomepageCMSInternal() {
+  const page = await db.query.cmsPages.findFirst({
     where: and(
       eq(cmsPages.slug, "home"),
       isNull(cmsPages.deletedAt)
@@ -196,152 +234,24 @@ export async function getHomepageCMS() {
       },
     },
   })
-
-  // If homepage record doesn't exist, create it (along with a default section & HERO / PRODUCT_GRID / COLLECTION_GRID blocks)
-  if (!page) {
-    try {
-      const [newPage] = await db.insert(cmsPages).values({
-        slug: "home",
-        title: "Homepage",
-        status: "PUBLISHED",
-      }).returning()
-
-      const [newSection] = await db.insert(cmsSections).values({
-        pageId: newPage.id,
-        name: "Hero Section",
-        sortOrder: 0,
-      }).returning()
-
-      await db.insert(cmsBlocks).values({
-        sectionId: newSection.id,
-        type: "HERO",
-        sortOrder: 0,
-        data: {
-          slides: [
-            {
-              id: "slide-default-1",
-              imageDesktopUrl: "/assets/brand/hero/hero-bg.png",
-              imageMobileUrl: "/assets/brand/hero/hero-bg.png",
-              redirectUrl: "/collections",
-              altText: "Elevate Everyday Living",
-              isActive: true,
-            }
-          ]
-        },
-      })
-
-      await db.insert(cmsBlocks).values({
-        sectionId: newSection.id,
-        type: "PRODUCT_GRID",
-        sortOrder: 1,
-        data: { items: [] },
-      })
-
-      await db.insert(cmsBlocks).values({
-        sectionId: newSection.id,
-        type: "COLLECTION_GRID",
-        sortOrder: 2,
-        data: { collectionIds: [] },
-      })
-
-      // Query again to get the populated structure
-      page = await db.query.cmsPages.findFirst({
-        where: eq(cmsPages.id, newPage.id),
-        with: {
-          sections: {
-            with: {
-              blocks: true,
-            },
-          },
-        },
-      })
-    } catch (error) {
-      console.error("Failed to auto-seed homepage CMS record:", error)
-    }
-  } else {
-    // If homepage exists, ensure it has a PRODUCT_GRID block
-    let productGridBlock = null
-    let collectionGridBlock = null
-    const firstSection = page.sections[0]
-    
-    for (const section of page.sections) {
-      if (!productGridBlock) {
-        productGridBlock = section.blocks?.find((b: any) => b.type === "PRODUCT_GRID")
-      }
-      if (!collectionGridBlock) {
-        collectionGridBlock = section.blocks?.find((b: any) => b.type === "COLLECTION_GRID")
-      }
-    }
-
-    if (!productGridBlock && firstSection) {
-      try {
-        await db.insert(cmsBlocks).values({
-          sectionId: firstSection.id,
-          type: "PRODUCT_GRID",
-          sortOrder: 1,
-          data: { items: [] },
-        })
-      } catch (err) {
-        console.error("Failed to seed missing PRODUCT_GRID block:", err)
-      }
-    }
-
-    if (!collectionGridBlock && firstSection) {
-      try {
-        await db.insert(cmsBlocks).values({
-          sectionId: firstSection.id,
-          type: "COLLECTION_GRID",
-          sortOrder: 2,
-          data: { collectionIds: [] },
-        })
-      } catch (err) {
-        console.error("Failed to seed missing COLLECTION_GRID block:", err)
-      }
-    }
-
-    let bannerBlock = null
-    for (const section of page.sections) {
-      if (!bannerBlock) {
-        bannerBlock = section.blocks?.find((b: any) => b.type === "BANNER")
-      }
-    }
-
-    if (!bannerBlock && firstSection) {
-      try {
-        await db.insert(cmsBlocks).values({
-          sectionId: firstSection.id,
-          type: "BANNER",
-          sortOrder: 3,
-          data: {
-            imageUrl: null,
-            title: "The Linen Edit",
-            isActive: false,
-            linkUrl: "/collections"
-          },
-        })
-      } catch (err) {
-        console.error("Failed to seed missing BANNER block:", err)
-      }
-    }
-
-    // Re-query if anything was added
-    if ((!productGridBlock || !collectionGridBlock || !bannerBlock) && firstSection) {
-      try {
-        page = await db.query.cmsPages.findFirst({
-          where: eq(cmsPages.id, page.id),
-          with: {
-            sections: {
-              with: {
-                blocks: true,
-              },
-            },
-          },
-        })
-      } catch (err) {
-        console.error("Failed to re-query page structure after seeding blocks:", err)
-      }
-    }
-  }
-
-  return page
+  return page ?? null
 }
+
+const _getHomepageCMSCached = unstable_cache(
+  async () => _getHomepageCMSInternal(),
+  ["homepage-cms-v2"],
+  { tags: ["cms"], revalidate: 1800 }
+)
+
+export async function getHomepageCMS() {
+  return _getHomepageCMSCached()
+}
+
+export const getHomepageSettings = unstable_cache(
+  async () => {
+    const settingsQuery = await db.select().from(homepageSettings).limit(1)
+    return settingsQuery.length > 0 ? settingsQuery[0] : null
+  },
+  ["homepage-settings-v2"],
+  { tags: ["cms", "settings"], revalidate: 1800 }
+)
