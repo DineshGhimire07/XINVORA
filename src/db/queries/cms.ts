@@ -165,14 +165,16 @@ async function _findRandomCatalogProductsInternal(limit = 24) {
     }
   })
 
-  // Fisher-Yates shuffle to mix products across all collections (cached per hour for stable browsing sessions)
-  const shuffled = [...itemsWithPrices]
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-  }
+  // Deterministic stable ordering based on product ID to mix products across all collections stably
+  const sorted = [...itemsWithPrices].sort((a, b) => {
+    let hashA = 0
+    for (let i = 0; i < a.id.length; i++) hashA = (hashA * 31 + a.id.charCodeAt(i)) | 0
+    let hashB = 0
+    for (let i = 0; i < b.id.length; i++) hashB = (hashB * 31 + b.id.charCodeAt(i)) | 0
+    return hashA - hashB
+  })
 
-  return shuffled.slice(0, limit)
+  return sorted.slice(0, limit)
 }
 
 const _findRandomCatalogProductsCached = unstable_cache(

@@ -26,6 +26,8 @@ export const metadata = buildMetadata({
   description: "XINVORA is a premium lifestyle brand creating considered objects for modern living. Elevate everyday living with thoughtful design, exceptional materials, and timeless craft.",
 })
 
+export const revalidate = 3600
+
 import { getHomepageCMS, getHomepageSettings } from "@/db/queries/cms"
 import { CMSBlockRenderer } from "@/components/cms/BlockRenderer"
 import { findProductsByIds, findCollectionsByIds, findLookbookSlides, findRandomCatalogProducts } from "@/db/queries"
