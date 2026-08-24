@@ -63,5 +63,13 @@
     "tsx": "^4.22.5",
     "typescript": "^5",
     "vitest": "^3.2.7"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "argon2": true,
+    "sharp": true,
+    "@esbuild/linux-x64": true,
+    "unix-resolver": true,
+    "ssbuild": true
   }
 }
