@@ -2,6 +2,14 @@ import "server-only"
 import { eq, and, desc, asc, sql, gte, lt, isNull } from "drizzle-orm"
 import { db } from "../client"
 import { orders, orderItems, users, products, variants, inventory, categories, userSessions, userEvents } from "../schema"
+import { unstable_cache } from "next/cache"
+
+// Dashboard data is cached for 5 minutes.
+// Admin metrics being 5 minutes stale is perfectly acceptable and prevents
+// the admin page from firing 6+ heavy SQL queries (COUNT DISTINCT, regex,
+// correlated subqueries) on every single page load.
+const DASHBOARD_CACHE_TTL = 300 // 5 minutes
+
 
 function calculatePercentChange(current: number, previous: number): string {
   if (previous === 0) {
@@ -12,7 +20,7 @@ function calculatePercentChange(current: number, previous: number): string {
   return `${sign}${change.toFixed(1)}%`
 }
 
-export async function getDashboardStats() {
+const _getDashboardStats = async () => {
   const now = new Date()
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
@@ -81,7 +89,13 @@ export async function getDashboardStats() {
   }
 }
 
-export async function getSalesOverviewChart() {
+export const getDashboardStats = unstable_cache(
+  _getDashboardStats,
+  ["dashboard-stats"],
+  { tags: ["dashboard"], revalidate: DASHBOARD_CACHE_TTL }
+)
+
+const _getSalesOverviewChart = async () => {
   const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
   const allOrders = await db
     .select({
@@ -123,7 +137,13 @@ export async function getSalesOverviewChart() {
   return chartData
 }
 
-export async function getRecentOrders() {
+export const getSalesOverviewChart = unstable_cache(
+  _getSalesOverviewChart,
+  ["dashboard-sales-chart"],
+  { tags: ["dashboard"], revalidate: DASHBOARD_CACHE_TTL }
+)
+
+const _getRecentOrders = async () => {
   return await db
     .select({
       id: orders.id,
@@ -141,7 +161,13 @@ export async function getRecentOrders() {
     .limit(5)
 }
 
-export async function getTopProducts() {
+export const getRecentOrders = unstable_cache(
+  _getRecentOrders,
+  ["dashboard-recent-orders"],
+  { tags: ["dashboard", "orders"], revalidate: DASHBOARD_CACHE_TTL }
+)
+
+const _getTopProducts = async () => {
   return await db
     .select({
       name: sql<string>`coalesce(${products.name}, ${orderItems.productName})`,
@@ -157,7 +183,13 @@ export async function getTopProducts() {
     .limit(5)
 }
 
-export async function getOrdersByStatus() {
+export const getTopProducts = unstable_cache(
+  _getTopProducts,
+  ["dashboard-top-products"],
+  { tags: ["dashboard", "products"], revalidate: DASHBOARD_CACHE_TTL }
+)
+
+const _getOrdersByStatus = async () => {
   return await db
     .select({
       status: orders.status,
@@ -168,7 +200,13 @@ export async function getOrdersByStatus() {
     .groupBy(orders.status)
 }
 
-export async function getLowStockAlert() {
+export const getOrdersByStatus = unstable_cache(
+  _getOrdersByStatus,
+  ["dashboard-orders-by-status"],
+  { tags: ["dashboard", "orders"], revalidate: DASHBOARD_CACHE_TTL }
+)
+
+const _getLowStockAlert = async () => {
   return await db
     .select({
       id: variants.id,
@@ -196,9 +234,15 @@ export async function getLowStockAlert() {
     .limit(5)
 }
 
+export const getLowStockAlert = unstable_cache(
+  _getLowStockAlert,
+  ["dashboard-low-stock"],
+  { tags: ["dashboard", "inventory"], revalidate: DASHBOARD_CACHE_TTL }
+)
+
 // ── New Analytics Queries ──────────────────────────────────────────────
 
-export async function getConversionRate() {
+const _getConversionRate = async () => {
   const now = new Date()
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
@@ -238,7 +282,13 @@ export async function getConversionRate() {
   }
 }
 
-export async function getSessionsByDevice() {
+export const getConversionRate = unstable_cache(
+  _getConversionRate,
+  ["dashboard-conversion-rate"],
+  { tags: ["dashboard"], revalidate: DASHBOARD_CACHE_TTL }
+)
+
+const _getSessionsByDevice = async () => {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
   const rows = await db
@@ -262,7 +312,13 @@ export async function getSessionsByDevice() {
   }
 }
 
-export async function getRevenueByCategory() {
+export const getSessionsByDevice = unstable_cache(
+  _getSessionsByDevice,
+  ["dashboard-sessions-by-device"],
+  { tags: ["dashboard"], revalidate: DASHBOARD_CACHE_TTL }
+)
+
+const _getRevenueByCategory = async () => {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
   const rows = await db
@@ -289,7 +345,13 @@ export async function getRevenueByCategory() {
   }))
 }
 
-export async function getNewVsReturningCustomers() {
+export const getRevenueByCategory = unstable_cache(
+  _getRevenueByCategory,
+  ["dashboard-revenue-by-category"],
+  { tags: ["dashboard"], revalidate: DASHBOARD_CACHE_TTL }
+)
+
+const _getNewVsReturningCustomers = async () => {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
   const sevenDaysAgoISO = sevenDaysAgo.toISOString()
 
@@ -336,7 +398,13 @@ export async function getNewVsReturningCustomers() {
   }
 }
 
-export async function getSalesHeatmap() {
+export const getNewVsReturningCustomers = unstable_cache(
+  _getNewVsReturningCustomers,
+  ["dashboard-new-vs-returning"],
+  { tags: ["dashboard"], revalidate: DASHBOARD_CACHE_TTL }
+)
+
+const _getSalesHeatmap = async () => {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
   const rows = await db
@@ -360,7 +428,13 @@ export async function getSalesHeatmap() {
   return heatmap
 }
 
-export async function getTopReferrers() {
+export const getSalesHeatmap = unstable_cache(
+  _getSalesHeatmap,
+  ["dashboard-sales-heatmap"],
+  { tags: ["dashboard"], revalidate: DASHBOARD_CACHE_TTL }
+)
+
+const _getTopReferrers = async () => {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
   const rows = await db
@@ -393,7 +467,13 @@ export async function getTopReferrers() {
   }))
 }
 
-export async function getConversionFunnel() {
+export const getTopReferrers = unstable_cache(
+  _getTopReferrers,
+  ["dashboard-top-referrers"],
+  { tags: ["dashboard"], revalidate: DASHBOARD_CACHE_TTL }
+)
+
+const _getConversionFunnel = async () => {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
   const stages = [
@@ -404,21 +484,19 @@ export async function getConversionFunnel() {
     { name: "Orders Placed", eventType: "ORDER_COMPLETE" },
   ]
 
-  const results = []
-  for (const stage of stages) {
-    const [result] = await db
-      .select({ count: sql<number>`count(distinct ${userEvents.sessionId})` })
-      .from(userEvents)
-      .where(and(
-        gte(userEvents.createdAt, sevenDaysAgo),
-        eq(userEvents.eventType, stage.eventType)
-      ))
-
-    results.push({
-      name: stage.name,
-      value: Number(result?.count ?? 0),
+  // Run all 5 stage queries in parallel instead of a serial for-loop
+  const results = await Promise.all(
+    stages.map(async (stage) => {
+      const [result] = await db
+        .select({ count: sql<number>`count(distinct ${userEvents.sessionId})` })
+        .from(userEvents)
+        .where(and(
+          gte(userEvents.createdAt, sevenDaysAgo),
+          eq(userEvents.eventType, stage.eventType)
+        ))
+      return { name: stage.name, value: Number(result?.count ?? 0) }
     })
-  }
+  )
 
   const topValue = results[0]?.value || 1
   return results.map((r) => ({
@@ -426,3 +504,9 @@ export async function getConversionFunnel() {
     percentage: Number(((r.value / topValue) * 100).toFixed(1)),
   }))
 }
+
+export const getConversionFunnel = unstable_cache(
+  _getConversionFunnel,
+  ["dashboard-conversion-funnel"],
+  { tags: ["dashboard"], revalidate: DASHBOARD_CACHE_TTL }
+)
