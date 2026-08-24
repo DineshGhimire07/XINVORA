@@ -27,12 +27,18 @@ export function MediaSelector({
   onChange,
   roleLabels,
   initialRoles,
+  productName,
+  productSlug,
+  isSaving,
 }: {
   mediaItems: any[]
   selectedImages: string[]
   onChange: (images: string[]) => void
   roleLabels?: string[]
   initialRoles?: Record<string, string>
+  productName?: string
+  productSlug?: string
+  isSaving?: boolean
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedRoles, setSelectedRoles] = useState<Record<string, string>>(initialRoles || {})
@@ -160,17 +166,17 @@ export function MediaSelector({
       )}
 
       {selectedImages.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center justify-between text-admin-xs">
             <span className="font-bold text-admin-text-secondary uppercase tracking-wider">
               Selected Product Photos ({selectedImages.length})
             </span>
-            <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
-              ★ Roles auto-align with position, or choose custom role (Front, Back, Lifestyle) per photo below.
+            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+              <span>✓</span> Auto-named according to XINVORA SEO rules ({productName || "Product"} - Role)
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 mb-2">
             {selectedImages.map((url, i) => {
               const explicitRole = selectedRoles[url] || selectedRoles[String(i)] || "auto"
               const defaultRoleLabel = roleLabels?.[i]
@@ -182,8 +188,22 @@ export function MediaSelector({
                 ? `★ #1 ${displayLabel || "Cover"}`
                 : `#${i + 1} ${displayLabel || `Photo ${i + 1}`}`
 
+              // Rule-based SEO Alt Text & Filename preview
+              const rolePart = explicitRole !== "auto"
+                ? explicitRole.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+                : (defaultRoleLabel?.toLowerCase().replace(/[^a-z0-9]+/g, "-") || `photo-${i + 1}`)
+              
+              const cleanSlug = (productSlug || "product")
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "")
+
+              const ruleAltText = `${(productName || "Product").trim()} - ${displayLabel || `Photo ${i + 1}`}`
+              const ruleFilename = `${cleanSlug}-${rolePart}.webp`
+
               return (
-                <div key={i} className="flex flex-col gap-1.5 p-2 bg-admin-content/20 border border-admin-border rounded-admin-md shadow-xs">
+                <div key={i} className="flex flex-col gap-2 p-2.5 bg-admin-content/20 border border-admin-border rounded-admin-md shadow-xs">
                   <div className={`relative aspect-square border-2 group overflow-hidden bg-admin-content/40 rounded-admin-sm ${i === 0 ? "border-amber-500 ring-2 ring-amber-500/20" : "border-admin-border"}`}>
                     <Image src={url} alt="Selected" fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" />
                     
@@ -202,14 +222,14 @@ export function MediaSelector({
                   </div>
 
                   {/* Explicit Role Selector per Photo */}
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-col gap-1">
                     <label className="text-[9px] font-bold text-admin-text-secondary uppercase tracking-wider">
                       Role / View
                     </label>
                     <select
                       value={explicitRole}
                       onChange={(e) => handleRoleChange(url, e.target.value)}
-                      className="w-full text-[11px] font-medium py-1 px-2 bg-admin-surface border border-admin-border text-admin-text-primary rounded focus:outline-none focus:ring-1 focus:ring-admin-primary"
+                      className="w-full text-[11px] font-medium py-1.5 px-2 bg-admin-surface border border-admin-border text-admin-text-primary rounded focus:outline-none focus:ring-1 focus:ring-admin-primary"
                     >
                       {SUPPORTED_ROLES.map((r) => (
                         <option key={r.value} value={r.value}>
@@ -219,6 +239,20 @@ export function MediaSelector({
                     </select>
                     <input type="hidden" name={`imageRole_${url}`} value={explicitRole} />
                     <input type="hidden" name={`imageRole_${i}`} value={explicitRole} />
+                  </div>
+
+                  {/* Rule-based SEO Name Preview */}
+                  <div className="px-2 py-1.5 bg-admin-surface/80 border border-admin-border/70 rounded text-[10px] space-y-0.5">
+                    <div className="flex items-center justify-between gap-1 text-[8px] font-bold uppercase tracking-wider text-admin-text-secondary">
+                      <span>SEO Name / Alt</span>
+                      <span className="text-emerald-600 font-bold">✓ Rules Applied</span>
+                    </div>
+                    <p className="font-semibold text-admin-text-primary truncate" title={ruleAltText}>
+                      {ruleAltText}
+                    </p>
+                    <p className="font-mono text-[9px] text-admin-text-secondary truncate opacity-85" title={ruleFilename}>
+                      📁 {ruleFilename}
+                    </p>
                   </div>
 
                   <div className="flex items-center justify-between gap-1 pt-0.5">
@@ -278,15 +312,27 @@ export function MediaSelector({
         <input key={i} type="hidden" name="images" value={url} />
       ))}
 
-      <div className="flex gap-4">
+      <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-admin-border/50">
         <Button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="self-start bg-admin-surface text-admin-text-primary px-5 py-2 text-admin-xs uppercase tracking-wider font-bold border border-admin-border hover:bg-admin-content transition-colors"
+          className="bg-admin-surface text-admin-text-primary px-4 py-2 text-admin-xs uppercase tracking-wider font-bold border border-admin-border hover:bg-admin-content transition-colors cursor-pointer"
         >
           {isOpen ? "Close Media Selector" : "+ Select From Media Library"}
         </Button>
         <MediaUploader onUploadComplete={handleUploadComplete} />
+
+        {/* Dedicated Save Button right in Product Images */}
+        <button
+          type="submit"
+          disabled={isSaving}
+          className="ml-auto bg-admin-primary text-white px-5 py-2 text-admin-xs uppercase tracking-wider font-bold rounded-admin-md hover:bg-admin-primary/90 transition-all shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span>{isSaving ? "Saving..." : "Save Product & Image Names"}</span>
+        </button>
       </div>
 
       {isOpen && (

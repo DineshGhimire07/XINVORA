@@ -47,6 +47,8 @@ export default function ProductEditor({
   const [isSavingSize, setIsSavingSize] = useState(false)
   const [customSizes, setCustomSizes] = useState<any[]>(sizes || [])
   const [customColors, setCustomColors] = useState<any[]>(colors || [])
+  const [productNameVal, setProductNameVal] = useState<string>(product?.name || "")
+  const [productSlugVal, setProductSlugVal] = useState<string>(product?.slug || "")
   const [selectedColorIds, setSelectedColorIds] = useState<string[]>(product?.colorIds || [])
   const [newColorName, setNewColorName] = useState("")
   const [newColorHex, setNewColorHex] = useState("#1A1A1A")
@@ -220,7 +222,13 @@ export default function ProductEditor({
 
     if (result.success) {
       setSaveSuccess(true)
-      setToastMsg(product ? `"${formData.get("name") || "Product"}" updated successfully!` : `"${formData.get("name") || "Product"}" created successfully!`)
+      const imgCount = selectedImages.length
+      const pName = (formData.get("name") as string) || productNameVal || "Product"
+      setToastMsg(
+        product
+          ? `"${pName}" & ${imgCount} photo${imgCount === 1 ? "" : "s"} named & saved successfully according to XINVORA SEO rules!`
+          : `"${pName}" & ${imgCount} photo${imgCount === 1 ? "" : "s"} created & named successfully!`
+      )
       setShowToast(true)
       setTimeout(() => {
         setSaveProgress(0)
@@ -325,6 +333,7 @@ export default function ProductEditor({
                 name="name"
                 ref={nameRef}
                 defaultValue={product?.name}
+                onChange={(e) => setProductNameVal(e.target.value)}
                 required
                 className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
               />
@@ -338,6 +347,7 @@ export default function ProductEditor({
                 id="slug"
                 name="slug"
                 defaultValue={product?.slug}
+                onChange={(e) => setProductSlugVal(e.target.value)}
                 required
                 className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
               />
@@ -913,6 +923,9 @@ export default function ProductEditor({
             onChange={setSelectedImages}
             roleLabels={["Lifestyle", "Front Close-Up", "Front", "Back", "Detail", "Side"]}
             initialRoles={product?.imageRoles}
+            productName={productNameVal || product?.name || "Product"}
+            productSlug={productSlugVal || product?.slug || "product"}
+            isSaving={isLoading}
           />
         </div>
 
