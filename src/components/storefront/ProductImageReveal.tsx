@@ -3,7 +3,7 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
+import { optimizeCloudinaryUrl } from "@/lib/image-optimizer"
 
 export interface ProductImageRevealProps {
   productId: string
@@ -23,6 +23,7 @@ export function ProductImageReveal({
   priority = false,
   showDots = true,
 }: ProductImageRevealProps) {
+  const [isInteractive, setIsInteractive] = React.useState(false)
   const containerRef = React.useRef<HTMLDivElement>(null)
   const dotsContainerRef = React.useRef<HTMLDivElement>(null)
   const activeIndexRef = React.useRef(0)
@@ -42,6 +43,7 @@ export function ProductImageReveal({
 
   // Dot sync via passive rAF scroll listener on the scroll track
   React.useEffect(() => {
+    if (!isInteractive) return
     const el = containerRef.current
     if (!el) return
 
@@ -65,92 +67,88 @@ export function ProductImageReveal({
       el.removeEventListener("scroll", onScroll)
       if (rafId) cancelAnimationFrame(rafId)
     }
-  }, [images.length, updateDots])
+  }, [isInteractive, images.length, updateDots])
 
-  const resetToStart = React.useCallback(() => {
-    const el = containerRef.current
-    if (!el) return
-    el.scrollLeft = 0
-    activeIndexRef.current = 0
-    updateDots(0)
-  }, [updateDots])
-
-  // Reset when card is FULLY off-screen — observe the parent [data-product-card]
-  React.useEffect(() => {
-    const el = containerRef.current
-    if (!el || typeof IntersectionObserver === "undefined") return
-
-    const cardEl = el.closest("[data-product-card]") as Element | null
-    const target = cardEl ?? el
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0]
-        // Only reset when completely invisible AND we're not already on image 0
-        if (!entry.isIntersecting && activeIndexRef.current !== 0) {
-          resetToStart()
-        }
-      },
-      { threshold: 0 }
-    )
-
-    observer.observe(target)
-    return () => observer.disconnect()
-  }, [resetToStart])
+  const enableInteractive = React.useCallback(() => {
+    if (!isInteractive && images.length > 1) {
+      setIsInteractive(true)
+    }
+  }, [isInteractive, images.length])
 
   return (
-    // Outer wrapper: NO touch-action override — let all touches propagate naturally to the page
-    <div className="relative w-full h-full overflow-hidden select-none">
-      {/*
-        Scroll track: NO touchAction override.
-        The browser detects horizontal swipes on this element naturally via overflow-x scroll.
-        Do NOT set -webkit-overflow-scrolling: touch — it is deprecated and causes
-        momentum scroll conflicts with vertical page scroll on modern iOS.
-      */}
+    <div
+      className="relative w-full h-full overflow-hidden select-none"
+      onTouchStart={enableInteractive}
+      onPointerDown={enableInteractive}
+    >
       <div
         ref={containerRef}
         className="w-full h-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory overscroll-x-contain"
         style={{
-          /*
-           * touch-action: pan-x pan-y — allows the browser to handle BOTH directions.
-           * The browser automatically routes: horizontal gesture → this scroll container,
-           * vertical gesture → parent page scroll. Works in browser AND PWA standalone mode.
-           */
           touchAction: "pan-x pan-y",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
         }}
       >
-        {images.map((img, i) => (
-          <div
-            key={i}
-            className="relative shrink-0 snap-center snap-always"
-            style={{ minWidth: "100%", width: "100%", height: "100%" }}
-          >
-            <Link
-              href={`/products/${productSlug}`}
-              className="absolute inset-0 z-10 block w-full h-full"
-              aria-label={`${productName} view ${i + 1}`}
-              draggable={false}
-            />
-            <Image
-              src={optimizeCloudinaryUrl(img.url, { width: 640 })}
-              alt={img.altText || `${productName} view ${i + 1}`}
-              fill
-              sizes="(max-width: 640px) 50vw, 33vw"
-              priority={priority && i === 0}
-              fetchPriority={priority && i === 0 ? "high" : "low"}
-              loading={priority && i === 0 ? "eager" : "lazy"}
-              decoding="async"
-              className="object-cover object-top pointer-events-none select-none"
-              draggable={false}
-            />
-          </div>
-        ))}
+        {/* Always render Image 0 for instant initial and swipe-back paint */}
+        <div
+          className="relative shrink-0 snap-center snap-always"
+          style={{ minWidth: "100%", width: "100%", height: "100%" }}
+        >
+          <Link
+            href={`/products/${productSlug}`}
+            className="absolute inset-0 z-10 block w-full h-full"
+            aria-label={`${productName} view 1`}
+            draggable={false}
+          />
+          <Image
+            src={optimizeCloudinaryUrl(images[0]?.url, { width: 640 })}
+            alt={images[0]?.altText || `${productName} view 1`}
+            fill
+            sizes="(max-width: 640px) 50vw, 33vw"
+            priority={priority}
+            fetchPriority={priority ? "high" : "auto"}
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+            className="object-cover object-top pointer-events-none select-none"
+            draggable={false}
+          />
+        </div>
+
+        {/* Lazy render additional slides only when user touches/interacts with the card */}
+        {isInteractive &&
+          images.slice(1).map((img, idx) => {
+            const i = idx + 1
+            return (
+              <div
+                key={i}
+                className="relative shrink-0 snap-center snap-always"
+                style={{ minWidth: "100%", width: "100%", height: "100%" }}
+              >
+                <Link
+                  href={`/products/${productSlug}`}
+                  className="absolute inset-0 z-10 block w-full h-full"
+                  aria-label={`${productName} view ${i + 1}`}
+                  draggable={false}
+                />
+                <Image
+                  src={optimizeCloudinaryUrl(img.url, { width: 640 })}
+                  alt={img.altText || `${productName} view ${i + 1}`}
+                  fill
+                  sizes="(max-width: 640px) 50vw, 33vw"
+                  loading="lazy"
+                  fetchPriority="low"
+                  decoding="async"
+                  className="object-cover object-top pointer-events-none select-none"
+                  draggable={false}
+                />
+              </div>
+            )
+          })}
       </div>
 
-      {/* Dot indicators — only rendered when showDots=true */}
-      {showDots && (
+      {/* Dot indicators — always visible when showDots=true and images > 1 */}
+      {showDots && images.length > 1 && (
         <div
           ref={dotsContainerRef}
           className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 pointer-events-none"
@@ -168,3 +166,4 @@ export function ProductImageReveal({
     </div>
   )
 }
+
