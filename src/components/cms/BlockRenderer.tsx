@@ -90,8 +90,6 @@ function CMSCollectionGrid({ block, collections = [] }: { block: any; collection
                         priority={index < 2}
                         fetchPriority={index < 2 ? "high" : "auto"}
                         loading={index < 2 ? "eager" : "lazy"}
-                        placeholder="blur"
-                        blurDataURL={SHIMMER_BLUR_DATA_URL}
                         className="block md:hidden object-cover object-top transition-all duration-700 ease-out group-hover:scale-105"
                       />
                     )}
@@ -104,8 +102,6 @@ function CMSCollectionGrid({ block, collections = [] }: { block: any; collection
                         priority={index < 2}
                         fetchPriority={index < 2 ? "high" : "auto"}
                         loading={index < 2 ? "eager" : "lazy"}
-                        placeholder="blur"
-                        blurDataURL={SHIMMER_BLUR_DATA_URL}
                         className={`${collection.imageMobileUrl ? "hidden md:block" : "block"} object-cover object-top transition-all duration-700 ease-out group-hover:scale-105`}
                       />
                     )}
@@ -294,8 +290,6 @@ function CMSHeroCarousel({ block }: { block: any }) {
                         priority={isFirstSlide}
                         fetchPriority={isFirstSlide ? "high" : "auto"}
                         loading={isFirstSlide ? "eager" : "lazy"}
-                        placeholder="blur"
-                        blurDataURL={SHIMMER_BLUR_DATA_URL}
                         className="hidden md:block object-cover object-center max-w-none w-full h-full"
                       />
                     )}
@@ -308,8 +302,6 @@ function CMSHeroCarousel({ block }: { block: any }) {
                         priority={isFirstSlide}
                         fetchPriority={isFirstSlide ? "high" : "auto"}
                         loading={isFirstSlide ? "eager" : "lazy"}
-                        placeholder="blur"
-                        blurDataURL={SHIMMER_BLUR_DATA_URL}
                         className="block md:hidden object-cover object-center max-w-none w-full h-full"
                       />
                     )}
@@ -328,8 +320,6 @@ function CMSHeroCarousel({ block }: { block: any }) {
                         priority={isFirstSlide}
                         fetchPriority={isFirstSlide ? "high" : "auto"}
                         loading={isFirstSlide ? "eager" : "lazy"}
-                        placeholder="blur"
-                        blurDataURL={SHIMMER_BLUR_DATA_URL}
                         className="hidden md:block object-cover object-center max-w-none w-full h-full"
                       />
                     )}
@@ -342,8 +332,6 @@ function CMSHeroCarousel({ block }: { block: any }) {
                         priority={isFirstSlide}
                         fetchPriority={isFirstSlide ? "high" : "auto"}
                         loading={isFirstSlide ? "eager" : "lazy"}
-                        placeholder="blur"
-                        blurDataURL={SHIMMER_BLUR_DATA_URL}
                         className="block md:hidden object-cover object-center max-w-none w-full h-full"
                       />
                     )}

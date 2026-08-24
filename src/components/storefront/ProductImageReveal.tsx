@@ -142,8 +142,6 @@ export function ProductImageReveal({
               fetchPriority={priority && i === 0 ? "high" : "auto"}
               loading={priority && i === 0 ? "eager" : "lazy"}
               decoding="async"
-              placeholder="blur"
-              blurDataURL={SHIMMER_BLUR_DATA_URL}
               className="object-cover object-top pointer-events-none select-none"
               draggable={false}
             />

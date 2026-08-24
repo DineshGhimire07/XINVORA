@@ -123,8 +123,6 @@ export function ProductCard({
               priority={priority}
               fetchPriority={priority ? "high" : "auto"}
               loading={priority ? "eager" : "lazy"}
-              placeholder="blur"
-              blurDataURL={SHIMMER_BLUR_DATA_URL}
               className="object-cover object-top pointer-events-none"
             />
           ) : images.length > 0 ? (
@@ -137,8 +135,6 @@ export function ProductCard({
                 priority={priority}
                 fetchPriority={priority ? "high" : "auto"}
                 loading={priority ? "eager" : "lazy"}
-                placeholder="blur"
-                blurDataURL={SHIMMER_BLUR_DATA_URL}
                 className={`object-cover object-top pointer-events-none transition-opacity duration-500 ease-out ${
                   !disableHover && images[1] && isDesktopHovered ? "opacity-0" : "opacity-100"
                 }`}
@@ -191,8 +187,6 @@ export function ProductCard({
                   priority={priority}
                   fetchPriority={priority ? "high" : "auto"}
                   loading={priority ? "eager" : "lazy"}
-                  placeholder="blur"
-                  blurDataURL={SHIMMER_BLUR_DATA_URL}
                   className="object-cover object-top pointer-events-none"
                 />
               ) : images.length > 0 ? (
@@ -204,8 +198,6 @@ export function ProductCard({
                   priority={priority}
                   fetchPriority={priority ? "high" : "auto"}
                   loading={priority ? "eager" : "lazy"}
-                  placeholder="blur"
-                  blurDataURL={SHIMMER_BLUR_DATA_URL}
                   className="object-cover object-top pointer-events-none"
                 />
               ) : (
