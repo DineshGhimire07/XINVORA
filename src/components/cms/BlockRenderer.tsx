@@ -570,7 +570,6 @@ function CMSBannerBlock({ block }: { block: any }) {
           alt={data.title || "Banner"}
           className={`w-full h-full ${mobileFitClass} ${desktopFitClass} ${mobilePosClass} ${desktopPosClass}`}
           loading="lazy"
-          decoding="async"
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
         />
       </picture>

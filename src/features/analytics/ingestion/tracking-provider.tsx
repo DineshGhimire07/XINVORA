@@ -210,6 +210,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
+        keepalive: true,
       })
     } catch (err) {
       console.warn("[Analytics] Telemetry event failed to send:", err)

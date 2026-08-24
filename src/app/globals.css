@@ -278,9 +278,6 @@
     /* overflow-x: clip (not hidden) — see html rule above for explanation */
     overflow-x: clip;
     scrollbar-width: none; /* Firefox */
-    /* Prevent elastic overscroll bounce on iOS/Android — eliminates the
-       back-and-forth jitter when reversing scroll direction */
-    overscroll-behavior-y: none;
   }
 
   /* Hide scrollbar Chrome/Safari/Edge on body too */

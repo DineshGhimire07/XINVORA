@@ -144,7 +144,6 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
                   fill
                   sizes="(max-width: 1024px) 15vw, 10vw"
                   loading="lazy"
-                  decoding="async"
                   placeholder="blur"
                   blurDataURL={SHIMMER_BLUR_DATA_URL}
                   className="object-cover object-top"

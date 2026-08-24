@@ -25,7 +25,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
         </Suspense>
         <CookieScriptLoader />
         <HeaderServer />
-        <main className="flex-1 flex flex-col w-full">{children}</main>
+        <div className="flex-1 flex flex-col w-full">{children}</div>
         <CookieBanner />
         <CookieModal />
         <Suspense fallback={null}>

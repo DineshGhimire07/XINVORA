@@ -6,31 +6,76 @@ import { usePathname, useSearchParams } from "next/navigation"
 export function ScrollToTop() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const isPopStateRef = useRef(false)
+  const lastPopstateTimeRef = useRef<number>(0)
+  const prevPathRef = useRef<string | null>(null)
 
   useEffect(() => {
-    const handlePopState = () => {
-      isPopStateRef.current = true
+    // Enable browser-native scroll restoration for BFCache and popstate navigation
+    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "auto"
     }
-    window.addEventListener("popstate", handlePopState)
-    return () => window.removeEventListener("popstate", handlePopState)
+
+    const handlePopState = () => {
+      lastPopstateTimeRef.current = Date.now()
+    }
+
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        lastPopstateTimeRef.current = Date.now()
+      }
+    }
+
+    window.addEventListener("popstate", handlePopState, { passive: true })
+    window.addEventListener("pageshow", handlePageShow, { passive: true })
+    return () => {
+      window.removeEventListener("popstate", handlePopState)
+      window.removeEventListener("pageshow", handlePageShow)
+    }
   }, [])
 
   useEffect(() => {
-    // If the navigation is a browser back/forward (popstate), do not reset scroll to top
-    if (isPopStateRef.current) {
-      isPopStateRef.current = false
+    const currentPath = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : "")
+
+    // Skip on initial mount if already at top
+    if (prevPathRef.current === null) {
+      prevPathRef.current = currentPath
       return
     }
 
-    // Reset scroll position to top only on forward/push navigation
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: "instant",
-    })
+    const isDifferentPath = prevPathRef.current !== currentPath
+    prevPathRef.current = currentPath
+
+    // If popstate occurred within the last 1500ms, let browser restore scroll
+    const isPopState = Date.now() - lastPopstateTimeRef.current < 1500
+
+    if (isPopState) {
+      return
+    }
+
+    if (isDifferentPath) {
+      // Forward / Push navigation: guarantee page starts at top
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "instant",
+      })
+
+      // Secondary check after next paint frame to handle streaming/async page layout settlement
+      const rafId = requestAnimationFrame(() => {
+        if (Date.now() - lastPopstateTimeRef.current >= 1500) {
+          window.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: "instant",
+          })
+        }
+      })
+
+      return () => cancelAnimationFrame(rafId)
+    }
   }, [pathname, searchParams])
 
   return null
 }
+
 

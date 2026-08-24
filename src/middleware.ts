@@ -26,25 +26,9 @@ export default auth((req) => {
   const isAdminRoute = nextUrl.pathname.startsWith("/admin")
   const isAccountRoute = nextUrl.pathname.startsWith("/account")
 
-  const requestHeaders = new Headers(req.headers)
-  requestHeaders.set("x-pathname", nextUrl.pathname)
-
-  // ── Pre-Launch Preview Gate ──────────────────────────────────────────────
-  // When enabled, all routes (except /preview and /api) require the preview
-  // cookie to be present. Set NEXT_PUBLIC_PREVIEW_MODE=false to disable.
-  if (PREVIEW_CONFIG.enabled && !isPreviewPage && !isApiRoute) {
-    const previewCookie = req.cookies.get(PREVIEW_CONFIG.cookieName)
-    const hasAccess = previewCookie?.value === PREVIEW_CONFIG.accessKey
-
-    if (!hasAccess) {
-      const previewUrl = new URL("/preview", nextUrl)
-      return NextResponse.redirect(previewUrl)
-    }
-  }
-
   // Always allow API auth routes
   if (isApiAuthRoute) {
-    return NextResponse.next({ request: { headers: requestHeaders } })
+    return NextResponse.next()
   }
 
   // Redirect authenticated users away from auth routes (login/register)
@@ -53,7 +37,7 @@ export default auth((req) => {
       const callbackUrl = nextUrl.searchParams.get("callbackUrl") || "/account"
       return NextResponse.redirect(new URL(callbackUrl, nextUrl))
     }
-    return NextResponse.next({ request: { headers: requestHeaders } })
+    return NextResponse.next()
   }
 
   // Protect Admin routes
@@ -64,7 +48,7 @@ export default auth((req) => {
     if (user?.role !== "ADMIN") {
       return NextResponse.redirect(new URL("/", nextUrl))
     }
-    return NextResponse.next({ request: { headers: requestHeaders } })
+    return NextResponse.next()
   }
 
   // Protect Account routes
@@ -74,10 +58,10 @@ export default auth((req) => {
       loginUrl.searchParams.set("callbackUrl", nextUrl.pathname + nextUrl.search)
       return NextResponse.redirect(loginUrl)
     }
-    return NextResponse.next({ request: { headers: requestHeaders } })
+    return NextResponse.next()
   }
 
-  return NextResponse.next({ request: { headers: requestHeaders } })
+  return NextResponse.next()
 })
 
 // Optionally, don't invoke Middleware on some paths

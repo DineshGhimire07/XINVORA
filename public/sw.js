@@ -1,23 +1,22 @@
 /**
- * XINVORA Service Worker
- * Handles offline caching for a premium shopping experience.
+ * XINVORA Service Worker (v4)
+ * Handles fast asset caching for a premium, low-latency shopping experience.
  *
  * Strategy:
- * - HTML pages: Network-first (always fresh content), fallback to cache
- * - Static assets (JS/CSS/fonts/images): Cache-first (fast loads)
+ * - HTML / Navigations: Browser & Next.js native (allows instant BFCache & router cache)
+ * - Static assets (JS/CSS/fonts/images): Cache-first (ultra-fast loads)
  * - API calls: Network-only (never cache API data)
  */
 
-const CACHE_VERSION = "xinvora-v3"
+const CACHE_VERSION = "xinvora-v4"
 const STATIC_CACHE = `${CACHE_VERSION}-static`
-const PAGE_CACHE = `${CACHE_VERSION}-pages`
 
-// Only pre-cache the offline fallback — NOT the homepage (it's ISR/CMS content that changes)
+// Only pre-cache the offline fallback
 const PRECACHE_ASSETS = [
   "/offline",
 ]
 
-// Install: pre-cache the app shell
+// Install: pre-cache static offline shell
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
@@ -33,7 +32,7 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((key) => key.startsWith("xinvora-") && key !== STATIC_CACHE && key !== PAGE_CACHE)
+          .filter((key) => key.startsWith("xinvora-") && key !== STATIC_CACHE)
           .map((key) => caches.delete(key))
       )
     )
@@ -52,10 +51,10 @@ self.addEventListener("fetch", (event) => {
   // Skip API routes — always network-only
   if (url.pathname.startsWith("/api/")) return
 
-  // Skip Next.js internal routes
-  if (url.pathname.startsWith("/_next/data/")) return
+  // Skip Next.js internal routes and navigations to allow instant BFCache and router caching
+  if (url.pathname.startsWith("/_next/data/") || request.mode === "navigate") return
 
-  // Static assets (_next/static, fonts, images) — Cache-first
+  // Static assets (_next/static, fonts, images, icons) — Cache-first
   if (
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.startsWith("/fonts/") ||
@@ -74,23 +73,5 @@ self.addEventListener("fetch", (event) => {
     )
     return
   }
-
-  // HTML pages — Network-first, fallback to cache, then offline page
-  if (request.headers.get("accept")?.includes("text/html")) {
-    event.respondWith(
-      caches.open(PAGE_CACHE).then(async (cache) => {
-        try {
-          const response = await fetch(request)
-          if (response.ok) cache.put(request, response.clone())
-          return response
-        } catch {
-          const cached = await cache.match(request)
-          if (cached) return cached
-          const offlinePage = await caches.match("/offline")
-          return offlinePage || new Response("You are offline.", { status: 503 })
-        }
-      })
-    )
-    return
-  }
 })
+
