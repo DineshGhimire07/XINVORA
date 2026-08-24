@@ -25,6 +25,8 @@ export const metadata = buildMetadata({
   description: "Browse the XINVORA catalogue. Refined objects, garment collections, and meticulous accessories designed for everyday permanence.",
 })
 
+export const revalidate = 3600
+
 export default async function CollectionsPage({
   searchParams,
 }: {

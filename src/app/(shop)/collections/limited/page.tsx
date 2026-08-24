@@ -17,6 +17,8 @@ export const metadata: Metadata = buildMetadata({
   description: "Rare pieces in very limited quantities. Once it's gone, it's gone.",
 })
 
+export const revalidate = 3600
+
 export default async function LimitedCollectionPage(props: {
   searchParams: Promise<{
     sort?: string

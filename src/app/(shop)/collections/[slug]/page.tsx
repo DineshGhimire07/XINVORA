@@ -16,6 +16,8 @@ import { collections } from "@/db/schema"
 import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
 import { CollectionViewTracker } from "@/features/analytics/components/CollectionViewTracker"
 
+export const revalidate = 3600
+
 export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
@@ -100,8 +102,6 @@ export default async function CollectionDetailPage(props: {
             sizes="100vw"
             priority
             fetchPriority="high"
-            placeholder="blur"
-            blurDataURL={SHIMMER_BLUR_DATA_URL}
             className="object-cover object-center"
           />
         </Section>
@@ -127,8 +127,6 @@ export default async function CollectionDetailPage(props: {
                   sizes="(max-width: 768px) 100vw, 450px"
                   priority
                   fetchPriority="high"
-                  placeholder="blur"
-                  blurDataURL={SHIMMER_BLUR_DATA_URL}
                   className="object-cover"
                 />
               </div>
