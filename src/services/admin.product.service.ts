@@ -189,8 +189,10 @@ export class AdminProductService {
       } else if (cleanColors.length > 0 && activeSizes.length > 0) {
         // Color + Size combinations
         for (const cId of cleanColors) {
+          const colorQty = colorStocks?.[cId] !== undefined ? Number(colorStocks[cId]) : undefined
           for (const sId of activeSizes) {
-            const qty = (sizeStocks || {})[sId] || 0
+            const sizeQty = (sizeStocks || {})[sId] || 0
+            const qty = colorQty !== undefined ? colorQty : sizeQty
             variantSpecs.push({
               colorId: cId,
               sizeId: sId,
@@ -449,8 +451,10 @@ export class AdminProductService {
           }
         } else if (cleanColors.length > 0 && activeSizes.length > 0) {
           for (const cId of cleanColors) {
+            const colorQty = colorStocks?.[cId] !== undefined ? Number(colorStocks[cId]) : undefined
             for (const sId of activeSizes) {
-              const qty = (sizeStocks || {})[sId] || 0
+              const sizeQty = (sizeStocks || {})[sId] || 0
+              const qty = colorQty !== undefined ? colorQty : sizeQty
               targetSpecs.push({
                 colorId: cId,
                 sizeId: sId,

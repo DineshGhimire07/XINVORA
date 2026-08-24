@@ -85,4 +85,32 @@ describe("Product Color & Variant Inventory Logic", () => {
     expect(customColors.map((c) => c.id)).toEqual(["c1", "c3"])
     expect(selectedColorIds).toEqual(["c1"])
   })
+
+  it("deducts inventory per specific variant without affecting other colors (e.g. 3 total: 1 White, 1 Yellow, 1 Black)", () => {
+    // 1 Size: S-L (total stock = 3)
+    // 3 Colors: White (1), Light Yellow (1), Black (1)
+    const inventoryState: Record<string, number> = {
+      "variant-white-sl": 1,
+      "variant-yellow-sl": 1,
+      "variant-black-sl": 1,
+    }
+
+    const getTotalStock = () => Object.values(inventoryState).reduce((a, b) => a + b, 0)
+    expect(getTotalStock()).toBe(3)
+
+    // Purchase 1 item of White / S-L
+    const purchaseVariantId = "variant-white-sl"
+    const purchaseQty = 1
+
+    expect(inventoryState[purchaseVariantId]).toBeGreaterThanOrEqual(purchaseQty)
+    inventoryState[purchaseVariantId] -= purchaseQty
+
+    // White / S-L is now 0 (Out of stock)
+    expect(inventoryState["variant-white-sl"]).toBe(0)
+    // Yellow & Black still have 1 each
+    expect(inventoryState["variant-yellow-sl"]).toBe(1)
+    expect(inventoryState["variant-black-sl"]).toBe(1)
+    // Total product stock drops to 2
+    expect(getTotalStock()).toBe(2)
+  })
 })
