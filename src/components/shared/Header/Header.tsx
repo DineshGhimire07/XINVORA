@@ -161,14 +161,13 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
 
   return (
     <header
-      className="fixed top-0 left-0 w-full z-50 flex flex-col"
-      style={{ background: "#F8F5F0" }}
+      className="fixed top-0 left-0 w-full z-50 flex flex-col bg-transparent backdrop-blur-[2px] text-text-primary border-b border-transparent"
     >
-      {/* Status bar safe zone — solid background clears time/battery area cleanly */}
+      {/* Safe area spacer — zero height in browser, equals status bar height in PWA standalone */}
       <div style={{ height: "env(safe-area-inset-top)" }} aria-hidden="true" />
 
       {/* Nav content row */}
-      <div className="h-[52px] md:h-[60px] grid grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 md:px-8 lg:px-10 w-full relative">
+      <div className="h-[56px] md:h-[64px] grid grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6 md:px-8 lg:px-10 w-full relative">
         
         {/* LEFT NAV */}
         <nav className="hidden md:flex items-center gap-10 h-full">
