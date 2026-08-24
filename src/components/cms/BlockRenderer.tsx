@@ -75,10 +75,10 @@ function CMSCollectionGrid({ block, collections = [] }: { block: any; collection
             <Link
               key={collection.id}
               href={`/collections/${collection.slug}`}
-              className="group flex flex-col relative w-full h-full overflow-hidden p-0 m-0 border-0 bg-neutral-950"
+              className="group flex flex-col relative w-full h-full overflow-hidden p-0 m-0 border-0 bg-[#ECEBE7]"
             >
               {/* Visual Card Image container */}
-              <div className="relative w-full h-full bg-neutral-950 overflow-hidden select-none p-0 m-0 border-0">
+              <div className="relative w-full h-full bg-[#ECEBE7] overflow-hidden select-none p-0 m-0 border-0">
                 {hasCover ? (
                   <>
                     {collection.imageMobileUrl && (

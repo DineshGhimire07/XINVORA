@@ -139,7 +139,7 @@ export function ProductImageReveal({
               fill
               sizes="(max-width: 640px) 50vw, 33vw"
               priority={priority && i === 0}
-              fetchPriority={priority && i === 0 ? "high" : "auto"}
+              fetchPriority={priority && i === 0 ? "high" : "low"}
               loading={priority && i === 0 ? "eager" : "lazy"}
               decoding="async"
               className="object-cover object-top pointer-events-none select-none"
