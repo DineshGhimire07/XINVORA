@@ -242,6 +242,7 @@ function PageViewTracker({
 
   useEffect(() => {
     const currentPath = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : "")
+    if (prevPathRef.current === currentPath) return
 
     const timer = setTimeout(() => {
       trackEvent(AnalyticsEvent.PAGE_VIEW, {
@@ -251,7 +252,7 @@ function PageViewTracker({
         ;(window as any).__xinvoraPrevPath = prevPathRef.current
       }
       prevPathRef.current = currentPath
-    }, 100)
+    }, 200)
 
     return () => clearTimeout(timer)
   }, [pathname, searchParams, trackEvent])

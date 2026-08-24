@@ -58,11 +58,9 @@ export function HeaderStateProvider({ children }: { children: React.ReactNode })
     }
 
     window.addEventListener("cart-updated", handleUpdate)
-    window.addEventListener("focus", handleUpdate)
 
     return () => {
       window.removeEventListener("cart-updated", handleUpdate)
-      window.removeEventListener("focus", handleUpdate)
     }
   }, [fetchState])
 
