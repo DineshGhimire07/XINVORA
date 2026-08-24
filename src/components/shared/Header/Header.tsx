@@ -83,7 +83,7 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
   const pathname = usePathname()
   const router = useRouter()
   const isHomepage = pathname === "/"
-  const isPDP = pathname.startsWith("/products/")
+  const canGoBack = !isHomepage
   const { state } = useHeaderState()
 
   const liveCartCount = state.cart ? state.cart.cartCount : cartCount
@@ -95,6 +95,10 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
   const handleBack = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back()
+    } else if (pathname.startsWith("/checkout")) {
+      router.push("/cart")
+    } else if (pathname.startsWith("/collections/")) {
+      router.push("/collections")
     } else {
       router.push("/")
     }
@@ -216,18 +220,18 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
 
         {/* MOBILE MENU / BACK TRIGGER */}
         <div className="md:hidden flex items-center justify-start">
-          {isPDP ? (
+          {canGoBack ? (
             <button
               onClick={handleBack}
               className="flex items-center justify-center p-2 -ml-2 text-current hover:opacity-60 transition-opacity active:scale-95"
-              aria-label="Back to catalog"
+              aria-label="Back to previous page"
             >
               <ArrowLeft className="w-5.5 h-5.5 stroke-[1.5]" />
             </button>
           ) : (
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="flex items-center justify-start py-2 text-current hover:opacity-60 transition-opacity"
+              className="flex items-center justify-start py-2 text-current hover:opacity-60 transition-opacity active:scale-95"
               aria-label="Open navigation menu"
             >
               <Menu className="w-5.5 h-5.5 stroke-[1.25]" />

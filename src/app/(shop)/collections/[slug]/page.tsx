@@ -15,7 +15,6 @@ import { inArray, and, eq } from "drizzle-orm"
 import { collections } from "@/db/schema"
 import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
 import { CollectionViewTracker } from "@/features/analytics/components/CollectionViewTracker"
-import { PDPBackButton } from "@/components/storefront/PDPBackButton"
 
 export const revalidate = 3600
 
@@ -76,26 +75,20 @@ export default async function CollectionDetailPage(props: {
       {/* Analytics: fire COLLECTION_VIEW once on mount (consent-gated) */}
       <CollectionViewTracker collectionId={collection.id} collectionName={collection.name} />
       
-      {/* 1. Breadcrumbs & Back Navigation */}
-      <div className="bg-white py-3 border-b border-neutral-100">
-        <Container className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <PDPBackButton fallbackUrl="/collections" label="Back" className="!mb-0 !py-0 text-text-secondary hover:text-text-primary" />
-            <div className="h-3 w-px bg-neutral-200 hidden sm:block" />
-            <div className="hidden sm:flex items-center gap-2 text-[10px] uppercase tracking-widest text-text-secondary">
-              <Link href="/" className="hover:text-text-primary transition-colors">Home</Link>
+      {/* 1. Breadcrumbs */}
+      <div className="bg-white py-4 border-b border-neutral-100">
+        <Container className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-text-secondary">
+          <Link href="/" className="hover:text-text-primary transition-colors">Home</Link>
+          <ChevronRight className="w-3 h-3 text-neutral-300" />
+          <Link href="/collections" className="hover:text-text-primary transition-colors">Collections</Link>
+          {parent && (
+            <>
               <ChevronRight className="w-3 h-3 text-neutral-300" />
-              <Link href="/collections" className="hover:text-text-primary transition-colors">Collections</Link>
-              {parent && (
-                <>
-                  <ChevronRight className="w-3 h-3 text-neutral-300" />
-                  <Link href={`/collections/${parent.slug}`} className="hover:text-text-primary transition-colors">{parent.name}</Link>
-                </>
-              )}
-              <ChevronRight className="w-3 h-3 text-neutral-300" />
-              <span className="text-text-primary font-medium">{collection.name}</span>
-            </div>
-          </div>
+              <Link href={`/collections/${parent.slug}`} className="hover:text-text-primary transition-colors">{parent.name}</Link>
+            </>
+          )}
+          <ChevronRight className="w-3 h-3 text-neutral-300" />
+          <span className="text-text-primary font-medium">{collection.name}</span>
         </Container>
       </div>
 

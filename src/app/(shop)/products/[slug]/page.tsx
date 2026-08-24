@@ -11,7 +11,6 @@ import { ProductInstagramCard } from "@/components/storefront/ProductInstagramCa
 import { ProductTryOnGuide } from "@/components/storefront/ProductTryOnGuide"
 import { ProductEditorialPair } from "@/components/storefront/ProductEditorialPair"
 import { WishlistToggleIcon } from "@/components/shop/WishlistToggleIcon"
-import { PDPBackButton } from "@/components/storefront/PDPBackButton"
 import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
@@ -136,8 +135,6 @@ export default async function ProductDetailPage({
       {/* Analytics: fire PRODUCT_VIEW once on mount (consent-gated) */}
       <ProductViewTracker productId={product.id} categoryId={product.category?.id ?? null} />
       <Container>
-        <PDPBackButton />
-
         {/* Compact "Shop the Look" carousel — only shown when this product is part of a look */}
         {hasPairings && hasLookbook && (
           <section className="py-8 border-b border-border/20 mb-6">
