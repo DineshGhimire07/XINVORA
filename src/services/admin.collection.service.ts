@@ -261,6 +261,7 @@ export class AdminCollectionService {
           const imageUrl = item.imageUrl ? String(item.imageUrl).trim() : null
           const imageMobileUrl = item.imageMobileUrl ? String(item.imageMobileUrl).trim() : null
           const bannerUrl = item.bannerUrl ? String(item.bannerUrl).trim() : null
+          const bannerMobileUrl = item.bannerMobileUrl ? String(item.bannerMobileUrl).trim() : null
 
           let sortOrder = 0
           if (item.sortOrder !== undefined && item.sortOrder !== null && item.sortOrder !== "") {
@@ -299,6 +300,7 @@ export class AdminCollectionService {
                 imageUrl: imageUrl || undefined,
                 imageMobileUrl: imageMobileUrl || undefined,
                 bannerUrl: bannerUrl || undefined,
+                bannerMobileUrl: bannerMobileUrl || undefined,
                 sortOrder,
                 isActive,
                 seoTitle: seoTitle || undefined,
@@ -323,6 +325,7 @@ export class AdminCollectionService {
                 imageUrl,
                 imageMobileUrl,
                 bannerUrl,
+                bannerMobileUrl,
                 sortOrder,
                 isActive,
                 seoTitle,
@@ -374,6 +377,7 @@ export interface BulkCollectionInput {
   imageUrl?: string | null
   imageMobileUrl?: string | null
   bannerUrl?: string | null
+  bannerMobileUrl?: string | null
   sortOrder?: number | string | null
   isActive?: boolean | string | null
   seoTitle?: string | null

@@ -44,9 +44,9 @@ describe("Collection Bulk Import Utilities & Validation", () => {
   })
 
   it("should generate exact header-only CSV template string with 0 data rows", () => {
-    const csvHeader = "Name,Slug,Description,Image URL,Image Mobile URL,Banner URL,Sort Order,Is Active,SEO Title,SEO Description,Parent Slug\n"
+    const csvHeader = "Name,Slug,Description,Image URL,Image Mobile URL,Banner URL,Banner Mobile URL,Sort Order,Is Active,SEO Title,SEO Description,Parent Slug\n"
     const lines = csvHeader.trim().split("\n")
     expect(lines.length).toBe(1)
-    expect(lines[0]).toBe("Name,Slug,Description,Image URL,Image Mobile URL,Banner URL,Sort Order,Is Active,SEO Title,SEO Description,Parent Slug")
+    expect(lines[0]).toBe("Name,Slug,Description,Image URL,Image Mobile URL,Banner URL,Banner Mobile URL,Sort Order,Is Active,SEO Title,SEO Description,Parent Slug")
   })
 })

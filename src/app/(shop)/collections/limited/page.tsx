@@ -84,15 +84,26 @@ export default async function LimitedCollectionPage(props: {
     <main className="flex-1 bg-background pt-[72px] md:pt-20">
 
       {/* ── Unique LIMITED Hero ── */}
-      {limitedCollection?.bannerUrl ? (
-        <div className="relative w-full aspect-[21/9] md:aspect-[32/10] overflow-hidden bg-neutral-900">
-          <Image
-            src={limitedCollection.bannerUrl}
-            alt="Limited Edition Banner"
-            fill
-            priority
-            className="object-cover object-center"
-          />
+      {limitedCollection?.bannerUrl || limitedCollection?.bannerMobileUrl ? (
+        <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[32/10] overflow-hidden bg-neutral-900">
+          {limitedCollection.bannerUrl && (
+            <Image
+              src={limitedCollection.bannerUrl}
+              alt="Limited Edition Desktop Banner"
+              fill
+              priority
+              className={`object-cover object-center ${limitedCollection.bannerMobileUrl ? "hidden md:block" : "block"}`}
+            />
+          )}
+          {(limitedCollection.bannerMobileUrl || limitedCollection.bannerUrl) && (
+            <Image
+              src={limitedCollection.bannerMobileUrl || limitedCollection.bannerUrl!}
+              alt="Limited Edition Mobile Banner"
+              fill
+              priority
+              className={`object-cover object-center ${limitedCollection.bannerMobileUrl ? "block md:hidden" : "hidden"}`}
+            />
+          )}
         </div>
       ) : (
         <section className="w-full bg-[#F3EFEA] border-b border-neutral-200/60 pt-14 pb-16 md:pt-20 md:pb-24 relative overflow-hidden select-none">

@@ -9,6 +9,7 @@ export const collections = pgTable("collections", {
   imageUrl: varchar("image_url", { length: 1024 }),
   imageMobileUrl: varchar("image_mobile_url", { length: 1024 }),
   bannerUrl: varchar("banner_url", { length: 1024 }),
+  bannerMobileUrl: varchar("banner_mobile_url", { length: 1024 }),
   sortOrder: integer("sort_order").default(0).notNull(),
   seoTitle: varchar("seo_title", { length: 255 }),
   seoDescription: text("seo_description"),

@@ -50,7 +50,7 @@ export function CollectionBulkImportModal({ isOpen, onClose }: CollectionBulkImp
   // 1. Download Header-Only CSV Template (No sample data rows)
   const handleDownloadTemplate = () => {
     // Header only — strictly NO collection sample data rows
-    const csvHeader = "Name,Slug,Description,Image URL,Image Mobile URL,Banner URL,Sort Order,Is Active,SEO Title,SEO Description,Parent Slug\n"
+    const csvHeader = "Name,Slug,Description,Image URL,Image Mobile URL,Banner URL,Banner Mobile URL,Sort Order,Is Active,SEO Title,SEO Description,Parent Slug\n"
     const blob = new Blob([csvHeader], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
@@ -126,6 +126,7 @@ export function CollectionBulkImportModal({ isOpen, onClose }: CollectionBulkImp
       imageUrl: headerCells.findIndex((h) => h === "imageurl" || h === "image" || h === "photo" || h === "coverimage"),
       imageMobileUrl: headerCells.findIndex((h) => h === "imagemobileurl" || h === "mobileimage" || h === "mobilephoto"),
       bannerUrl: headerCells.findIndex((h) => h === "bannerurl" || h === "banner" || h === "heroimage"),
+      bannerMobileUrl: headerCells.findIndex((h) => h === "bannermobileurl" || h === "mobilebanner" || h === "mobilebannerurl"),
       sortOrder: headerCells.findIndex((h) => h === "sortorder" || h === "order" || h === "position"),
       isActive: headerCells.findIndex((h) => h === "isactive" || h === "active" || h === "status"),
       seoTitle: headerCells.findIndex((h) => h === "seotitle" || h === "metatitle"),
@@ -150,6 +151,7 @@ export function CollectionBulkImportModal({ isOpen, onClose }: CollectionBulkImp
       const imageUrl = colIndex.imageUrl !== -1 ? cells[colIndex.imageUrl]?.trim() : ""
       const imageMobileUrl = colIndex.imageMobileUrl !== -1 ? cells[colIndex.imageMobileUrl]?.trim() : ""
       const bannerUrl = colIndex.bannerUrl !== -1 ? cells[colIndex.bannerUrl]?.trim() : ""
+      const bannerMobileUrl = colIndex.bannerMobileUrl !== -1 ? cells[colIndex.bannerMobileUrl]?.trim() : ""
       const sortOrderRaw = colIndex.sortOrder !== -1 ? cells[colIndex.sortOrder]?.trim() : ""
       const isActiveRaw = colIndex.isActive !== -1 ? cells[colIndex.isActive]?.trim() : ""
       const seoTitle = colIndex.seoTitle !== -1 ? cells[colIndex.seoTitle]?.trim() : ""
@@ -168,6 +170,7 @@ export function CollectionBulkImportModal({ isOpen, onClose }: CollectionBulkImp
         imageUrl: imageUrl || null,
         imageMobileUrl: imageMobileUrl || null,
         bannerUrl: bannerUrl || null,
+        bannerMobileUrl: bannerMobileUrl || null,
         sortOrder: sortOrderRaw ? parseInt(sortOrderRaw, 10) || 0 : 0,
         isActive: isActiveRaw ? !["false", "0", "no", "inactive"].includes(isActiveRaw.toLowerCase()) : true,
         seoTitle: seoTitle || null,

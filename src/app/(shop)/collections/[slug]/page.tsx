@@ -93,17 +93,32 @@ export default async function CollectionDetailPage(props: {
       </div>
 
       {/* 2. Collection Hero Banner Overlay */}
-      {collection.bannerUrl ? (
-        <Section id="collection-detail-hero" padding="none" className="relative w-full aspect-[21/9] md:aspect-[32/10] overflow-hidden bg-neutral-900 border-b border-neutral-100 flex items-center select-none">
-          <Image
-            src={optimizeCloudinaryUrl(collection.bannerUrl, { width: 1920 })}
-            alt={collection.name}
-            fill
-            sizes="100vw"
-            priority
-            fetchPriority="high"
-            className="object-cover object-center"
-          />
+      {collection.bannerUrl || collection.bannerMobileUrl ? (
+        <Section id="collection-detail-hero" padding="none" className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[32/10] overflow-hidden bg-neutral-900 border-b border-neutral-100 flex items-center select-none">
+          {/* Desktop / Laptop Banner */}
+          {collection.bannerUrl && (
+            <Image
+              src={optimizeCloudinaryUrl(collection.bannerUrl, { width: 1920 })}
+              alt={collection.name}
+              fill
+              sizes="100vw"
+              priority
+              fetchPriority="high"
+              className={`object-cover object-center ${collection.bannerMobileUrl ? "hidden md:block" : "block"}`}
+            />
+          )}
+          {/* Mobile Phone Banner */}
+          {(collection.bannerMobileUrl || collection.bannerUrl) && (
+            <Image
+              src={optimizeCloudinaryUrl(collection.bannerMobileUrl || collection.bannerUrl!, { width: 1080 })}
+              alt={collection.name}
+              fill
+              sizes="100vw"
+              priority
+              fetchPriority="high"
+              className={`object-cover object-center ${collection.bannerMobileUrl ? "block md:hidden" : "hidden"}`}
+            />
+          )}
         </Section>
       ) : (
         /* Render standard text hero if no bannerUrl */

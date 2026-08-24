@@ -59,6 +59,9 @@ export default function CollectionEditor({
   const [bannerUrl, setBannerUrl] = useState<string | null>(collection?.bannerUrl || null)
   const [isUploadingBanner, setIsUploadingBanner] = useState(false)
   const [dragBanner, setDragBanner] = useState(false)
+  const [bannerMobileUrl, setBannerMobileUrl] = useState<string | null>(collection?.bannerMobileUrl || null)
+  const [isUploadingBannerMobile, setIsUploadingBannerMobile] = useState(false)
+  const [dragBannerMobile, setDragBannerMobile] = useState(false)
 
   // Cropping states
   const [coverSource, setCoverSource] = useState<string | null>(null)
@@ -67,10 +70,13 @@ export default function CollectionEditor({
   const [isCroppingMobile, setIsCroppingMobile] = useState(false)
   const [bannerSource, setBannerSource] = useState<string | null>(null)
   const [isCroppingBanner, setIsCroppingBanner] = useState(false)
+  const [bannerMobileSource, setBannerMobileSource] = useState<string | null>(null)
+  const [isCroppingBannerMobile, setIsCroppingBannerMobile] = useState(false)
 
   const desktopFileRef = useRef<HTMLInputElement>(null)
   const mobileFileRef = useRef<HTMLInputElement>(null)
   const bannerFileRef = useRef<HTMLInputElement>(null)
+  const bannerMobileFileRef = useRef<HTMLInputElement>(null)
 
   const handleAddRole = () => {
     const nextPos = templateRoles.length + 1
@@ -241,7 +247,7 @@ export default function CollectionEditor({
           <button
             type="submit"
             form="collection-form"
-            disabled={isLoading || isUploading || isUploadingMobile || isUploadingBanner}
+            disabled={isLoading || isUploading || isUploadingMobile || isUploadingBanner || isUploadingBannerMobile}
             className="bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 px-5 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md transition-colors disabled:opacity-50"
           >
             {isLoading ? "Saving..." : collection ? "Save Changes" : "Create Collection"}
@@ -259,7 +265,7 @@ export default function CollectionEditor({
         {/* Section 1: Basic Information */}
         <div className="bg-admin-surface border border-admin-border rounded-admin-lg p-6 space-y-6 shadow-xs">
           <h3 className="text-admin-base font-bold text-admin-text-primary border-b border-admin-border pb-3">
-            Collection Details & Imagery (3 Dedicated Uploads)
+            Collection Details & Imagery (4 Dedicated Responsive Uploads)
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -640,29 +646,26 @@ export default function CollectionEditor({
           </div>
 
           {/* ════════════════════════════════════════════════════════════════════════ */}
-          {/* UPLOAD 3: STOREFRONT LANDSCAPE BANNER                                    */}
+          {/* UPLOAD 3: DESKTOP / LAPTOP STOREFRONT CINEMATIC BANNER                    */}
           {/* ════════════════════════════════════════════════════════════════════════ */}
           <div className="flex flex-col gap-2.5 pt-4 border-t border-admin-border/60">
             <div className="flex items-center justify-between">
               <label className="text-admin-xs font-bold text-admin-text-primary uppercase tracking-wider flex items-center gap-2">
-                <span>🏪 3. Storefront Landscape Banner (Collection Page Top Header)</span>
+                <span>💻 3. Desktop / Laptop Cinematic Banner (Collection Page Top Header)</span>
               </label>
               <span className="text-[10px] bg-admin-primary/10 text-admin-primary font-bold px-2 py-0.5 rounded-sm">
-                Storefront Ratio: 32:10 Wide
+                Desktop Ratio: 32:10 Wide (or 16:5)
               </span>
             </div>
             <input type="hidden" name="bannerUrl" value={bannerUrl || ""} />
 
             {/* Spec Guideline Card */}
-            <div className="p-3 bg-admin-content/80 border border-admin-border/70 rounded-admin-md grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-admin-text-secondary">
+            <div className="p-3 bg-admin-content/80 border border-admin-border/70 rounded-admin-md flex items-center justify-between text-[11px] text-admin-text-secondary">
               <div>
-                <span className="font-bold text-admin-text-primary">💻 Desktop / Laptop: </span>
-                <strong className="text-admin-text-primary">1920 × 600 px</strong> (or 2560 × 800 px)
+                <span className="font-bold text-admin-text-primary">Recommended Laptop / Desktop Banner: </span>
+                <strong className="text-admin-text-primary">1920 × 600 px</strong> (or 2560 × 800 px Retina)
               </div>
-              <div>
-                <span className="font-bold text-admin-text-primary">📱 Mobile Phones: </span>
-                <strong className="text-admin-text-primary">800 × 340 px</strong> (or 1080 × 460 px)
-              </div>
+              <span className="text-[10px] font-mono text-admin-text-secondary/70">32:10 Wide Aspect</span>
             </div>
             
             <div
@@ -680,7 +683,7 @@ export default function CollectionEditor({
                     const url = await uploadImage(file, { purpose: "banner" })
                     setBannerUrl(url)
                   } catch (err) {
-                    alert("Failed to upload banner image.")
+                    alert("Failed to upload desktop banner image.")
                   } finally {
                     setIsUploadingBanner(false)
                   }
@@ -692,19 +695,19 @@ export default function CollectionEditor({
             >
               <div 
                 onClick={() => bannerFileRef.current?.click()}
-                title="Click or drag banner photo here to upload"
+                title="Click or drag desktop banner photo here to upload"
                 className="w-full md:w-80 h-24 bg-admin-content border-2 border-dashed border-admin-border hover:border-admin-primary/80 rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner cursor-pointer group transition-all"
               >
                 {bannerUrl ? (
                   <img
                     src={bannerUrl}
-                    alt="Collection Banner"
+                    alt="Desktop Banner"
                     className="w-full h-full object-cover group-hover:opacity-85 transition-opacity"
                   />
                 ) : (
                   <div className="flex flex-col items-center gap-1 text-center text-admin-text-secondary/60 group-hover:text-admin-primary transition-colors">
                     <ImageIcon className="w-7 h-7" />
-                    <span className="text-[8px] uppercase font-bold tracking-wider">Click or Drop 32:10 Banner</span>
+                    <span className="text-[8px] uppercase font-bold tracking-wider">Click or Drop 32:10 Desktop Banner</span>
                   </div>
                 )}
                 {dragBanner && (
@@ -717,7 +720,7 @@ export default function CollectionEditor({
               <div className="flex flex-col gap-2.5 flex-1">
                 <div className="flex flex-wrap items-center gap-2.5">
                   <label className="cursor-pointer bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 text-admin-xs font-semibold px-4 py-2 rounded-admin-md transition-colors select-none">
-                    {isUploadingBanner ? "Uploading..." : bannerUrl ? "Replace Banner" : "Upload Ready Banner"}
+                    {isUploadingBanner ? "Uploading..." : bannerUrl ? "Replace Desktop Banner" : "Upload Ready Banner"}
                     <input
                       ref={bannerFileRef}
                       type="file"
@@ -733,7 +736,7 @@ export default function CollectionEditor({
                             setBannerUrl(url)
                           } catch (err) {
                             console.error(err)
-                            alert("Failed to upload banner image.")
+                            alert("Failed to upload desktop banner image.")
                           } finally {
                             setIsUploadingBanner(false)
                             e.target.value = ""
@@ -785,7 +788,156 @@ export default function CollectionEditor({
                   )}
                 </div>
                 <p className="text-[10px] text-admin-text-secondary/80 leading-relaxed">
-                  Displays as the cinematic hero banner at the top of the individual collection page. Drag & drop image anywhere here to upload.
+                  Displays as the cinematic widescreen banner at the top of the collection page on desktop & laptop screens.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* ════════════════════════════════════════════════════════════════════════ */}
+          {/* UPLOAD 4: MOBILE PHONE STOREFRONT CINEMATIC BANNER                        */}
+          {/* ════════════════════════════════════════════════════════════════════════ */}
+          <div className="flex flex-col gap-2.5 pt-4 border-t border-admin-border/60">
+            <div className="flex items-center justify-between">
+              <label className="text-admin-xs font-bold text-admin-text-primary uppercase tracking-wider flex items-center gap-2">
+                <span>📱 4. Mobile Phone Cinematic Banner (Collection Page Top Header)</span>
+              </label>
+              <span className="text-[10px] bg-admin-primary/10 text-admin-primary font-bold px-2 py-0.5 rounded-sm">
+                Mobile Ratio: 16:9 Landscape (or 2:1)
+              </span>
+            </div>
+            <input type="hidden" name="bannerMobileUrl" value={bannerMobileUrl || ""} />
+
+            {/* Spec Guideline Card */}
+            <div className="p-3 bg-admin-content/80 border border-admin-border/70 rounded-admin-md flex items-center justify-between text-[11px] text-admin-text-secondary">
+              <div>
+                <span className="font-bold text-admin-text-primary">Recommended Mobile Smartphone Banner: </span>
+                <strong className="text-admin-text-primary">1080 × 600 px</strong> (or 800 × 450 px)
+              </div>
+              <span className="text-[10px] font-mono text-admin-text-secondary/70">16:9 Mobile Aspect</span>
+            </div>
+            
+            <div
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragBannerMobile(true); }}
+              onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setDragBannerMobile(true); }}
+              onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragBannerMobile(false); }}
+              onDrop={async (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setDragBannerMobile(false)
+                const file = e.dataTransfer.files?.[0]
+                if (file) {
+                  setIsUploadingBannerMobile(true)
+                  try {
+                    const url = await uploadImage(file, { purpose: "banner" })
+                    setBannerMobileUrl(url)
+                  } catch (err) {
+                    alert("Failed to upload mobile banner image.")
+                  } finally {
+                    setIsUploadingBannerMobile(false)
+                  }
+                }
+              }}
+              className={`flex flex-col md:flex-row items-start md:items-center gap-5 p-3 rounded-admin-md border transition-all ${
+                dragBannerMobile ? "border-2 border-dashed border-admin-primary bg-admin-primary/10 ring-4 ring-admin-primary/20" : "border-transparent"
+              }`}
+            >
+              <div 
+                onClick={() => bannerMobileFileRef.current?.click()}
+                title="Click or drag mobile banner photo here to upload"
+                className="w-full md:w-56 h-28 bg-admin-content border-2 border-dashed border-admin-border hover:border-admin-primary/80 rounded-admin-md overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-inner cursor-pointer group transition-all"
+              >
+                {bannerMobileUrl ? (
+                  <img
+                    src={bannerMobileUrl}
+                    alt="Mobile Banner"
+                    className="w-full h-full object-cover group-hover:opacity-85 transition-opacity"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-1 text-center text-admin-text-secondary/60 group-hover:text-admin-primary transition-colors">
+                    <ImageIcon className="w-7 h-7" />
+                    <span className="text-[8px] uppercase font-bold tracking-wider">Click or Drop 16:9 Mobile Banner</span>
+                  </div>
+                )}
+                {dragBannerMobile && (
+                  <div className="absolute inset-0 bg-admin-primary/20 backdrop-blur-xs flex items-center justify-center pointer-events-none">
+                    <span className="text-xs font-bold text-admin-primary">📥 Drop Banner</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex flex-col gap-2.5 flex-1">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <label className="cursor-pointer bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 text-admin-xs font-semibold px-4 py-2 rounded-admin-md transition-colors select-none">
+                    {isUploadingBannerMobile ? "Uploading..." : bannerMobileUrl ? "Replace Mobile Banner" : "Upload Ready Mobile Banner"}
+                    <input
+                      ref={bannerMobileFileRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={isUploadingBannerMobile}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          setIsUploadingBannerMobile(true)
+                          try {
+                            const url = await uploadImage(file, { purpose: "banner" })
+                            setBannerMobileUrl(url)
+                          } catch (err) {
+                            console.error(err)
+                            alert("Failed to upload mobile banner image.")
+                          } finally {
+                            setIsUploadingBannerMobile(false)
+                            e.target.value = ""
+                          }
+                        }
+                      }}
+                    />
+                  </label>
+
+                  <label className="cursor-pointer bg-admin-content border border-admin-border hover:border-admin-border-strong text-admin-text-primary text-admin-xs font-semibold px-3.5 py-2 rounded-admin-md transition-colors select-none">
+                    Crop & Upload (16:9)
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={isUploadingBannerMobile}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          const url = URL.createObjectURL(file)
+                          setBannerMobileSource(url)
+                          setIsCroppingBannerMobile(true)
+                          e.target.value = ""
+                        }
+                      }}
+                    />
+                  </label>
+
+                  {bannerMobileUrl && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBannerMobileSource(bannerMobileUrl)
+                          setIsCroppingBannerMobile(true)
+                        }}
+                        className="text-admin-primary text-admin-xs font-semibold hover:underline"
+                      >
+                        Recrop
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBannerMobileUrl(null)}
+                        className="text-admin-status-danger-text text-admin-xs font-semibold hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </>
+                  )}
+                </div>
+                <p className="text-[10px] text-admin-text-secondary/80 leading-relaxed">
+                  Tailored for smartphones to avoid unwanted cropping of widescreen laptop banners. Automatically served to mobile visitors.
                 </p>
               </div>
             </div>
@@ -1020,7 +1172,7 @@ export default function CollectionEditor({
                 setBannerUrl(url)
               } catch (err) {
                 console.error(err)
-                alert("Failed to upload cropped banner image.")
+                alert("Failed to upload cropped desktop banner image.")
               } finally {
                 setIsUploadingBanner(false)
               }
@@ -1031,6 +1183,37 @@ export default function CollectionEditor({
                 URL.revokeObjectURL(bannerSource)
               }
               setBannerSource(null)
+            }}
+          />
+        )}
+
+        {isCroppingBannerMobile && bannerMobileSource && (
+          <ImageCropperModal
+            imageSrc={bannerMobileSource}
+            aspect={16 / 9}
+            onCropComplete={async (croppedFile) => {
+              setIsCroppingBannerMobile(false)
+              if (bannerMobileSource.startsWith("blob:")) {
+                URL.revokeObjectURL(bannerMobileSource)
+              }
+              setBannerMobileSource(null)
+              setIsUploadingBannerMobile(true)
+              try {
+                const url = await uploadImage(croppedFile)
+                setBannerMobileUrl(url)
+              } catch (err) {
+                console.error(err)
+                alert("Failed to upload cropped mobile banner image.")
+              } finally {
+                setIsUploadingBannerMobile(false)
+              }
+            }}
+            onClose={() => {
+              setIsCroppingBannerMobile(false)
+              if (bannerMobileSource.startsWith("blob:")) {
+                URL.revokeObjectURL(bannerMobileSource)
+              }
+              setBannerMobileSource(null)
             }}
           />
         )}
