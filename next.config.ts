@@ -12,13 +12,14 @@ import type { NextConfig } from "next";
 
 const cspHeader = `
   default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline';
-  style-src 'self' 'unsafe-inline';
-  img-src 'self' blob: data: https: res.cloudinary.com images.unsplash.com placehold.co;
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.clarity.ms https://*.clarity.ms https://connect.facebook.net https://analytics.tiktok.com https://va.vercel-scripts.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  img-src 'self' blob: data: https: res.cloudinary.com images.unsplash.com placehold.co https://www.facebook.com https://*.clarity.ms https://www.google-analytics.com https://analytics.tiktok.com;
   font-src 'self' data: https://fonts.gstatic.com;
-  connect-src 'self' https://res.cloudinary.com https://api.cloudinary.com https://*.supabase.co wss://*.supabase.co;
+  connect-src 'self' https://res.cloudinary.com https://api.cloudinary.com https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.clarity.ms https://www.facebook.com https://*.tiktok.com https://analytics.tiktok.com https://vitals.vercel-insights.com;
   media-src 'self' blob: https://res.cloudinary.com;
   worker-src 'self' blob:;
+  frame-src 'self' https://www.facebook.com https://connect.facebook.net;
   object-src 'none';
   base-uri 'self';
   form-action 'self' https://res.cloudinary.com;
