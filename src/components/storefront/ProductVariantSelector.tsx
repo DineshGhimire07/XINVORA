@@ -104,7 +104,19 @@ export function ProductVariantSelector({
   initialWishlistVariantIds = [],
   offSection,
 }: ProductVariantSelectorProps) {
-  const [selectedColorId, setSelectedColorId] = useState<string | null>(colors[0]?.id || null)
+  // Filter out any placeholder/empty color names
+  const validColors = useMemo(() => {
+    return (colors || []).filter((c) => c && c.name && c.name !== "Default")
+  }, [colors])
+
+  const [selectedColorId, setSelectedColorId] = useState<string | null>(() => {
+    // Auto-select first in-stock color if available, else first color
+    const inStockColor = validColors.find((c) =>
+      variants.some((v) => v.color?.id === c.id && v.inventory && v.inventory.quantity > 0)
+    )
+    return inStockColor?.id || validColors[0]?.id || null
+  })
+
   const [selectedSizeId, setSelectedSizeId] = useState<string | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false)
@@ -114,23 +126,57 @@ export function ProductVariantSelector({
 
   const { wishlistIds: sharedWishlistIds } = useHeaderState()
 
+  // Filter sizes to show ONLY those with active stock > 0 for currently selected color
+  const availableSizes = useMemo(() => {
+    return sizes.filter((size) => {
+      const matchingVariants = variants.filter((v) =>
+        v.size?.id === size.id &&
+        (selectedColorId && validColors.length > 0 ? v.color?.id === selectedColorId : true)
+      )
+      return matchingVariants.some((v) => v.inventory && v.inventory.quantity > 0)
+    })
+  }, [sizes, variants, selectedColorId, validColors])
+
   const handleSizeSelect = (sizeId: string) => {
     setSelectedSizeId(sizeId)
     setValidationError(null)
     router.prefetch("/checkout")
   }
 
-  // Filter sizes to show ONLY those with active stock > 0
-  const availableSizes = useMemo(() => {
-    return sizes.filter((size) => {
-      const matchingVariants = variants.filter((v) => v.size?.id === size.id)
-      return matchingVariants.some((v) => v.inventory && v.inventory.quantity > 0)
-    })
-  }, [sizes, variants])
+  const handleColorSelect = (colorId: string) => {
+    setSelectedColorId(colorId)
+    setValidationError(null)
+    // Check if current selectedSizeId is still available in the new color
+    const stillAvailable = sizes.some(
+      (s) =>
+        s.id === selectedSizeId &&
+        variants.some(
+          (v) =>
+            v.color?.id === colorId &&
+            v.size?.id === s.id &&
+            v.inventory &&
+            v.inventory.quantity > 0
+        )
+    )
+    if (!stillAvailable) {
+      const firstAvailable = sizes.find((s) =>
+        variants.some(
+          (v) =>
+            v.color?.id === colorId &&
+            v.size?.id === s.id &&
+            v.inventory &&
+            v.inventory.quantity > 0
+        )
+      )
+      if (firstAvailable) {
+        setSelectedSizeId(firstAvailable.id)
+      }
+    }
+  }
 
-  // Auto-select first in-stock size on mount
+  // Auto-select first in-stock size on mount or when color changes
   useEffect(() => {
-    if (availableSizes.length > 0 && !selectedSizeId) {
+    if (availableSizes.length > 0 && (!selectedSizeId || !availableSizes.some((s) => s.id === selectedSizeId))) {
       setSelectedSizeId(availableSizes[0].id)
       router.prefetch("/checkout")
     }
@@ -332,6 +378,57 @@ export function ProductVariantSelector({
 
 
 
+      {/* Colour Swatches (when valid colors are configured) */}
+      {validColors.length > 0 && (
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold tracking-widest text-text-secondary uppercase select-none flex items-center gap-1.5">
+              <span>Colour:</span>
+              <span className="text-text-primary font-bold">
+                {validColors.find((c) => c.id === selectedColorId)?.name || "Select Colour"}
+              </span>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap" role="group" aria-label="Select Colour">
+            {validColors.map((color) => {
+              const isSelected = color.id === selectedColorId
+              const matchingColorVariants = variants.filter((v) => v.color?.id === color.id)
+              const isColorSoldOut =
+                matchingColorVariants.length > 0 &&
+                matchingColorVariants.every((v) => !v.inventory || v.inventory.quantity <= 0)
+
+              return (
+                <button
+                  key={color.id}
+                  type="button"
+                  onClick={() => handleColorSelect(color.id)}
+                  aria-pressed={isSelected}
+                  title={`${color.name}${isColorSoldOut ? " — Sold Out" : ""}`}
+                  className={`group relative p-0.5 rounded-full transition-all flex items-center justify-center ${
+                    isSelected
+                      ? "ring-2 ring-text-primary ring-offset-2 ring-offset-background scale-110"
+                      : "hover:scale-105 opacity-85 hover:opacity-100 ring-1 ring-transparent hover:ring-border"
+                  }`}
+                >
+                  <span
+                    className={`w-6 h-6 rounded-full border border-black/20 block shadow-xs transition-transform ${
+                      isColorSoldOut ? "opacity-40" : ""
+                    }`}
+                    style={{ backgroundColor: color.hexCode || "#1A1A1A" }}
+                  />
+                  {isColorSoldOut && (
+                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="w-[120%] h-[1.5px] bg-neutral-500/80 -rotate-45" />
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Sizes — render ONLY in-stock sizes (no crossed-out buttons) */}
       {availableSizes.length > 0 && (
         <div className="flex flex-col gap-2.5">
@@ -352,8 +449,8 @@ export function ProductVariantSelector({
           <div className="flex items-center gap-2 flex-wrap" role="group" aria-label="Select Size">
             {availableSizes.map((size) => {
               const isSelected = size.id === selectedSizeId
-              const matchingVariants = variants.filter(v => v.size?.id === size.id)
-              const isSoldOut = matchingVariants.length > 0 && matchingVariants.every(v => !v.inventory || v.inventory.quantity <= 0)
+              const matchingVariants = variants.filter((v) => v.size?.id === size.id)
+              const isSoldOut = matchingVariants.length > 0 && matchingVariants.every((v) => !v.inventory || v.inventory.quantity <= 0)
 
               const sizeText = size.abbreviation || size.name
               const isLongText = sizeText.length > 3
@@ -397,6 +494,13 @@ export function ProductVariantSelector({
         <div className="flex items-center justify-center py-1 select-none">
           <span className="text-[12px] font-medium text-red-500 tracking-wide">
             Only {activeVariant.inventory.quantity} {activeVariant.inventory.quantity === 1 ? "item" : "items"} available in stock
+          </span>
+        </div>
+      ) : activeVariant?.inventory && activeVariant.inventory.quantity > 5 ? (
+        <div className="flex items-center gap-2 select-none">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <span className="text-[11px] font-semibold tracking-wider text-emerald-700 uppercase">
+            In Stock ({activeVariant.inventory.quantity} available)
           </span>
         </div>
       ) : null}

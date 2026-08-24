@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { createProductAction, updateProductAction, archiveProductAction } from "@/actions/admin/products.actions"
 import { createMaterialAction } from "@/actions/admin/materials.actions"
 import { createSizeAction } from "@/actions/admin/sizes.actions"
+import { createColorAction } from "@/actions/admin/colors.actions"
 import { createCategoryAction } from "@/actions/admin/categories.actions"
 import { MediaSelector } from "@/components/admin/MediaSelector"
 import AdminProductPicker from "@/components/admin/AdminProductPicker"
@@ -19,6 +20,7 @@ export default function ProductEditor({
   collections,
   materials,
   sizes,
+  colors,
   allProducts,
 }: {
   product?: any
@@ -28,6 +30,7 @@ export default function ProductEditor({
   collections?: any[]
   materials?: any[]
   sizes?: any[]
+  colors?: any[]
   allProducts?: any[]
 }) {
   const router = useRouter()
@@ -43,6 +46,35 @@ export default function ProductEditor({
   const [newSizeName, setNewSizeName] = useState("")
   const [isSavingSize, setIsSavingSize] = useState(false)
   const [customSizes, setCustomSizes] = useState<any[]>(sizes || [])
+  const [customColors, setCustomColors] = useState<any[]>(colors || [])
+  const [selectedColorIds, setSelectedColorIds] = useState<string[]>(product?.colorIds || [])
+  const [newColorName, setNewColorName] = useState("")
+  const [newColorHex, setNewColorHex] = useState("#1A1A1A")
+  const [isSavingColor, setIsSavingColor] = useState(false)
+
+  const handleAddColor = async () => {
+    if (!newColorName.trim() || isSavingColor) return
+    setIsSavingColor(true)
+    try {
+      const fd = new FormData()
+      fd.append("name", newColorName.trim())
+      fd.append("hexCode", newColorHex || "#000000")
+      const res = await createColorAction(fd)
+      if (res.success && res.data) {
+        const newCol = res.data
+        setCustomColors((prev) => [...prev.filter((c) => c.id !== newCol.id), newCol])
+        setSelectedColorIds((prev) => (prev.includes(newCol.id) ? prev : [...prev, newCol.id]))
+        setNewColorName("")
+        setNewColorHex("#1A1A1A")
+      } else {
+        alert(res.error || "Failed to add color")
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to add color")
+    } finally {
+      setIsSavingColor(false)
+    }
+  }
 
   const handleAddMaterial = async () => {
     if (!newMaterialName.trim() || isSavingMaterial) return
@@ -519,56 +551,221 @@ export default function ProductEditor({
           })()}
         </div>
 
-        {/* Section 3: Sizing Stock Levels */}
-        <div className="bg-admin-surface border border-admin-border rounded-admin-lg p-6 space-y-5 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-admin-border pb-3">
+        {/* Section 3: Colors, Sizing & Variant Stock */}
+        <div className="bg-admin-surface border border-admin-border rounded-admin-lg p-6 space-y-6 shadow-xs">
+          <div className="border-b border-admin-border pb-3">
             <h3 className="text-admin-base font-bold text-admin-text-primary">
-              Clothing Sizing & Stock
+              Colors, Sizing & Stock Availability
             </h3>
+            <p className="text-admin-xs text-admin-text-secondary mt-0.5">
+              Select product colors and sizes to configure live stock inventory and PDP swatches.
+            </p>
+          </div>
 
-            {/* ── Inline Add Custom Size ── */}
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={newSizeName}
-                onChange={(e) => setNewSizeName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault()
-                    handleAddSize()
-                  }
-                }}
-                placeholder="e.g. Free Size (Fits XS-M) or XS-L"
-                className="h-8 px-3 text-admin-sm border border-admin-border rounded-admin-md bg-admin-content text-admin-text-primary placeholder:text-admin-text-tertiary focus:outline-none focus:ring-1 focus:ring-admin-primary w-60"
-              />
-              <button
-                type="button"
-                disabled={isSavingSize || !newSizeName.trim()}
-                onClick={handleAddSize}
-                className="h-8 px-3 text-admin-xs font-semibold uppercase tracking-wider bg-admin-primary text-white rounded-admin-md hover:bg-admin-primary/90 transition-colors disabled:opacity-50 flex-shrink-0"
-              >
-                {isSavingSize ? "…" : "+ Add Size"}
-              </button>
+          {/* ── 3A: Color Selection & Add Color ── */}
+          <div className="space-y-3 bg-admin-content/20 p-4 rounded-admin-md border border-admin-border/60">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <label className="text-admin-xs font-bold uppercase tracking-wider text-admin-text-primary flex items-center gap-2">
+                <span>Product Colors</span>
+                {selectedColorIds.length > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-admin-primary/10 text-admin-primary">
+                    {selectedColorIds.length} Selected
+                  </span>
+                )}
+              </label>
+
+              {/* Inline Add New Color */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <input
+                  type="text"
+                  value={newColorName}
+                  onChange={(e) => setNewColorName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      handleAddColor()
+                    }
+                  }}
+                  placeholder="Color Name (e.g. Burgundy, Sage)"
+                  className="h-8 px-3 text-admin-sm border border-admin-border rounded-admin-md bg-admin-content text-admin-text-primary placeholder:text-admin-text-tertiary focus:outline-none focus:ring-1 focus:ring-admin-primary w-48"
+                />
+                <div className="flex items-center gap-1.5 border border-admin-border rounded-admin-md px-2 h-8 bg-admin-content">
+                  <input
+                    type="color"
+                    value={newColorHex}
+                    onChange={(e) => setNewColorHex(e.target.value)}
+                    className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0"
+                    title="Choose color shade"
+                  />
+                  <input
+                    type="text"
+                    value={newColorHex}
+                    onChange={(e) => setNewColorHex(e.target.value)}
+                    placeholder="#1A1A1A"
+                    className="w-18 text-[11px] font-mono uppercase bg-transparent text-admin-text-primary focus:outline-none"
+                  />
+                </div>
+                <button
+                  type="button"
+                  disabled={isSavingColor || !newColorName.trim()}
+                  onClick={handleAddColor}
+                  className="h-8 px-3 text-admin-xs font-semibold uppercase tracking-wider bg-admin-primary text-white rounded-admin-md hover:bg-admin-primary/90 transition-colors disabled:opacity-50 flex-shrink-0"
+                >
+                  {isSavingColor ? "…" : "+ Add Color"}
+                </button>
+              </div>
+            </div>
+
+            {/* Colors Checkbox Chips */}
+            <div className="flex flex-wrap gap-2.5 pt-1">
+              {customColors?.map((color) => {
+                const isSelected = selectedColorIds.includes(color.id)
+                return (
+                  <label
+                    key={color.id}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-admin-md border text-admin-xs font-medium cursor-pointer transition-all select-none ${
+                      isSelected
+                        ? "border-admin-primary bg-admin-primary/10 text-admin-text-primary font-bold shadow-xs"
+                        : "border-admin-border bg-admin-content/60 text-admin-text-secondary hover:border-admin-primary/50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      name="colorIds"
+                      value={color.id}
+                      checked={isSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedColorIds((prev) => [...prev, color.id])
+                        } else {
+                          setSelectedColorIds((prev) => prev.filter((id) => id !== color.id))
+                        }
+                      }}
+                      className="sr-only"
+                    />
+                    <span
+                      className="w-4 h-4 rounded-full border border-black/20 flex-shrink-0 shadow-2xs"
+                      style={{ backgroundColor: color.hexCode || "#000000" }}
+                      aria-hidden="true"
+                    />
+                    <span>{color.name}</span>
+                    <span className="text-[10px] text-admin-text-secondary/60 font-mono">
+                      {color.hexCode}
+                    </span>
+                  </label>
+                )
+              })}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-            {customSizes?.filter(s => s.category === "CLOTHING" || s.category === "ALL" || !s.category).map((size) => (
-              <div key={size.id} className="flex flex-col gap-1.5 bg-admin-content/10 border border-admin-border p-3 rounded-admin-md">
-                <label htmlFor={`sizeStock_${size.id}`} className="text-admin-xs font-bold text-admin-text-primary truncate" title={size.name}>
-                  Size {size.name}
-                </label>
+          {/* ── 3B: Size Selection & Add Size ── */}
+          <div className="space-y-3 bg-admin-content/20 p-4 rounded-admin-md border border-admin-border/60">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <label className="text-admin-xs font-bold uppercase tracking-wider text-admin-text-primary">
+                Product Sizes
+              </label>
+
+              {/* Inline Add Custom Size */}
+              <div className="flex items-center gap-2">
                 <input
-                  id={`sizeStock_${size.id}`}
-                  name={`sizeStock_${size.id}`}
-                  type="number"
-                  defaultValue={0}
-                  className="px-3 py-1.5 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-sm focus:outline-none focus:border-admin-border-strong transition-all"
+                  type="text"
+                  value={newSizeName}
+                  onChange={(e) => setNewSizeName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      handleAddSize()
+                    }
+                  }}
+                  placeholder="e.g. Free Size (Fits XS-M) or XS-L"
+                  className="h-8 px-3 text-admin-sm border border-admin-border rounded-admin-md bg-admin-content text-admin-text-primary placeholder:text-admin-text-tertiary focus:outline-none focus:ring-1 focus:ring-admin-primary w-52"
                 />
-                {product && <span className="text-[10px] text-admin-text-secondary">Current: {product.sizeInventories?.[size.id] || 0}</span>}
+                <button
+                  type="button"
+                  disabled={isSavingSize || !newSizeName.trim()}
+                  onClick={handleAddSize}
+                  className="h-8 px-3 text-admin-xs font-semibold uppercase tracking-wider bg-admin-primary text-white rounded-admin-md hover:bg-admin-primary/90 transition-colors disabled:opacity-50 flex-shrink-0"
+                >
+                  {isSavingSize ? "…" : "+ Add Size"}
+                </button>
               </div>
-            ))}
+            </div>
+
+            {/* Sizes Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {customSizes?.filter(s => s.category === "CLOTHING" || s.category === "ALL" || !s.category).map((size) => {
+                const isColorMatrixActive = selectedColorIds.length > 0
+                return (
+                  <div key={size.id} className="flex flex-col gap-1 bg-admin-card border border-admin-border p-2.5 rounded-admin-md">
+                    <label htmlFor={`sizeStock_${size.id}`} className="text-admin-xs font-bold text-admin-text-primary truncate" title={size.name}>
+                      Size {size.name}
+                    </label>
+                    <input
+                      id={`sizeStock_${size.id}`}
+                      name={`sizeStock_${size.id}`}
+                      type="number"
+                      min="0"
+                      defaultValue={product?.sizeInventories?.[size.id] || 0}
+                      className="px-2.5 py-1 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-sm focus:outline-none focus:border-admin-border-strong transition-all"
+                    />
+                    {product && <span className="text-[10px] text-admin-text-secondary">Current: {product.sizeInventories?.[size.id] || 0}</span>}
+                  </div>
+                )
+              })}
+            </div>
           </div>
+
+          {/* ── 3C: Color & Size Matrix Stock (When Colors are selected) ── */}
+          {selectedColorIds.length > 0 && (
+            <div className="space-y-3 bg-admin-card p-4 rounded-admin-md border border-admin-border">
+              <div className="flex items-center justify-between border-b border-admin-border pb-2">
+                <span className="text-admin-xs font-bold uppercase tracking-wider text-admin-text-primary">
+                  Per-Color Stock Breakdown (PDP Swatch Matrix)
+                </span>
+                <span className="text-[11px] text-admin-text-secondary">
+                  Specify stock for each active colorway
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+                {selectedColorIds.map((cId) => {
+                  const colorObj = customColors.find((c) => c.id === cId)
+                  if (!colorObj) return null
+                  const currentStock = product?.colorInventories?.[cId] ?? product?.matrixInventories?.[cId] ?? 0
+                  return (
+                    <div key={cId} className="flex items-center justify-between gap-3 p-3 rounded-admin-md border border-admin-border bg-admin-content/30">
+                      <div className="flex items-center gap-2.5">
+                        <span
+                          className="w-5 h-5 rounded-full border border-black/20 flex-shrink-0 shadow-2xs"
+                          style={{ backgroundColor: colorObj.hexCode || "#000000" }}
+                        />
+                        <div>
+                          <p className="text-admin-xs font-bold text-admin-text-primary">{colorObj.name}</p>
+                          <p className="text-[10px] font-mono text-admin-text-secondary">{colorObj.hexCode}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-0.5">
+                        <input
+                          type="number"
+                          min="0"
+                          name={`colorStock_${cId}`}
+                          defaultValue={currentStock}
+                          placeholder="Qty"
+                          className="w-20 px-2 py-1 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-sm focus:outline-none focus:border-admin-border-strong text-right font-medium"
+                        />
+                        {product && (
+                          <span className="text-[9px] text-admin-text-secondary">
+                            Stock: {currentStock}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Section 4: Specifications (Collections & Materials) */}

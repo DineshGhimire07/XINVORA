@@ -115,10 +115,7 @@ export default async function ProductDetailPage({
   const rawColors = Array.from(new Map(activeVariants.filter(v => v.color).map(v => [v.color!.id, v.color!])).values())
   const rawSizes = Array.from(new Map(activeVariants.filter(v => v.size).map(v => [v.size!.id, v.size!])).values())
 
-  // If colors is empty (e.g. base variant creation), provide a default color dot
-  const colors = rawColors.length > 0 ? rawColors : [{ id: "default-color", name: "Default", hexCode: "" }]
-
-  // Only display sizes that actually exist on this product's active variants
+  const colors = rawColors
   const sizes = rawSizes
 
   // Check inventory availability (naive global check for now)

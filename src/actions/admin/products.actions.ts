@@ -37,6 +37,9 @@ const productSchema = z.object({
   collectionIds: z.array(z.string()).optional(),
   materialIds: z.array(z.string()).optional(),
   pairedProductIds: z.array(z.string()).optional(),
+  colorIds: z.array(z.string()).optional(),
+  colorStocks: z.record(z.string(), z.number()).optional(),
+  matrixStocks: z.record(z.string(), z.number()).optional(),
   sizeStocks: z.record(z.string(), z.number()).optional(),
   imageRoles: z.record(z.string(), z.string()).optional(),
 })
@@ -56,9 +59,18 @@ export async function createProductAction(formData: FormData) {
     const session = await SessionService.requireAdmin()
 
     const sizeStocks: Record<string, number> = {}
+    const colorStocks: Record<string, number> = {}
+    const matrixStocks: Record<string, number> = {}
     const imageRoles: Record<string, string> = {}
+
     for (const [key, val] of formData.entries()) {
-      if (key.startsWith("sizeStock_")) {
+      if (key.startsWith("matrixStock_")) {
+        const identifier = key.replace("matrixStock_", "")
+        matrixStocks[identifier] = Number(val) || 0
+      } else if (key.startsWith("colorStock_")) {
+        const colorId = key.replace("colorStock_", "")
+        colorStocks[colorId] = Number(val) || 0
+      } else if (key.startsWith("sizeStock_")) {
         const sizeId = key.replace("sizeStock_", "")
         sizeStocks[sizeId] = Number(val) || 0
       }
@@ -93,6 +105,9 @@ export async function createProductAction(formData: FormData) {
       collectionIds: formData.getAll("collectionIds"),
       materialIds: formData.getAll("materialIds"),
       pairedProductIds: formData.getAll("pairedProductIds"),
+      colorIds: formData.getAll("colorIds"),
+      colorStocks: colorStocks,
+      matrixStocks: matrixStocks,
       sizeStocks: sizeStocks,
     }
 
@@ -127,9 +142,18 @@ export async function updateProductAction(id: string, formData: FormData) {
     const session = await SessionService.requireAdmin()
 
     const sizeStocks: Record<string, number> = {}
+    const colorStocks: Record<string, number> = {}
+    const matrixStocks: Record<string, number> = {}
     const imageRoles: Record<string, string> = {}
+
     for (const [key, val] of formData.entries()) {
-      if (key.startsWith("sizeStock_")) {
+      if (key.startsWith("matrixStock_")) {
+        const identifier = key.replace("matrixStock_", "")
+        matrixStocks[identifier] = Number(val) || 0
+      } else if (key.startsWith("colorStock_")) {
+        const colorId = key.replace("colorStock_", "")
+        colorStocks[colorId] = Number(val) || 0
+      } else if (key.startsWith("sizeStock_")) {
         const sizeId = key.replace("sizeStock_", "")
         sizeStocks[sizeId] = Number(val) || 0
       }
@@ -164,6 +188,9 @@ export async function updateProductAction(id: string, formData: FormData) {
       collectionIds: formData.getAll("collectionIds"),
       materialIds: formData.getAll("materialIds"),
       pairedProductIds: formData.getAll("pairedProductIds"),
+      colorIds: formData.getAll("colorIds"),
+      colorStocks: colorStocks,
+      matrixStocks: matrixStocks,
       sizeStocks: sizeStocks,
     }
 

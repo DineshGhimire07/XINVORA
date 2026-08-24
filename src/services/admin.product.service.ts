@@ -40,6 +40,9 @@ export interface CreateProductInput {
   collectionIds?: string[]
   materialIds?: string[]
   pairedProductIds?: string[]
+  colorIds?: string[]
+  colorStocks?: Record<string, number>
+  matrixStocks?: Record<string, number>
   seoTitle?: string | null
   seoDescription?: string | null
   instagramReelUrl?: string | null
@@ -60,7 +63,21 @@ export class AdminProductService {
         throw new Error("Slug already in use.")
       }
 
-      const { basePrice, compareAtPrice, stockQuantity, images, imageRoles, collectionIds, materialIds, pairedProductIds, sizeStocks, ...productData } = data
+      const {
+        basePrice,
+        compareAtPrice,
+        stockQuantity,
+        images,
+        imageRoles,
+        collectionIds,
+        materialIds,
+        pairedProductIds,
+        colorIds,
+        colorStocks,
+        matrixStocks,
+        sizeStocks,
+        ...productData
+      } = data
       const finalShortDesc = productData.shortDescription || (productData.description ? productData.description.slice(0, 200) : "Concise summary of this product details.")
       const product = await insertProduct({
         ...productData,
@@ -138,15 +155,81 @@ export class AdminProductService {
         )
       }
 
-      // Handle variants (Batched for instant speed)
-      const activeSizes = Object.keys(sizeStocks || {}).filter(sizeId => (sizeStocks || {})[sizeId] > 0)
-      
-      if (activeSizes.length > 0) {
+      // Build variant specifications
+      interface VariantSpecItem {
+        colorId: string | null
+        sizeId: string | null
+        quantity: number
+        sku: string
+      }
+      const variantSpecs: VariantSpecItem[] = []
+
+      const cleanColors = (colorIds || []).filter(Boolean)
+      const activeSizes = Object.keys(sizeStocks || {}).filter(sId => (sizeStocks || {})[sId] > 0 || (matrixStocks && Object.keys(matrixStocks).some(k => k.includes(sId))))
+
+      if (matrixStocks && Object.keys(matrixStocks).length > 0) {
+        // Explicit matrix stock provided
+        for (const [key, qty] of Object.entries(matrixStocks)) {
+          if (qty > 0) {
+            const parts = key.split("_")
+            const cId = parts.length === 2 ? parts[0] : null
+            const sId = parts.length === 2 ? parts[1] : (cleanColors.includes(key) ? null : key)
+            const actualColorId = cId || (cleanColors.includes(key) ? key : null)
+            const skuParts = [product.slug]
+            if (actualColorId) skuParts.push(actualColorId.slice(0, 4))
+            if (sId) skuParts.push(sId.slice(0, 4))
+            variantSpecs.push({
+              colorId: actualColorId,
+              sizeId: sId,
+              quantity: Number(qty) || 0,
+              sku: skuParts.join("-").toUpperCase(),
+            })
+          }
+        }
+      } else if (cleanColors.length > 0 && activeSizes.length > 0) {
+        // Color + Size combinations
+        for (const cId of cleanColors) {
+          for (const sId of activeSizes) {
+            const qty = (sizeStocks || {})[sId] || 0
+            variantSpecs.push({
+              colorId: cId,
+              sizeId: sId,
+              quantity: qty,
+              sku: `${product.slug}-${cId.slice(0, 4)}-${sId.slice(0, 4)}`.toUpperCase(),
+            })
+          }
+        }
+      } else if (cleanColors.length > 0) {
+        // Colors only
+        for (const cId of cleanColors) {
+          const qty = (colorStocks || {})[cId] ?? Number(stockQuantity) ?? 0
+          variantSpecs.push({
+            colorId: cId,
+            sizeId: null,
+            quantity: qty,
+            sku: `${product.slug}-${cId.slice(0, 4)}`.toUpperCase(),
+          })
+        }
+      } else if (activeSizes.length > 0) {
+        // Sizes only
+        for (const sId of activeSizes) {
+          const qty = (sizeStocks || {})[sId] || 0
+          variantSpecs.push({
+            colorId: null,
+            sizeId: sId,
+            quantity: qty,
+            sku: `${product.slug}-${sId.slice(0, 4)}`.toUpperCase(),
+          })
+        }
+      }
+
+      if (variantSpecs.length > 0) {
         const newVariants = await tx.insert(variants).values(
-          activeSizes.map(sizeId => ({
+          variantSpecs.map(spec => ({
             productId: product.id,
-            sku: `${product.slug}-${sizeId.slice(0, 4)}`.toUpperCase(),
-            sizeId,
+            sku: spec.sku,
+            colorId: spec.colorId,
+            sizeId: spec.sizeId,
           }))
         ).returning()
 
@@ -161,9 +244,10 @@ export class AdminProductService {
         )
 
         await tx.insert(inventory).values(
-          newVariants.map(variant => ({
+          newVariants.map((variant, idx) => ({
             variantId: variant.id,
-            quantity: (sizeStocks || {})[variant.sizeId!] || 0,
+            quantity: variantSpecs[idx]?.quantity || 0,
+            status: ((variantSpecs[idx]?.quantity || 0) > 0 ? "IN_STOCK" : "OUT_OF_STOCK") as "IN_STOCK" | "OUT_OF_STOCK",
             lowStockThreshold: 2,
           }))
         )
@@ -184,6 +268,7 @@ export class AdminProductService {
         await tx.insert(inventory).values({
           variantId: defaultVariant.id,
           quantity: Number(stockQuantity) || 0,
+          status: (Number(stockQuantity) > 0 ? "IN_STOCK" : "OUT_OF_STOCK") as "IN_STOCK" | "OUT_OF_STOCK",
           lowStockThreshold: 2,
         })
       }
@@ -210,7 +295,21 @@ export class AdminProductService {
         }
       }
 
-      const { basePrice, compareAtPrice, stockQuantity, images, imageRoles, collectionIds, materialIds, pairedProductIds, sizeStocks, ...productData } = data
+      const {
+        basePrice,
+        compareAtPrice,
+        stockQuantity,
+        images,
+        imageRoles,
+        collectionIds,
+        materialIds,
+        pairedProductIds,
+        colorIds,
+        colorStocks,
+        matrixStocks,
+        sizeStocks,
+        ...productData
+      } = data
       const product = await updateProduct(id, productData, tx)
 
       // Update collections first so template resolution has current collection associations
@@ -297,8 +396,8 @@ export class AdminProductService {
         }
       }
 
-      // Update variants & inventory for sizes if sizeStocks is passed
-      if (sizeStocks) {
+      // Update variants & inventory for colors, sizes, or matrix stocks
+      if (matrixStocks || colorStocks || sizeStocks || colorIds) {
         // Resolve Default Price Book
         let priceBook = await tx.select().from(priceBooks).where(eq(priceBooks.currency, "NPR")).limit(1)
         let priceBookId
@@ -321,27 +420,89 @@ export class AdminProductService {
           existingInventories = await tx.select().from(inventory).where(inArray(inventory.variantId, existingVariantIds))
         }
 
-        const newVariantSizesToCreate: { sizeId: string; qty: number }[] = []
+        interface TargetVariantSpec {
+          colorId: string | null
+          sizeId: string | null
+          qty: number
+          sku: string
+        }
+        const targetSpecs: TargetVariantSpec[] = []
 
-        for (const [sizeId, qty] of Object.entries(sizeStocks)) {
-          const stockNum = Number(qty) || 0
-          const match = existingVariants.find(v => v.sizeId === sizeId)
+        const cleanColors = (colorIds || []).filter(Boolean)
+        const activeSizes = Object.keys(sizeStocks || {}).filter(sId => (sizeStocks || {})[sId] > 0 || (matrixStocks && Object.keys(matrixStocks).some(k => k.includes(sId))))
+
+        if (matrixStocks && Object.keys(matrixStocks).length > 0) {
+          for (const [key, qty] of Object.entries(matrixStocks)) {
+            const parts = key.split("_")
+            const cId = parts.length === 2 ? parts[0] : null
+            const sId = parts.length === 2 ? parts[1] : (cleanColors.includes(key) ? null : key)
+            const actualColorId = cId || (cleanColors.includes(key) ? key : null)
+            const skuParts = [product.slug]
+            if (actualColorId) skuParts.push(actualColorId.slice(0, 4))
+            if (sId) skuParts.push(sId.slice(0, 4))
+            targetSpecs.push({
+              colorId: actualColorId,
+              sizeId: sId,
+              qty: Number(qty) || 0,
+              sku: skuParts.join("-").toUpperCase(),
+            })
+          }
+        } else if (cleanColors.length > 0 && activeSizes.length > 0) {
+          for (const cId of cleanColors) {
+            for (const sId of activeSizes) {
+              const qty = (sizeStocks || {})[sId] || 0
+              targetSpecs.push({
+                colorId: cId,
+                sizeId: sId,
+                qty,
+                sku: `${product.slug}-${cId.slice(0, 4)}-${sId.slice(0, 4)}`.toUpperCase(),
+              })
+            }
+          }
+        } else if (cleanColors.length > 0) {
+          for (const cId of cleanColors) {
+            const qty = (colorStocks || {})[cId] ?? Number(stockQuantity) ?? 0
+            targetSpecs.push({
+              colorId: cId,
+              sizeId: null,
+              qty,
+              sku: `${product.slug}-${cId.slice(0, 4)}`.toUpperCase(),
+            })
+          }
+        } else if (sizeStocks && Object.keys(sizeStocks).length > 0) {
+          for (const [sizeId, qty] of Object.entries(sizeStocks)) {
+            targetSpecs.push({
+              colorId: null,
+              sizeId,
+              qty: Number(qty) || 0,
+              sku: `${product.slug}-${sizeId.slice(0, 4)}`.toUpperCase(),
+            })
+          }
+        }
+
+        const newVariantsToInsert: TargetVariantSpec[] = []
+
+        for (const spec of targetSpecs) {
+          const match = existingVariants.find(v => 
+            (spec.colorId ? v.colorId === spec.colorId : (v.colorId === null || !spec.colorId)) &&
+            (spec.sizeId ? v.sizeId === spec.sizeId : (v.sizeId === null || !spec.sizeId))
+          )
 
           if (match) {
-            // Existing variant: update stock & price
+            // Update existing variant inventory and price
             const invRow = existingInventories.find(i => i.variantId === match.id)
             if (invRow) {
               await tx.update(inventory)
                 .set({
-                  quantity: stockNum,
-                  status: stockNum > 0 ? "IN_STOCK" : "OUT_OF_STOCK"
+                  quantity: spec.qty,
+                  status: spec.qty > 0 ? "IN_STOCK" : "OUT_OF_STOCK"
                 })
                 .where(eq(inventory.variantId, match.id))
             } else {
               await tx.insert(inventory).values({
                 variantId: match.id,
-                quantity: stockNum,
-                status: stockNum > 0 ? "IN_STOCK" : "OUT_OF_STOCK"
+                quantity: spec.qty,
+                status: spec.qty > 0 ? "IN_STOCK" : "OUT_OF_STOCK"
               })
             }
 
@@ -353,31 +514,27 @@ export class AdminProductService {
                 })
                 .where(eq(priceBookEntries.variantId, match.id))
             }
-          } else if (stockNum > 0) {
-            // Collect new variant sizes to batch create
-            newVariantSizesToCreate.push({ sizeId, qty: stockNum })
+          } else if (spec.qty > 0 || targetSpecs.length <= 5) {
+            newVariantsToInsert.push(spec)
           }
         }
 
-        // Batch create all new size variants in 3 queries
-        if (newVariantSizesToCreate.length > 0) {
-          const variantRows = newVariantSizesToCreate.map(item => ({
+        if (newVariantsToInsert.length > 0) {
+          const variantRows = newVariantsToInsert.map(item => ({
             productId: id,
-            sku: `${product.slug}-${item.sizeId.slice(0, 4)}-${crypto.randomUUID().slice(0, 8)}`,
+            sku: `${item.sku}-${crypto.randomUUID().slice(0, 6)}`.toUpperCase(),
+            colorId: item.colorId,
             sizeId: item.sizeId,
           }))
 
           const insertedVariants = await tx.insert(variants).values(variantRows).returning()
 
-          const inventoryRows = insertedVariants.map(v => {
-            const item = newVariantSizesToCreate.find(i => i.sizeId === v.sizeId)
-            const quantity = item?.qty || 0
-            return {
-              variantId: v.id,
-              quantity,
-              status: (quantity > 0 ? "IN_STOCK" : "OUT_OF_STOCK") as "IN_STOCK" | "OUT_OF_STOCK"
-            }
-          })
+          const inventoryRows = insertedVariants.map((v, idx) => ({
+            variantId: v.id,
+            quantity: newVariantsToInsert[idx]?.qty || 0,
+            status: ((newVariantsToInsert[idx]?.qty || 0) > 0 ? "IN_STOCK" : "OUT_OF_STOCK") as "IN_STOCK" | "OUT_OF_STOCK",
+            lowStockThreshold: 2,
+          }))
           await tx.insert(inventory).values(inventoryRows)
 
           const priceRows = insertedVariants.map(v => ({

@@ -8,6 +8,7 @@ import { brands } from "@/db/schema/brands"
 import { mediaLibrary } from "@/db/schema/media"
 import { productImages } from "@/db/schema/product-images"
 import { variants } from "@/db/schema/variants"
+import { colors } from "@/db/schema/colors"
 import { priceBookEntries } from "@/db/schema/price-book-entries"
 import { collections } from "@/db/schema/collections"
 import { materials } from "@/db/schema/materials"
@@ -73,12 +74,23 @@ export default async function AdminProductEditorPage(props: PageProps) {
 
     const allVariants = await db.select().from(variants).where(eq(variants.productId, id))
     const sizeInventories: Record<string, number> = {}
+    const colorInventories: Record<string, number> = {}
+    const matrixInventories: Record<string, number> = {}
+    const colorIdsSet = new Set<string>()
+
     for (const v of allVariants) {
-      if (v.sizeId) {
-        const inv = await db.select().from(inventory).where(eq(inventory.variantId, v.id)).limit(1)
-        if (inv.length > 0) {
-          sizeInventories[v.sizeId] = inv[0].quantity
-        }
+      if (v.colorId) colorIdsSet.add(v.colorId)
+      const inv = await db.select().from(inventory).where(eq(inventory.variantId, v.id)).limit(1)
+      const qty = inv.length > 0 ? inv[0].quantity : 0
+
+      if (v.colorId && v.sizeId) {
+        matrixInventories[`${v.colorId}_${v.sizeId}`] = qty
+        sizeInventories[v.sizeId] = (sizeInventories[v.sizeId] || 0) + qty
+        colorInventories[v.colorId] = (colorInventories[v.colorId] || 0) + qty
+      } else if (v.sizeId) {
+        sizeInventories[v.sizeId] = qty
+      } else if (v.colorId) {
+        colorInventories[v.colorId] = qty
       }
     }
 
@@ -96,10 +108,13 @@ export default async function AdminProductEditorPage(props: PageProps) {
       collectionIds: collectionsResult.map(c => c.collectionId),
       materialIds: materialsResult.map(m => m.materialId),
       pairedProductIds: pairingsResult.map(p => p.pairedProductId),
+      colorIds: Array.from(colorIdsSet),
       basePrice,
       compareAtPrice,
       stockQuantity,
-      sizeInventories
+      sizeInventories,
+      colorInventories,
+      matrixInventories,
     }
   }
 
@@ -109,6 +124,7 @@ export default async function AdminProductEditorPage(props: PageProps) {
   const allCollections = await db.select().from(collections)
   const allMaterials = await db.select().from(materials)
   const allSizes = await db.select().from(sizes)
+  const allColors = await db.select().from(colors)
   const allProductsList = await db
     .select({ id: products.id, name: products.name, slug: products.slug })
     .from(products)
@@ -137,6 +153,7 @@ export default async function AdminProductEditorPage(props: PageProps) {
         collections={serialize(allCollections)}
         materials={serialize(allMaterials)}
         sizes={serialize(allSizes)}
+        colors={serialize(allColors)}
         allProducts={serialize(allProductsList)}
       />
     </div>
