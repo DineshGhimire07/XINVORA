@@ -103,7 +103,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           />
           <SkipToContent />
           <PWARegister />
-          <main id="main-content" className="flex min-h-[100svh] flex-col w-full overflow-x-hidden">
+          <main id="main-content" className="flex min-h-[100svh] flex-col w-full overflow-x-clip">
             {children}
           </main>
         </Providers>

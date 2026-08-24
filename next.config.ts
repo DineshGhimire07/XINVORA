@@ -15,12 +15,14 @@ const cspHeader = `
   script-src 'self' 'unsafe-eval' 'unsafe-inline';
   style-src 'self' 'unsafe-inline';
   img-src 'self' blob: data: https: res.cloudinary.com images.unsplash.com placehold.co;
-  font-src 'self' data:;
+  font-src 'self' data: https://fonts.gstatic.com;
+  connect-src 'self' https://res.cloudinary.com https://api.cloudinary.com https://*.supabase.co wss://*.supabase.co;
+  media-src 'self' blob: https://res.cloudinary.com;
+  worker-src 'self' blob:;
   object-src 'none';
   base-uri 'self';
-  form-action 'self';
+  form-action 'self' https://res.cloudinary.com;
   frame-ancestors 'none';
-  block-all-mixed-content;
   upgrade-insecure-requests;
 `.replace(/\s{2,}/g, ' ').trim();
 
