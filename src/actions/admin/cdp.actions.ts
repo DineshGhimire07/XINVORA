@@ -171,9 +171,17 @@ export async function getCustomerDetailsAction(userId: string) {
 export async function getSystemHealthAction() {
   await SessionService.requireAdmin()
 
-  // 1. Get queue memory stats
-  const { IngestionService } = require("@/features/analytics/ingestion/service")
-  const queueStats = await IngestionService.getStats()
+  // 1. Analytics queue stats
+  // The in-memory queue + setInterval worker has been replaced with next/server's
+  // after() pattern. Events are now processed immediately post-response inside each
+  // serverless invocation — there is no persistent in-memory queue to report on.
+  const queueStats = {
+    queueLength: 0,
+    isWorkerActive: false,
+    architecture: "after() — serverless-safe, no in-memory queue",
+    maxBatchSize: 1,
+    flushIntervalMs: 0,
+  }
 
   // 2. Count unresolved DLQ events
   const [dlqCountResult] = await db

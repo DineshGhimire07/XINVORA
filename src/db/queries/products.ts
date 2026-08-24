@@ -328,25 +328,28 @@ async function _findProductsInternal(
   const items = hasMore ? rows.slice(0, limit) : rows
   const nextCursor = hasMore ? (items[items.length - 1]?.id ?? null) : null
 
-  // Fetch prices for items
+  // ── Fetch prices + off-section data in parallel ────────────────────────
+  // Both queries are independent reads on different tables. Running them
+  // concurrently eliminates one serial DB round-trip per product listing.
   const productIds = items.map(i => i.id)
-  let prices: any[] = []
-  if (productIds.length > 0) {
-    prices = await db
-      .select({
-        productId: variants.productId,
-        price: priceBookEntries.price,
-        compareAtPrice: priceBookEntries.compareAtPrice,
-      })
-      .from(variants)
-      .innerJoin(priceBookEntries, eq(variants.id, priceBookEntries.variantId))
-      .innerJoin(priceBooks, and(eq(priceBookEntries.priceBookId, priceBooks.id), eq(priceBooks.isDefault, true)))
-      .where(and(inArray(variants.productId, productIds), isNull(variants.deletedAt), eq(variants.isActive, true)))
-  }
 
-  // Fetch Off Section overlay for these products
   const { findOffSectionByProductIds } = await import("./off-section")
-  const offSectionMap = productIds.length > 0 ? await findOffSectionByProductIds(productIds) : new Map()
+
+  const [prices, offSectionMap] = await Promise.all([
+    productIds.length > 0
+      ? db
+          .select({
+            productId: variants.productId,
+            price: priceBookEntries.price,
+            compareAtPrice: priceBookEntries.compareAtPrice,
+          })
+          .from(variants)
+          .innerJoin(priceBookEntries, eq(variants.id, priceBookEntries.variantId))
+          .innerJoin(priceBooks, and(eq(priceBookEntries.priceBookId, priceBooks.id), eq(priceBooks.isDefault, true)))
+          .where(and(inArray(variants.productId, productIds), isNull(variants.deletedAt), eq(variants.isActive, true)))
+      : Promise.resolve([] as any[]),
+    productIds.length > 0 ? findOffSectionByProductIds(productIds) : Promise.resolve(new Map()),
+  ])
 
   const itemsWithPrices = items.map(item => {
     const itemPrices = prices.filter(p => p.productId === item.id)
@@ -370,6 +373,7 @@ async function _findProductsInternal(
     totalCount,
   }
 }
+
 
 const _findProductsCached = unstable_cache(
   async (paramsStr: string) => {
