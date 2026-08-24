@@ -9,37 +9,38 @@ import { Section } from "@/components/shared/section"
 import { Container } from "@/components/shared/container"
 import { Grid } from "@/components/shared/grid"
 import { Stack } from "@/components/shared/stack"
+import { FAQAccordion, type FAQGroup } from "@/components/shop/FAQAccordion"
 import { buildMetadata } from "@/lib/metadata"
 import * as React from "react"
 
 export const metadata = buildMetadata({
   title: "FAQ",
-  description: "Frequently Asked Questions. Information on orders, shipping, returns, product variants, and linen/furniture care.",
+  description: "Frequently Asked Questions. Information on orders, shipping throughout Nepal, returns, products, sizing, and customer support.",
 })
-
-interface FAQGroup {
-  category: string
-  items: {
-    q: string
-    a: string
-  }[]
-}
 
 const FAQ_DATA: FAQGroup[] = [
   {
-    category: "Orders & Production",
+    category: "Orders & Payment",
     items: [
       {
-        q: "What does 'Made to Order' mean?",
-        a: "To eliminate waste and maintain exceptional quality control, certain garments and furniture editions are constructed only after an order is confirmed. Production times vary between 2 to 4 weeks depending on the workshop.",
+        q: "What payment methods does XINVORA accept?",
+        a: "XINVORA accepts both Cash on Delivery (COD) and online payments.",
       },
       {
-        q: "Can I modify or cancel my order?",
-        a: "As production begins shortly after verification, modifications must be requested within 24 hours of placement by writing to our support correspondence.",
+        q: "Can I place an order from anywhere in Nepal?",
+        a: "Yes. XINVORA delivers across Nepal.",
       },
       {
-        q: "Are the editions restocked?",
-        a: "We produce in controlled, limited runs. Once an edition is marked as sold out, it is rarely restocked in the exact same textile configuration, as we source deadstock or small-batch organic fabrics.",
+        q: "Can I order multiple products in one order?",
+        a: "Yes. You can purchase multiple products in a single order. The shipping charge remains NPR 150 per order, whether you purchase one product or multiple products.",
+      },
+      {
+        q: "Can I check my order status?",
+        a: "Yes. You can check your order status from the Profile section of your XINVORA account. Once an order is dispatched, available shipment or delivery information will be shown there.",
+      },
+      {
+        q: "Can I cancel my order after placing it?",
+        a: "Orders can only be cancelled before they enter the shipping/dispatch process. Once an order has been dispatched, cancellation may no longer be possible.",
       },
     ],
   },
@@ -47,42 +48,135 @@ const FAQ_DATA: FAQGroup[] = [
     category: "Shipping & Delivery",
     items: [
       {
-        q: "Where do you ship from?",
-        a: "All objects are packaged and shipped from our studio warehouse in Copenhagen, Denmark.",
+        q: "How much does shipping cost?",
+        a: "The standard shipping fee is NPR 150 per order. The charge remains NPR 150 whether the order contains one product or multiple products.",
       },
       {
-        q: "Do you offer international shipping?",
-        a: "Yes, we ship globally via carbon-neutral express carriers. Transit times range from 3 to 7 business days depending on the region.",
+        q: "How long does delivery take?",
+        a: (
+          <span className="flex flex-col gap-2">
+            <span>Estimated delivery times are:</span>
+            <span className="pl-3 border-l-2 border-accent/40 flex flex-col gap-1 text-text-primary/90">
+              <span><strong>Kathmandu Valley:</strong> approximately 2–3 days</span>
+              <span><strong>Outside Kathmandu:</strong> approximately 3–4 days</span>
+            </span>
+            <span className="text-text-secondary/90 text-[12.5px] mt-1">
+              Delivery times are estimates and may vary due to courier conditions, weather, holidays, remote locations, or other circumstances beyond XINVORA&apos;s control.
+            </span>
+          </span>
+        ),
       },
       {
-        q: "How can I track my shipment?",
-        a: "Once your package is hand-inspected and dispatched, a tracking confirmation link will be delivered via email.",
+        q: "Do you deliver outside Kathmandu?",
+        a: "Yes. XINVORA delivers all over Nepal.",
+      },
+      {
+        q: "How can I track my order?",
+        a: "You can check your order status from the Profile section of your XINVORA account. Once your order is dispatched, available shipment or delivery information will be shown there.",
       },
     ],
   },
   {
-    category: "Returns & Exchanges",
+    category: "Returns, Exchanges & Refunds",
     items: [
       {
-        q: "What is your return policy?",
-        a: "We accept returns of unworn, unwashed garments and unused furniture pieces in their original packaging within 14 days of delivery. Returns are subject to a return shipping and restocking fee.",
+        q: "Can I return a product?",
+        a: "Yes. Returns are available for eligible orders, subject to XINVORA's return conditions and product verification.",
       },
       {
-        q: "How do I initiate a return?",
-        a: "To request a return, contact our support team. Detailed documentation is provided on our Returns page.",
+        q: "How does the return process work?",
+        a: (
+          <span>
+            Contact XINVORA through{" "}
+            <a
+              href="mailto:support.xinvora@gmail.com"
+              className="text-text-primary underline underline-offset-4 hover:text-accent transition-colors font-medium"
+            >
+              support.xinvora@gmail.com
+            </a>{" "}
+            or WhatsApp. Our team will review the request and guide you through the return process.
+          </span>
+        ),
+      },
+      {
+        q: "Will I automatically receive a refund after returning an item?",
+        a: "No. Refunds are processed after the returned garment has been verified by XINVORA. The condition of the garment and whether it meets the applicable return requirements will be considered before a refund is approved.",
+      },
+      {
+        q: "What condition must the product be in for a return?",
+        a: "Returned garments must generally be unused, unworn, undamaged, and returned with their original tags and packaging where applicable. Products showing signs of wear, damage, alteration, washing, or misuse may not qualify for a refund.",
+      },
+      {
+        q: "What if I receive a damaged or incorrect product?",
+        a: "Contact XINVORA as soon as possible. After verification, XINVORA may provide a replacement or refund depending on the situation and product availability.",
+      },
+      {
+        q: "Can I exchange a product for another size?",
+        a: "Eligible size exchanges may be possible depending on product availability and the condition of the returned garment. Contact XINVORA support before sending anything back.",
       },
     ],
   },
   {
-    category: "Care Guidelines",
+    category: "Products & Sizing",
     items: [
       {
-        q: "How do I care for Belgian Linen?",
-        a: "Wash on a gentle cycle in cool water with a mild pH-neutral detergent. Line dry out of direct sunlight. Wrinkling is a natural characteristic of flax fibers and represents its design character; avoid high-heat ironing.",
+        q: "How do I choose the right size?",
+        a: "A size guide is available on the product page. We recommend checking the measurements before placing your order.",
       },
       {
-        q: "How do I care for FSC Oak furniture?",
-        a: "Dust weekly with a dry lint-free cloth. Wipe spills immediately. Avoid placing solid timber near direct heating vents or radiators. Re-apply a matte timber oil once a year to protect the timber surface.",
+        q: "Are XINVORA products manufactured by XINVORA?",
+        a: "XINVORA is a curated fashion brand. We carefully select products and focus on quality, presentation, and the overall customer experience rather than manufacturing every garment ourselves.",
+      },
+      {
+        q: "Will every product be restocked?",
+        a: "Not necessarily. Some regular products may be restocked when available, while Limited products are permanently limited and will never be restocked.",
+      },
+    ],
+  },
+  {
+    category: "Limited Collection",
+    items: [
+      {
+        q: "What does \"Limited\" mean on XINVORA?",
+        a: "A Limited product is intentionally released in very small quantities. Once the available pieces are sold, the product will not be restocked or reproduced as a regular XINVORA product.",
+      },
+      {
+        q: "Why are Limited products not restocked?",
+        a: "Limited releases are designed to remain genuinely scarce. They are available only in very limited quantities and are not intended to return once sold out.",
+      },
+    ],
+  },
+  {
+    category: "Support",
+    items: [
+      {
+        q: "How can I contact XINVORA?",
+        a: (
+          <span className="flex flex-col gap-2">
+            <span>For customer support, contact:</span>
+            <span className="pl-3 border-l-2 border-accent/40 flex flex-col gap-1 text-text-primary/90">
+              <span>
+                <strong>Email:</strong>{" "}
+                <a
+                  href="mailto:support.xinvora@gmail.com"
+                  className="text-text-primary underline underline-offset-4 hover:text-accent transition-colors"
+                >
+                  support.xinvora@gmail.com
+                </a>
+              </span>
+              <span>
+                <strong>WhatsApp:</strong> XINVORA&apos;s official WhatsApp support channel
+              </span>
+            </span>
+            <span className="text-text-secondary/90 text-[12.5px] mt-1">
+              For support requests, customers should include their order number and a brief description of the issue whenever applicable.
+            </span>
+          </span>
+        ),
+      },
+      {
+        q: "Can I call XINVORA for support?",
+        a: "XINVORA currently provides customer support through email and WhatsApp rather than phone calls.",
       },
     ],
   },
@@ -95,7 +189,7 @@ export default function FAQPage() {
       {/* Editorial Hero */}
       <Section id="faq-hero" padding="md" className="bg-background">
         <Container>
-          <Stack gap={6} className="max-w-[32rem] text-left">
+          <Stack gap={6} className="max-w-[36rem] text-left">
             <span className="text-overline text-accent tracking-overline uppercase select-none">
               Assistance
             </span>
@@ -103,7 +197,7 @@ export default function FAQPage() {
               Frequently Asked Questions.
             </h1>
             <p className="text-body-md text-text-secondary leading-relaxed text-pretty">
-              Essential references regarding our sourcing processes, order shipping parameters, returns instructions, and raw material care guides.
+              Essential references regarding our ordering processes, shipping throughout Nepal, return conditions, sizing, and customer assistance.
             </p>
           </Stack>
         </Container>
@@ -120,47 +214,29 @@ export default function FAQPage() {
                 <span className="text-[10px] font-bold tracking-[0.25em] text-accent uppercase">
                   Categories
                 </span>
-                <ul className="space-y-3 text-[11px] font-semibold tracking-wider text-text-secondary uppercase">
-                  {FAQ_DATA.map((group) => (
-                    <li key={group.category}>
-                      <a 
-                        href={`#${group.category.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
-                        className="hover:text-text-primary transition-colors cursor-pointer"
-                      >
-                        {group.category}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+                <nav aria-label="FAQ Categories">
+                  <ul className="space-y-3 text-[11px] font-semibold tracking-wider text-text-secondary uppercase">
+                    {FAQ_DATA.map((group) => {
+                      const slug = group.category.toLowerCase().replace(/[^a-z0-9]/g, "-")
+                      return (
+                        <li key={group.category}>
+                          <a 
+                            href={`#${slug}`}
+                            className="hover:text-text-primary transition-colors cursor-pointer block py-0.5"
+                          >
+                            {group.category}
+                          </a>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </nav>
               </Stack>
             </div>
 
             {/* Right Q&A list Column (8/12 width) */}
-            <div className="md:col-span-8 flex flex-col gap-16 text-left">
-              {FAQ_DATA.map((group) => (
-                <Stack 
-                  key={group.category}
-                  id={group.category.toLowerCase().replace(/[^a-z0-9]/g, "-")} 
-                  gap={6}
-                  className="scroll-mt-32"
-                >
-                  <h2 className="text-[11px] font-bold tracking-[0.25em] text-accent uppercase select-none border-b border-border/40 pb-3">
-                    {group.category}
-                  </h2>
-                  <div className="space-y-8">
-                    {group.items.map((item, idx) => (
-                      <Stack key={idx} gap={2} className="max-w-[36rem]">
-                        <h3 className="text-body-md font-bold font-display text-text-primary">
-                          {item.q}
-                        </h3>
-                        <p className="text-body-sm text-text-secondary leading-relaxed text-pretty">
-                          {item.a}
-                        </p>
-                      </Stack>
-                    ))}
-                  </div>
-                </Stack>
-              ))}
+            <div className="md:col-span-8 text-left">
+              <FAQAccordion groups={FAQ_DATA} />
             </div>
 
           </Grid>
@@ -170,3 +246,4 @@ export default function FAQPage() {
     </main>
   )
 }
+
