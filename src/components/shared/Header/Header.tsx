@@ -2,8 +2,8 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Search, User, ShoppingBag, Heart, Menu, X } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { Search, User, ShoppingBag, Heart, Menu, X, ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useHeaderState } from "@/providers/header-state-provider"
 
@@ -81,7 +81,9 @@ const journalList = [
 
 export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: HeaderProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const isHomepage = pathname === "/"
+  const isPDP = pathname.startsWith("/products/")
   const { state } = useHeaderState()
 
   const liveCartCount = state.cart ? state.cart.cartCount : cartCount
@@ -89,6 +91,14 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
 
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
   const drawerRef = React.useRef<HTMLDivElement>(null)
+
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back()
+    } else {
+      router.push("/")
+    }
+  }
 
   // Body scroll lock on mobile menu toggle
   React.useEffect(() => {
@@ -204,14 +214,26 @@ export function Header({ cartCount = 0, wishlistCount = 0, collections = [] }: H
           </Link>
         </nav>
 
-        {/* MOBILE MENU TRIGGER */}
-        <button
-          onClick={() => setMobileMenuOpen(true)}
-          className="md:hidden flex items-center justify-start py-2 text-current hover:opacity-60 transition-opacity"
-          aria-label="Open navigation menu"
-        >
-          <Menu className="w-5.5 h-5.5 stroke-[1.25]" />
-        </button>
+        {/* MOBILE MENU / BACK TRIGGER */}
+        <div className="md:hidden flex items-center justify-start">
+          {isPDP ? (
+            <button
+              onClick={handleBack}
+              className="flex items-center justify-center p-2 -ml-2 text-current hover:opacity-60 transition-opacity active:scale-95"
+              aria-label="Back to catalog"
+            >
+              <ArrowLeft className="w-5.5 h-5.5 stroke-[1.5]" />
+            </button>
+          ) : (
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="flex items-center justify-start py-2 text-current hover:opacity-60 transition-opacity"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="w-5.5 h-5.5 stroke-[1.25]" />
+            </button>
+          )}
+        </div>
 
         {/* CENTER LOGO */}
         <div className="justify-self-center">
