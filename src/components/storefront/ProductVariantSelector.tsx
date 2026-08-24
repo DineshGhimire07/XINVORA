@@ -443,7 +443,7 @@ export function ProductVariantSelector({
             <div className="flex items-stretch gap-3 w-full">
               <div className="flex-1">
                 {activeVariant ? (
-                  <AddToCartButton variantId={activeVariant.id} inStock={inStock} />
+                  <AddToCartButton variantId={activeVariant.id} productId={productId} inStock={inStock} />
                 ) : (
                   <Button 
                     variant="primary" 

@@ -7,6 +7,8 @@ import { PaymentStep } from "./PaymentStep"
 import { OrderSummary } from "./OrderSummary"
 import { type NepalDeliveryFormValues } from "@/validations/checkout"
 import { getPaymentQrsAction } from "@/actions/checkout.actions"
+import { useAnalytics } from "@/features/analytics/ingestion/tracking-provider"
+import { AnalyticsEvent } from "@/features/analytics/events/registry"
 
 interface CheckoutFlowProps {
   provinces: any[]
@@ -38,6 +40,13 @@ export function CheckoutFlow({
   const [addressData, setAddressData] = useState<NepalDeliveryFormValues | null>(null)
   const [paymentQrs, setPaymentQrs] = useState<any>(initialPaymentQrs || null)
   const [loadingQrs, setLoadingQrs] = useState(false)
+  const { trackEvent } = useAnalytics()
+
+  // Analytics: CHECKOUT_START — fire once when checkout flow mounts
+  useEffect(() => {
+    trackEvent(AnalyticsEvent.CHECKOUT_START)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Eager pre-fetch & image preloading on mount (Step 1) for instant 0ms Step 2 transition
   useEffect(() => {

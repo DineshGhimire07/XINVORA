@@ -23,6 +23,7 @@ import { type TimingEntry, timedPromise, printTimingSummary } from "@/lib/perf"
 import { ShopTheLookCarousel } from "@/components/storefront/ShopTheLookCarousel"
 import { ProductsInLook } from "@/components/storefront/ProductsInLook"
 import { ProductCard } from "@/components/storefront/ProductCard"
+import { ProductViewTracker } from "@/features/analytics/components/ProductViewTracker"
 
 export const revalidate = 3600
 
@@ -134,6 +135,8 @@ export default async function ProductDetailPage({
 
   return (
     <main className="flex-1 bg-background pt-20 md:pt-28 pb-16">
+      {/* Analytics: fire PRODUCT_VIEW once on mount (consent-gated) */}
+      <ProductViewTracker productId={product.id} categoryId={product.category?.id ?? null} />
       <Container>
 
         {/* Compact "Shop the Look" carousel — only shown when this product is part of a look */}

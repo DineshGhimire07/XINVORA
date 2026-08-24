@@ -2,8 +2,9 @@
 
 import * as React from "react"
 import { toggleWishlistByProductIdAction } from "@/actions/wishlist.actions"
-
 import { Heart } from "lucide-react"
+import { useAnalytics } from "@/features/analytics/ingestion/tracking-provider"
+import { AnalyticsEvent } from "@/features/analytics/events/registry"
 
 interface WishlistToggleIconProps {
   productId: string
@@ -13,6 +14,7 @@ interface WishlistToggleIconProps {
 export function WishlistToggleIcon({ productId, initialIsWishlisted = false }: WishlistToggleIconProps) {
   const [isWishlisted, setIsWishlisted] = React.useState(initialIsWishlisted)
   const [isPending, startTransition] = React.useTransition()
+  const { trackEvent } = useAnalytics()
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -31,6 +33,12 @@ export function WishlistToggleIcon({ productId, initialIsWishlisted = false }: W
       } else if (res.data) {
         // Sync with server state
         setIsWishlisted(res.data.wishlisted)
+        // Analytics: fire WISHLIST_ADD or WISHLIST_REMOVE based on confirmed server state
+        trackEvent(
+          res.data.wishlisted ? AnalyticsEvent.WISHLIST_ADD : AnalyticsEvent.WISHLIST_REMOVE,
+          {},
+          productId
+        )
       }
     })
   }

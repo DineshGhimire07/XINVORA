@@ -36,7 +36,7 @@
  */
 
 import { db } from "@/db/client"
-import { userSessions, userEvents, customerMetrics, recommendationSignals, analyticsDlq } from "@/db/schema"
+import { userSessions, userEvents, customerMetrics, recommendationSignals, analyticsDlq, searchQueries } from "@/db/schema"
 import { eq, and, sql } from "drizzle-orm"
 import { IngestEvent, AnalyticsEvent } from "../events/registry"
 
@@ -120,6 +120,10 @@ async function _processSingleEvent(event: IngestEvent): Promise<void> {
           .values({
             userId: event.userId || null,
             sessionKey: event.sessionKey,
+            // anonymousId — persistent browser identity from xinvora_anon_id cookie.
+            // Enables COUNT(DISTINCT anonymous_id) for unique visitor metrics.
+            // Passed via payload.anonymousId from the tracking provider.
+            anonymousId: (payload.anonymousId as string | undefined) || null,
             startedAt: eventTime,
             lastActivityAt: eventTime,
             deviceType: event.device,
@@ -184,6 +188,8 @@ async function _processSingleEvent(event: IngestEvent): Promise<void> {
       productId: event.productId || null,
       categoryId: event.categoryId || null,
       orderId: event.orderId || null,
+      collectionId: event.collectionId || null, // Phase 2 — collection analytics
+      variantId: event.variantId || null,       // Phase 2 — variant-level analytics
       page: event.page,
       referrer: event.referrer || null,
       device: event.device,
@@ -196,13 +202,35 @@ async function _processSingleEvent(event: IngestEvent): Promise<void> {
       createdAt: eventTime,
     })
 
-    // ── 3. Update Customer Metrics Cache Incrementally ─────────────────────
+    // ── 3. Populate search_queries for SEARCH events (Phase 4) ─────────────
+    // Pipeline 1 is the single source of truth for search analytics.
+    // The broken Pipeline 2 recordSearchAction() will be removed in Phase 8.
+    if (event.eventType === AnalyticsEvent.SEARCH) {
+      const searchPayload = event.payload as any
+      const searchQuery = searchPayload?.query
+      if (searchQuery && typeof searchQuery === "string" && searchQuery.trim()) {
+        const anonymousId = (searchPayload?.anonymousId as string | undefined) || "unknown"
+        await tx
+          .insert(searchQueries)
+          .values({
+            sessionId: event.sessionKey,
+            anonymousId,
+            userId: event.userId || session.userId || null,
+            query: searchQuery.trim().slice(0, 255),
+            resultsCount: typeof searchPayload?.resultsCount === "number" ? searchPayload.resultsCount : 0,
+            createdAt: eventTime,
+          })
+          .onConflictDoNothing()
+      }
+    }
+
+    // ── 4. Update Customer Metrics Cache Incrementally ─────────────────────
     const currentUserId = event.userId || session.userId
     if (currentUserId) {
       await _updateMetricsIncremental(tx, currentUserId, event, eventTime)
     }
 
-    // ── 4. Update Recommendation Signals (Brand & Category Affinity) ───────
+    // ── 5. Update Recommendation Signals (Brand & Category Affinity) ───────
     if (currentUserId && event.productId) {
       await _updateRecommendationSignals(tx, currentUserId, event, eventTime)
     }

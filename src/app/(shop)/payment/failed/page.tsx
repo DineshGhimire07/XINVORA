@@ -4,6 +4,7 @@ import { Stack } from "@/components/shared/stack"
 import { Button } from "@/components/ui/button"
 import { findPayment } from "@/db/queries/payments"
 import Link from "next/link"
+import { PaymentFailTracker } from "@/features/analytics/components/PaymentFailTracker"
 
 interface FailedPageProps {
   searchParams: Promise<{ paymentId?: string }>
@@ -22,6 +23,8 @@ export default async function FailedPage({ searchParams }: FailedPageProps) {
 
   return (
     <Section className="py-24 md:py-32 bg-background flex flex-col items-center justify-center min-h-screen text-center">
+      {/* Analytics: fire PAYMENT_FAIL on mount (consent-gated) */}
+      <PaymentFailTracker />
       <Container className="max-w-md">
         <Stack gap={6} className="items-center">
           <div className="w-16 h-16 rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-red-600 mb-2 font-bold text-lg">

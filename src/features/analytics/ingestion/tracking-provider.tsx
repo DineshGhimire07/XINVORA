@@ -1,9 +1,86 @@
 "use client"
 
+/**
+ * features/analytics/ingestion/tracking-provider.tsx
+ *
+ * IDENTITY MODEL:
+ *   anonymousId  — persistent browser cookie (xinvora_anon_id), 1-year expiry.
+ *                  Identifies the same browser across sessions.
+ *   sessionKey   — localStorage UUID (xinvora_session_key).
+ *                  One per browsing session. Many sessions per anonymousId.
+ *   userId       — NextAuth JWT user ID. Null until login.
+ *
+ * CONSENT GATE:
+ *   trackEvent() checks analytics consent from CookieProvider before sending
+ *   any behavioral analytics. Operational identity events (LOGIN, LOGOUT,
+ *   SIGN_UP, PROFILE_UPDATE) bypass the gate — they are not behavioral
+ *   analytics.
+ *
+ * ACCOUNT-SWITCH SAFETY:
+ *   When a DIFFERENT user logs in (prevUserId ≠ newUserId, both non-null),
+ *   a new sessionKey is generated. This prevents Person B from inheriting
+ *   Person A's session row in user_sessions.
+ *   When the SAME user re-logs in (prevUserId === newUserId), no rotation.
+ *   When transitioning from anonymous to authenticated (prevUserId = null),
+ *   no rotation — this is identity elevation, not a switch.
+ */
+
 import React, { createContext, useContext, useEffect, useRef, Suspense } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { AnalyticsEvent, AnalyticsEventType } from "../events/registry"
+import { useCookieConsent } from "@/components/cookies/CookieProvider"
+import { getOrCreateAnonymousId } from "@/lib/analytics/anonymous"
+
+// ── Consent configuration ───────────────────────────────────────────────────
+
+/**
+ * Events that are operational/identity events and bypass the analytics
+ * consent gate. These are NOT behavioral tracking events.
+ *
+ * NOTE: CHECKOUT_START, ORDER_COMPLETE, PAYMENT_SUCCESS, PAYMENT_FAIL are
+ * intentionally NOT here pending business/legal classification. They default
+ * to requiring analytics consent (conservative position).
+ */
+const NECESSARY_EVENTS = new Set<AnalyticsEventType>([
+  AnalyticsEvent.LOGIN,
+  AnalyticsEvent.LOGOUT,
+  AnalyticsEvent.SIGN_UP,
+  AnalyticsEvent.PROFILE_UPDATE,
+])
+
+/**
+ * Events that require personalization consent rather than general analytics.
+ * These are gated behind consentState.personalization.
+ */
+const PERSONALIZATION_EVENTS = new Set<AnalyticsEventType>([
+  AnalyticsEvent.SIZE_SELECTED,
+  AnalyticsEvent.COLOR_SELECTED,
+  AnalyticsEvent.RECOMMENDATION_CLICK,
+])
+
+// ── Session key helpers ─────────────────────────────────────────────────────
+
+const SESSION_KEY_STORAGE = "xinvora_session_key"
+
+function getSessionKey(): string {
+  if (typeof window === "undefined") return ""
+  let key = localStorage.getItem(SESSION_KEY_STORAGE)
+  if (!key) {
+    key = crypto.randomUUID()
+    localStorage.setItem(SESSION_KEY_STORAGE, key)
+  }
+  return key
+}
+
+function rotateSessionKey(): string {
+  if (typeof window === "undefined") return ""
+  const newKey = crypto.randomUUID()
+  localStorage.setItem(SESSION_KEY_STORAGE, newKey)
+  return newKey
+}
+
+// ── Context ─────────────────────────────────────────────────────────────────
 
 interface AnalyticsContextType {
   trackEvent: (
@@ -11,7 +88,9 @@ interface AnalyticsContextType {
     payload?: Record<string, any>,
     productId?: string | null,
     categoryId?: string | null,
-    orderId?: string | null
+    orderId?: string | null,
+    collectionId?: string | null,
+    variantId?: string | null
   ) => Promise<void>
 }
 
@@ -25,33 +104,63 @@ export function useAnalytics() {
   return context
 }
 
+// ── Provider ─────────────────────────────────────────────────────────────────
+
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession()
+  const { consentState, isLoaded } = useCookieConsent()
 
-  // Generate or load persistent session key
-  const getSessionKey = (): string => {
-    if (typeof window === "undefined") return ""
-    let key = localStorage.getItem("xinvora_session_key")
-    if (!key) {
-      key = crypto.randomUUID()
-      localStorage.setItem("xinvora_session_key", key)
+  // Track previous userId to detect account switches
+  const prevUserIdRef = useRef<string | null>(null)
+
+  // ── Account-switch safety: rotate sessionKey when a DIFFERENT user logs in ──
+  useEffect(() => {
+    const currentUserId = session?.user?.id ?? null
+    const prevUserId = prevUserIdRef.current
+
+    const isAccountSwitch =
+      prevUserId !== null &&       // there was a previous authenticated user
+      currentUserId !== null &&    // there is a new authenticated user
+      prevUserId !== currentUserId // they are different people
+
+    if (isAccountSwitch) {
+      // Generate a fresh session key so Person B starts a clean user_sessions row.
+      // Person A's historical events remain attributed to Person A.
+      rotateSessionKey()
     }
-    return key
-  }
+
+    prevUserIdRef.current = currentUserId
+  }, [session?.user?.id])
 
   const trackEvent = async (
     eventType: AnalyticsEventType,
     payload: Record<string, any> = {},
     productId?: string | null,
     categoryId?: string | null,
-    orderId?: string | null
+    orderId?: string | null,
+    collectionId?: string | null,
+    variantId?: string | null
   ) => {
     try {
+      // ── Consent gate ───────────────────────────────────────────────────────
+      // Wait until CookieProvider has resolved the consent state.
+      if (!isLoaded) return
+
+      const isNecessary = NECESSARY_EVENTS.has(eventType)
+      const isPersonalization = PERSONALIZATION_EVENTS.has(eventType)
+
+      if (!isNecessary) {
+        if (isPersonalization && !consentState.personalization) return
+        if (!isPersonalization && !consentState.analytics) return
+      }
+      // ── End consent gate ───────────────────────────────────────────────────
+
       const sessionKey = getSessionKey()
       if (!sessionKey) return
 
       const eventId = crypto.randomUUID()
       const userId = session?.user?.id || null
+      const anonymousId = getOrCreateAnonymousId()
 
       const body = {
         eventId,
@@ -61,6 +170,8 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         productId: productId || null,
         categoryId: categoryId || null,
         orderId: orderId || null,
+        collectionId: collectionId || null,
+        variantId: variantId || null,
         page: window.location.pathname + window.location.search,
         referrer: (window as any).__xinvoraPrevPath || document.referrer || null,
         device: getDeviceType(),
@@ -68,6 +179,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         source: "WEB",
         payload: {
           ...payload,
+          anonymousId,
           utmInfo: getUtmParameters(),
         },
         createdAt: new Date().toISOString(),
@@ -75,20 +187,18 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
       await fetch("/api/analytics/event", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       })
     } catch (err) {
-      console.warn("Telemetry event failed to send:", err)
+      console.warn("[Analytics] Telemetry event failed to send:", err)
     }
   }
 
   return (
     <AnalyticsContext.Provider value={{ trackEvent }}>
-      {/* Only this small tracker calls useSearchParams()/usePathname(), so only
-          it needs a Suspense boundary — children render immediately, unaffected. */}
+      {/* PageViewTracker uses useSearchParams/usePathname — needs Suspense boundary.
+          Children render immediately, unaffected. */}
       <Suspense fallback={null}>
         <PageViewTracker trackEvent={trackEvent} />
       </Suspense>
@@ -96,6 +206,8 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     </AnalyticsContext.Provider>
   )
 }
+
+// ── Page View Tracker ────────────────────────────────────────────────────────
 
 function PageViewTracker({
   trackEvent,
@@ -114,7 +226,7 @@ function PageViewTracker({
         title: document.title,
       })
       if (typeof window !== "undefined") {
-        (window as any).__xinvoraPrevPath = prevPathRef.current
+        ;(window as any).__xinvoraPrevPath = prevPathRef.current
       }
       prevPathRef.current = currentPath
     }, 100)
@@ -124,6 +236,8 @@ function PageViewTracker({
 
   return null
 }
+
+// ── Utilities ────────────────────────────────────────────────────────────────
 
 const getDeviceType = () => {
   if (typeof window === "undefined") return "DESKTOP"

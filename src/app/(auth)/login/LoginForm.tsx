@@ -9,6 +9,8 @@ import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Mail, Lock, Eye, EyeOff, Loader2, ShieldCheck, LockIcon, ShieldAlert } from "lucide-react"
+import { useAnalytics } from "@/features/analytics/ingestion/tracking-provider"
+import { AnalyticsEvent } from "@/features/analytics/events/registry"
 
 export function LoginForm() {
   const router = useRouter()
@@ -21,6 +23,7 @@ export function LoginForm() {
   const [isPending, startTransition] = useTransition()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<{ email?: string[]; password?: string[] }>({})
+  const { trackEvent } = useAnalytics()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -34,6 +37,8 @@ export function LoginForm() {
     startTransition(async () => {
       const result = await loginAction(null, formData)
       if (result.success) {
+        // Analytics: LOGIN — fire before redirect so it is within the same session context
+        trackEvent(AnalyticsEvent.LOGIN)
         // Successful login: redirect directly to target (e.g. /checkout for Buy Now)
         router.push(callbackUrl)
         router.refresh()

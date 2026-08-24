@@ -16,6 +16,8 @@ import {
   Loader2,
   ShieldAlert,
 } from "lucide-react"
+import { useAnalytics } from "@/features/analytics/ingestion/tracking-provider"
+import { AnalyticsEvent } from "@/features/analytics/events/registry"
 
 export function RegisterForm() {
   const router = useRouter()
@@ -33,6 +35,7 @@ export function RegisterForm() {
   const [isPending, startTransition] = useTransition()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
+  const { trackEvent } = useAnalytics()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -53,6 +56,8 @@ export function RegisterForm() {
     startTransition(async () => {
       const result = await registerAction(null, formData)
       if (result.success) {
+        // Analytics: SIGN_UP — fire before redirect so it is within the same session context
+        trackEvent(AnalyticsEvent.SIGN_UP)
         // Successful registration & auto-login: Seamlessly redirect directly to callbackUrl
         router.push(callbackUrl)
         router.refresh()

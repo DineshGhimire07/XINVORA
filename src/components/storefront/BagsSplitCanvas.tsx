@@ -220,7 +220,7 @@ export function BagsSplitCanvas({ products }: BagsSplitCanvasProps) {
 
                   {/* Direct Add to Bag button drawer with custom styling overrides */}
                   <div className="w-full mt-1 [&_button]:rounded-none [&_button]:bg-transparent [&_button]:border [&_button]:border-text-primary [&_button]:text-text-primary [&_button]:hover:bg-text-primary [&_button]:hover:text-white [&_button]:transition-all [&_button]:duration-300 [&_button]:text-[11px] [&_button]:tracking-[0.2em] [&_button]:uppercase [&_button]:py-3.5 [&_button]:h-auto [&_button]:font-medium">
-                    <AddToCartButton variantId={product.variantId} inStock={product.quantity > 0} />
+                    <AddToCartButton variantId={product.variantId} productId={product.id} inStock={product.quantity > 0} />
                   </div>
                 </div>
               </div>

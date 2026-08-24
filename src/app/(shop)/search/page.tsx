@@ -46,7 +46,7 @@ export default async function SearchPage({
               Search XINVORA.
             </h1>
             
-            <SearchInput />
+            <SearchInput resultsCount={response.totalCount} />
           </Stack>
         </Section>
 

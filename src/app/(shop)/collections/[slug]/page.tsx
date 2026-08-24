@@ -14,6 +14,7 @@ import { findCollectionDetailBySlug } from "@/db/queries/collections"
 import { ChevronRight } from "lucide-react"
 import { inArray } from "drizzle-orm"
 import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
+import { CollectionViewTracker } from "@/features/analytics/components/CollectionViewTracker"
 
 export async function generateMetadata(props: {
   params: Promise<{ slug: string }>
@@ -89,6 +90,8 @@ export default async function CollectionDetailPage(props: {
 
   return (
     <main className="flex-1 bg-background pt-[72px] md:pt-20">
+      {/* Analytics: fire COLLECTION_VIEW once on mount (consent-gated) */}
+      <CollectionViewTracker collectionId={collection.id} collectionName={collection.name} />
       
       {/* 1. Breadcrumbs */}
       <div className="bg-white py-4 border-b border-neutral-100">

@@ -3,6 +3,7 @@ import { Section } from "@/components/shared/section"
 import { Stack } from "@/components/shared/stack"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { PaymentSuccessTracker } from "@/features/analytics/components/PaymentSuccessTracker"
 
 interface SuccessPageProps {
   searchParams: Promise<{ orderNumber?: string }>
@@ -13,6 +14,8 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
 
   return (
     <Section className="py-24 md:py-32 bg-background flex flex-col items-center justify-center min-h-screen text-center">
+      {/* Analytics: fire ORDER_COMPLETE + PAYMENT_SUCCESS on mount (consent-gated) */}
+      <PaymentSuccessTracker orderId={orderNumber ?? null} />
       <Container className="max-w-md">
         <Stack gap={6} className="items-center">
           <div className="w-16 h-16 rounded-full bg-green-50 border border-green-200 flex items-center justify-center text-green-600 mb-2">

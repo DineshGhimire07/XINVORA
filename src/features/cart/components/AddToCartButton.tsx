@@ -4,20 +4,36 @@ import { useActionState, useEffect } from "react"
 import { addToCartAction } from "@/actions/cart.actions"
 import { Button } from "@/components/ui/button"
 import { ShoppingBag } from "lucide-react"
+import { useAnalytics } from "@/features/analytics/ingestion/tracking-provider"
+import { AnalyticsEvent } from "@/features/analytics/events/registry"
 
 interface AddToCartButtonProps {
   variantId: string
+  productId: string
   inStock: boolean
 }
 
-export function AddToCartButton({ variantId, inStock }: AddToCartButtonProps) {
+export function AddToCartButton({ variantId, productId, inStock }: AddToCartButtonProps) {
   const [state, action, isPending] = useActionState<any, FormData>(addToCartAction, null)
+  const { trackEvent } = useAnalytics()
 
-  // Notify Header to refresh cart badge after successful add
   useEffect(() => {
     if (state?.success) {
+      // Notify Header to refresh cart badge
       window.dispatchEvent(new Event("cart-updated"))
+      // Analytics: CART_ADD — fire after confirmed server success
+      trackEvent(
+        AnalyticsEvent.CART_ADD,
+        {},
+        productId,
+        null,
+        null,
+        null,
+        variantId
+      )
     }
+    // state is the only dep that changes on submission
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state])
 
   return (
@@ -51,4 +67,3 @@ export function AddToCartButton({ variantId, inStock }: AddToCartButtonProps) {
     </form>
   )
 }
-
