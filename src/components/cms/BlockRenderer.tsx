@@ -562,7 +562,7 @@ function CMSBannerBlock({ block }: { block: any }) {
       ? `md:object-[${desktopCustomFocal}]`
       : "md:object-center"
 
-  const containerBaseClass = `relative block w-full overflow-hidden bg-neutral-900 ${
+  const containerBaseClass = `relative block w-full overflow-hidden bg-surface ${
     mobileSizeMode !== "custom" ? mobileClass : ""
   } ${desktopSizeMode !== "custom" ? desktopClass : ""}`
 
@@ -583,6 +583,7 @@ function CMSBannerBlock({ block }: { block: any }) {
           className={`w-full h-full ${mobileFitClass} ${desktopFitClass} ${mobilePosClass} ${desktopPosClass}`}
           loading="lazy"
           decoding="async"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
         />
       </picture>
       <div className="absolute inset-0 bg-black/25 group-hover:bg-black/35 transition-colors duration-500 pointer-events-none" />
