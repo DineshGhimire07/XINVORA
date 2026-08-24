@@ -5,7 +5,7 @@ import { SessionService } from "@/services/session.service"
 import { db } from "@/db/client"
 import { colors } from "@/db/schema"
 import { AdminAuditService } from "@/services/admin.audit.service"
-import { ilike } from "drizzle-orm"
+import { ilike, eq } from "drizzle-orm"
 import { z } from "zod"
 
 const colorSchema = z.object({
@@ -73,6 +73,33 @@ export async function createColorAction(formData: FormData) {
     }
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to create color." }
+  }
+}
+
+export async function deleteColorAction(id: string) {
+  try {
+    const session = await SessionService.requireAdmin()
+
+    const existing = await db.select().from(colors).where(eq(colors.id, id)).limit(1)
+    if (existing.length === 0) {
+      return { success: false, error: "Color not found." }
+    }
+
+    await db.delete(colors).where(eq(colors.id, id))
+
+    await AdminAuditService.logAction({
+      userId: session.id,
+      action: "DELETE",
+      entityType: "COLOR",
+      entityId: id,
+      oldValue: existing[0],
+    })
+
+    revalidatePath("/admin/products")
+    revalidatePath("/admin/products/create")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to delete color." }
   }
 }
 

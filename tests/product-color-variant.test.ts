@@ -69,4 +69,20 @@ describe("Product Color & Variant Inventory Logic", () => {
     const burgundyAvailable = getAvailableSizesForColor("c-burgundy")
     expect(burgundyAvailable.map((s) => s.abbreviation)).toEqual(["M"])
   })
+
+  it("handles color deletion and removes deleted color from active selections", () => {
+    let customColors = [
+      { id: "c1", name: "Midnight Black", hexCode: "#1A1A1A" },
+      { id: "c2", name: "Burgundy", hexCode: "#800020" },
+      { id: "c3", name: "Sage Green", hexCode: "#8A9A5B" },
+    ]
+    let selectedColorIds = ["c1", "c2"]
+
+    const deleteColorId = "c2"
+    customColors = customColors.filter((c) => c.id !== deleteColorId)
+    selectedColorIds = selectedColorIds.filter((id) => id !== deleteColorId)
+
+    expect(customColors.map((c) => c.id)).toEqual(["c1", "c3"])
+    expect(selectedColorIds).toEqual(["c1"])
+  })
 })

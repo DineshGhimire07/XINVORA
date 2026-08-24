@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { createProductAction, updateProductAction, archiveProductAction } from "@/actions/admin/products.actions"
 import { createMaterialAction } from "@/actions/admin/materials.actions"
 import { createSizeAction } from "@/actions/admin/sizes.actions"
-import { createColorAction } from "@/actions/admin/colors.actions"
+import { createColorAction, deleteColorAction } from "@/actions/admin/colors.actions"
 import { createCategoryAction } from "@/actions/admin/categories.actions"
 import { MediaSelector } from "@/components/admin/MediaSelector"
 import AdminProductPicker from "@/components/admin/AdminProductPicker"
@@ -51,6 +51,7 @@ export default function ProductEditor({
   const [newColorName, setNewColorName] = useState("")
   const [newColorHex, setNewColorHex] = useState("#1A1A1A")
   const [isSavingColor, setIsSavingColor] = useState(false)
+  const [isDeletingColorId, setIsDeletingColorId] = useState<string | null>(null)
 
   const handleAddColor = async () => {
     if (!newColorName.trim() || isSavingColor) return
@@ -73,6 +74,28 @@ export default function ProductEditor({
       alert(err.message || "Failed to add color")
     } finally {
       setIsSavingColor(false)
+    }
+  }
+
+  const handleDeleteColor = async (colorId: string, colorName: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm(`Are you sure you want to delete "${colorName}"? This will remove it from available colors.`)) {
+      return
+    }
+    setIsDeletingColorId(colorId)
+    try {
+      const res = await deleteColorAction(colorId)
+      if (res.success) {
+        setCustomColors((prev) => prev.filter((c) => c.id !== colorId))
+        setSelectedColorIds((prev) => prev.filter((id) => id !== colorId))
+      } else {
+        alert(res.error || "Failed to delete color")
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to delete color")
+    } finally {
+      setIsDeletingColorId(null)
     }
   }
 
@@ -621,38 +644,58 @@ export default function ProductEditor({
               {customColors?.map((color) => {
                 const isSelected = selectedColorIds.includes(color.id)
                 return (
-                  <label
+                  <div
                     key={color.id}
-                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-admin-md border text-admin-xs font-medium cursor-pointer transition-all select-none ${
+                    className={`group inline-flex items-center gap-2 px-3 py-1.5 rounded-admin-md border text-admin-xs font-medium transition-all select-none ${
                       isSelected
                         ? "border-admin-primary bg-admin-primary/10 text-admin-text-primary font-bold shadow-xs"
                         : "border-admin-border bg-admin-content/60 text-admin-text-secondary hover:border-admin-primary/50"
                     }`}
                   >
-                    <input
-                      type="checkbox"
-                      name="colorIds"
-                      value={color.id}
-                      checked={isSelected}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedColorIds((prev) => [...prev, color.id])
-                        } else {
-                          setSelectedColorIds((prev) => prev.filter((id) => id !== color.id))
-                        }
-                      }}
-                      className="sr-only"
-                    />
-                    <span
-                      className="w-4 h-4 rounded-full border border-black/20 flex-shrink-0 shadow-2xs"
-                      style={{ backgroundColor: color.hexCode || "#000000" }}
-                      aria-hidden="true"
-                    />
-                    <span>{color.name}</span>
-                    <span className="text-[10px] text-admin-text-secondary/60 font-mono">
-                      {color.hexCode}
-                    </span>
-                  </label>
+                    <label className="inline-flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="colorIds"
+                        value={color.id}
+                        checked={isSelected}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedColorIds((prev) => [...prev, color.id])
+                          } else {
+                            setSelectedColorIds((prev) => prev.filter((id) => id !== color.id))
+                          }
+                        }}
+                        className="sr-only"
+                      />
+                      <span
+                        className="w-4 h-4 rounded-full border border-black/20 flex-shrink-0 shadow-2xs"
+                        style={{ backgroundColor: color.hexCode || "#000000" }}
+                        aria-hidden="true"
+                      />
+                      <span>{color.name}</span>
+                      <span className="text-[10px] text-admin-text-secondary/60 font-mono">
+                        {color.hexCode}
+                      </span>
+                    </label>
+
+                    {/* Delete Color Option */}
+                    <button
+                      type="button"
+                      disabled={isDeletingColorId === color.id}
+                      onClick={(e) => handleDeleteColor(color.id, color.name, e)}
+                      title={`Delete "${color.name}" color`}
+                      className="ml-1 -mr-1 p-0.5 rounded-full hover:bg-red-500/15 text-admin-text-secondary/50 hover:text-red-500 transition-colors opacity-70 group-hover:opacity-100 cursor-pointer"
+                    >
+                      {isDeletingColorId === color.id ? (
+                        <span className="text-[10px] animate-pulse">…</span>
+                      ) : (
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 )
               })}
             </div>
