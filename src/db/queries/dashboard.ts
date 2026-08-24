@@ -1,7 +1,7 @@
 import "server-only"
 import { eq, and, desc, asc, sql, gte, lte, lt, isNull, isNotNull, inArray } from "drizzle-orm"
 import { db } from "../client"
-import { orders, orderItems, users, products, variants, inventory, categories, userSessions, userEvents, searchQueries, collections, backInStockRequests, customerMetrics } from "../schema"
+import { orders, orderItems, users, products, variants, inventory, categories, userSessions, userEvents, searchQueries, collections, backInStockRequests, customerMetrics, productCollections } from "../schema"
 import { unstable_cache } from "next/cache"
 
 // Dashboard data is cached for 5 minutes.
@@ -770,8 +770,8 @@ const _getCollectionRevenue = async (startISO: string, endISO: string) => {
     .from(orderItems)
     .innerJoin(variants, eq(orderItems.variantId, variants.id))
     .innerJoin(products, eq(variants.productId, products.id))
-    .innerJoin(sql`product_collections pc`, sql`pc.product_id = ${products.id}`)
-    .innerJoin(collections, sql`pc.collection_id = ${collections.id}`)
+    .innerJoin(productCollections, eq(products.id, productCollections.productId))
+    .innerJoin(collections, eq(productCollections.collectionId, collections.id))
     .innerJoin(orders, eq(orderItems.orderId, orders.id))
     .where(and(
       gte(orders.createdAt, new Date(startISO)),

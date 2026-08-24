@@ -41,6 +41,15 @@ function getDefaultDateRange() {
   }
 }
 
+async function safeQuery<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await fn()
+  } catch (err) {
+    console.error("CDP Analytics Query error:", err)
+    return fallback
+  }
+}
+
 export default async function AnalyticsPage({
   searchParams,
 }: {
@@ -53,7 +62,7 @@ export default async function AnalyticsPage({
   const startISO = params?.start ?? defaults.startISO
   const endISO = params?.end ?? defaults.endISO
 
-  // All queries run in parallel — analytics must not serially block the page.
+  // All queries run in parallel with safe fallbacks — one query failure will never crash the dashboard
   const [
     // Existing overview widgets (fixed 7-day window, cached separately)
     stats,
@@ -78,26 +87,59 @@ export default async function AnalyticsPage({
     topSearchQueries,
     customerDistribution,
   ] = await Promise.all([
-    getDashboardStats(),
-    getSalesOverviewChart(),
-    getTopProducts(),
-    getConversionRate(),
-    getSessionsByDevice(),
-    getRevenueByCategory(),
-    getNewVsReturningCustomers(),
-    getSalesHeatmap(),
-    getTopReferrers(),
-    getConversionFunnel(),
-    getRevenueSummary(startISO, endISO),
-    getRevenueByDay(startISO, endISO),
-    getSessionSummary(startISO, endISO),
-    getProductSalesTable(startISO, endISO),
-    getCollectionRevenue(startISO, endISO),
-    getUTMAttribution(startISO, endISO),
-    getGeoBreakdown(startISO, endISO),
-    getInventoryWithDemand(),
-    getTopSearchQueries(startISO, endISO),
-    getCustomerValueDistribution(),
+    safeQuery(() => getDashboardStats(), {
+      revenue: { value: 0, change: "0%", isPositive: true },
+      orders: { value: 0, change: "0%", isPositive: true },
+      customers: { value: 0, change: "0%", isPositive: true },
+      aov: { value: 0, change: "0%", isPositive: true },
+    }),
+    safeQuery(() => getSalesOverviewChart(), []),
+    safeQuery(() => getTopProducts(), []),
+    safeQuery(() => getConversionRate(), { value: 0, change: "0%", isPositive: true }),
+    safeQuery(() => getSessionsByDevice(), { data: [], total: 0 }),
+    safeQuery(() => getRevenueByCategory(), []),
+    safeQuery(() => getNewVsReturningCustomers(), {
+      newCustomers: 0,
+      returningCustomers: 0,
+      total: 0,
+      newPercentage: 0,
+      returningPercentage: 0,
+    }),
+    safeQuery(() => getSalesHeatmap(), Array.from({ length: 7 }, () => Array(24).fill(0))),
+    safeQuery(() => getTopReferrers(), []),
+    safeQuery(() => getConversionFunnel(), []),
+    safeQuery(() => getRevenueSummary(startISO, endISO), {
+      gross: 0,
+      net: 0,
+      orderCount: 0,
+      aov: 0,
+      prevGross: 0,
+      prevOrderCount: 0,
+      grossChange: "0%",
+      orderCountChange: "0%",
+    }),
+    safeQuery(() => getRevenueByDay(startISO, endISO), []),
+    safeQuery(() => getSessionSummary(startISO, endISO), {
+      sessions: 0,
+      anonVisitors: 0,
+      customers: 0,
+      returning: 0,
+      newVisitors: 0,
+    }),
+    safeQuery(() => getProductSalesTable(startISO, endISO), []),
+    safeQuery(() => getCollectionRevenue(startISO, endISO), []),
+    safeQuery(() => getUTMAttribution(startISO, endISO), []),
+    safeQuery(() => getGeoBreakdown(startISO, endISO), []),
+    safeQuery(() => getInventoryWithDemand(), []),
+    safeQuery(() => getTopSearchQueries(startISO, endISO), []),
+    safeQuery(() => getCustomerValueDistribution(), {
+      totalCustomers: 0,
+      avgLtv: 0,
+      avgOrders: 0,
+      avgAov: 0,
+      repeatCustomers: 0,
+      repeatRate: 0,
+    }),
   ])
 
   return (
