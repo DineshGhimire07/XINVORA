@@ -45,6 +45,21 @@ ALTER TABLE "user_events"
 ALTER TABLE "user_events"
   ADD COLUMN IF NOT EXISTS "variant_id" UUID;
 
+-- ── 4. search_queries: table creation (Phase 4 — Search Analytics) ───────────
+-- Single source of truth for search intelligence.
+-- Populated by Pipeline 1 on SEARCH events.
+CREATE TABLE IF NOT EXISTS "search_queries" (
+  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  "session_id" VARCHAR(64) NOT NULL,
+  "anonymous_id" VARCHAR(64) NOT NULL,
+  "user_id" UUID REFERENCES "users"("id") ON DELETE SET NULL,
+  "query" VARCHAR(255) NOT NULL,
+  "results_count" INTEGER NOT NULL DEFAULT 0,
+  "clicked_product_id" UUID REFERENCES "products"("id") ON DELETE SET NULL,
+  "converted" BOOLEAN NOT NULL DEFAULT false,
+  "created_at" TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL
+);
+
 -- ── INDEXES ──────────────────────────────────────────────────────────────────
 
 -- user_sessions: anonymous_id + started_at composite
@@ -79,3 +94,11 @@ CREATE INDEX IF NOT EXISTS "event_collection_idx"
 -- Query: Variant-level behavioral analytics (cart abandonment by variant).
 CREATE INDEX IF NOT EXISTS "event_variant_idx"
   ON "user_events" ("variant_id");
+
+-- search_queries: query index for aggregation
+CREATE INDEX IF NOT EXISTS "search_queries_query_idx"
+  ON "search_queries" ("query");
+
+-- search_queries: created_at index for date-bounded queries
+CREATE INDEX IF NOT EXISTS "search_queries_created_at_idx"
+  ON "search_queries" ("created_at");

@@ -25,39 +25,41 @@ const _getDashboardStats = async () => {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
 
-  // 1. Fetch orders stats
-  const [thisWeekOrdersResult] = await db
-    .select({
-      revenue: sql<number>`coalesce(sum(${orders.total}), 0)`,
-      count: sql<number>`count(*)`,
-    })
-    .from(orders)
-    .where(and(gte(orders.createdAt, sevenDaysAgo), isNull(orders.deletedAt)))
-
-  const [lastWeekOrdersResult] = await db
-    .select({
-      revenue: sql<number>`coalesce(sum(${orders.total}), 0)`,
-      count: sql<number>`count(*)`,
-    })
-    .from(orders)
-    .where(and(gte(orders.createdAt, fourteenDaysAgo), lt(orders.createdAt, sevenDaysAgo), isNull(orders.deletedAt)))
+  // Fetch orders and customers stats in parallel
+  const [
+    [thisWeekOrdersResult],
+    [lastWeekOrdersResult],
+    [thisWeekCustomersResult],
+    [lastWeekCustomersResult],
+  ] = await Promise.all([
+    db
+      .select({
+        revenue: sql<number>`coalesce(sum(${orders.total}), 0)`,
+        count: sql<number>`count(*)`,
+      })
+      .from(orders)
+      .where(and(gte(orders.createdAt, sevenDaysAgo), isNull(orders.deletedAt))),
+    db
+      .select({
+        revenue: sql<number>`coalesce(sum(${orders.total}), 0)`,
+        count: sql<number>`count(*)`,
+      })
+      .from(orders)
+      .where(and(gte(orders.createdAt, fourteenDaysAgo), lt(orders.createdAt, sevenDaysAgo), isNull(orders.deletedAt))),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(and(eq(users.role, "CUSTOMER"), isNull(users.deletedAt), lt(users.createdAt, now))),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(and(eq(users.role, "CUSTOMER"), isNull(users.deletedAt), lt(users.createdAt, sevenDaysAgo))),
+  ])
 
   const thisWeekRevenue = Number(thisWeekOrdersResult?.revenue ?? 0)
   const thisWeekOrdersCount = Number(thisWeekOrdersResult?.count ?? 0)
   const lastWeekRevenue = Number(lastWeekOrdersResult?.revenue ?? 0)
   const lastWeekOrdersCount = Number(lastWeekOrdersResult?.count ?? 0)
-
-  // 2. Fetch customer stats (cumulative)
-  const [thisWeekCustomersResult] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(users)
-    .where(and(eq(users.role, "CUSTOMER"), isNull(users.deletedAt), lt(users.createdAt, now)))
-
-  const [lastWeekCustomersResult] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(users)
-    .where(and(eq(users.role, "CUSTOMER"), isNull(users.deletedAt), lt(users.createdAt, sevenDaysAgo)))
-
   const thisWeekCustomersCount = Number(thisWeekCustomersResult?.count ?? 0)
   const lastWeekCustomersCount = Number(lastWeekCustomersResult?.count ?? 0)
 
@@ -612,47 +614,35 @@ const _getSessionSummary = async (startISO: string, endISO: string) => {
   const start = new Date(startISO)
   const end = new Date(endISO)
 
-  const [sessionsRow] = await db
-    .select({ sessions: sql<number>`count(*)` })
-    .from(userSessions)
-    .where(and(gte(userSessions.startedAt, start), lte(userSessions.startedAt, end)))
+  // Single query for sessions, unique anonymous visitors, and authenticated customers
+  const [[summaryRow], [returningRow]] = await Promise.all([
+    db
+      .select({
+        sessions: sql<number>`count(*)`,
+        anon: sql<number>`count(distinct ${userSessions.anonymousId})`,
+        customers: sql<number>`count(distinct ${userSessions.userId})`,
+      })
+      .from(userSessions)
+      .where(and(gte(userSessions.startedAt, start), lte(userSessions.startedAt, end))),
+    // Returning visitors: anonymousId has at least one session BEFORE the start date
+    db
+      .select({ returning: sql<number>`count(distinct s.anonymous_id)` })
+      .from(sql`user_sessions s`)
+      .where(sql`
+        s.started_at BETWEEN ${start} AND ${end}
+        AND s.anonymous_id IS NOT NULL
+        AND EXISTS (
+          SELECT 1 FROM user_sessions prev
+          WHERE prev.anonymous_id = s.anonymous_id
+            AND prev.started_at < ${start}
+        )
+      `),
+  ])
 
-  const [anonRow] = await db
-    .select({ anon: sql<number>`count(distinct ${userSessions.anonymousId})` })
-    .from(userSessions)
-    .where(and(
-      gte(userSessions.startedAt, start),
-      lte(userSessions.startedAt, end),
-      isNotNull(userSessions.anonymousId),
-    ))
-
-  const [authRow] = await db
-    .select({ customers: sql<number>`count(distinct ${userSessions.userId})` })
-    .from(userSessions)
-    .where(and(
-      gte(userSessions.startedAt, start),
-      lte(userSessions.startedAt, end),
-      isNotNull(userSessions.userId),
-    ))
-
-  // Returning visitors: anonymousId has at least one session BEFORE the start date
-  const [returningRow] = await db
-    .select({ returning: sql<number>`count(distinct s.anonymous_id)` })
-    .from(sql`user_sessions s`)
-    .where(sql`
-      s.started_at BETWEEN ${start} AND ${end}
-      AND s.anonymous_id IS NOT NULL
-      AND EXISTS (
-        SELECT 1 FROM user_sessions prev
-        WHERE prev.anonymous_id = s.anonymous_id
-          AND prev.started_at < ${start}
-      )
-    `)
-
-  const sessions = Number(sessionsRow.sessions)
-  const anonVisitors = Number(anonRow.anon)
-  const customers = Number(authRow.customers)
-  const returning = Number(returningRow.returning)
+  const sessions = Number(summaryRow?.sessions ?? 0)
+  const anonVisitors = Number(summaryRow?.anon ?? 0)
+  const customers = Number(summaryRow?.customers ?? 0)
+  const returning = Number(returningRow?.returning ?? 0)
   const newVisitors = Math.max(0, anonVisitors - returning)
 
   return { sessions, anonVisitors, customers, returning, newVisitors }

@@ -25,13 +25,22 @@ export function PaymentSuccessTracker({ orderId }: PaymentSuccessTrackerProps) {
   const { trackEvent } = useAnalytics()
 
   useEffect(() => {
+    // Prevent duplicate tracking on page refresh / revisit
+    if (orderId && typeof window !== "undefined") {
+      const storageKey = `xinvora_order_tracked_${orderId}`
+      if (sessionStorage.getItem(storageKey)) {
+        return
+      }
+      sessionStorage.setItem(storageKey, "1")
+    }
+
     // ORDER_COMPLETE: marks a completed purchase funnel step
     trackEvent(AnalyticsEvent.ORDER_COMPLETE, {}, null, null, orderId ?? null)
     // PAYMENT_SUCCESS: payment provider confirmed
     trackEvent(AnalyticsEvent.PAYMENT_SUCCESS, {}, null, null, orderId ?? null)
     // Fire once on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [orderId])
 
   return null
 }

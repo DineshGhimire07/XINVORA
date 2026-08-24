@@ -36,7 +36,7 @@
  */
 
 import { db } from "@/db/client"
-import { userSessions, userEvents, customerMetrics, recommendationSignals, analyticsDlq, searchQueries } from "@/db/schema"
+import { userSessions, userEvents, customerMetrics, recommendationSignals, analyticsDlq, searchQueries, orders } from "@/db/schema"
 import { eq, and, sql } from "drizzle-orm"
 import { IngestEvent, AnalyticsEvent } from "../events/registry"
 
@@ -270,7 +270,7 @@ async function _updateMetricsIncremental(
     updates.cartCount = Math.max(0, metrics.cartCount - 1)
   } else if (event.eventType === AnalyticsEvent.ORDER_COMPLETE && event.orderId) {
     const order = await tx.query.orders.findFirst({
-      where: eq(sql`id`, event.orderId),
+      where: eq(orders.id, event.orderId),
     })
 
     if (order) {

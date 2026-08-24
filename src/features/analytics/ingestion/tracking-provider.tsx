@@ -110,23 +110,44 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession()
   const { consentState, isLoaded } = useCookieConsent()
 
-  // Track previous userId to detect account switches
+  // Track previous userId to detect account switches and logouts
   const prevUserIdRef = useRef<string | null>(null)
+  const isInitialMountRef = useRef<boolean>(true)
 
-  // ── Account-switch safety: rotate sessionKey when a DIFFERENT user logs in ──
+  // ── Account-switch safety: rotate sessionKey when switching accounts or on logout ──
   useEffect(() => {
     const currentUserId = session?.user?.id ?? null
+
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false
+      prevUserIdRef.current = currentUserId
+      return
+    }
+
     const prevUserId = prevUserIdRef.current
 
-    const isAccountSwitch =
-      prevUserId !== null &&       // there was a previous authenticated user
-      currentUserId !== null &&    // there is a new authenticated user
-      prevUserId !== currentUserId // they are different people
+    // Case 1: Person A logged out (prevUserId !== null && currentUserId === null)
+    // Rotate session key so post-logout guest browsing starts a fresh session.
+    // Case 2: Person B logged in after Person A (prevUserId !== null && currentUserId !== null && prevUserId !== currentUserId)
+    // Rotate session key so Person B gets a fresh session row.
+    // Case 3: Person B logs in after Person A had logged out
+    const lastAuthUser = typeof window !== "undefined" ? localStorage.getItem("xinvora_last_auth_user") : null
+    const isDifferentUser = currentUserId !== null && lastAuthUser !== null && lastAuthUser !== currentUserId
+    const isLogout = prevUserId !== null && currentUserId === null
+    const isDirectAccountSwitch = prevUserId !== null && currentUserId !== null && prevUserId !== currentUserId
 
-    if (isAccountSwitch) {
-      // Generate a fresh session key so Person B starts a clean user_sessions row.
-      // Person A's historical events remain attributed to Person A.
+    if (isLogout || isDirectAccountSwitch || isDifferentUser) {
       rotateSessionKey()
+    }
+
+    if (currentUserId) {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("xinvora_last_auth_user", currentUserId)
+      }
+    } else if (isLogout) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("xinvora_last_auth_user")
+      }
     }
 
     prevUserIdRef.current = currentUserId

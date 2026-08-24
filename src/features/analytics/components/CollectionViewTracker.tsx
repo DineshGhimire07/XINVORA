@@ -10,7 +10,7 @@
  * Consent: trackEvent() internally checks analytics consent before sending.
  */
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useAnalytics } from "@/features/analytics/ingestion/tracking-provider"
 import { AnalyticsEvent } from "@/features/analytics/events/registry"
 
@@ -21,8 +21,12 @@ interface CollectionViewTrackerProps {
 
 export function CollectionViewTracker({ collectionId, collectionName }: CollectionViewTrackerProps) {
   const { trackEvent } = useAnalytics()
+  const lastTrackedIdRef = useRef<string | null>(null)
 
   useEffect(() => {
+    if (lastTrackedIdRef.current === collectionId) return
+    lastTrackedIdRef.current = collectionId
+
     trackEvent(
       AnalyticsEvent.COLLECTION_VIEW,
       { collectionName },
@@ -31,7 +35,7 @@ export function CollectionViewTracker({ collectionId, collectionName }: Collecti
       null,  // orderId
       collectionId
     )
-    // Fire once on mount.
+    // Fire once per collectionId mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collectionId])
 
