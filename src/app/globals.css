@@ -247,7 +247,10 @@
     padding: 0;
     /* Hide scrollbar (keeps scroll) — eliminates right-side gap on full-bleed sections */
     scrollbar-width: none; /* Firefox */
-    overflow-x: hidden;
+    /* overflow-x: clip (not hidden) — 'hidden' on html/body creates a scroll container
+       that breaks touch-scroll on Android Chrome. 'clip' clips visually without
+       creating a scroll container, preserving native vertical scroll. */
+    overflow-x: clip;
     /* Premium font rendering */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -272,7 +275,8 @@
     padding: 0;
     min-height: 100vh;
     min-height: 100svh;
-    overflow-x: hidden;
+    /* overflow-x: clip (not hidden) — see html rule above for explanation */
+    overflow-x: clip;
     scrollbar-width: none; /* Firefox */
     /* Prevent elastic overscroll bounce on iOS/Android — eliminates the
        back-and-forth jitter when reversing scroll direction */
