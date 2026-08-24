@@ -139,3 +139,19 @@ export async function hardDeleteCollectionAction(id: string) {
     return { success: false, error: error.message || "Failed to delete collection" }
   }
 }
+
+export async function bulkCreateCollectionsAction(items: any[]) {
+  try {
+    const session = await SessionService.requireAdmin()
+    const result = await AdminCollectionService.bulkCreateCollections(items, session.id)
+
+    revalidateTag("collections", "default")
+    revalidatePath("/admin/collections")
+    revalidatePath("/collections")
+
+    return { success: true, data: result }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to bulk import collections" }
+  }
+}
+

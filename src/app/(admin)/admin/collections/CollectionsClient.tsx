@@ -1,10 +1,14 @@
 "use client"
 
+import { useState } from "react"
 import { DataTable } from "@/components/admin/ui/DataTable"
 import { StatusBadge } from "@/components/admin/ui/StatusBadge"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { hardDeleteCollectionAction } from "@/actions/admin/collections.actions"
+import { CollectionBulkImportModal } from "@/components/admin/CollectionBulkImportModal"
+import { Download, Upload, Plus } from "lucide-react"
+import { toast } from "sonner"
 
 interface CollectionsClientProps {
   collections: {
@@ -21,6 +25,22 @@ interface CollectionsClientProps {
 
 export function CollectionsClient({ collections }: CollectionsClientProps) {
   const router = useRouter()
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false)
+
+  // Download Header-Only CSV Template (strictly NO sample collection data)
+  const handleDownloadTemplate = () => {
+    const csvHeader = "Name,Slug,Description,Image URL,Image Mobile URL,Banner URL,Sort Order,Is Active,SEO Title,SEO Description,Parent Slug\n"
+    const blob = new Blob([csvHeader], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", "xinvora_collections_template.csv")
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    toast.success("CSV Template downloaded (headers only)")
+  }
 
   const columns = [
     {
@@ -138,11 +158,58 @@ export function CollectionsClient({ collections }: CollectionsClientProps) {
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={collections}
-      onRowClick={handleRowClick}
-      emptyStateText="No collections configured yet."
-    />
+    <div className="space-y-4">
+      {/* Top Action Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-admin-card p-4 rounded-admin-md border border-admin-border">
+        <div className="flex items-center gap-2">
+          <span className="text-admin-sm font-semibold text-admin-text-primary">
+            {collections.length} {collections.length === 1 ? "Collection" : "Collections"}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleDownloadTemplate}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md border border-admin-border bg-admin-content/40 hover:bg-admin-content text-admin-text-primary transition-colors shadow-xs"
+            title="Download blank CSV template with column headers only"
+          >
+            <Download className="w-3.5 h-3.5 text-admin-text-secondary" />
+            <span>Download Template</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsBulkModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md border border-admin-border bg-admin-content/40 hover:bg-admin-content text-admin-text-primary transition-colors shadow-xs"
+            title="Import multiple collections from CSV"
+          >
+            <Upload className="w-3.5 h-3.5 text-admin-text-secondary" />
+            <span>Bulk Import</span>
+          </button>
+
+          <Link
+            href="/admin/collections/new"
+            className="inline-flex items-center gap-1.5 bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 px-4 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md transition-colors shadow-xs"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Collection</span>
+          </Link>
+        </div>
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={collections}
+        onRowClick={handleRowClick}
+        emptyStateText="No collections configured yet."
+      />
+
+      <CollectionBulkImportModal
+        isOpen={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+      />
+    </div>
   )
 }
+
