@@ -122,7 +122,8 @@ export function ProductCard({
               sizes="(max-width: 1024px) 33vw, 25vw"
               priority={priority}
               fetchPriority={priority ? "high" : "auto"}
-              loading={priority ? "eager" : "lazy"}
+              loading="eager"
+              decoding="async"
               className="object-cover object-top pointer-events-none"
             />
           ) : images.length > 0 ? (
@@ -134,7 +135,8 @@ export function ProductCard({
                 sizes="(max-width: 1024px) 33vw, 25vw"
                 priority={priority}
                 fetchPriority={priority ? "high" : "auto"}
-                loading={priority ? "eager" : "lazy"}
+                loading="eager"
+                decoding="async"
                 className={`object-cover object-top pointer-events-none transition-opacity duration-500 ease-out ${
                   !disableHover && images[1] && isDesktopHovered ? "opacity-0" : "opacity-100"
                 }`}
@@ -186,7 +188,8 @@ export function ProductCard({
                   sizes="(max-width: 640px) 50vw, 33vw"
                   priority={priority}
                   fetchPriority={priority ? "high" : "auto"}
-                  loading={priority ? "eager" : "lazy"}
+                  loading="eager"
+                  decoding="async"
                   className="object-cover object-top pointer-events-none"
                 />
               ) : images.length > 0 ? (
@@ -197,7 +200,8 @@ export function ProductCard({
                   sizes="(max-width: 640px) 50vw, 33vw"
                   priority={priority}
                   fetchPriority={priority ? "high" : "auto"}
-                  loading={priority ? "eager" : "lazy"}
+                  loading="eager"
+                  decoding="async"
                   className="object-cover object-top pointer-events-none"
                 />
               ) : (

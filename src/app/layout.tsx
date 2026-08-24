@@ -19,7 +19,6 @@ import { buildRootMetadata } from "@/lib/metadata"
 import { cn } from "@/lib/utils"
 import { SkipToContent } from "@/components/shared/skip-to-content"
 import { PWARegister } from "@/components/pwa/PWARegister"
-import NextTopLoader from "nextjs-toploader"
 import "@/app/globals.css"
 
 // ── Font Loading ──────────────────────────────────────────────────────────────
@@ -93,14 +92,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         )}
       >
         <Providers>
-          <NextTopLoader
-            color="#A48B78"
-            height={2}
-            showSpinner={false}
-            easing="ease"
-            speed={200}
-            shadow={false}
-          />
           <SkipToContent />
           <PWARegister />
           <main id="main-content" className="flex min-h-[100svh] flex-col w-full overflow-x-clip">

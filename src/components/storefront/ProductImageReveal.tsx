@@ -108,7 +108,7 @@ export function ProductImageReveal({
             sizes="(max-width: 640px) 50vw, 33vw"
             priority={priority}
             fetchPriority={priority ? "high" : "auto"}
-            loading={priority ? "eager" : "lazy"}
+            loading="eager"
             decoding="async"
             className="object-cover object-top pointer-events-none select-none"
             draggable={false}
