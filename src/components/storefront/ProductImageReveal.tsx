@@ -68,6 +68,26 @@ export function ProductImageReveal({
     }
   }, [images, updateDots])
 
+  // Auto-reset back to photo 1 when the card scrolls out of viewport
+  React.useEffect(() => {
+    const el = containerRef.current
+    if (!el || !images || images.length <= 1) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting && activeIndexRef.current !== 0) {
+          activeIndexRef.current = 0
+          el.scrollLeft = 0
+          updateDots(0)
+        }
+      },
+      { threshold: 0 }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [images, updateDots])
+
   return (
     <div className="relative w-full h-full overflow-hidden select-none">
       <div
