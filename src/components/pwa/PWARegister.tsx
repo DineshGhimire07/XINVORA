@@ -3,24 +3,32 @@
 import { useEffect } from "react"
 
 /**
- * PWARegister — silently registers the XINVORA service worker.
- * Mounted once in the root layout. No UI rendered.
+ * PWARegister — unregisters any active service worker to unlock native
+ * WebKit PageCache (BFCache) on iOS Safari & Chrome iOS.
  */
 export function PWARegister() {
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return
 
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("/sw.js", { scope: "/" })
-        .catch((err) => {
-          // Silently ignore — SW registration failures are non-fatal
-          if (process.env.NODE_ENV === "development") {
-            console.warn("[XINVORA PWA] Service worker registration failed:", err)
+    // Unregister any active service worker to allow 0ms BFCache restorations
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        registration.unregister()
+      }
+    }).catch(() => {})
+
+    // Clean up old caches
+    if ("caches" in window) {
+      caches.keys().then((keys) => {
+        for (const key of keys) {
+          if (key.startsWith("xinvora-")) {
+            caches.delete(key)
           }
-        })
-    })
+        }
+      }).catch(() => {})
+    }
   }, [])
 
   return null
 }
+
