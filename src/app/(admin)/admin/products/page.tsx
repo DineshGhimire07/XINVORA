@@ -1,7 +1,7 @@
 import { SessionService } from "@/services/session.service"
 import { findAdminProductsPaginated } from "@/db/queries/products"
 import { ProductsClient } from "./ProductsClient"
-import Link from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
 export const metadata = {
@@ -45,24 +45,24 @@ export default async function AdminProductsPage(props: PageProps) {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <a
+          <Link
             href="/admin/products/ai-photography"
             className="inline-flex items-center gap-1.5 justify-center bg-admin-surface border border-admin-border text-admin-text-primary hover:bg-admin-content-hover px-4 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md transition-colors"
           >
             📸 AI Photography
-          </a>
-          <a
+          </Link>
+          <Link
             href="/admin/products/bulk-upload"
             className="inline-flex items-center justify-center bg-admin-surface border border-admin-border text-admin-text-primary hover:bg-admin-content-hover px-4 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md transition-colors"
           >
             ⚡ Bulk Import
-          </a>
-          <a
+          </Link>
+          <Link
             href="/admin/products/create"
             className="inline-flex items-center justify-center bg-admin-primary text-admin-primary-on hover:bg-admin-primary/95 px-4 py-2 text-admin-xs font-bold uppercase tracking-wider rounded-admin-md transition-colors"
           >
             + Add Product
-          </a>
+          </Link>
         </div>
       </div>
 

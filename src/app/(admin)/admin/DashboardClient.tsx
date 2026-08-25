@@ -122,6 +122,7 @@ export function DashboardClient({
           value={formatCurrency(stats.revenue.value)}
           icon={DollarSign}
           accent="purple"
+          href="/admin/cdp"
           trend={{ value: stats.revenue.change, direction: stats.revenue.isPositive ? "up" : "down" }}
         />
         <StatCard
@@ -129,6 +130,7 @@ export function DashboardClient({
           value={stats.orders.value}
           icon={ShoppingBag}
           accent="orange"
+          href="/admin/orders"
           trend={{ value: stats.orders.change, direction: stats.orders.isPositive ? "up" : "down" }}
         />
         <StatCard
@@ -136,6 +138,7 @@ export function DashboardClient({
           value={stats.customers.value}
           icon={Users}
           accent="blue"
+          href="/admin/users"
           trend={{ value: stats.customers.change, direction: stats.customers.isPositive ? "up" : "down" }}
         />
         <StatCard
@@ -143,6 +146,7 @@ export function DashboardClient({
           value={formatCurrency(stats.aov.value)}
           icon={TrendingUp}
           accent="green"
+          href="/admin/cdp"
           trend={{ value: stats.aov.change, direction: stats.aov.isPositive ? "up" : "down" }}
         />
       </Grid>
@@ -219,14 +223,26 @@ export function DashboardClient({
 
         {/* Low stock alerts */}
         <div className="bg-admin-surface border border-admin-border rounded-admin-lg p-admin-card flex flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-admin-status-warning-text" />
-            <h3 className="text-admin-base font-bold text-admin-text-primary">Low Stock Alert</h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-admin-status-warning-text" />
+              <h3 className="text-admin-base font-bold text-admin-text-primary">Low Stock Alert</h3>
+            </div>
+            <a
+              href="/admin/products"
+              className="text-admin-xs font-semibold text-admin-text-secondary hover:text-admin-text-primary transition-colors"
+            >
+              View All &rarr;
+            </a>
           </div>
           <div className="divide-y divide-admin-border">
             {lowStockItems.length > 0 ? (
               lowStockItems.map((item, idx) => (
-                <div key={idx} className="py-3 flex items-center justify-between first:pt-0 last:pb-0 gap-3">
+                <a
+                  key={idx}
+                  href="/admin/products"
+                  className="py-3 flex items-center justify-between first:pt-0 last:pb-0 gap-3 group hover:bg-admin-content/50 px-1 -mx-1 rounded-sm transition-colors"
+                >
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-8 bg-admin-content border border-admin-border rounded-sm overflow-hidden flex-shrink-0 flex items-center justify-center">
                       {item.imageUrl ? (
@@ -236,7 +252,7 @@ export function DashboardClient({
                       )}
                     </div>
                     <div className="flex flex-col gap-0.5 text-left">
-                      <span className="text-admin-sm font-semibold text-admin-text-primary">
+                      <span className="text-admin-sm font-semibold text-admin-text-primary group-hover:text-white transition-colors">
                         {item.productName}
                       </span>
                       <span className="text-admin-xs text-admin-text-secondary font-mono">
@@ -249,7 +265,7 @@ export function DashboardClient({
                       {item.quantity} left
                     </span>
                   </div>
-                </div>
+                </a>
               ))
             ) : (
               <p className="text-admin-sm text-admin-text-secondary py-4 text-center">All inventory levels healthy.</p>

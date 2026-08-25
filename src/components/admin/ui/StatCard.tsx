@@ -1,5 +1,6 @@
 import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 
 interface StatCardProps {
   label: string
@@ -7,10 +8,11 @@ interface StatCardProps {
   icon: LucideIcon
   accent: "purple" | "orange" | "blue" | "green" | "pink"
   trend?: { value: string; direction: "up" | "down" }
+  href?: string
   className?: string
 }
 
-export function StatCard({ label, value, icon: Icon, accent, trend, className }: StatCardProps) {
+export function StatCard({ label, value, icon: Icon, accent, trend, href, className }: StatCardProps) {
   const accentBgClass = {
     purple: "bg-admin-accent-purple-bg text-admin-accent-purple-icon",
     orange: "bg-admin-accent-orange-bg text-admin-accent-orange-icon",
@@ -19,8 +21,14 @@ export function StatCard({ label, value, icon: Icon, accent, trend, className }:
     pink: "bg-admin-accent-pink-bg text-admin-accent-pink-icon",
   }[accent]
 
-  return (
-    <div className={cn("bg-admin-surface border border-admin-border rounded-admin-lg p-admin-card flex flex-col justify-between", className)}>
+  const content = (
+    <div
+      className={cn(
+        "bg-admin-surface border border-admin-border rounded-admin-lg p-admin-card flex flex-col justify-between transition-all duration-150",
+        href && "hover:border-admin-border-strong hover:shadow-md cursor-pointer",
+        className
+      )}
+    >
       <div className="flex items-center justify-between">
         <span className="text-admin-xs text-admin-text-secondary font-semibold tracking-wider uppercase">
           {label}
@@ -51,4 +59,14 @@ export function StatCard({ label, value, icon: Icon, accent, trend, className }:
       </div>
     </div>
   )
+
+  if (href) {
+    return (
+      <Link href={href} className="block group">
+        {content}
+      </Link>
+    )
+  }
+
+  return content
 }
