@@ -25,6 +25,8 @@ import { ProductsInLook } from "@/components/storefront/ProductsInLook"
 import { ProductCard } from "@/components/storefront/ProductCard"
 import { ProductViewTracker } from "@/features/analytics/components/ProductViewTracker"
 
+import { optimizeCloudinaryUrl } from "@/lib/image-optimizer"
+
 export const revalidate = 3600
 
 export async function generateStaticParams() {
@@ -132,6 +134,18 @@ export default async function ProductDetailPage({
 
   return (
     <main className="flex-1 bg-background pt-20 md:pt-28 pb-16">
+      {/* ── High-Priority Preload Hoisting for ALL Product Dress Images ── */}
+      {product.productImages && product.productImages.slice(0, 7).map((img, i) => (
+        <link
+          key={`preload-pdp-${i}`}
+          rel="preload"
+          as="image"
+          href={optimizeCloudinaryUrl(img.url, { width: 1200 })}
+          // @ts-ignore
+          fetchPriority="high"
+        />
+      ))}
+
       {/* Analytics: fire PRODUCT_VIEW once on mount (consent-gated) */}
       <ProductViewTracker productId={product.id} categoryId={product.category?.id ?? null} />
       <Container>
@@ -144,7 +158,7 @@ export default async function ProductDetailPage({
                 <h2 className="text-sm font-display font-medium text-text-primary uppercase tracking-[0.15em] mt-0.5">Shop the Look</h2>
               </div>
             </div>
-            <ShopTheLookCarousel slides={lookbookData.slides} products={lookbookData.products} compact />
+            <ShopTheLookCarousel slides={lookbookData.slides} products={lookbookData.products} compact isDetailPage={true} />
           </section>
         )}
         
@@ -238,7 +252,7 @@ export default async function ProductDetailPage({
           <ProductsInLook products={pairingProducts} />
         )}
 
-        {/* 4. You May Also Love section */}
+        {/* 4. You May Also Love section (Below fold: lazy loaded, low network priority) */}
         {relatedProducts.length > 0 && (
           <Section id="related-products" padding="lg" className="border-t border-border/20">
             <Stack gap={10}>
@@ -256,7 +270,7 @@ export default async function ProductDetailPage({
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-12">
-                {relatedProducts.map((rel: any, idx: number) => {
+                {relatedProducts.map((rel: any) => {
                   const inStock = (rel.variants || []).length > 0
                     ? (rel.variants || []).some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)
                     : true
@@ -266,7 +280,7 @@ export default async function ProductDetailPage({
                       product={rel}
                       itemColors={[]}
                       itemSizes={[]}
-                      priority={idx < 5}
+                      priority={false}
                       inStock={inStock}
                       hideWishlist={false}
                     />

@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
-
 import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
 
 interface ProductGalleryProps {
@@ -18,6 +17,31 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
   // Desktop: main display capped at first 5 (photos 6 & 7 reserved for editorial pair below)
   // Mobile: swipe gallery contains all images up to 7
   const galleryImages = images && images.length > 0 ? images.slice(0, 7) : []
+
+  // High-priority client prefetcher: immediately cache all product views (front, back, details)
+  useEffect(() => {
+    if (typeof window === "undefined" || galleryImages.length === 0) return
+
+    galleryImages.forEach((img) => {
+      // Prefetch full-res desktop view
+      const fullResUrl = optimizeCloudinaryUrl(img.url, { width: 1200 })
+      const img1 = new window.Image()
+      if ("fetchPriority" in img1) {
+        // @ts-ignore
+        img1.fetchPriority = "high"
+      }
+      img1.src = fullResUrl
+
+      // Prefetch mobile & thumbnail views
+      const thumbUrl = optimizeCloudinaryUrl(img.url, { width: 250 })
+      const img2 = new window.Image()
+      if ("fetchPriority" in img2) {
+        // @ts-ignore
+        img2.fetchPriority = "high"
+      }
+      img2.src = thumbUrl
+    })
+  }, [galleryImages])
 
   if (galleryImages.length === 0) {
     return (
@@ -50,7 +74,7 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
 
   return (
     <div className="w-full">
-      {/* ── Mobile View: Premium Scroll-Snap Carousel (Clean, Swipe-Only, No Thumbnails) ── */}
+      {/* ── Mobile View: Premium Scroll-Snap Carousel with Eager Priority Loading for all Angles ── */}
       <div className="relative md:hidden w-full aspect-[3/4] bg-surface rounded-sm overflow-hidden select-none">
         {/* Badge overlay */}
         {badge && (
@@ -75,9 +99,9 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
                 fill
                 sizes="100vw"
                 className="object-cover object-top"
-                priority={idx === 0}
-                fetchPriority={idx === 0 ? "high" : "auto"}
-                loading={idx === 0 ? "eager" : "lazy"}
+                priority={true}
+                fetchPriority="high"
+                loading="eager"
                 placeholder="blur"
                 blurDataURL={SHIMMER_BLUR_DATA_URL}
               />
@@ -100,9 +124,9 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
         )}
       </div>
 
-      {/* ── Desktop View: Main Image + Side Thumbnails (Grid layout) ── */}
+      {/* ── Desktop View: Main Image + Side Thumbnails (All High Priority) ── */}
       <div className="hidden md:grid grid-cols-5 gap-3 w-full items-stretch">
-        {/* Main Image */}
+        {/* Main Image Container with Pre-rendered Views for 0ms Swap Latency */}
         <div className="relative col-span-4 aspect-[3/4] bg-surface rounded-sm overflow-hidden select-none">
           {badge && (
             <div className="absolute top-4 left-4 z-10 pointer-events-none">
@@ -112,22 +136,23 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
             </div>
           )}
 
+          {/* Active Main Photo */}
           <Image
             src={optimizeCloudinaryUrl(activeImage.url, { width: 1200 })}
             alt={activeImage.altText || `${productName} - Photo ${activeIndex + 1}`}
             fill
             sizes="60vw"
-            className="object-cover object-top transition-opacity duration-300"
-            priority={activeIndex === 0}
-            fetchPriority={activeIndex === 0 ? "high" : "auto"}
-            loading={activeIndex === 0 ? "eager" : "lazy"}
+            className="object-cover object-top transition-opacity duration-200"
+            priority={true}
+            fetchPriority="high"
+            loading="eager"
             placeholder="blur"
             blurDataURL={SHIMMER_BLUR_DATA_URL}
             key={activeIndex}
           />
         </div>
 
-        {/* Desktop Vertical Thumbnail Strip */}
+        {/* Desktop Vertical Thumbnail Strip - All High Priority */}
         {desktopThumbnails.length > 0 && (
           <div className="grid grid-rows-4 gap-3 h-full">
             {desktopThumbnails.map(({ img, originalIndex }) => (
@@ -143,7 +168,9 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
                   alt={img.altText || `${productName} - Photo ${originalIndex + 1}`}
                   fill
                   sizes="(max-width: 1024px) 15vw, 10vw"
-                  loading="lazy"
+                  priority={true}
+                  fetchPriority="high"
+                  loading="eager"
                   placeholder="blur"
                   blurDataURL={SHIMMER_BLUR_DATA_URL}
                   className="object-cover object-top"

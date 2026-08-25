@@ -295,9 +295,9 @@ export function ShopTheLookCarousel({
                     fill
                     sizes="(max-width: 768px) 280px, 420px"
                     className="object-cover object-top"
-                    priority={absDist <= 1}
-                    fetchPriority={absDist <= 1 ? "high" : "auto"}
-                    loading={absDist <= 1 ? "eager" : "lazy"}
+                    priority={!compact && !isDetailPage && absDist <= 1}
+                    fetchPriority={!compact && !isDetailPage && absDist <= 1 ? "high" : "low"}
+                    loading={!compact && !isDetailPage && absDist <= 1 ? "eager" : "lazy"}
                     placeholder="blur"
                     blurDataURL={SHIMMER_BLUR_DATA_URL}
                   />

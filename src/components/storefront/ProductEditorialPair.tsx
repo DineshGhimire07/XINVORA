@@ -10,6 +10,7 @@
 
 import { useEffect, useRef } from "react"
 import Image from "next/image"
+import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
 
 interface ProductEditorialPairProps {
   images: { url: string; altText: string | null; position: number }[]
@@ -66,7 +67,7 @@ export function ProductEditorialPair({ images, productName }: ProductEditorialPa
           "
         >
           <Image
-            src={img.url}
+            src={optimizeCloudinaryUrl(img.url, { width: 900 })}
             alt={
               img.altText ||
               `${productName} editorial ${i === 0 ? "front" : "alternate"} view`
@@ -74,7 +75,11 @@ export function ProductEditorialPair({ images, productName }: ProductEditorialPa
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 40vw, 28vw"
             className="object-cover object-top transition-opacity duration-700 ease-out"
-            loading="lazy"
+            priority={true}
+            fetchPriority="high"
+            loading="eager"
+            placeholder="blur"
+            blurDataURL={SHIMMER_BLUR_DATA_URL}
           />
         </div>
       ))}

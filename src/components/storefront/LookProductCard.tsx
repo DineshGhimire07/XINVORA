@@ -9,6 +9,7 @@ import { toggleWishlistByProductIdAction } from "@/actions/wishlist.actions"
 import { ShoppingBag, Heart, Check } from "lucide-react"
 import { useHeaderState } from "@/providers/header-state-provider"
 import { cn } from "@/lib/utils"
+import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
 
 interface PairedProduct {
   id: string
@@ -108,10 +109,14 @@ export function LookProductCard({ product, compact = false }: LookProductCardPro
         <Link href={`/products/${product.slug}`} className="absolute inset-0 z-0" aria-label={product.name}>
           {images.length > 0 ? (
             <Image
-              src={images[0].url}
+              src={optimizeCloudinaryUrl(images[0].url, { width: 600 })}
               alt={images[0].altText || product.name}
               fill
               sizes="(max-width: 768px) 50vw, 25vw"
+              loading="lazy"
+              fetchPriority="low"
+              placeholder="blur"
+              blurDataURL={SHIMMER_BLUR_DATA_URL}
               className="object-cover object-top transition-opacity duration-700 ease-out"
             />
           ) : (
