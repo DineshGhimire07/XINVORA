@@ -431,7 +431,7 @@ export class AdminProductService {
         const targetSpecs: TargetVariantSpec[] = []
 
         const cleanColors = (colorIds || []).filter(Boolean)
-        const activeSizes = Object.keys(sizeStocks || {}).filter(sId => (sizeStocks || {})[sId] > 0 || (matrixStocks && Object.keys(matrixStocks).some(k => k.includes(sId))))
+        const activeSizes = Object.keys(sizeStocks || {})
 
         if (matrixStocks && Object.keys(matrixStocks).length > 0) {
           for (const [key, qty] of Object.entries(matrixStocks)) {
@@ -445,7 +445,7 @@ export class AdminProductService {
             targetSpecs.push({
               colorId: actualColorId,
               sizeId: sId,
-              qty: Number(qty) || 0,
+              qty: Math.max(0, Number(qty) || 0),
               sku: skuParts.join("-").toUpperCase(),
             })
           }
@@ -453,23 +453,23 @@ export class AdminProductService {
           for (const cId of cleanColors) {
             const colorQty = colorStocks?.[cId] !== undefined ? Number(colorStocks[cId]) : undefined
             for (const sId of activeSizes) {
-              const sizeQty = (sizeStocks || {})[sId] || 0
+              const sizeQty = (sizeStocks || {})[sId] !== undefined ? Number((sizeStocks || {})[sId]) : 0
               const qty = colorQty !== undefined ? colorQty : sizeQty
               targetSpecs.push({
                 colorId: cId,
                 sizeId: sId,
-                qty,
+                qty: Math.max(0, qty || 0),
                 sku: `${product.slug}-${cId.slice(0, 4)}-${sId.slice(0, 4)}`.toUpperCase(),
               })
             }
           }
         } else if (cleanColors.length > 0) {
           for (const cId of cleanColors) {
-            const qty = (colorStocks || {})[cId] ?? Number(stockQuantity) ?? 0
+            const qty = colorStocks?.[cId] !== undefined ? Number(colorStocks[cId]) : (Number(stockQuantity) || 0)
             targetSpecs.push({
               colorId: cId,
               sizeId: null,
-              qty,
+              qty: Math.max(0, qty || 0),
               sku: `${product.slug}-${cId.slice(0, 4)}`.toUpperCase(),
             })
           }
@@ -478,13 +478,14 @@ export class AdminProductService {
             targetSpecs.push({
               colorId: null,
               sizeId,
-              qty: Number(qty) || 0,
+              qty: Math.max(0, Number(qty) || 0),
               sku: `${product.slug}-${sizeId.slice(0, 4)}`.toUpperCase(),
             })
           }
         }
 
         const newVariantsToInsert: TargetVariantSpec[] = []
+        const matchedVariantIds = new Set<string>()
 
         for (const spec of targetSpecs) {
           const match = existingVariants.find(v => 
@@ -493,6 +494,7 @@ export class AdminProductService {
           )
 
           if (match) {
+            matchedVariantIds.add(match.id)
             // Update existing variant inventory and price
             const invRow = existingInventories.find(i => i.variantId === match.id)
             if (invRow) {
@@ -518,8 +520,20 @@ export class AdminProductService {
                 })
                 .where(eq(priceBookEntries.variantId, match.id))
             }
-          } else if (spec.qty > 0 || targetSpecs.length <= 5) {
+          } else if (spec.qty >= 0) {
             newVariantsToInsert.push(spec)
+          }
+        }
+
+        // Zero out any existing variants that are no longer selected (removes old/ghost stock)
+        for (const v of existingVariants) {
+          if (!matchedVariantIds.has(v.id)) {
+            await tx.update(inventory)
+              .set({
+                quantity: 0,
+                status: "OUT_OF_STOCK"
+              })
+              .where(eq(inventory.variantId, v.id))
           }
         }
 

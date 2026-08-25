@@ -384,22 +384,45 @@ export async function quickUpdateProductAction(
 
       // Update Stock if provided
       if (updates.stock !== undefined && updates.stock >= 0) {
-        const existingInv = await db
+        const allProductVariants = await db
           .select()
-          .from(inventory)
-          .where(eq(inventory.variantId, variantId))
-          .limit(1)
+          .from(variants)
+          .where(eq(variants.productId, id))
 
-        if (existingInv.length > 0) {
-          await db
-            .update(inventory)
-            .set({ quantity: updates.stock, updatedAt: new Date() })
-            .where(eq(inventory.id, existingInv[0].id))
-        } else {
-          await db.insert(inventory).values({
-            variantId: variantId,
-            quantity: updates.stock,
-          })
+        if (allProductVariants.length > 0) {
+          const primaryVarId = allProductVariants[0].id
+          const existingInv = await db
+            .select()
+            .from(inventory)
+            .where(eq(inventory.variantId, primaryVarId))
+            .limit(1)
+
+          if (existingInv.length > 0) {
+            await db
+              .update(inventory)
+              .set({ 
+                quantity: updates.stock, 
+                status: updates.stock > 0 ? "IN_STOCK" : "OUT_OF_STOCK", 
+                updatedAt: new Date() 
+              })
+              .where(eq(inventory.id, existingInv[0].id))
+          } else {
+            await db.insert(inventory).values({
+              variantId: primaryVarId,
+              quantity: updates.stock,
+              status: updates.stock > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
+            })
+          }
+
+          // Zero out other variants so total product stock matches requested stock exactly
+          if (allProductVariants.length > 1) {
+            const secondaryVarIds = allProductVariants.slice(1).map((v) => v.id)
+            const { inArray } = await import("drizzle-orm")
+            await db
+              .update(inventory)
+              .set({ quantity: 0, status: "OUT_OF_STOCK", updatedAt: new Date() })
+              .where(inArray(inventory.variantId, secondaryVarIds))
+          }
         }
       }
     }

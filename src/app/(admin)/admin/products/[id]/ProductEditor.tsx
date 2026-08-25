@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useRef } from "react"
+import { useState, useTransition, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { createProductAction, updateProductAction, archiveProductAction } from "@/actions/admin/products.actions"
 import { createMaterialAction } from "@/actions/admin/materials.actions"
@@ -54,6 +54,27 @@ export default function ProductEditor({
   const [newColorHex, setNewColorHex] = useState("#1A1A1A")
   const [isSavingColor, setIsSavingColor] = useState(false)
   const [isDeletingColorId, setIsDeletingColorId] = useState<string | null>(null)
+
+  // ── Real-time Stock Management State ──
+  const [colorStockMap, setColorStockMap] = useState<Record<string, number>>(() => {
+    return product?.colorInventories || {}
+  })
+  const [sizeStockMap, setSizeStockMap] = useState<Record<string, number>>(() => {
+    return product?.sizeInventories || {}
+  })
+  const [baseStockVal, setBaseStockVal] = useState<number>(product?.stockQuantity || 0)
+
+  // Live Auto-synced Total Stock (Equal to sum of active colorways or sizes)
+  const computedTotalStock = useMemo(() => {
+    if (selectedColorIds.length > 0) {
+      return selectedColorIds.reduce((sum, cId) => sum + (colorStockMap[cId] ?? 0), 0)
+    }
+    const sizeKeys = Object.keys(sizeStockMap)
+    if (sizeKeys.length > 0 && sizeKeys.some((k) => (sizeStockMap[k] ?? 0) > 0)) {
+      return sizeKeys.reduce((sum, sId) => sum + (sizeStockMap[sId] ?? 0), 0)
+    }
+    return baseStockVal
+  }, [selectedColorIds, colorStockMap, sizeStockMap, baseStockVal])
 
   const handleAddColor = async () => {
     if (!newColorName.trim() || isSavingColor) return
@@ -550,18 +571,59 @@ export default function ProductEditor({
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="stockQuantity" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
-                    {product ? "Adjust Stock (+/-)" : "Stock Quantity"}
-                  </label>
-                  <input
-                    id="stockQuantity"
-                    name="stockQuantity"
-                    type="number"
-                    defaultValue={0}
-                    required
-                    className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
-                  />
-                  {product && <span className="text-admin-xs text-admin-text-secondary mt-0.5">Current Stock: {product.stockQuantity || 0}</span>}
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="stockQuantity" className="text-admin-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+                      Total Stock Quantity
+                    </label>
+                    {selectedColorIds.length > 0 ? (
+                      <span className="text-[10px] font-bold text-admin-status-success-text bg-admin-status-success-bg px-2 py-0.5 rounded-sm">
+                        Auto-synced ({selectedColorIds.length} Colors)
+                      </span>
+                    ) : Object.keys(sizeStockMap).some((k) => (sizeStockMap[k] ?? 0) > 0) ? (
+                      <span className="text-[10px] font-bold text-admin-status-success-text bg-admin-status-success-bg px-2 py-0.5 rounded-sm">
+                        Auto-synced (Sizes)
+                      </span>
+                    ) : null}
+                  </div>
+                  {selectedColorIds.length > 0 || Object.keys(sizeStockMap).some((k) => (sizeStockMap[k] ?? 0) > 0) ? (
+                    <div className="relative">
+                      <input
+                        id="stockQuantityDisplay"
+                        type="number"
+                        readOnly
+                        value={computedTotalStock}
+                        className="w-full px-3.5 py-2 bg-admin-content/70 border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md cursor-not-allowed font-bold"
+                      />
+                      <input type="hidden" name="stockQuantity" value={computedTotalStock} />
+                    </div>
+                  ) : (
+                    <input
+                      id="stockQuantity"
+                      name="stockQuantity"
+                      type="number"
+                      min="0"
+                      value={baseStockVal}
+                      onChange={(e) => setBaseStockVal(Math.max(0, parseInt(e.target.value) || 0))}
+                      required
+                      className="px-3.5 py-2 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-md focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all font-semibold"
+                    />
+                  )}
+                  <div className="flex items-center justify-between text-admin-xs text-admin-text-secondary mt-0.5">
+                    <span>Live Total Stock: <strong className="text-admin-text-primary">{computedTotalStock} units</strong></span>
+                    {selectedColorIds.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const zeroed: Record<string, number> = {}
+                          selectedColorIds.forEach((cId) => { zeroed[cId] = 0 })
+                          setColorStockMap(zeroed)
+                        }}
+                        className="text-[10px] text-red-500 hover:text-red-600 underline font-semibold"
+                      >
+                        Reset All Colors to 0
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -747,21 +809,39 @@ export default function ProductEditor({
             {/* Sizes Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               {customSizes?.filter(s => s.category === "CLOTHING" || s.category === "ALL" || !s.category).map((size) => {
-                const isColorMatrixActive = selectedColorIds.length > 0
+                const currentSizeStock = sizeStockMap[size.id] ?? product?.sizeInventories?.[size.id] ?? 0
                 return (
-                  <div key={size.id} className="flex flex-col gap-1 bg-admin-card border border-admin-border p-2.5 rounded-admin-md">
-                    <label htmlFor={`sizeStock_${size.id}`} className="text-admin-xs font-bold text-admin-text-primary truncate" title={size.name}>
-                      Size {size.name}
-                    </label>
+                  <div key={size.id} className="flex flex-col gap-1.5 bg-admin-card border border-admin-border p-2.5 rounded-admin-md hover:border-admin-border-strong transition-colors">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor={`sizeStock_${size.id}`} className="text-admin-xs font-bold text-admin-text-primary truncate" title={size.name}>
+                        Size {size.name}
+                      </label>
+                      {currentSizeStock > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSizeStockMap((prev) => ({ ...prev, [size.id]: 0 }))}
+                          title="Clear size stock to 0"
+                          className="text-[9px] text-red-500 hover:text-red-600 font-semibold"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
                     <input
                       id={`sizeStock_${size.id}`}
-                      name={`sizeStock_${size.id}`}
                       type="number"
                       min="0"
-                      defaultValue={product?.sizeInventories?.[size.id] || 0}
-                      className="px-2.5 py-1 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-sm focus:outline-none focus:border-admin-border-strong transition-all"
+                      value={currentSizeStock}
+                      onChange={(e) => {
+                        const val = Math.max(0, parseInt(e.target.value) || 0)
+                        setSizeStockMap((prev) => ({ ...prev, [size.id]: val }))
+                      }}
+                      className="px-2.5 py-1 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-sm focus:outline-none focus:border-admin-primary focus:ring-1 focus:ring-admin-primary font-bold transition-all"
                     />
-                    {product && <span className="text-[10px] text-admin-text-secondary">Current: {product.sizeInventories?.[size.id] || 0}</span>}
+                    <input type="hidden" name={`sizeStock_${size.id}`} value={currentSizeStock} />
+                    <span className="text-[10px] text-admin-text-secondary">
+                      Stock: <strong className={currentSizeStock > 0 ? "text-admin-text-primary" : "text-neutral-500"}>{currentSizeStock}</strong>
+                    </span>
                   </div>
                 )
               })}
@@ -772,24 +852,54 @@ export default function ProductEditor({
           {selectedColorIds.length > 0 && (
             <div className="space-y-3 bg-admin-card p-4 rounded-admin-md border border-admin-border">
               <div className="flex items-center justify-between border-b border-admin-border pb-2">
-                <span className="text-admin-xs font-bold uppercase tracking-wider text-admin-text-primary">
-                  Per-Color Stock Breakdown (PDP Swatch Matrix)
-                </span>
-                <span className="text-[11px] text-admin-text-secondary">
-                  Specify stock for each active colorway
-                </span>
+                <div>
+                  <span className="text-admin-xs font-bold uppercase tracking-wider text-admin-text-primary">
+                    Per-Color Stock Breakdown (PDP Swatch Matrix)
+                  </span>
+                  <p className="text-[11px] text-admin-text-secondary">
+                    Total: <strong className="text-admin-text-primary">{computedTotalStock} units</strong> across {selectedColorIds.length} colorway{selectedColorIds.length === 1 ? "" : "s"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const zeroed: Record<string, number> = { ...colorStockMap }
+                      selectedColorIds.forEach((cId) => { zeroed[cId] = 0 })
+                      setColorStockMap(zeroed)
+                    }}
+                    className="text-[10px] px-2 py-1 bg-admin-content border border-admin-border text-admin-text-secondary hover:text-red-500 rounded font-medium transition-colors"
+                  >
+                    Clear All (0)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const quick = prompt("Enter stock quantity to set for ALL active colors:", "5")
+                      if (quick !== null) {
+                        const num = Math.max(0, parseInt(quick) || 0)
+                        const updated: Record<string, number> = { ...colorStockMap }
+                        selectedColorIds.forEach((cId) => { updated[cId] = num })
+                        setColorStockMap(updated)
+                      }
+                    }}
+                    className="text-[10px] px-2 py-1 bg-admin-content border border-admin-border text-admin-text-primary hover:bg-admin-content-hover rounded font-medium transition-colors"
+                  >
+                    Set All to…
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
                 {selectedColorIds.map((cId) => {
                   const colorObj = customColors.find((c) => c.id === cId)
                   if (!colorObj) return null
-                  const currentStock = product?.colorInventories?.[cId] ?? product?.matrixInventories?.[cId] ?? 0
+                  const currentStock = colorStockMap[cId] ?? product?.colorInventories?.[cId] ?? product?.matrixInventories?.[cId] ?? 0
                   return (
-                    <div key={cId} className="flex items-center justify-between gap-3 p-3 rounded-admin-md border border-admin-border bg-admin-content/30">
+                    <div key={cId} className="flex items-center justify-between gap-3 p-3 rounded-admin-md border border-admin-border bg-admin-content/30 hover:border-admin-border-strong transition-colors">
                       <div className="flex items-center gap-2.5">
                         <span
-                          className="w-5 h-5 rounded-full border border-black/20 flex-shrink-0 shadow-2xs"
+                          className="w-6 h-6 rounded-full border border-black/20 flex-shrink-0 shadow-2xs"
                           style={{ backgroundColor: colorObj.hexCode || "#000000" }}
                         />
                         <div>
@@ -798,20 +908,34 @@ export default function ProductEditor({
                         </div>
                       </div>
 
-                      <div className="flex flex-col items-end gap-0.5">
-                        <input
-                          type="number"
-                          min="0"
-                          name={`colorStock_${cId}`}
-                          defaultValue={currentStock}
-                          placeholder="Qty"
-                          className="w-20 px-2 py-1 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-sm focus:outline-none focus:border-admin-border-strong text-right font-medium"
-                        />
-                        {product && (
-                          <span className="text-[9px] text-admin-text-secondary">
-                            Stock: {currentStock}
-                          </span>
-                        )}
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            min="0"
+                            value={currentStock}
+                            onChange={(e) => {
+                              const val = Math.max(0, parseInt(e.target.value) || 0)
+                              setColorStockMap((prev) => ({ ...prev, [cId]: val }))
+                            }}
+                            placeholder="0"
+                            className="w-20 px-2 py-1 bg-admin-content border border-admin-border text-admin-text-primary text-admin-sm rounded-admin-sm focus:outline-none focus:border-admin-primary focus:ring-1 focus:ring-admin-primary text-right font-bold transition-all"
+                          />
+                          <input type="hidden" name={`colorStock_${cId}`} value={currentStock} />
+                          {currentStock > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setColorStockMap((prev) => ({ ...prev, [cId]: 0 }))}
+                              title="Clear stock to 0"
+                              className="px-1.5 py-1 text-[10px] bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 rounded-xs font-bold transition-colors"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-admin-text-secondary">
+                          Stock: <strong className={currentStock > 0 ? "text-admin-text-primary" : "text-red-500 font-bold"}>{currentStock}</strong>
+                        </span>
                       </div>
                     </div>
                   )

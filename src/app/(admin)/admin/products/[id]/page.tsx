@@ -77,11 +77,13 @@ export default async function AdminProductEditorPage(props: PageProps) {
     const colorInventories: Record<string, number> = {}
     const matrixInventories: Record<string, number> = {}
     const colorIdsSet = new Set<string>()
+    let totalStockSum = 0
 
     for (const v of allVariants) {
       if (v.colorId) colorIdsSet.add(v.colorId)
       const inv = await db.select().from(inventory).where(eq(inventory.variantId, v.id)).limit(1)
       const qty = inv.length > 0 ? inv[0].quantity : 0
+      totalStockSum += qty
 
       if (v.colorId && v.sizeId) {
         matrixInventories[`${v.colorId}_${v.sizeId}`] = qty
@@ -92,6 +94,10 @@ export default async function AdminProductEditorPage(props: PageProps) {
       } else if (v.colorId) {
         colorInventories[v.colorId] = qty
       }
+    }
+
+    if (allVariants.length > 0) {
+      stockQuantity = totalStockSum
     }
 
     const imageRolesMap: Record<string, string> = {}
