@@ -2,7 +2,7 @@ import "server-only"
 import { db } from "@/db/client"
 import { auditLogs } from "@/db/schema/audit-logs"
 
-export type AuditAction = "CREATE" | "UPDATE" | "DELETE" | "PUBLISH" | "ARCHIVE" | "RESTORE"
+export type AuditAction = "CREATE" | "UPDATE" | "DELETE" | "PUBLISH" | "ARCHIVE" | "RESTORE" | "BULK_UPDATE" | "CLEAN_SYNC"
 export type AuditEntityType = "PRODUCT" | "VARIANT" | "INVENTORY" | "CATEGORY" | "COLLECTION" | "BRAND" | "MATERIAL" | "COLOR" | "SIZE" | "COUPON" | "ORDER" | "USER" | "CMS_PAGE" | "CMS_SECTION" | "CMS_BLOCK" | "MEDIA" | "NAVIGATION_MENU" | "MENU_ITEM" | "ANNOUNCEMENT" | "HOMEPAGE_SETTINGS" | "TAG" | "ATTRIBUTE" | "JOURNAL" | "JOURNAL_CATEGORY" | "JOURNAL_TAG" | "JOURNAL_REVISION"
 
 export class AdminAuditService {

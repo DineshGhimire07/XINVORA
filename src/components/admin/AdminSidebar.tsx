@@ -19,8 +19,9 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  LucideIcon,
+  Boxes,
   Globe,
+  type LucideIcon,
 } from "lucide-react"
 
 interface SubItem {
@@ -53,6 +54,7 @@ const navItems: NavItem[] = [
     icon: ShoppingBag,
     items: [
       { name: "All Products", href: "/admin/products" },
+      { name: "Master Inventory", href: "/admin/inventory" },
       { name: "AI Photography", href: "/admin/products/ai-photography" },
       { name: "Bulk Import", href: "/admin/products/bulk-upload" },
       { name: "Media Library", href: "/admin/media" },
@@ -60,9 +62,9 @@ const navItems: NavItem[] = [
       { name: "Tags", href: "/admin/tags" },
       { name: "Brands", href: "/admin/brands" },
       { name: "Attributes", href: "/admin/attributes" },
-      { name: "Inventory Matrix", href: "/admin/inventory" },
     ],
   },
+  { name: "Master Inventory", href: "/admin/inventory", icon: Boxes },
   { name: "Photography Studio", href: "/admin/products/ai-photography", icon: Camera },
   { name: "Collections", href: "/admin/collections", icon: Layers },
   {

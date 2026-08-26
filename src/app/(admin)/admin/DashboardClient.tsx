@@ -52,6 +52,8 @@ interface DashboardClientProps {
     sku: string
     quantity: number
     imageUrl: string | null
+    color?: string | null
+    size?: string | null
   }[]
 }
 
@@ -229,7 +231,7 @@ export function DashboardClient({
               <h3 className="text-admin-base font-bold text-admin-text-primary">Low Stock Alert</h3>
             </div>
             <a
-              href="/admin/products"
+              href="/admin/inventory?status=LOW_STOCK"
               className="text-admin-xs font-semibold text-admin-text-secondary hover:text-admin-text-primary transition-colors"
             >
               View All &rarr;
@@ -240,7 +242,7 @@ export function DashboardClient({
               lowStockItems.map((item, idx) => (
                 <a
                   key={idx}
-                  href="/admin/products"
+                  href={`/admin/inventory?search=${encodeURIComponent(item.sku)}`}
                   className="py-3 flex items-center justify-between first:pt-0 last:pb-0 gap-3 group hover:bg-admin-content/50 px-1 -mx-1 rounded-sm transition-colors"
                 >
                   <div className="flex items-center gap-3">
@@ -255,9 +257,11 @@ export function DashboardClient({
                       <span className="text-admin-sm font-semibold text-admin-text-primary group-hover:text-white transition-colors">
                         {item.productName}
                       </span>
-                      <span className="text-admin-xs text-admin-text-secondary font-mono">
-                        SKU: {item.sku}
-                      </span>
+                      <div className="flex items-center gap-2 text-admin-xs text-admin-text-secondary font-mono">
+                        <span>SKU: {item.sku}</span>
+                        {item.color && <span>• {item.color}</span>}
+                        {item.size && <span>• Size {item.size}</span>}
+                      </div>
                     </div>
                   </div>
                   <div className="text-right shrink-0">

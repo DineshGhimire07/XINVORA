@@ -209,10 +209,13 @@ export const getOrdersByStatus = unstable_cache(
 )
 
 const _getLowStockAlert = async () => {
+  const { colors, sizes } = await import("../schema")
   return await db
     .select({
       id: variants.id,
       productName: products.name,
+      color: colors.name,
+      size: sizes.name,
       sku: variants.sku,
       quantity: inventory.quantity,
       imageUrl: sql<string>`(
@@ -226,10 +229,14 @@ const _getLowStockAlert = async () => {
     .from(inventory)
     .innerJoin(variants, eq(inventory.variantId, variants.id))
     .innerJoin(products, eq(variants.productId, products.id))
+    .leftJoin(colors, eq(variants.colorId, colors.id))
+    .leftJoin(sizes, eq(variants.sizeId, sizes.id))
     .where(
       and(
         sql`${inventory.quantity} <= ${inventory.lowStockThreshold}`,
-        isNull(variants.deletedAt)
+        isNull(variants.deletedAt),
+        isNull(products.deletedAt),
+        eq(products.status, "PUBLISHED" as any)
       )
     )
     .orderBy(asc(inventory.quantity))
