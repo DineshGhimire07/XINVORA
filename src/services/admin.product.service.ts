@@ -431,7 +431,8 @@ export class AdminProductService {
         const targetSpecs: TargetVariantSpec[] = []
 
         const cleanColors = (colorIds || []).filter(Boolean)
-        const activeSizes = Object.keys(sizeStocks || {})
+        const activeSizes = Object.keys(sizeStocks || {}).filter(sId => (Number(sizeStocks?.[sId]) > 0))
+        const hasColorStocks = cleanColors.some(cId => colorStocks?.[cId] !== undefined)
 
         if (matrixStocks && Object.keys(matrixStocks).length > 0) {
           for (const [key, qty] of Object.entries(matrixStocks)) {
@@ -449,16 +450,14 @@ export class AdminProductService {
               sku: skuParts.join("-").toUpperCase(),
             })
           }
-        } else if (cleanColors.length > 0 && activeSizes.length > 0) {
+        } else if (cleanColors.length > 0 && activeSizes.length > 0 && !hasColorStocks) {
           for (const cId of cleanColors) {
-            const colorQty = colorStocks?.[cId] !== undefined ? Number(colorStocks[cId]) : undefined
             for (const sId of activeSizes) {
               const sizeQty = (sizeStocks || {})[sId] !== undefined ? Number((sizeStocks || {})[sId]) : 0
-              const qty = colorQty !== undefined ? colorQty : sizeQty
               targetSpecs.push({
                 colorId: cId,
                 sizeId: sId,
-                qty: Math.max(0, qty || 0),
+                qty: Math.max(0, sizeQty || 0),
                 sku: `${product.slug}-${cId.slice(0, 4)}-${sId.slice(0, 4)}`.toUpperCase(),
               })
             }
@@ -473,13 +472,14 @@ export class AdminProductService {
               sku: `${product.slug}-${cId.slice(0, 4)}`.toUpperCase(),
             })
           }
-        } else if (sizeStocks && Object.keys(sizeStocks).length > 0) {
-          for (const [sizeId, qty] of Object.entries(sizeStocks)) {
+        } else if (activeSizes.length > 0) {
+          for (const sId of activeSizes) {
+            const qty = (sizeStocks || {})[sId] !== undefined ? Number((sizeStocks || {})[sId]) : 0
             targetSpecs.push({
               colorId: null,
-              sizeId,
-              qty: Math.max(0, Number(qty) || 0),
-              sku: `${product.slug}-${sizeId.slice(0, 4)}`.toUpperCase(),
+              sizeId: sId,
+              qty: Math.max(0, qty || 0),
+              sku: `${product.slug}-${sId.slice(0, 4)}`.toUpperCase(),
             })
           }
         }
@@ -495,20 +495,29 @@ export class AdminProductService {
 
           if (match) {
             matchedVariantIds.add(match.id)
+            // Restore variant if it was previously soft-deleted
+            if (match.deletedAt) {
+              await tx.update(variants)
+                .set({ deletedAt: null })
+                .where(eq(variants.id, match.id))
+            }
+
             // Update existing variant inventory and price
             const invRow = existingInventories.find(i => i.variantId === match.id)
             if (invRow) {
               await tx.update(inventory)
                 .set({
                   quantity: spec.qty,
-                  status: spec.qty > 0 ? "IN_STOCK" : "OUT_OF_STOCK"
+                  status: spec.qty > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
+                  updatedAt: new Date(),
                 })
                 .where(eq(inventory.variantId, match.id))
             } else {
               await tx.insert(inventory).values({
                 variantId: match.id,
                 quantity: spec.qty,
-                status: spec.qty > 0 ? "IN_STOCK" : "OUT_OF_STOCK"
+                status: spec.qty > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
+                updatedAt: new Date(),
               })
             }
 
@@ -525,13 +534,18 @@ export class AdminProductService {
           }
         }
 
-        // Zero out any existing variants that are no longer selected (removes old/ghost stock)
+        // Soft-delete any existing variants that are no longer selected (removes them completely from Master Inventory)
         for (const v of existingVariants) {
           if (!matchedVariantIds.has(v.id)) {
+            await tx.update(variants)
+              .set({ deletedAt: new Date() })
+              .where(eq(variants.id, v.id))
+
             await tx.update(inventory)
               .set({
                 quantity: 0,
-                status: "OUT_OF_STOCK"
+                status: "OUT_OF_STOCK",
+                updatedAt: new Date(),
               })
               .where(eq(inventory.variantId, v.id))
           }
