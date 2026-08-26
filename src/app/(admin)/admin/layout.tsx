@@ -3,8 +3,6 @@ import { SessionService } from "@/services/session.service"
 import { AdminSidebar } from "@/components/admin/AdminSidebar"
 import { AdminTopbar } from "@/components/admin/AdminTopbar"
 
-export const dynamic = "force-dynamic"
-
 export const metadata: Metadata = {
   title: "Admin Dashboard | XINVORA",
   robots: "noindex, nofollow", // Prevent indexing of admin pages

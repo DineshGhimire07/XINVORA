@@ -26,25 +26,20 @@ const queryClient =
     fetch_types: false,    // Skip pg_catalog type round-trip on connect (saves 1 RTT)
 
     // ── Connection limits ──────────────────────────────────────────────────
-    // Supabase pooler (pgBouncer) has a hard connection cap shared across ALL
-    // Vercel instances. max:10 per instance × many concurrent instances = pool
-    // exhaustion → CONNECT_TIMEOUT. Keep this low (2-3 per instance).
-    max: 3,
+    // Allow up to 10 connections so Promise.all parallel queries (dashboard,
+    // inventory, products) execute concurrently without waiting in queue.
+    max: 10,
 
     // ── Connection lifetime ───────────────────────────────────────────────
-    // Supabase aggressively recycles pooler connections. 30-min lifetime causes
-    // "Broken pipe" when Supabase kills the connection server-side before we do.
-    // 60s lifetime means we recycle proactively before Supabase can kill us.
-    max_lifetime: 60,
+    // Keep connections alive for warm reuse across consecutive navigations.
+    max_lifetime: 120,
 
     // ── Idle timeout ──────────────────────────────────────────────────────
-    // Release idle connections quickly in serverless — each warm instance
-    // holding idle connections contributes to pool exhaustion.
-    idle_timeout: 5,
+    // Allow connections to stay warm during active user sessions.
+    idle_timeout: 20,
 
     // ── Connect timeout ───────────────────────────────────────────────────
     // Fail fast if pooler is unreachable rather than holding the request open.
-    // 10s is generous enough for Asia-Pacific latency while not stalling SSR.
     connect_timeout: 10,
   })
 

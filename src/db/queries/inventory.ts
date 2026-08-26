@@ -6,9 +6,10 @@
  */
 
 import "server-only"
-import { eq } from "drizzle-orm"
+import { eq, sql, and, isNull, or, ilike, desc, asc } from "drizzle-orm"
 import { db } from "../client"
-import { inventory } from "../schema"
+import { inventory, products, variants, colors, sizes, productImages, categories, priceBookEntries, priceBooks } from "../schema"
+import { unstable_cache } from "next/cache"
 
 /**
  * Fetch the raw inventory details for a specific Variant ID.
@@ -41,10 +42,7 @@ export async function getAvailableStock(variantId: string): Promise<number> {
 /**
  * Fetch inventory summary statistics for the admin dashboard/inventory KPI cards.
  */
-export async function getInventoryStats() {
-  const { sql, and, isNull } = await import("drizzle-orm")
-  const { products, variants, inventory } = await import("../schema")
-
+const _getInventoryStats = async () => {
   const [stats] = await db
     .select({
       totalVariants: sql<number>`count(distinct ${variants.id})`,
@@ -66,6 +64,12 @@ export async function getInventoryStats() {
   }
 }
 
+export const getInventoryStats = unstable_cache(
+  _getInventoryStats,
+  ["inventory-stats"],
+  { tags: ["inventory", "dashboard"], revalidate: 60 }
+)
+
 /**
  * Fetch inventory data for the admin panel with pagination.
  * Joins with variants, products, categories, colors, sizes, and price book entries.
@@ -81,9 +85,6 @@ export async function findAdminInventoryPaginated(
     sortOrder?: "asc" | "desc"
   } = {}
 ) {
-  const { sql, desc, asc, and, or, ilike, isNull, eq } = await import("drizzle-orm")
-  const { products, variants, colors, sizes, productImages, categories, priceBookEntries, priceBooks } = await import("../schema")
-  
   const page = options.page || 1
   const limit = options.limit || 30
   const offset = (page - 1) * limit
