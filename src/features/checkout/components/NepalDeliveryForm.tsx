@@ -335,7 +335,7 @@ export function NepalDeliveryForm({
                 <input
                   id="fullName"
                   {...register("fullName")}
-                  placeholder="Dinesh Ghimire"
+                  placeholder="Your Name"
                   autoComplete="name"
                   className={cn(inputClass, errors.fullName && "border-error focus:border-error focus:ring-error/20")}
                 />
