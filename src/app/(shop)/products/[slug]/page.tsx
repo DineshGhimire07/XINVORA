@@ -10,6 +10,7 @@ import { ProductTrustGrid } from "@/components/storefront/ProductTrustGrid"
 import { ProductInstagramCard } from "@/components/storefront/ProductInstagramCard"
 import { ProductTryOnGuide } from "@/components/storefront/ProductTryOnGuide"
 import { ProductEditorialPair } from "@/components/storefront/ProductEditorialPair"
+import { ProductShareButton } from "@/components/storefront/ProductShareButton"
 import { WishlistToggleIcon } from "@/components/shop/WishlistToggleIcon"
 import Link from "next/link"
 import Image from "next/image"
@@ -187,12 +188,21 @@ export default async function ProductDetailPage({
                 
                 {/* Headers */}
                 <div className="flex flex-col gap-2.5">
-                  {/* Category / Subcategory Label in small caps */}
-                  <span className="text-[10px] font-bold tracking-[0.2em] text-accent uppercase select-none">
-                    {parentCategory 
-                      ? `${parentCategory.name} / ${product.category?.name}` 
-                      : product.category?.name || "CATALOGUE"}
-                  </span>
+                  {/* Category / Subcategory Label in small caps & Subtle Share Button */}
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-[10px] font-bold tracking-[0.2em] text-accent uppercase select-none">
+                      {parentCategory 
+                        ? `${parentCategory.name} / ${product.category?.name}` 
+                        : product.category?.name || "CATALOGUE"}
+                    </span>
+                    <ProductShareButton
+                      productName={product.name}
+                      categoryName={product.category?.name}
+                      imageUrl={product.productImages?.[0]?.url}
+                      shortDescription={product.shortDescription || undefined}
+                      variant="header"
+                    />
+                  </div>
                   
                   <h1 className="text-[2.25rem] font-display text-text-primary leading-tight tracking-tight uppercase font-light">
                     {product.name}
