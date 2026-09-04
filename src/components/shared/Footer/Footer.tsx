@@ -21,7 +21,7 @@ export async function Footer() {
   const contactSettings = settings.store_contact
   
   const storeName = generalSettings?.storeName || "XINVORA"
-  const tagline = generalSettings?.storeTagline || "Designed with intention. Made to endure. We create premium, quiet luxury apparel and furniture objects built for daily life."
+  const tagline = generalSettings?.storeTagline || "Designed with intention. Made to endure. We create premium, quiet luxury apparel and lifestyle objects built for daily life."
   const socialLinks = contactSettings?.socialLinks
 
   return (

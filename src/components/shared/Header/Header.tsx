@@ -49,7 +49,6 @@ const shopMegaMenu = {
     { name: "Wall Art", href: "/collections/wall-decor" },
     { name: "Candles", href: "/search?category=candles" },
     { name: "Textiles", href: "/search?category=textiles" },
-    { name: "Furniture", href: "/search?category=furniture" },
   ],
   FEATURED: [
     { name: "New Arrivals", href: "/search?sort=newest" },
