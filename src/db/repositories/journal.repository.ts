@@ -4,7 +4,7 @@ import { users } from "@/db/schema/users"
 import { userEvents } from "@/db/schema/user-events"
 import { products } from "@/db/schema/products"
 import { orders } from "@/db/schema/orders"
-import { eq, and, desc, sql, count, isNull, inArray, or, ilike, countDistinct } from "drizzle-orm"
+import { eq, and, desc, sql, count, isNull, inArray, or, ilike, countDistinct, lte } from "drizzle-orm"
 
 export class JournalRepository {
   static async findPostById(id: string) {
@@ -54,6 +54,7 @@ export class JournalRepository {
   static async searchPosts(params: {
     query?: string
     categoryId?: string
+    categorySlug?: string
     tagId?: string
     status?: string
     workflowState?: string
@@ -66,18 +67,49 @@ export class JournalRepository {
     const limit = params.limit || 20
     const offset = (page - 1) * limit
 
-    const conditions = [isNull(journalPosts.deletedAt)]
+    const conditions: any[] = [isNull(journalPosts.deletedAt)]
 
-    if (params.categoryId) {
+    if (params.categorySlug) {
+      const cat = await this.findCategoryBySlug(params.categorySlug)
+      if (cat) {
+        conditions.push(eq(journalPosts.categoryId, cat.id))
+      } else {
+        return { items: [], total: 0 }
+      }
+    } else if (params.categoryId) {
       conditions.push(eq(journalPosts.categoryId, params.categoryId))
     }
+
     if (params.status) {
-      // Allow filtering by simple status or exact workflowState
-      conditions.push(eq(journalPosts.workflowState, params.status))
+      if (params.status === "PUBLISHED") {
+        conditions.push(
+          or(
+            eq(journalPosts.workflowState, "PUBLISHED"),
+            and(
+              eq(journalPosts.workflowState, "SCHEDULED"),
+              lte(journalPosts.publishedAt, new Date())
+            )
+          )
+        )
+      } else {
+        conditions.push(eq(journalPosts.workflowState, params.status))
+      }
+    } else if (params.workflowState) {
+      if (params.workflowState === "PUBLISHED") {
+        conditions.push(
+          or(
+            eq(journalPosts.workflowState, "PUBLISHED"),
+            and(
+              eq(journalPosts.workflowState, "SCHEDULED"),
+              lte(journalPosts.publishedAt, new Date())
+            )
+          )
+        )
+      } else {
+        conditions.push(eq(journalPosts.workflowState, params.workflowState))
+      }
     }
-    if (params.workflowState) {
-      conditions.push(eq(journalPosts.workflowState, params.workflowState))
-    }
+
     if (params.isFeatured !== undefined) {
       conditions.push(eq(journalPosts.isFeatured, params.isFeatured))
     }

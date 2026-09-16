@@ -1,10 +1,21 @@
 import "server-only"
 import { db } from "@/db/client"
-import { insertJournalPost, updateJournalPost, softDeleteJournalPost, insertJournalRevision, deleteJournalPostTags, insertJournalPostTag, insertJournalTag, insertJournalView } from "@/db/mutations/journal"
-import { journalTags, journalRevisions } from "@/db/schema/journal"
+import {
+  insertJournalPost,
+  updateJournalPost,
+  softDeleteJournalPost,
+  insertJournalRevision,
+  deleteJournalPostTags,
+  insertJournalPostTag,
+  insertJournalTag,
+  insertJournalView,
+  bulkSetJournalPostsWorkflowState,
+  bulkSoftDeleteJournalPosts,
+} from "@/db/mutations/journal"
+import { journalTags, journalRevisions, journalPosts } from "@/db/schema/journal"
 import { JournalRepository } from "@/db/repositories/journal.repository"
 import { AdminAuditService } from "./admin.audit.service"
-import { eq, isNull } from "drizzle-orm"
+import { eq, isNull, and, lte } from "drizzle-orm"
 import sanitizeHtml from "sanitize-html"
 
 export class JournalService {
@@ -265,6 +276,21 @@ export class JournalService {
     })
 
     return await db.transaction(async (tx) => {
+      // 0. Check for slug change to create automatic 301 redirect
+      const existingPost = await JournalRepository.findPostById(id)
+      if (existingPost && existingPost.slug && existingPost.slug !== slug) {
+        try {
+          const { SEOWriteRepository } = await import("@/domains/seo/repositories/seo.write.repository")
+          await SEOWriteRepository.createRedirect({
+            sourceUrl: `/journal/${existingPost.slug}`,
+            targetUrl: `/journal/${slug}`,
+            statusCode: 301,
+          })
+        } catch (redirErr) {
+          console.warn("[JournalService.updatePost] Slug redirect creation notice:", redirErr)
+        }
+      }
+
       // 1. Update Post
       const post = await updateJournalPost(id, {
         title: data.title,
@@ -321,6 +347,65 @@ export class JournalService {
 
       return post
     })
+  }
+
+  public static async bulkSetWorkflowState(ids: string[], workflowState: string, adminUserId: string) {
+    if (!ids || ids.length === 0) return []
+
+    return await db.transaction(async (tx) => {
+      const publishedAt = workflowState === "PUBLISHED" ? new Date() : null
+      const updated = await bulkSetJournalPostsWorkflowState(ids, workflowState, publishedAt, tx)
+
+      for (const post of updated) {
+        await AdminAuditService.logAction({
+          userId: adminUserId,
+          action: "UPDATE",
+          entityType: "JOURNAL",
+          entityId: post.id,
+          newValue: { workflowState },
+        }, tx)
+      }
+
+      return updated
+    })
+  }
+
+  public static async bulkDeletePosts(ids: string[], adminUserId: string) {
+    if (!ids || ids.length === 0) return []
+
+    return await db.transaction(async (tx) => {
+      const deleted = await bulkSoftDeleteJournalPosts(ids, tx)
+
+      for (const post of deleted) {
+        await AdminAuditService.logAction({
+          userId: adminUserId,
+          action: "DELETE",
+          entityType: "JOURNAL",
+          entityId: post.id,
+        }, tx)
+      }
+
+      return deleted
+    })
+  }
+
+  public static async publishDueScheduledPosts() {
+    const now = new Date()
+    const duePosts = await db
+      .select({ id: journalPosts.id })
+      .from(journalPosts)
+      .where(
+        and(
+          eq(journalPosts.workflowState, "SCHEDULED"),
+          lte(journalPosts.publishedAt, now),
+          isNull(journalPosts.deletedAt)
+        )
+      )
+
+    if (duePosts.length === 0) return []
+
+    const ids = duePosts.map((p) => p.id)
+    return await bulkSetJournalPostsWorkflowState(ids, "PUBLISHED", now, db)
   }
 
   public static async duplicatePost(id: string, adminUserId: string) {

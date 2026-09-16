@@ -30,7 +30,7 @@ export default async function AdminInventoryPage(props: {
   const [result, stats, allCategories] = await Promise.all([
     findAdminInventoryPaginated({
       page,
-      limit: 30,
+      limit: 50,
       search,
       status,
       categoryId,

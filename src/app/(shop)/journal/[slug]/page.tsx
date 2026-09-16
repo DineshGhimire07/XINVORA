@@ -17,6 +17,9 @@ import { JournalRepository } from "@/db/repositories/journal.repository"
 import { JournalService } from "@/services/journal.service"
 import { findProductsByIds, findCollectionsByIds } from "@/db/queries/cms"
 import { Button } from "@/components/ui/button"
+import { SEOSchemaEngine } from "@/domains/seo/engines/schema.engine"
+import { journalSEOAdapter } from "@/domains/seo/adapters/journal.adapter"
+import { SITE } from "@/constants/site"
 
 interface JournalArticlePageProps {
   params: Promise<{ slug: string }>
@@ -35,10 +38,20 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: JournalArticlePageProps) {
   const resolvedParams = await params
   const post = await JournalRepository.findPostBySlug(resolvedParams.slug)
+  if (!post) {
+    return buildMetadata({
+      title: "Journal Story Not Found",
+      description: "The requested publication could not be found.",
+    })
+  }
   
   return buildMetadata({
-    title: post?.seoTitle || post?.title || "Journal Story",
-    description: post?.metaDescription || post?.excerpt || "XINVORA Journal publication details",
+    title: post.seoTitle || post.title || "Journal Story",
+    description: post.metaDescription || post.excerpt || "XINVORA Journal publication details",
+    image: post.ogImage || post.coverImage || undefined,
+    canonical: post.canonicalUrl || `/journal/${post.slug}`,
+    noIndex: post.robotsIndex === false,
+    keywords: post.focusKeyword ? post.focusKeyword.split(",").map((k: string) => k.trim()) : undefined,
   })
 }
 
@@ -49,6 +62,10 @@ export default async function JournalArticlePage({ params }: JournalArticlePageP
   if (!post) {
     notFound()
   }
+
+  // Generate JSON-LD Schema for Article, Organization, Breadcrumbs, etc.
+  const normalizedEntity = journalSEOAdapter.normalize(post)
+  const jsonLd = SEOSchemaEngine.generateJSONLD(SITE.url, normalizedEntity)
 
   // 1. Asynchronously record the view event
   try {
@@ -111,6 +128,10 @@ export default async function JournalArticlePage({ params }: JournalArticlePageP
 
   return (
     <main className="flex-1 bg-background pt-20 md:pt-28 pb-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Container>
         
         {/* Breadcrumbs */}

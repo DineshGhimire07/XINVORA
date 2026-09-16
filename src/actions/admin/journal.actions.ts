@@ -36,6 +36,10 @@ export async function createJournalPostAction(input: any) {
 
     revalidatePath("/admin/content/journal")
     revalidatePath("/journal")
+    if (post?.slug) {
+      revalidatePath(`/journal/${post.slug}`)
+    }
+    revalidatePath("/sitemap-journal.xml")
     return { success: true, id: post.id }
   } catch (error: any) {
     console.error("[createJournalPostAction] Error:", error)
@@ -48,11 +52,15 @@ export async function updateJournalPostAction(id: string, input: any) {
     const session = await SessionService.requireAdmin()
     const data = basePostSchema.parse(input)
 
-    await JournalService.updatePost(id, data as any, session.id)
+    const post = await JournalService.updatePost(id, data as any, session.id)
 
     revalidatePath("/admin/content/journal")
     revalidatePath(`/admin/content/journal/${id}`)
     revalidatePath("/journal")
+    if (post?.slug) {
+      revalidatePath(`/journal/${post.slug}`)
+    }
+    revalidatePath("/sitemap-journal.xml")
     return { success: true }
   } catch (error: any) {
     console.error("[updateJournalPostAction] Error:", error)
@@ -67,6 +75,10 @@ export async function duplicateJournalPostAction(id: string) {
 
     revalidatePath("/admin/content/journal")
     revalidatePath("/journal")
+    if (post?.slug) {
+      revalidatePath(`/journal/${post.slug}`)
+    }
+    revalidatePath("/sitemap-journal.xml")
     return { success: true, id: post.id }
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to duplicate journal post" }
@@ -81,6 +93,10 @@ export async function restoreJournalRevisionAction(revisionId: string) {
     revalidatePath("/admin/content/journal")
     revalidatePath(`/admin/content/journal/${post.id}`)
     revalidatePath("/journal")
+    if (post?.slug) {
+      revalidatePath(`/journal/${post.slug}`)
+    }
+    revalidatePath("/sitemap-journal.xml")
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to restore revision" }
@@ -90,10 +106,14 @@ export async function restoreJournalRevisionAction(revisionId: string) {
 export async function deleteJournalPostAction(id: string) {
   try {
     const session = await SessionService.requireAdmin()
-    await JournalService.deletePost(id, session.id)
+    const post = await JournalService.deletePost(id, session.id)
 
     revalidatePath("/admin/content/journal")
     revalidatePath("/journal")
+    if (post?.slug) {
+      revalidatePath(`/journal/${post.slug}`)
+    }
+    revalidatePath("/sitemap-journal.xml")
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to delete journal post" }
@@ -104,16 +124,11 @@ export async function deleteJournalPostAction(id: string) {
 export async function bulkPublishJournalPostsAction(ids: string[]) {
   try {
     const session = await SessionService.requireAdmin()
-    
-    for (const id of ids) {
-      const post = await JournalService.updatePost(id, {
-        title: "", excerpt: "", body: [], // these parameters aren't modified because we only pass workflowState in dynamic save/update
-        workflowState: "PUBLISHED",
-      } as any, session.id)
-    }
+    await JournalService.bulkSetWorkflowState(ids, "PUBLISHED", session.id)
 
     revalidatePath("/admin/content/journal")
     revalidatePath("/journal")
+    revalidatePath("/sitemap-journal.xml")
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message || "Bulk publish failed" }
@@ -123,16 +138,11 @@ export async function bulkPublishJournalPostsAction(ids: string[]) {
 export async function bulkArchiveJournalPostsAction(ids: string[]) {
   try {
     const session = await SessionService.requireAdmin()
-    
-    for (const id of ids) {
-      await JournalService.updatePost(id, {
-        title: "", excerpt: "", body: [],
-        workflowState: "ARCHIVED",
-      } as any, session.id)
-    }
+    await JournalService.bulkSetWorkflowState(ids, "ARCHIVED", session.id)
 
     revalidatePath("/admin/content/journal")
     revalidatePath("/journal")
+    revalidatePath("/sitemap-journal.xml")
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message || "Bulk archive failed" }
@@ -142,13 +152,11 @@ export async function bulkArchiveJournalPostsAction(ids: string[]) {
 export async function bulkDeleteJournalPostsAction(ids: string[]) {
   try {
     const session = await SessionService.requireAdmin()
-    
-    for (const id of ids) {
-      await JournalService.deletePost(id, session.id)
-    }
+    await JournalService.bulkDeletePosts(ids, session.id)
 
     revalidatePath("/admin/content/journal")
     revalidatePath("/journal")
+    revalidatePath("/sitemap-journal.xml")
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message || "Bulk delete failed" }

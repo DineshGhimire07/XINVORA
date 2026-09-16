@@ -17,6 +17,42 @@ export async function updateJournalPost(id: string, data: Partial<typeof journal
   return result[0]
 }
 
+export async function bulkSetJournalPostsWorkflowState(
+  ids: string[],
+  workflowState: string,
+  publishedAt: Date | null,
+  tx: any
+) {
+  const { inArray } = await import("drizzle-orm")
+  if (!ids || ids.length === 0) return []
+
+  const updateData: any = {
+    workflowState,
+    updatedAt: new Date(),
+  }
+
+  if (workflowState === "PUBLISHED") {
+    updateData.publishedAt = publishedAt || new Date()
+  }
+
+  return await tx
+    .update(journalPosts)
+    .set(updateData)
+    .where(inArray(journalPosts.id, ids))
+    .returning()
+}
+
+export async function bulkSoftDeleteJournalPosts(ids: string[], tx: any) {
+  const { inArray } = await import("drizzle-orm")
+  if (!ids || ids.length === 0) return []
+
+  return await tx
+    .update(journalPosts)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(inArray(journalPosts.id, ids))
+    .returning()
+}
+
 export async function softDeleteJournalPost(id: string, tx: any) {
   const result = await tx
     .update(journalPosts)
