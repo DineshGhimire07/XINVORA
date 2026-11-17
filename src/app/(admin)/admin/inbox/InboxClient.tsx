@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import type { ChatInquiry } from "@/db/schema"
+import { useState, useTransition, useEffect, useRef } from "react"
+import type { ChatInquiry, ChatMessage } from "@/db/schema"
 import {
   markChatReadAction,
   markChatRepliedAction,
   deleteChatAction,
+  sendAdminReplyAction,
+  getInquiryMessagesAction,
 } from "@/actions/admin/chat.actions"
 import {
   MessageCircle,
@@ -17,6 +19,9 @@ import {
   Clock,
   Package,
   Search,
+  Send,
+  User,
+  ShieldCheck,
 } from "lucide-react"
 
 interface InboxClientProps {
@@ -30,7 +35,14 @@ export function InboxClient({ initialInquiries }: InboxClientProps) {
   const [selectedId, setSelectedId] = useState<string | null>(
     initialInquiries[0]?.id || null
   )
+
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [loadingMessages, setLoadingMessages] = useState(false)
+  const [replyText, setReplyText] = useState("")
+  const [isSendingReply, setIsSendingReply] = useState(false)
   const [isPending, startTransition] = useTransition()
+
+  const chatScrollRef = useRef<HTMLDivElement>(null)
 
   const filteredInquiries = inquiries.filter((item) => {
     if (filter !== "ALL" && item.status !== filter) return false
@@ -45,6 +57,41 @@ export function InboxClient({ initialInquiries }: InboxClientProps) {
   })
 
   const selectedInquiry = inquiries.find((i) => i.id === selectedId) || null
+
+  // Fetch messages when selected inquiry changes
+  useEffect(() => {
+    if (!selectedId) {
+      setMessages([])
+      return
+    }
+
+    let isCurrent = true
+    setLoadingMessages(true)
+
+    getInquiryMessagesAction(selectedId).then((res) => {
+      if (isCurrent && res.success) {
+        setMessages(res.messages)
+        setLoadingMessages(false)
+        // Scroll to bottom
+        setTimeout(() => {
+          if (chatScrollRef.current) {
+            chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+          }
+        }, 100)
+      }
+    })
+
+    return () => {
+      isCurrent = false
+    }
+  }, [selectedId])
+
+  // Scroll to bottom when messages update
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+    }
+  }, [messages])
 
   const handleMarkRead = (id: string) => {
     startTransition(async () => {
@@ -65,12 +112,40 @@ export function InboxClient({ initialInquiries }: InboxClientProps) {
   }
 
   const handleDelete = (id: string) => {
-    if (!confirm("Are you sure you want to delete this inquiry?")) return
+    if (!confirm("Are you sure you want to delete this conversation?")) return
     startTransition(async () => {
       setInquiries((prev) => prev.filter((item) => item.id !== id))
       if (selectedId === id) setSelectedId(null)
       await deleteChatAction(id)
     })
+  }
+
+  const handleSendReply = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    if (!replyText.trim() || !selectedId || isSendingReply) return
+
+    const textToSend = replyText.trim()
+    setIsSendingReply(true)
+
+    const res = await sendAdminReplyAction({
+      inquiryId: selectedId,
+      message: textToSend,
+    })
+
+    setIsSendingReply(false)
+
+    if (res.success && res.message) {
+      setMessages((prev) => [...prev, res.message!])
+      setReplyText("")
+      // Update local inquiry status
+      setInquiries((prev) =>
+        prev.map((item) =>
+          item.id === selectedId
+            ? { ...item, status: "REPLIED", updatedAt: new Date() }
+            : item
+        )
+      )
+    }
   }
 
   return (
@@ -95,7 +170,7 @@ export function InboxClient({ initialInquiries }: InboxClientProps) {
               >
                 <span>
                   {tab === "ALL"
-                    ? "All Messages"
+                    ? "All Conversations"
                     : tab === "NEW"
                     ? "New"
                     : tab === "READ"
@@ -123,7 +198,7 @@ export function InboxClient({ initialInquiries }: InboxClientProps) {
           />
           <input
             type="text"
-            placeholder="Search inquiries, products..."
+            placeholder="Search customer, product..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 text-xs bg-surface-secondary border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-text-primary"
@@ -131,19 +206,19 @@ export function InboxClient({ initialInquiries }: InboxClientProps) {
         </div>
       </div>
 
-      {/* Main Split View: List on left, Details on right */}
+      {/* Main Split View: List on left, Full Chatbox on right */}
       {filteredInquiries.length === 0 ? (
         <div className="p-12 text-center border border-dashed border-border rounded-xl bg-surface/50">
           <MessageCircle size={32} className="mx-auto text-text-tertiary mb-3 opacity-60" />
-          <p className="text-sm font-medium text-text-primary">No inquiries found</p>
+          <p className="text-sm font-medium text-text-primary">No conversations found</p>
           <p className="text-xs text-text-secondary mt-1">
-            {search ? "Try adjusting your search criteria." : "New messages from the storefront chat widget will appear here."}
+            {search ? "Try adjusting your search criteria." : "Customer messages from the chat widget will appear here."}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           {/* List column */}
-          <div className="lg:col-span-5 space-y-2.5 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
+          <div className="lg:col-span-5 space-y-2.5 max-h-[calc(100vh-250px)] overflow-y-auto pr-1">
             {filteredInquiries.map((inquiry) => {
               const isSelected = inquiry.id === selectedId
               const isNew = inquiry.status === "NEW"
@@ -173,7 +248,7 @@ export function InboxClient({ initialInquiries }: InboxClientProps) {
                     </div>
                     <span className="text-[10px] text-text-tertiary shrink-0 flex items-center gap-1">
                       <Clock size={10} />
-                      {new Date(inquiry.createdAt).toLocaleDateString([], {
+                      {new Date(inquiry.updatedAt || inquiry.createdAt).toLocaleDateString([], {
                         month: "short",
                         day: "numeric",
                         hour: "2-digit",
@@ -214,19 +289,19 @@ export function InboxClient({ initialInquiries }: InboxClientProps) {
             })}
           </div>
 
-          {/* Details column */}
-          <div className="lg:col-span-7 bg-surface border border-border rounded-xl p-6 sticky top-6 space-y-6">
+          {/* Chat details & 2-way conversation column */}
+          <div className="lg:col-span-7 bg-surface border border-border rounded-xl flex flex-col h-[calc(100vh-250px)] sticky top-6 overflow-hidden">
             {selectedInquiry ? (
               <>
                 {/* Header */}
-                <div className="flex items-start justify-between gap-4 pb-4 border-b border-border">
+                <div className="flex items-start justify-between gap-4 p-4 border-b border-border bg-surface shrink-0">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-base font-bold text-text-primary">
+                      <h2 className="text-sm font-bold text-text-primary">
                         {selectedInquiry.customerName || "Anonymous Shopper"}
                       </h2>
                       <span
-                        className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                        className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${
                           selectedInquiry.status === "NEW"
                             ? "bg-red-500/15 text-red-600 dark:text-red-400"
                             : selectedInquiry.status === "REPLIED"
@@ -237,13 +312,24 @@ export function InboxClient({ initialInquiries }: InboxClientProps) {
                         {selectedInquiry.status}
                       </span>
                     </div>
-                    <p className="text-xs text-text-secondary mt-0.5">
-                      Received{" "}
-                      {new Date(selectedInquiry.createdAt).toLocaleString([], {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </p>
+                    <div className="flex items-center gap-3 text-xs text-text-secondary mt-1">
+                      {selectedInquiry.customerEmail && (
+                        <a
+                          href={`mailto:${selectedInquiry.customerEmail}`}
+                          className="hover:underline flex items-center gap-1 text-text-primary font-medium"
+                        >
+                          <Mail size={12} /> {selectedInquiry.customerEmail}
+                        </a>
+                      )}
+                      <span>
+                        Started: {new Date(selectedInquiry.createdAt).toLocaleDateString([], {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-1.5">
@@ -252,122 +338,154 @@ export function InboxClient({ initialInquiries }: InboxClientProps) {
                         onClick={() => handleMarkReplied(selectedInquiry.id)}
                         disabled={isPending}
                         title="Mark as Replied"
-                        className="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-border bg-surface hover:bg-emerald-50 text-emerald-700 transition-colors flex items-center gap-1"
+                        className="px-2.5 py-1 text-xs font-medium rounded-lg border border-border bg-surface hover:bg-emerald-50 text-emerald-700 transition-colors flex items-center gap-1"
                       >
-                        <CheckCircle size={13} />
-                        <span>Replied</span>
-                      </button>
-                    )}
-                    {selectedInquiry.status === "NEW" && (
-                      <button
-                        onClick={() => handleMarkRead(selectedInquiry.id)}
-                        disabled={isPending}
-                        title="Mark as Read"
-                        className="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-border bg-surface hover:bg-surface-secondary text-text-primary transition-colors flex items-center gap-1"
-                      >
-                        <Eye size={13} />
-                        <span>Read</span>
+                        <CheckCircle size={12} />
+                        <span>Done</span>
                       </button>
                     )}
                     <button
                       onClick={() => handleDelete(selectedInquiry.id)}
                       disabled={isPending}
-                      title="Delete inquiry"
+                      title="Delete conversation"
                       className="p-1.5 text-xs font-medium rounded-lg border border-border bg-surface hover:bg-red-50 text-red-600 transition-colors"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 </div>
 
-                {/* Contact info row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-surface-secondary p-3.5 rounded-lg border border-border">
-                  <div>
-                    <span className="text-text-tertiary block text-[10px] uppercase font-semibold">
-                      Email Address
-                    </span>
-                    {selectedInquiry.customerEmail ? (
-                      <a
-                        href={`mailto:${selectedInquiry.customerEmail}?subject=Re: Your XINVORA inquiry`}
-                        className="text-text-primary hover:underline font-medium inline-flex items-center gap-1 mt-0.5"
-                      >
-                        <Mail size={12} />
-                        {selectedInquiry.customerEmail}
-                      </a>
-                    ) : (
-                      <span className="text-text-tertiary">Not provided</span>
-                    )}
-                  </div>
-                  <div>
-                    <span className="text-text-tertiary block text-[10px] uppercase font-semibold">
-                      Session / Client ID
-                    </span>
-                    <span className="font-mono text-[11px] text-text-secondary truncate block mt-0.5">
-                      {selectedInquiry.sessionId || "Direct Web Client"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Product Context */}
+                {/* Attached Product Context (if present) */}
                 {selectedInquiry.productName && (
-                  <div className="p-3.5 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-lg">
-                    <span className="text-[10px] uppercase font-bold text-amber-800 dark:text-amber-400 tracking-wider block mb-1">
-                      Attached Product Context
-                    </span>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <Package size={16} className="text-amber-700 shrink-0" />
-                        <span className="font-semibold text-xs text-amber-950 dark:text-amber-200">
-                          {selectedInquiry.productName}
-                        </span>
-                      </div>
-                      {selectedInquiry.productUrl && (
-                        <a
-                          href={selectedInquiry.productUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-medium text-amber-800 hover:text-amber-950 underline shrink-0"
-                        >
-                          View Product <ExternalLink size={12} />
-                        </a>
-                      )}
+                  <div className="px-4 py-2 bg-amber-50/70 dark:bg-amber-950/20 border-b border-amber-200/60 dark:border-amber-900/40 flex items-center justify-between gap-3 text-xs shrink-0">
+                    <div className="flex items-center gap-2 truncate">
+                      <Package size={14} className="text-amber-700 shrink-0" />
+                      <span className="text-[11px] font-medium text-amber-950 dark:text-amber-200 truncate">
+                        Product: <strong>{selectedInquiry.productName}</strong>
+                      </span>
                     </div>
+                    {selectedInquiry.productUrl && (
+                      <a
+                        href={selectedInquiry.productUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-800 hover:text-amber-950 underline shrink-0"
+                      >
+                        View <ExternalLink size={11} />
+                      </a>
+                    )}
                   </div>
                 )}
 
-                {/* Message Body */}
-                <div>
-                  <h3 className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">
-                    Customer Message
-                  </h3>
-                  <div className="p-4 rounded-xl bg-surface-secondary border border-border whitespace-pre-wrap text-sm text-text-primary leading-relaxed">
-                    {selectedInquiry.message}
-                  </div>
+                {/* Scrollable Chat History */}
+                <div
+                  ref={chatScrollRef}
+                  className="flex-1 overflow-y-auto p-4 space-y-3 bg-surface-secondary/40"
+                >
+                  {loadingMessages ? (
+                    <div className="py-8 text-center text-xs text-text-tertiary">
+                      Loading conversation...
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="p-3.5 bg-surface rounded-xl border border-border text-xs text-text-primary">
+                      {selectedInquiry.message}
+                    </div>
+                  ) : (
+                    messages.map((msg) => {
+                      const isAdmin = msg.sender === "ADMIN"
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex flex-col ${
+                            isAdmin ? "items-end" : "items-start"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 mb-1 px-1 text-[10px] text-text-tertiary">
+                            {isAdmin ? (
+                              <>
+                                <ShieldCheck size={11} className="text-accent" />
+                                <span className="font-semibold text-text-secondary">XINVORA Team (You)</span>
+                              </>
+                            ) : (
+                              <>
+                                <User size={11} />
+                                <span className="font-semibold text-text-secondary">
+                                  {selectedInquiry.customerName || "Customer"}
+                                </span>
+                              </>
+                            )}
+                            <span>·</span>
+                            <span>
+                              {new Date(msg.createdAt).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+
+                          <div
+                            className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed whitespace-pre-wrap shadow-xs ${
+                              isAdmin
+                                ? "bg-text-primary text-white rounded-br-xs"
+                                : "bg-surface border border-border text-text-primary rounded-bl-xs"
+                            }`}
+                          >
+                            {msg.message}
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
                 </div>
 
-                {/* Quick Action Footer */}
-                <div className="pt-2 flex flex-wrap items-center gap-3">
-                  {selectedInquiry.customerEmail && (
-                    <a
-                      href={`mailto:${selectedInquiry.customerEmail}?subject=XINVORA Inquiry Response&body=Hi ${selectedInquiry.customerName || "there"},%0D%0A%0D%0AThank you for reaching out to XINVORA regarding your inquiry:%0D%0A"${encodeURIComponent(selectedInquiry.message)}"%0D%0A%0D%0A`}
-                      className="px-4 py-2 rounded-lg bg-text-primary text-white text-xs font-semibold hover:opacity-90 inline-flex items-center gap-2 transition-all shadow-sm"
+                {/* Reply Input Box */}
+                <form
+                  onSubmit={handleSendReply}
+                  className="p-3 border-t border-border bg-surface shrink-0 space-y-2"
+                >
+                  <div className="relative flex items-center">
+                    <textarea
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                          handleSendReply()
+                        }
+                      }}
+                      placeholder="Type your reply to customer (Cmd/Ctrl + Enter to send)..."
+                      rows={2}
+                      className="w-full pr-12 pl-3 py-2 text-xs bg-surface-secondary border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-text-primary resize-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isSendingReply || !replyText.trim()}
+                      className="absolute right-2.5 bottom-2.5 p-2 rounded-lg bg-text-primary text-white hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      title="Send Reply"
                     >
-                      <Mail size={14} /> Reply via Email
+                      {isSendingReply ? (
+                        <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin block" />
+                      ) : (
+                        <Send size={13} />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-text-tertiary px-1">
+                    <span>Press Cmd + Enter to send</span>
+                    <a
+                      href={`https://wa.me/9779743679470`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#128C7E] hover:underline inline-flex items-center gap-1 font-medium"
+                    >
+                      WhatsApp Admin
                     </a>
-                  )}
-                  <a
-                    href={`https://wa.me/9779743679470`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 rounded-lg bg-[#25D366] text-white text-xs font-semibold hover:bg-[#1db954] inline-flex items-center gap-2 transition-all shadow-sm"
-                  >
-                    Open WhatsApp Admin
-                  </a>
-                </div>
+                  </div>
+                </form>
               </>
             ) : (
-              <div className="py-12 text-center text-text-tertiary text-xs">
-                Select an inquiry from the list to view full details.
+              <div className="m-auto text-center text-text-tertiary text-xs">
+                Select a conversation from the list to start replying.
               </div>
             )}
           </div>

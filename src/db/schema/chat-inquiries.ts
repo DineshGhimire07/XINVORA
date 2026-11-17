@@ -3,6 +3,7 @@ import { users } from "./users"
 import { products } from "./products"
 
 export const chatStatusEnum = pgEnum("chat_status", ["NEW", "READ", "REPLIED"])
+export const chatSenderEnum = pgEnum("chat_sender", ["CUSTOMER", "ADMIN"])
 
 export const chatInquiries = pgTable("chat_inquiries", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -21,7 +22,7 @@ export const chatInquiries = pgTable("chat_inquiries", {
   // customer info (optional for anonymous)
   customerName: varchar("customer_name", { length: 255 }),
   customerEmail: varchar("customer_email", { length: 255 }),
-  // message
+  // message summary / initial message
   message: text("message").notNull(),
   // admin status
   status: chatStatusEnum("status").default("NEW").notNull(),
@@ -30,5 +31,17 @@ export const chatInquiries = pgTable("chat_inquiries", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
+export const chatMessages = pgTable("chat_messages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  inquiryId: uuid("inquiry_id")
+    .references(() => chatInquiries.id, { onDelete: "cascade" })
+    .notNull(),
+  sender: chatSenderEnum("sender").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
 export type ChatInquiry = typeof chatInquiries.$inferSelect
 export type NewChatInquiry = typeof chatInquiries.$inferInsert
+export type ChatMessage = typeof chatMessages.$inferSelect
+export type NewChatMessage = typeof chatMessages.$inferInsert
