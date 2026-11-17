@@ -154,7 +154,7 @@ export default async function CollectionsPage({
                 )}
               </Container>
             ) : (
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-1.5 gap-y-10 w-full px-0">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-1 sm:gap-x-2 lg:gap-x-3 gap-y-3 sm:gap-y-4 lg:gap-y-6 w-full px-0">
                 {products.map((product, index) => {
                   const cardData = variantCardMap?.[product.id] || {
                     colors: [],

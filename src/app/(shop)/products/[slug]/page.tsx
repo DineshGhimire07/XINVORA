@@ -281,7 +281,7 @@ export default async function ProductDetailPage({
                 </Link>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-12">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-1.5 sm:gap-x-3 md:gap-x-4 gap-y-4 sm:gap-y-6 lg:gap-y-8">
                 {relatedProducts.map((rel: any) => {
                   const inStock = (rel.variants || []).length > 0
                     ? (rel.variants || []).some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)

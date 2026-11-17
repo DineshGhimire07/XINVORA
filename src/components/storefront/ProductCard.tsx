@@ -100,7 +100,7 @@ export function ProductCard({
   const [isDesktopHovered, setIsDesktopHovered] = React.useState(false)
   
   return (
-    <div data-product-card className={`group flex flex-col text-left w-full relative ${hideName && hidePrice ? "" : "gap-2.5"}`}>
+    <div data-product-card className={`group flex flex-col text-left w-full relative ${hideName && hidePrice ? "" : "gap-1.5"}`}>
       {/* Visual Card Image container */}
       <div className="relative w-full aspect-square bg-[#ECEBE7] overflow-hidden select-none">
         {/* Desktop Presentation (md+): Smooth hover swap between first and second photo */}
@@ -255,7 +255,7 @@ export function ProductCard({
 
       {/* Product details row */}
       {(!hideName || !hidePrice) && (
-        <div className="flex flex-col gap-1 px-0.5 pt-1.5 mb-2">
+        <div className="flex flex-col gap-0.5 px-1 pt-1 pb-0.5">
           {(!hideName || !hidePrice) && (
             <div className="flex items-center justify-between text-[10px] tracking-wider text-text-primary">
               {!hideName && (
