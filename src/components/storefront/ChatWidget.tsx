@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { X, ArrowUpRight } from "lucide-react"
+import { X, ArrowUpRight, Headset } from "lucide-react"
 import { submitChatInquiryAction } from "@/actions/storefront/chat.actions"
 import { usePathname } from "next/navigation"
 
@@ -133,16 +133,18 @@ export function ChatWidget() {
         >
           {/* Header */}
           <div className="flex items-start justify-between px-6 pt-5 pb-4 border-b border-border/60 bg-surface/50">
-            <div>
-              <p className="text-[10px] font-sans font-bold tracking-[0.25em] text-accent uppercase select-none">
-                Client Advisory
-              </p>
-              <h3 className="font-display text-base uppercase tracking-[0.12em] text-text-primary mt-0.5">
-                Talk to Team
-              </h3>
-              <p className="text-[11px] text-text-secondary mt-0.5 font-light">
-                Direct inquiry & bespoke assistance
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center shrink-0">
+                <Headset size={15} strokeWidth={1.5} className="text-text-primary" />
+              </div>
+              <div>
+                <p className="text-[9px] font-sans font-bold tracking-[0.25em] text-accent uppercase select-none">
+                  Client Support
+                </p>
+                <h3 className="font-display text-sm uppercase tracking-[0.12em] text-text-primary mt-0.5">
+                  Direct Inquiries
+                </h3>
+              </div>
             </div>
             <button
               onClick={() => setStep("idle")}
@@ -281,29 +283,21 @@ export function ChatWidget() {
         </div>
       )}
 
-      {/* Floating Trigger — Subtle luxury atelier pill */}
+      {/* Floating Trigger — Minimalist support icon button */}
       <button
         onClick={() => setStep((s) => (s === "idle" ? "open" : "idle"))}
-        aria-label="Talk to team"
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[200] border border-border hover:border-text-primary bg-background/95 backdrop-blur-sm text-text-primary px-3.5 py-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.08)] transition-all duration-300 select-none group"
+        aria-label={step === "idle" ? "Customer Support" : "Close Support Panel"}
+        title="Customer Support"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[200] w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-full border border-border/80 hover:border-text-primary bg-background/95 backdrop-blur-sm text-text-primary shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:scale-105 active:scale-95 transition-all duration-200 select-none group"
       >
-        <div className="flex items-center gap-2">
-          {step === "idle" ? (
-            <>
-              <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-              <span className="text-[10px] font-sans font-semibold tracking-[0.2em] uppercase">
-                Talk to team
-              </span>
-            </>
-          ) : (
-            <>
-              <X size={13} strokeWidth={1.5} />
-              <span className="text-[10px] font-sans font-semibold tracking-[0.2em] uppercase">
-                Close
-              </span>
-            </>
-          )}
-        </div>
+        {step === "idle" ? (
+          <div className="relative flex items-center justify-center">
+            <Headset size={19} strokeWidth={1.5} className="text-text-primary group-hover:text-accent transition-colors" />
+            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-accent ring-2 ring-background" />
+          </div>
+        ) : (
+          <X size={18} strokeWidth={1.5} className="text-text-primary" />
+        )}
       </button>
     </>
   )
