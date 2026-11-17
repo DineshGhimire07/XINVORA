@@ -11,6 +11,7 @@ import { collections, productCollections } from "@/db/schema"
 import { or, eq } from "drizzle-orm"
 import { findProducts } from "@/db/queries/products"
 import { getFilterAttributes, findVariantCardMapByProductIds } from "@/db/queries/collections"
+import { optimizeCloudinaryUrl } from "@/lib/image-optimizer"
 
 export const metadata: Metadata = buildMetadata({
   title: "Limited Edition | XINVORA",
@@ -82,28 +83,24 @@ export default async function LimitedCollectionPage(props: {
 
   return (
     <main className="flex-1 bg-background pt-[72px] md:pt-20">
-      {/* ── Unique LIMITED Hero ── */}
+      {/* ── Unique LIMITED Hero (Free Size: full-width, natural height) ── */}
       {limitedCollection?.bannerUrl || limitedCollection?.bannerMobileUrl ? (
-        <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[32/10] overflow-hidden bg-neutral-900">
-          {limitedCollection.bannerUrl && (
-            <Image
-              src={limitedCollection.bannerUrl}
-              alt="Limited Edition Desktop Banner"
-              fill
-              priority
-              className={`object-cover object-center ${limitedCollection.bannerMobileUrl ? "hidden md:block" : "block"}`}
+        <section id="collection-limited-hero" className="w-full block select-none border-b border-neutral-100 bg-neutral-900">
+          <picture className="block w-full h-auto">
+            {limitedCollection.bannerMobileUrl && (
+              <source
+                media="(max-width: 767px)"
+                srcSet={optimizeCloudinaryUrl(limitedCollection.bannerMobileUrl, { width: 1080 })}
+              />
+            )}
+            <img
+              src={optimizeCloudinaryUrl(limitedCollection.bannerUrl || limitedCollection.bannerMobileUrl!, { width: 1920 })}
+              alt={limitedCollection.name || "Limited Edition Banner"}
+              className="w-full h-auto block"
+              loading="eager"
             />
-          )}
-          {(limitedCollection.bannerMobileUrl || limitedCollection.bannerUrl) && (
-            <Image
-              src={limitedCollection.bannerMobileUrl || limitedCollection.bannerUrl!}
-              alt="Limited Edition Mobile Banner"
-              fill
-              priority
-              className={`object-cover object-center ${limitedCollection.bannerMobileUrl ? "block md:hidden" : "hidden"}`}
-            />
-          )}
-        </div>
+          </picture>
+        </section>
       ) : (
         <section className="w-full bg-[#F3EFEA] border-b border-neutral-200/60 pt-14 pb-16 md:pt-20 md:pb-24 relative overflow-hidden select-none">
           <Container>

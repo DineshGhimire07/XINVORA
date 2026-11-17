@@ -702,12 +702,12 @@ export default function CollectionEditor({
                   <img
                     src={bannerUrl}
                     alt="Desktop Banner"
-                    className="w-full h-full object-cover group-hover:opacity-85 transition-opacity"
+                    className="w-full h-full object-contain group-hover:opacity-85 transition-opacity bg-black/5"
                   />
                 ) : (
                   <div className="flex flex-col items-center gap-1 text-center text-admin-text-secondary/60 group-hover:text-admin-primary transition-colors">
                     <ImageIcon className="w-7 h-7" />
-                    <span className="text-[8px] uppercase font-bold tracking-wider">Click or Drop 32:10 Desktop Banner</span>
+                    <span className="text-[8px] uppercase font-bold tracking-wider">Click or Drop Desktop Banner (Free Size · 1920×Auto)</span>
                   </div>
                 )}
                 {dragBanner && (
@@ -747,7 +747,7 @@ export default function CollectionEditor({
                   </label>
 
                   <label className="cursor-pointer bg-admin-content border border-admin-border hover:border-admin-border-strong text-admin-text-primary text-admin-xs font-semibold px-3.5 py-2 rounded-admin-md transition-colors select-none">
-                    Crop & Upload (32:10)
+                    Crop & Upload (Free Size / Any Ratio)
                     <input
                       type="file"
                       accept="image/*"
@@ -851,12 +851,12 @@ export default function CollectionEditor({
                   <img
                     src={bannerMobileUrl}
                     alt="Mobile Banner"
-                    className="w-full h-full object-cover group-hover:opacity-85 transition-opacity"
+                    className="w-full h-full object-contain group-hover:opacity-85 transition-opacity bg-black/5"
                   />
                 ) : (
                   <div className="flex flex-col items-center gap-1 text-center text-admin-text-secondary/60 group-hover:text-admin-primary transition-colors">
                     <ImageIcon className="w-7 h-7" />
-                    <span className="text-[8px] uppercase font-bold tracking-wider">Click or Drop 16:9 Mobile Banner</span>
+                    <span className="text-[8px] uppercase font-bold tracking-wider">Click or Drop Mobile Banner (Free Size · Auto)</span>
                   </div>
                 )}
                 {dragBannerMobile && (
@@ -896,7 +896,7 @@ export default function CollectionEditor({
                   </label>
 
                   <label className="cursor-pointer bg-admin-content border border-admin-border hover:border-admin-border-strong text-admin-text-primary text-admin-xs font-semibold px-3.5 py-2 rounded-admin-md transition-colors select-none">
-                    Crop & Upload (16:9)
+                    Crop & Upload (Free Size / Any Ratio)
                     <input
                       type="file"
                       accept="image/*"
@@ -1159,7 +1159,7 @@ export default function CollectionEditor({
         {isCroppingBanner && bannerSource && (
           <ImageCropperModal
             imageSrc={bannerSource}
-            aspect={32 / 10}
+            aspect={0}
             onCropComplete={async (croppedFile) => {
               setIsCroppingBanner(false)
               if (bannerSource.startsWith("blob:")) {
@@ -1190,7 +1190,7 @@ export default function CollectionEditor({
         {isCroppingBannerMobile && bannerMobileSource && (
           <ImageCropperModal
             imageSrc={bannerMobileSource}
-            aspect={16 / 9}
+            aspect={0}
             onCropComplete={async (croppedFile) => {
               setIsCroppingBannerMobile(false)
               if (bannerMobileSource.startsWith("blob:")) {
