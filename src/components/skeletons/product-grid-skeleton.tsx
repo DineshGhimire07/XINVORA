@@ -27,7 +27,7 @@ export function ProductGridSkeleton({ count = 8, showHeader = true }: ProductGri
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} className="flex flex-col space-y-3 group">
             {/* Product Image Aspect-Ratio Container Skeleton */}
-            <div className="aspect-[3/4] w-full rounded-md bg-[#FAF8F5] overflow-hidden relative">
+            <div className="aspect-square w-full rounded-md bg-[#FAF8F5] overflow-hidden relative">
               <Skeleton className="w-full h-full bg-[#EAE6DF]" />
             </div>
 

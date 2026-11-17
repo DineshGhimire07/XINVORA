@@ -94,31 +94,21 @@ export default async function CollectionDetailPage(props: {
 
       {/* 2. Collection Hero Banner Overlay */}
       {collection.bannerUrl || collection.bannerMobileUrl ? (
-        <Section id="collection-detail-hero" padding="none" className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[32/10] overflow-hidden bg-neutral-900 border-b border-neutral-100 flex items-center select-none">
-          {/* Desktop / Laptop Banner */}
-          {collection.bannerUrl && (
-            <Image
-              src={optimizeCloudinaryUrl(collection.bannerUrl, { width: 1920 })}
+        <Section id="collection-detail-hero" padding="none" className="relative w-full overflow-hidden bg-neutral-900 border-b border-neutral-100 block select-none">
+          <picture className="block w-full h-auto">
+            {collection.bannerMobileUrl && (
+              <source
+                media="(max-width: 767px)"
+                srcSet={optimizeCloudinaryUrl(collection.bannerMobileUrl, { width: 1080 })}
+              />
+            )}
+            <img
+              src={optimizeCloudinaryUrl(collection.bannerUrl || collection.bannerMobileUrl!, { width: 1920 })}
               alt={collection.name}
-              fill
-              sizes="100vw"
-              priority
-              fetchPriority="high"
-              className={`object-cover object-center ${collection.bannerMobileUrl ? "hidden md:block" : "block"}`}
+              className="w-full h-auto block"
+              loading="eager"
             />
-          )}
-          {/* Mobile Phone Banner */}
-          {(collection.bannerMobileUrl || collection.bannerUrl) && (
-            <Image
-              src={optimizeCloudinaryUrl(collection.bannerMobileUrl || collection.bannerUrl!, { width: 1080 })}
-              alt={collection.name}
-              fill
-              sizes="100vw"
-              priority
-              fetchPriority="high"
-              className={`object-cover object-center ${collection.bannerMobileUrl ? "block md:hidden" : "hidden"}`}
-            />
-          )}
+          </picture>
         </Section>
       ) : (
         /* Render standard text hero if no bannerUrl */

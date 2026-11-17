@@ -45,7 +45,7 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
 
   if (galleryImages.length === 0) {
     return (
-      <div className="relative w-full aspect-[3/4] bg-surface border border-border rounded-sm overflow-hidden select-none flex items-center justify-center">
+      <div className="relative w-full aspect-square bg-surface border border-border rounded-sm overflow-hidden select-none flex items-center justify-center">
         <span className="text-body-sm text-text-tertiary">No image available</span>
       </div>
     )
@@ -75,7 +75,7 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
   return (
     <div className="w-full">
       {/* ── Mobile View: Premium Scroll-Snap Carousel with Eager Priority Loading for all Angles ── */}
-      <div className="relative md:hidden w-full aspect-[3/4] bg-surface rounded-sm overflow-hidden select-none">
+      <div className="relative md:hidden w-full aspect-square bg-surface rounded-sm overflow-hidden select-none">
         {/* Badge overlay */}
         {badge && (
           <div className="absolute top-4 left-4 z-10 pointer-events-none">
@@ -98,7 +98,7 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
                 alt={img.altText || `${productName} - Photo ${idx + 1}`}
                 fill
                 sizes="100vw"
-                className="object-cover object-top"
+                className="object-cover object-center"
                 priority={true}
                 fetchPriority="high"
                 loading="eager"
@@ -127,7 +127,7 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
       {/* ── Desktop View: Main Image + Side Thumbnails (All High Priority) ── */}
       <div className="hidden md:grid grid-cols-5 gap-3 w-full items-stretch">
         {/* Main Image Container with Pre-rendered Views for 0ms Swap Latency */}
-        <div className="relative col-span-4 aspect-[3/4] bg-surface rounded-sm overflow-hidden select-none">
+        <div className="relative col-span-4 aspect-square bg-surface rounded-sm overflow-hidden select-none">
           {badge && (
             <div className="absolute top-4 left-4 z-10 pointer-events-none">
               <span className="inline-flex items-center px-2.5 py-1 text-[9px] font-bold tracking-[0.2em] uppercase bg-text-primary text-surface select-none">
@@ -142,7 +142,7 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
             alt={activeImage.altText || `${productName} - Photo ${activeIndex + 1}`}
             fill
             sizes="60vw"
-            className="object-cover object-top transition-opacity duration-200"
+            className="object-cover object-center transition-opacity duration-200"
             priority={true}
             fetchPriority="high"
             loading="eager"
@@ -173,7 +173,7 @@ export function ProductGallery({ images, productName, badge }: ProductGalleryPro
                   loading="eager"
                   placeholder="blur"
                   blurDataURL={SHIMMER_BLUR_DATA_URL}
-                  className="object-cover object-top"
+                  className="object-cover object-center"
                 />
               </button>
             ))}

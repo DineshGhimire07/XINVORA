@@ -13,6 +13,7 @@ interface ImageCropperModalProps {
 }
 
 const PRESETS = [
+  { label: "Free (1920×Auto)", value: 0 },
   { label: "1:2 (Editorial 4-Box)", value: 1 / 2 },
   { label: "9:16 (Phone Story)", value: 9 / 16 },
   { label: "32:10 (Banner)", value: 32 / 10 },
@@ -153,7 +154,7 @@ export default function ImageCropperModal({
             image={imageSrc}
             crop={crop}
             zoom={zoom}
-            aspect={currentAspect}
+            aspect={currentAspect > 0 ? currentAspect : undefined}
             objectFit={objectFit}
             onCropChange={setCrop}
             onCropComplete={onCropCompleteCallback}

@@ -653,6 +653,115 @@ export class AdminProductService {
     })
   }
 
+  static async publishProduct(id: string, adminUserId: string) {
+    return await db.transaction(async (tx) => {
+      const [product] = await tx
+        .update(products)
+        .set({ deletedAt: null, status: "PUBLISHED", updatedAt: new Date() })
+        .where(eq(products.id, id))
+        .returning()
+
+      await tx
+        .update(variants)
+        .set({ deletedAt: null, isActive: true, updatedAt: new Date() })
+        .where(eq(variants.productId, id))
+
+      await AdminAuditService.logAction({
+        userId: adminUserId,
+        action: "UPDATE",
+        entityType: "PRODUCT",
+        entityId: id,
+        newValue: { status: "PUBLISHED" },
+      }, tx)
+
+      return product
+    })
+  }
+
+  static async archiveAllProducts(adminUserId: string) {
+    return await db.transaction(async (tx) => {
+      const updated = await tx
+        .update(products)
+        .set({ status: "ARCHIVED", updatedAt: new Date() })
+        .where(ne(products.status, "ARCHIVED"))
+        .returning({ id: products.id })
+
+      if (updated.length > 0) {
+        const productIds = updated.map(p => p.id)
+        await tx
+          .update(variants)
+          .set({ isActive: false, updatedAt: new Date() })
+          .where(inArray(variants.productId, productIds))
+
+        await AdminAuditService.logAction({
+          userId: adminUserId,
+          action: "UPDATE",
+          entityType: "PRODUCT",
+          entityId: "ALL",
+          newValue: { status: "ARCHIVED", count: updated.length },
+        }, tx)
+      }
+
+      return updated.length
+    })
+  }
+
+  static async bulkArchiveProducts(ids: string[], adminUserId: string) {
+    if (ids.length === 0) return 0
+    return await db.transaction(async (tx) => {
+      const updated = await tx
+        .update(products)
+        .set({ status: "ARCHIVED", updatedAt: new Date() })
+        .where(inArray(products.id, ids))
+        .returning({ id: products.id })
+
+      await tx
+        .update(variants)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(inArray(variants.productId, ids))
+
+      for (const id of ids) {
+        await AdminAuditService.logAction({
+          userId: adminUserId,
+          action: "UPDATE",
+          entityType: "PRODUCT",
+          entityId: id,
+          newValue: { status: "ARCHIVED" },
+        }, tx)
+      }
+
+      return updated.length
+    })
+  }
+
+  static async bulkPublishProducts(ids: string[], adminUserId: string) {
+    if (ids.length === 0) return 0
+    return await db.transaction(async (tx) => {
+      const updated = await tx
+        .update(products)
+        .set({ deletedAt: null, status: "PUBLISHED", updatedAt: new Date() })
+        .where(inArray(products.id, ids))
+        .returning({ id: products.id })
+
+      await tx
+        .update(variants)
+        .set({ deletedAt: null, isActive: true, updatedAt: new Date() })
+        .where(inArray(variants.productId, ids))
+
+      for (const id of ids) {
+        await AdminAuditService.logAction({
+          userId: adminUserId,
+          action: "UPDATE",
+          entityType: "PRODUCT",
+          entityId: id,
+          newValue: { status: "PUBLISHED" },
+        }, tx)
+      }
+
+      return updated.length
+    })
+  }
+
   static async hardDeleteProduct(id: string, adminUserId: string) {
     return await db.transaction(async (tx) => {
       // 1. Get variants for the product

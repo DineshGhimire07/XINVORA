@@ -106,7 +106,7 @@ export function LookProductCard({ product, compact = false }: LookProductCardPro
   return (
     <div className="group flex flex-col gap-0 text-left w-full relative">
       {/* Image Wrapper */}
-      <div className="relative w-full aspect-[3/4] bg-surface-secondary overflow-hidden block border border-border/40">
+      <div className="relative w-full aspect-square bg-surface-secondary overflow-hidden block border border-border/40">
         <Link href={`/products/${product.slug}`} className="absolute inset-0 z-0" aria-label={product.name}>
           {images.length > 0 ? (
             <Image
@@ -118,7 +118,7 @@ export function LookProductCard({ product, compact = false }: LookProductCardPro
               fetchPriority="low"
               placeholder="blur"
               blurDataURL={SHIMMER_BLUR_DATA_URL}
-              className="object-cover object-top transition-opacity duration-700 ease-out"
+              className="object-cover object-center transition-opacity duration-700 ease-out"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-[10px] text-text-tertiary uppercase select-none tracking-widest">

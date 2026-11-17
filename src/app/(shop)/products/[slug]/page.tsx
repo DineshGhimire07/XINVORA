@@ -25,6 +25,7 @@ import { ShopTheLookCarousel } from "@/components/storefront/ShopTheLookCarousel
 import { ProductsInLook } from "@/components/storefront/ProductsInLook"
 import { ProductCard } from "@/components/storefront/ProductCard"
 import { ProductViewTracker } from "@/features/analytics/components/ProductViewTracker"
+import { ProductChatSync } from "@/components/storefront/ProductChatSync"
 
 import { optimizeCloudinaryUrl } from "@/lib/image-optimizer"
 
@@ -149,6 +150,7 @@ export default async function ProductDetailPage({
 
       {/* Analytics: fire PRODUCT_VIEW once on mount (consent-gated) */}
       <ProductViewTracker productId={product.id} categoryId={product.category?.id ?? null} />
+      <ProductChatSync id={product.id} name={product.name} slug={product.slug} />
       <Container>
         {/* Compact "Shop the Look" carousel — only shown when this product is part of a look */}
         {hasPairings && hasLookbook && (

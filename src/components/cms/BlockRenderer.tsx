@@ -492,9 +492,15 @@ function CMSBannerBlock({ block }: { block: any }) {
   const mobileFocalPoint = data.mobileFocalPoint || "center"
   const mobileCustomFocal = data.mobileCustomFocalPoint || ""
 
+  // Check if Free Size (Natural Image Ratio) is selected
+  const isDesktopFree = desktopSizeMode === "free" || desktopRatio === "free"
+  const isMobileFree = mobileSizeMode === "free" || mobileRatio === "free"
+
   // Compute Mobile Sizing Class
   let mobileClass = "aspect-[4/5]"
-  if (mobileSizeMode === "ratio") {
+  if (isMobileFree) {
+    mobileClass = "aspect-auto h-auto"
+  } else if (mobileSizeMode === "ratio") {
     if (mobileRatio === "1:1") mobileClass = "aspect-[1/1]"
     else if (mobileRatio === "9:16") mobileClass = "aspect-[9/16]"
     else if (mobileRatio === "3:4") mobileClass = "aspect-[3/4]"
@@ -504,7 +510,9 @@ function CMSBannerBlock({ block }: { block: any }) {
 
   // Compute Desktop Sizing Class
   let desktopClass = "md:aspect-[32/10]"
-  if (desktopSizeMode === "50dvh") {
+  if (isDesktopFree) {
+    desktopClass = "md:aspect-auto md:h-auto"
+  } else if (desktopSizeMode === "50dvh") {
     desktopClass = "md:h-[50dvh] md:min-h-[350px] md:aspect-auto"
   } else if (desktopSizeMode === "ratio") {
     if (desktopRatio === "21:9") desktopClass = "md:aspect-[21/9] md:h-auto"
@@ -558,7 +566,7 @@ function CMSBannerBlock({ block }: { block: any }) {
 
   const InnerContent = () => (
     <>
-      <picture className="absolute inset-0 block w-full h-full">
+      <picture className={`block w-full ${isDesktopFree ? "md:h-auto md:static" : "md:absolute md:inset-0 md:h-full"} ${isMobileFree ? "h-auto static" : "absolute inset-0 h-full"}`}>
         {data.imageMobileUrl && (
           <source
             media="(max-width: 767px)"
@@ -568,7 +576,7 @@ function CMSBannerBlock({ block }: { block: any }) {
         <img
           src={optimizeCloudinaryUrl(data.imageUrl, { width: 1920 })}
           alt={data.title || "Banner"}
-          className={`w-full h-full ${mobileFitClass} ${desktopFitClass} ${mobilePosClass} ${desktopPosClass}`}
+          className={`w-full ${isMobileFree ? "h-auto block" : `h-full ${mobileFitClass} ${mobilePosClass}`} ${isDesktopFree ? "md:h-auto md:block" : `md:h-full ${desktopFitClass} ${desktopPosClass}`}`}
           loading="lazy"
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
         />

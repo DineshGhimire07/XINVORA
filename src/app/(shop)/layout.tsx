@@ -8,6 +8,7 @@ import { ScrollToTop } from "@/components/storefront/ScrollToTop"
 import { CookieScriptLoader } from "@/components/cookies/CookieScriptLoader"
 import { CookieBanner } from "@/components/cookies/CookieBanner"
 import { CookieModal } from "@/components/cookies/CookieModal"
+import { ChatWidget } from "@/components/storefront/ChatWidget"
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
   const settings = await AdminSettingsService.getAllSettings()
@@ -28,6 +29,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
         <div className="flex-1 flex flex-col w-full">{children}</div>
         <CookieBanner />
         <CookieModal />
+        <ChatWidget />
         <Suspense fallback={null}>
           <Footer />
         </Suspense>

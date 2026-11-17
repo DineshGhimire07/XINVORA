@@ -58,16 +58,16 @@ export default function BannerBlockEditor({
         isActive: true,
 
         // Explicit Desktop controls
-        desktopSizeMode: "ratio",
-        desktopRatio: "32:10",
+        desktopSizeMode: "free",
+        desktopRatio: "free",
         desktopCustomSize: "",
         desktopFit: "cover",
         desktopFocalPoint: "center",
         desktopCustomFocalPoint: "",
 
         // Explicit Mobile controls
-        mobileSizeMode: "ratio",
-        mobileRatio: "4:5",
+        mobileSizeMode: "free",
+        mobileRatio: "free",
         mobileCustomSize: "",
         mobileFit: "cover",
         mobileFocalPoint: "center",
@@ -118,17 +118,17 @@ export default function BannerBlockEditor({
             const data = banner.data
 
             // Normalize desktop values
-            const desktopSizeMode: "50dvh" | "ratio" | "custom" =
-              data.desktopSizeMode || (data.size === "half" ? "50dvh" : data.size === "custom" ? "custom" : "ratio")
-            const desktopRatio = data.desktopRatio || (data.size === "cinematic" ? "21:9" : data.size === "landscape" ? "16:9" : data.size === "classic" ? "4:3" : data.size === "square" ? "1:1" : data.size === "portrait" ? "3:4" : "32:10")
+            const desktopSizeMode: "free" | "50dvh" | "ratio" | "custom" =
+              data.desktopSizeMode || (data.size === "free" ? "free" : data.size === "half" ? "50dvh" : data.size === "custom" ? "custom" : "free")
+            const desktopRatio = data.desktopRatio || (data.size === "cinematic" ? "21:9" : data.size === "landscape" ? "16:9" : data.size === "classic" ? "4:3" : data.size === "square" ? "1:1" : data.size === "portrait" ? "3:4" : "free")
             const desktopFit = data.desktopFit || (data.fit === "contain" ? "contain" : data.fit === "fill" ? "fill" : "cover")
             const desktopFocalPoint = data.desktopFocalPoint || (data.position === "object-left" ? "left" : data.position === "object-right" ? "right" : data.position?.startsWith("object-") && data.position !== "object-center" ? "custom" : "center")
             const desktopCustomFocalPoint = data.desktopCustomFocalPoint || (data.position && !["object-center", "object-left", "object-right"].includes(data.position) ? data.position.replace("object-", "") : "top")
 
             // Normalize mobile values
-            const mobileSizeMode: "ratio" | "custom" =
-              data.mobileSizeMode || (data.mobileSize === "custom" ? "custom" : "ratio")
-            const mobileRatio = data.mobileRatio || (data.mobileSize === "square" ? "1:1" : data.mobileSize === "story" ? "9:16" : data.mobileSize === "portrait" ? "3:4" : "4:5")
+            const mobileSizeMode: "free" | "ratio" | "custom" =
+              data.mobileSizeMode || (data.mobileSize === "free" ? "free" : data.mobileSize === "custom" ? "custom" : "free")
+            const mobileRatio = data.mobileRatio || (data.mobileSize === "square" ? "1:1" : data.mobileSize === "story" ? "9:16" : data.mobileSize === "portrait" ? "3:4" : "free")
             const mobileFit = data.mobileFit || (data.fit === "contain" ? "contain" : data.fit === "fill" ? "fill" : "cover")
             const mobileFocalPoint = data.mobileFocalPoint || "center"
             const mobileCustomFocalPoint = data.mobileCustomFocalPoint || "top"
@@ -209,7 +209,24 @@ export default function BannerBlockEditor({
                       <Label className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
                         Size Mode
                       </Label>
-                      <div className="grid grid-cols-3 gap-1.5 p-1 bg-surface-secondary/50 border border-border rounded-sm">
+                      <div className="grid grid-cols-4 gap-1.5 p-1 bg-surface-secondary/50 border border-border rounded-sm">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateBannerData(banner.id, {
+                              desktopSizeMode: "free",
+                              desktopRatio: "free",
+                              size: "free",
+                            })
+                          }}
+                          className={`py-1.5 text-xs font-semibold rounded-sm transition-all ${
+                            desktopSizeMode === "free"
+                              ? "bg-neutral-900 text-white shadow-sm"
+                              : "text-text-secondary hover:text-text-primary"
+                          }`}
+                        >
+                          Free Size
+                        </button>
                         <button
                           type="button"
                           onClick={() => {
@@ -231,7 +248,7 @@ export default function BannerBlockEditor({
                           onClick={() => {
                             updateBannerData(banner.id, {
                               desktopSizeMode: "ratio",
-                              desktopRatio: desktopRatio || "32:10",
+                              desktopRatio: desktopRatio !== "free" ? desktopRatio : "32:10",
                               size: "editorial",
                             })
                           }}
@@ -261,6 +278,13 @@ export default function BannerBlockEditor({
                         </button>
                       </div>
 
+                      {/* Desktop Free Size Info */}
+                      {desktopSizeMode === "free" && (
+                        <p className="text-[11px] text-text-secondary pt-1 leading-relaxed">
+                          ✨ <strong>1920 × Free Size:</strong> Horizontal width is fixed at full-width (up to 1920px), and the vertical height naturally matches your uploaded banner photo without cropping.
+                        </p>
+                      )}
+
                       {/* Desktop Ratio Selector */}
                       {desktopSizeMode === "ratio" && (
                         <div className="space-y-1 pt-1">
@@ -272,6 +296,7 @@ export default function BannerBlockEditor({
                             onChange={(e) => updateBannerData(banner.id, { desktopRatio: e.target.value as any })}
                             className="w-full h-9 px-3 bg-surface border border-border rounded-sm text-xs focus:ring-1 focus:ring-text-primary"
                           >
+                            <option value="free">Free Size — 1920 × Natural Ratio (No Crop)</option>
                             <option value="32:10">32:10 — Wide Editorial Banner (Recommended)</option>
                             <option value="21:9">21:9 — Cinematic Ultrawide</option>
                             <option value="16:9">16:9 — Standard Landscape</option>
@@ -576,13 +601,30 @@ export default function BannerBlockEditor({
                       <Label className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
                         Size Mode
                       </Label>
-                      <div className="grid grid-cols-2 gap-1.5 p-1 bg-surface-secondary/50 border border-border rounded-sm">
+                      <div className="grid grid-cols-3 gap-1.5 p-1 bg-surface-secondary/50 border border-border rounded-sm">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateBannerData(banner.id, {
+                              mobileSizeMode: "free",
+                              mobileRatio: "free",
+                              mobileSize: "free",
+                            })
+                          }}
+                          className={`py-1.5 text-xs font-semibold rounded-sm transition-all ${
+                            mobileSizeMode === "free"
+                              ? "bg-neutral-900 text-white shadow-sm"
+                              : "text-text-secondary hover:text-text-primary"
+                          }`}
+                        >
+                          Free Size
+                        </button>
                         <button
                           type="button"
                           onClick={() => {
                             updateBannerData(banner.id, {
                               mobileSizeMode: "ratio",
-                              mobileRatio: mobileRatio || "4:5",
+                              mobileRatio: mobileRatio !== "free" ? mobileRatio : "4:5",
                               mobileSize: "standard-portrait",
                             })
                           }}
@@ -612,6 +654,13 @@ export default function BannerBlockEditor({
                         </button>
                       </div>
 
+                      {/* Mobile Free Size Info */}
+                      {mobileSizeMode === "free" && (
+                        <p className="text-[11px] text-text-secondary pt-1 leading-relaxed">
+                          ✨ <strong>Free Mobile Size:</strong> Full screen width; the vertical height naturally matches the mobile banner image without cropping.
+                        </p>
+                      )}
+
                       {/* Mobile Ratio Selector */}
                       {mobileSizeMode === "ratio" && (
                         <div className="space-y-1 pt-1">
@@ -623,6 +672,7 @@ export default function BannerBlockEditor({
                             onChange={(e) => updateBannerData(banner.id, { mobileRatio: e.target.value as any })}
                             className="w-full h-9 px-3 bg-surface border border-border rounded-sm text-xs focus:ring-1 focus:ring-text-primary"
                           >
+                            <option value="free">Free Size — Natural Ratio (No Crop)</option>
                             <option value="4:5">4:5 — Standard Mobile Portrait (Recommended)</option>
                             <option value="3:4">3:4 — Tall Portrait</option>
                             <option value="1:1">1:1 — Square</option>
@@ -990,7 +1040,10 @@ export default function BannerBlockEditor({
         const activeBanner = activeBanners.find((b) => b.id === croppingId)
         const getCropAspect = () => {
           if (cropType === "mobile") {
-            const mRatio = activeBanner?.data.mobileRatio || "4:5"
+            const mSizeMode = activeBanner?.data.mobileSizeMode || "free"
+            if (mSizeMode === "free") return 0
+            const mRatio = activeBanner?.data.mobileRatio || "free"
+            if (mRatio === "free") return 0
             if (mRatio === "1:1") return 1 / 1
             if (mRatio === "9:16") return 9 / 16
             if (mRatio === "3:4") return 3 / 4
@@ -998,9 +1051,11 @@ export default function BannerBlockEditor({
             return 4 / 5
           }
 
-          const dSizeMode = activeBanner?.data.desktopSizeMode || "ratio"
+          const dSizeMode = activeBanner?.data.desktopSizeMode || "free"
+          if (dSizeMode === "free") return 0
           if (dSizeMode === "50dvh") return 16 / 8
-          const dRatio = activeBanner?.data.desktopRatio || "32:10"
+          const dRatio = activeBanner?.data.desktopRatio || "free"
+          if (dRatio === "free") return 0
           if (dRatio === "21:9") return 21 / 9
           if (dRatio === "16:9") return 16 / 9
           if (dRatio === "4:3") return 4 / 3

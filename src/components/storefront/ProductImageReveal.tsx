@@ -120,7 +120,7 @@ export function ProductImageReveal({
                 priority={isFirst && priority}
                 fetchPriority={isFirst && priority ? "high" : "auto"}
                 loading={isFirst ? "eager" : "lazy"}
-                className="object-cover object-top pointer-events-none select-none"
+                className="object-cover object-center pointer-events-none select-none"
                 draggable={false}
               />
             </div>

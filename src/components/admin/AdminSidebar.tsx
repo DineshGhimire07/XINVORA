@@ -21,6 +21,8 @@ import {
   ChevronRight,
   Boxes,
   Globe,
+  Archive,
+  MessageCircle,
   type LucideIcon,
 } from "lucide-react"
 
@@ -54,6 +56,7 @@ const navItems: NavItem[] = [
     icon: ShoppingBag,
     items: [
       { name: "All Products", href: "/admin/products" },
+      { name: "Archive", href: "/admin/products?status=archived" },
       { name: "Master Inventory", href: "/admin/inventory" },
       { name: "AI Photography", href: "/admin/products/ai-photography" },
       { name: "Bulk Import", href: "/admin/products/bulk-upload" },
@@ -67,12 +70,14 @@ const navItems: NavItem[] = [
   { name: "Master Inventory", href: "/admin/inventory", icon: Boxes },
   { name: "Photography Studio", href: "/admin/products/ai-photography", icon: Camera },
   { name: "Collections", href: "/admin/collections", icon: Layers },
+  { name: "Live Chat Inbox", href: "/admin/inbox", icon: MessageCircle },
   {
     name: "Customers",
     href: "/admin/users",
     icon: Users,
     items: [
       { name: "All Customers", href: "/admin/users" },
+      { name: "Live Chat Inbox", href: "/admin/inbox" },
       { name: "Customer Inquiries", href: "/admin/inquiries" },
       { name: "Feedback & Stock Alerts", href: "/admin/customer-feedback" },
     ],

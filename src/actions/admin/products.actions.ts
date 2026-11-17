@@ -230,6 +230,82 @@ export async function updateProductAction(id: string, formData: FormData) {
   }
 }
 
+export async function publishProductAction(id: string) {
+  try {
+    const session = await SessionService.requireAdmin()
+    await AdminProductService.publishProduct(id, session.id)
+    revalidatePath("/admin/products")
+    revalidatePath("/admin/inventory")
+    revalidatePath("/admin")
+    revalidatePath("/")
+    revalidatePath("/products")
+    revalidatePath("/collections")
+    revalidateTag("products", "default")
+    revalidateTag("inventory", "default")
+    revalidateTag("dashboard", "default")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: extractDbError(error) }
+  }
+}
+
+export async function archiveAllActiveProductsAction() {
+  try {
+    const session = await SessionService.requireAdmin()
+    const count = await AdminProductService.archiveAllProducts(session.id)
+    revalidatePath("/admin/products")
+    revalidatePath("/admin/inventory")
+    revalidatePath("/admin")
+    revalidatePath("/")
+    revalidatePath("/products")
+    revalidatePath("/collections")
+    revalidateTag("products", "default")
+    revalidateTag("inventory", "default")
+    revalidateTag("dashboard", "default")
+    return { success: true, count }
+  } catch (error: any) {
+    return { success: false, error: extractDbError(error) }
+  }
+}
+
+export async function bulkArchiveProductsAction(ids: string[]) {
+  try {
+    const session = await SessionService.requireAdmin()
+    const count = await AdminProductService.bulkArchiveProducts(ids, session.id)
+    revalidatePath("/admin/products")
+    revalidatePath("/admin/inventory")
+    revalidatePath("/admin")
+    revalidatePath("/")
+    revalidatePath("/products")
+    revalidatePath("/collections")
+    revalidateTag("products", "default")
+    revalidateTag("inventory", "default")
+    revalidateTag("dashboard", "default")
+    return { success: true, count }
+  } catch (error: any) {
+    return { success: false, error: extractDbError(error) }
+  }
+}
+
+export async function bulkPublishProductsAction(ids: string[]) {
+  try {
+    const session = await SessionService.requireAdmin()
+    const count = await AdminProductService.bulkPublishProducts(ids, session.id)
+    revalidatePath("/admin/products")
+    revalidatePath("/admin/inventory")
+    revalidatePath("/admin")
+    revalidatePath("/")
+    revalidatePath("/products")
+    revalidatePath("/collections")
+    revalidateTag("products", "default")
+    revalidateTag("inventory", "default")
+    revalidateTag("dashboard", "default")
+    return { success: true, count }
+  } catch (error: any) {
+    return { success: false, error: extractDbError(error) }
+  }
+}
+
 export async function archiveProductAction(id: string) {
   try {
     const session = await SessionService.requireAdmin()

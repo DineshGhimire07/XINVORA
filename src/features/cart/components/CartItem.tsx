@@ -71,13 +71,13 @@ export function CartItem({ item }: CartItemProps) {
       <div className="hidden md:grid grid-cols-12 gap-4 items-center">
         {/* Product Details (Image + Name + Meta + Actions) */}
         <div className="col-span-6 flex gap-6 items-center">
-          <div className="w-24 aspect-[3/4] relative bg-surface rounded overflow-hidden shrink-0 border border-border">
+          <div className="w-24 aspect-square relative bg-surface rounded overflow-hidden shrink-0 border border-border">
             {primaryImage && (
               <Image
                 src={primaryImage.url}
                 alt={primaryImage.altText || item.variant.product.name}
                 fill
-                className="object-cover object-top"
+                className="object-cover object-center"
                 sizes="15vw"
               />
             )}
@@ -197,13 +197,13 @@ export function CartItem({ item }: CartItemProps) {
 
       {/* Mobile Layout */}
       <div className="flex gap-4 items-start md:hidden">
-        <div className="w-24 aspect-[3/4] relative bg-surface rounded overflow-hidden shrink-0 border border-border">
+        <div className="w-24 aspect-square relative bg-surface rounded overflow-hidden shrink-0 border border-border">
           {primaryImage && (
             <Image
               src={primaryImage.url}
               alt={primaryImage.altText || item.variant.product.name}
               fill
-              className="object-cover object-top"
+              className="object-cover object-center"
               sizes="25vw"
             />
           )}

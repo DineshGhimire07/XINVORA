@@ -61,7 +61,7 @@ export function ProductEditorialPair({ images, productName }: ProductEditorialPa
         <div
           key={i}
           className="
-            relative aspect-[3/4] overflow-hidden
+            relative aspect-square overflow-hidden
             rounded-sm bg-surface
             cursor-zoom-in
           "
@@ -74,7 +74,7 @@ export function ProductEditorialPair({ images, productName }: ProductEditorialPa
             }
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 40vw, 28vw"
-            className="object-cover object-top transition-opacity duration-700 ease-out"
+            className="object-cover object-center transition-opacity duration-700 ease-out"
             priority={true}
             fetchPriority="high"
             loading="eager"

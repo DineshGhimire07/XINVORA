@@ -6,7 +6,7 @@
  */
 
 import "server-only"
-import { eq, and, or, desc, asc, gt, inArray, count, ilike, min, sql, type SQL, isNull } from "drizzle-orm"
+import { eq, and, or, desc, asc, gt, inArray, count, ilike, min, sql, type SQL, isNull, isNotNull } from "drizzle-orm"
 import { db } from "../client"
 import {
   products,
@@ -496,10 +496,17 @@ export async function findAdminProductsPaginated(
   const limit = options.limit || 20
   const offset = (page - 1) * limit
 
-  const conditions: any[] = [isNull(products.deletedAt)]
+  const conditions: any[] = []
 
-  if (options.status) {
-    conditions.push(eq(products.status, options.status as any))
+  if (options.status === "ARCHIVED") {
+    // Show all archived products (either status is ARCHIVED or marked as soft-deleted)
+    conditions.push(or(eq(products.status, "ARCHIVED"), isNotNull(products.deletedAt)))
+  } else {
+    // Active tabs only show non-deleted products
+    conditions.push(isNull(products.deletedAt))
+    if (options.status) {
+      conditions.push(eq(products.status, options.status as any))
+    }
   }
 
   if (options.search) {

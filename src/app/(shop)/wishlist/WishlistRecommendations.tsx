@@ -34,14 +34,14 @@ export function WishlistRecommendations({ products }: WishlistRecommendationsPro
           return (
             <div key={p.id} className="group flex flex-col gap-4 text-left">
               {/* Product Image Wrapper */}
-              <div className="relative w-full aspect-[3/4] overflow-hidden bg-[#F8F6F2] select-none rounded-sm border border-[#ECE7DF]/40">
+              <div className="relative w-full aspect-square overflow-hidden bg-[#F8F6F2] select-none rounded-sm border border-[#ECE7DF]/40">
                 <Link href={`/products/${p.slug}`} className="block w-full h-full">
                   <Image
                     src={displayImage}
                     alt={p.productImages?.[0]?.altText || p.name}
                     fill
                     sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 15vw"
-                    className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
+                    className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                   />
                 </Link>
                 

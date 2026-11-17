@@ -81,7 +81,7 @@ export function WishlistGrid({ initialItems }: WishlistGridProps) {
             return (
               <Card key={item.id} className="rounded-none border-border-primary/30 shadow-xs flex flex-col justify-between">
                 <div>
-                  <div className="relative aspect-[3/4] overflow-hidden bg-surface-secondary/20">
+                  <div className="relative aspect-square overflow-hidden bg-surface-secondary/20">
                     <img
                       src={displayImage}
                       alt={item.variant.product.name}

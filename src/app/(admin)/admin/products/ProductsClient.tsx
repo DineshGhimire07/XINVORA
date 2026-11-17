@@ -4,12 +4,19 @@ import { useState, useTransition, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { DataTable } from "@/components/admin/ui/DataTable"
 import { formatCurrency } from "@/lib/utils"
-import { Search, Trash2, CheckSquare, Square, X } from "lucide-react"
+import { Search, Trash2, CheckSquare, Square, X, Archive, UploadCloud } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { DeleteProductButton } from "@/components/admin/DeleteProductButton"
-import { quickUpdateProductAction, bulkDeleteProductsAction } from "@/actions/admin/products.actions"
+import { 
+  quickUpdateProductAction, 
+  bulkDeleteProductsAction,
+  publishProductAction,
+  bulkArchiveProductsAction,
+  bulkPublishProductsAction,
+  archiveAllActiveProductsAction
+} from "@/actions/admin/products.actions"
 
 interface ProductsClientProps {
   productsData: {
@@ -238,6 +245,9 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
   const [isPending, startTransition] = useTransition()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [isBulkOperating, setIsBulkOperating] = useState(false)
+  const [isArchivingAll, setIsArchivingAll] = useState(false)
+  const [publishingId, setPublishingId] = useState<string | null>(null)
   const [itemsList, setItemsList] = useState(productsData.items)
 
   useEffect(() => {
@@ -263,6 +273,75 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
       else next.add(id)
       return next
     })
+  }
+
+  const handlePublishOne = async (id: string) => {
+    setPublishingId(id)
+    const res = await publishProductAction(id)
+    setPublishingId(null)
+    if (res.success) {
+      if (currentStatusTab.toLowerCase() === "archived") {
+        setItemsList(prev => prev.filter(p => p.id !== id))
+      } else {
+        setItemsList(prev => prev.map(p => p.id === id ? { ...p, status: "PUBLISHED" } : p))
+      }
+      router.refresh()
+    } else {
+      alert(res.error || "Failed to publish product")
+    }
+  }
+
+  const handleBulkArchive = async () => {
+    if (selectedIds.size === 0) return
+    const idsToArchive = Array.from(selectedIds)
+    const confirmed = window.confirm(
+      `Archive ${idsToArchive.length} selected product${idsToArchive.length > 1 ? 's' : ''}? They will be immediately hidden from the storefront and moved to the Archive vault.`
+    )
+    if (!confirmed) return
+    setIsBulkOperating(true)
+    const res = await bulkArchiveProductsAction(idsToArchive)
+    setIsBulkOperating(false)
+    if (res.success) {
+      setSelectedIds(new Set())
+      router.refresh()
+    } else {
+      alert(res.error || "Bulk archive failed")
+    }
+  }
+
+  const handleBulkPublish = async () => {
+    if (selectedIds.size === 0) return
+    const idsToPublish = Array.from(selectedIds)
+    const confirmed = window.confirm(
+      `Publish ${idsToPublish.length} selected product${idsToPublish.length > 1 ? 's' : ''} to the storefront?`
+    )
+    if (!confirmed) return
+    setIsBulkOperating(true)
+    const res = await bulkPublishProductsAction(idsToPublish)
+    setIsBulkOperating(false)
+    if (res.success) {
+      setSelectedIds(new Set())
+      router.refresh()
+    } else {
+      alert(res.error || "Bulk publish failed")
+    }
+  }
+
+  const handleArchiveAllActive = async () => {
+    const confirmed = window.confirm(
+      "⚠️ Are you sure you want to ARCHIVE ALL active products?\n\nThey will be immediately hidden from the storefront and moved to the Archive vault. Only admins will be able to see them. You can publish them back at any time."
+    )
+    if (!confirmed) return
+    setIsArchivingAll(true)
+    const res = await archiveAllActiveProductsAction()
+    setIsArchivingAll(false)
+    if (res.success) {
+      alert(`Successfully archived ${res.count ?? 0} active products. They are now safely in the Archive vault.`)
+      setSelectedIds(new Set())
+      router.refresh()
+    } else {
+      alert(res.error || "Failed to archive all products")
+    }
   }
 
   const handleBulkDelete = async () => {
@@ -430,7 +509,19 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
       cell: ({ row }: any) => {
         const item = row.original
         return (
-          <div className="flex items-center justify-end gap-3" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+            {item.status === "ARCHIVED" && (
+              <button
+                type="button"
+                onClick={() => handlePublishOne(item.id)}
+                disabled={publishingId === item.id}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-xs"
+                title="Publish product back to public storefront"
+              >
+                <UploadCloud className="w-3.5 h-3.5" />
+                {publishingId === item.id ? "Publishing..." : "Publish"}
+              </button>
+            )}
             <Link
               href={`/admin/products/${item.id}`}
               className="text-admin-xs uppercase tracking-wider font-bold text-admin-text-secondary hover:text-admin-primary transition-colors"
@@ -489,15 +580,34 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
 
   return (
     <div className="space-y-6">
-      {/* Bulk Delete Toolbar */}
+      {/* Bulk Operations Toolbar */}
       {someSelected && (
         <div className="flex items-center gap-3 px-4 py-3 bg-admin-primary/10 border border-admin-primary/20 rounded-admin-lg animate-in slide-in-from-top-2 duration-200">
           <span className="text-admin-sm font-semibold text-admin-primary">
             {selectedIds.size} product{selectedIds.size > 1 ? 's' : ''} selected
           </span>
+          {currentStatusTab.toLowerCase() === "archived" ? (
+            <button
+              onClick={handleBulkPublish}
+              disabled={isBulkOperating}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white text-[11px] font-bold uppercase tracking-wider rounded-admin-md hover:bg-emerald-700 disabled:opacity-60 transition-colors shadow-xs"
+            >
+              <UploadCloud className="w-3.5 h-3.5" />
+              {isBulkOperating ? 'Publishing...' : `Publish ${selectedIds.size} to Store`}
+            </button>
+          ) : (
+            <button
+              onClick={handleBulkArchive}
+              disabled={isBulkOperating}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white text-[11px] font-bold uppercase tracking-wider rounded-admin-md hover:bg-amber-700 disabled:opacity-60 transition-colors shadow-xs"
+            >
+              <Archive className="w-3.5 h-3.5" />
+              {isBulkOperating ? 'Archiving...' : `Archive ${selectedIds.size}`}
+            </button>
+          )}
           <button
             onClick={handleBulkDelete}
-            disabled={isBulkDeleting}
+            disabled={isBulkDeleting || isBulkOperating}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white text-[11px] font-bold uppercase tracking-wider rounded-admin-md hover:bg-red-600 disabled:opacity-60 transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -510,6 +620,16 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
             <X className="w-3.5 h-3.5" />
             Clear selection
           </button>
+        </div>
+      )}
+
+      {/* Archive Vault Info Banner */}
+      {currentStatusTab.toLowerCase() === "archived" && (
+        <div className="flex items-start md:items-center gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-admin-lg text-amber-900">
+          <Archive className="w-5 h-5 shrink-0 text-amber-600 mt-0.5 md:mt-0" />
+          <div className="text-admin-xs leading-relaxed">
+            <span className="font-bold">Archive Vault Active:</span> These products are completely hidden from the public storefront, collections, search, and PDP. Only admins can see them. Click <strong className="underline text-emerald-800">Publish</strong> to restore any product back to the live customer storefront at any time.
+          </div>
         </div>
       )}
 
@@ -526,7 +646,7 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
           />
         </form>
 
-        <div className="flex gap-1 overflow-x-auto select-none border-b border-admin-border pb-1 md:pb-0 md:border-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto select-none border-b border-admin-border pb-1 md:pb-0 md:border-none">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -541,6 +661,18 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
               {tab.label}
             </button>
           ))}
+
+          {currentStatusTab.toLowerCase() !== "archived" && (
+            <button
+              onClick={handleArchiveAllActive}
+              disabled={isArchivingAll}
+              className="ml-2 flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 text-amber-700 border border-amber-500/30 rounded-admin-md text-admin-xs font-bold uppercase tracking-wider hover:bg-amber-500/20 disabled:opacity-50 transition-colors whitespace-nowrap"
+              title="Archive all active products at once (moves them to Archive vault)"
+            >
+              <Archive className="w-3.5 h-3.5" />
+              {isArchivingAll ? "Archiving..." : "Archive All Active"}
+            </button>
+          )}
         </div>
       </div>
 

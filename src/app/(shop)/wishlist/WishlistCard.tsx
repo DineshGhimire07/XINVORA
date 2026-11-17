@@ -40,7 +40,7 @@ export function WishlistCard({ item, loading, onRemove, onAddToCart }: WishlistC
     <div className="group relative flex flex-col justify-between bg-white border border-[#ECE7DF] rounded-lg overflow-hidden hover:shadow-sm transition-all duration-300">
       <div>
         {/* Aspect Ratio Image Container */}
-        <div className="relative aspect-[3/4] overflow-hidden bg-[#F8F6F2]">
+        <div className="relative aspect-square overflow-hidden bg-[#F8F6F2]">
           <Link href={`/products/${item.variant.product.slug}`} className="block w-full h-full">
             <img
               src={displayImage}

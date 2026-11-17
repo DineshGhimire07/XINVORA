@@ -102,7 +102,7 @@ export function ProductCard({
   return (
     <div data-product-card className={`group flex flex-col text-left w-full relative ${hideName && hidePrice ? "" : "gap-2.5"}`}>
       {/* Visual Card Image container */}
-      <div className="relative w-full aspect-[3/4] bg-[#ECEBE7] overflow-hidden select-none">
+      <div className="relative w-full aspect-square bg-[#ECEBE7] overflow-hidden select-none">
         {/* Desktop Presentation (md+): Smooth hover swap between first and second photo */}
         <div 
           className="hidden md:block w-full h-full relative"
@@ -123,7 +123,7 @@ export function ProductCard({
               priority={priority}
               fetchPriority={priority ? "high" : "low"}
               loading={priority ? "eager" : "lazy"}
-              className="object-cover object-top pointer-events-none"
+              className="object-cover object-center pointer-events-none"
             />
           ) : images.length > 0 ? (
             <>
@@ -135,7 +135,7 @@ export function ProductCard({
                 priority={priority}
                 fetchPriority={priority ? "high" : "low"}
                 loading={priority ? "eager" : "lazy"}
-                className={`object-cover object-top pointer-events-none transition-opacity duration-500 ease-out ${
+                className={`object-cover object-center pointer-events-none transition-opacity duration-500 ease-out ${
                   !disableHover && images[1] && isDesktopHovered ? "opacity-0" : "opacity-100"
                 }`}
               />
@@ -147,7 +147,7 @@ export function ProductCard({
                   sizes="(max-width: 1024px) 33vw, 25vw"
                   loading="lazy"
                   fetchPriority="low"
-                  className={`object-cover object-top pointer-events-none absolute inset-0 transition-opacity duration-500 ease-out ${
+                  className={`object-cover object-center pointer-events-none absolute inset-0 transition-opacity duration-500 ease-out ${
                     isDesktopHovered ? "opacity-100" : "opacity-0"
                   }`}
                 />
@@ -187,7 +187,7 @@ export function ProductCard({
                   priority={priority}
                   fetchPriority={priority ? "high" : "low"}
                   loading={priority ? "eager" : "lazy"}
-                  className="object-cover object-top pointer-events-none"
+                  className="object-cover object-center pointer-events-none"
                 />
               ) : images.length > 0 ? (
                 <Image 
@@ -198,7 +198,7 @@ export function ProductCard({
                   priority={priority}
                   fetchPriority={priority ? "high" : "low"}
                   loading={priority ? "eager" : "lazy"}
-                  className="object-cover object-top pointer-events-none"
+                  className="object-cover object-center pointer-events-none"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-[10px] text-text-secondary uppercase select-none">

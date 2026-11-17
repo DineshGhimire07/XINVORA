@@ -331,14 +331,14 @@ function NewArrivalsSection({ settings }: { settings?: any }) {
                 href={item.slug ? `/products/${item.slug}` : "/collections"} 
                 className="group flex flex-col relative pointer-events-auto w-full"
               >
-                {/* Aspect Ratio 3:4 container - edge-to-edge full bleed display */}
-                <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-100 flex items-center justify-center">
+                {/* Aspect Ratio 1:1 square container - edge-to-edge full bleed display */}
+                <div className="relative aspect-square w-full overflow-hidden bg-neutral-100 flex items-center justify-center">
                   <Image
                     src={item.image}
                     alt={item.name}
                     fill
                     sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                    className="object-cover object-top select-none pointer-events-none transition-transform duration-700 ease-out group-hover:scale-105"
+                    className="object-cover object-center select-none pointer-events-none transition-transform duration-700 ease-out group-hover:scale-105"
                   />
                 </div>
               </Link>
