@@ -18,6 +18,10 @@ import {
   Unplug,
   KeyRound,
   Info,
+  Sparkles,
+  PlayCircle,
+  Code2,
+  PackageCheck,
 } from "lucide-react"
 import {
   startDarazAuthAction,
@@ -25,6 +29,7 @@ import {
   fetchCategoryTreeAction,
   fetchCategoryAttributesAction,
   exchangeDarazCodeAction,
+  simulateListingSubmissionAction,
 } from "@/actions/admin/daraz.actions"
 import type { DarazConnectionStatus } from "@/services/daraz.service"
 import type { DarazCategoryNode, DarazAttributeItem } from "@/lib/daraz/client"
@@ -44,7 +49,7 @@ export function DarazStudioClient({
   const [logs] = useState<any[]>(initialLogs)
   const [templates] = useState<any[]>(initialTemplates)
 
-  const [activeTab, setActiveTab] = useState<"connection" | "categories" | "logs">("connection")
+  const [activeTab, setActiveTab] = useState<"connection" | "categories" | "demo" | "logs">("connection")
   const [isPending, startTransition] = useTransition()
   const [authError, setAuthError] = useState<string | null>(null)
   const [copiedUrl, setCopiedUrl] = useState(false)
@@ -135,6 +140,60 @@ export function DarazStudioClient({
       setManualError(err.message || "An unexpected error occurred.")
     } finally {
       setExchangingCode(false)
+    }
+  }
+
+  // Demo / Simulation State
+  const defaultSampleMd = `---
+product_id: PRODUCT_001
+title: "XINVORA Vintage Cottagecore Ivory Floral Maxi Dress"
+category_id: 1740
+brand: "XINVORA"
+seller_sku: "XIN-DRS-001"
+price: 1349
+special_price: 1199
+stock: 12
+color: "Ivory"
+size: "Free Size"
+fabric: "Linen"
+
+highlights:
+  - Premium breathable pure linen blend fabric
+  - Elegant ruched bodice with adjustable tie back
+  - Designed for warm weather styling in Nepal
+
+package:
+  weight: 0.35
+  length: 30
+  width: 25
+  height: 5
+  content: "1x Maxi Dress, 1x Care Tag"
+---
+
+Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailored from a breathable linen blend, featuring subtle floral detailing and a flattering flowing tiered silhouette.`
+
+  const [demoMarkdown, setDemoMarkdown] = useState(defaultSampleMd)
+  const [demoCatId, setDemoCatId] = useState("1740")
+  const [demoLoading, setDemoLoading] = useState(false)
+  const [demoResult, setDemoResult] = useState<any>(null)
+  const [demoCopiedXml, setDemoCopiedXml] = useState(false)
+
+  const handleRunDemo = async () => {
+    setDemoLoading(true)
+    try {
+      const res = await simulateListingSubmissionAction({
+        categoryId: demoCatId,
+        markdown: demoMarkdown,
+      })
+      if (res.success) {
+        setDemoResult(res.data)
+      } else {
+        alert(res.error || "Simulation failed.")
+      }
+    } catch (err: any) {
+      alert(err.message || "Simulation failed.")
+    } finally {
+      setDemoLoading(false)
     }
   }
 
@@ -255,6 +314,21 @@ export function DarazStudioClient({
         >
           <FolderTree className="w-4 h-4" />
           Category Discovery & Attributes
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveTab("demo")
+            if (!demoResult) handleRunDemo()
+          }}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "demo"
+              ? "border-orange-600 text-orange-600 font-semibold"
+              : "border-transparent text-admin-text-secondary hover:text-admin-text-primary"
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-orange-500" />
+          Listing Simulator (Live Demo)
         </button>
 
         <button
@@ -725,7 +799,214 @@ export function DarazStudioClient({
         </div>
       )}
 
-      {/* TAB 3: AUDIT LOGS */}
+      {/* TAB 3: DEMO & SIMULATOR */}
+      {activeTab === "demo" && (
+        <div className="space-y-6">
+          <div className="bg-admin-card rounded-xl border border-admin-border p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-semibold text-admin-text-primary">
+                    Product Folder & Listing Simulator (Live Demo)
+                  </h2>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    Live Engine
+                  </span>
+                </div>
+                <p className="text-xs text-admin-text-secondary mt-0.5">
+                  Simulate reading a product folder (<code>listing.md</code> + product images), validating against Daraz Nepal&apos;s live attribute schema, and generating the official XML payload.
+                </p>
+              </div>
+
+              <button
+                onClick={handleRunDemo}
+                disabled={demoLoading}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs tracking-wide shadow-sm disabled:opacity-50 transition-colors"
+              >
+                {demoLoading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
+                Run Live Simulation &amp; Validation
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Column: Simulated Product Folder */}
+            <div className="bg-admin-card rounded-xl border border-admin-border p-5 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-admin-border pb-3">
+                <div className="flex items-center gap-2">
+                  <FolderTree className="w-4 h-4 text-orange-600" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-admin-text-primary">
+                    Product Folder: XINVORA_PRODUCTS/PRODUCT_001/
+                  </h3>
+                </div>
+                <span className="text-[11px] text-admin-text-secondary font-mono">
+                  listing.md + 3 photos
+                </span>
+              </div>
+
+              {/* Photos in Folder Preview */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-admin-text-secondary uppercase tracking-wider">
+                  Detected Product Images (3 files)
+                </label>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="p-2.5 rounded-lg border border-admin-border bg-admin-bg/50 flex flex-col items-center justify-center text-center">
+                    <span className="font-mono text-[11px] text-admin-text-primary font-medium">image_1.jpg</span>
+                    <span className="text-[10px] text-emerald-600 font-semibold mt-0.5">Primary Cover</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg border border-admin-border bg-admin-bg/50 flex flex-col items-center justify-center text-center">
+                    <span className="font-mono text-[11px] text-admin-text-primary font-medium">image_2.jpg</span>
+                    <span className="text-[10px] text-admin-text-secondary mt-0.5">Detail Shot</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg border border-admin-border bg-admin-bg/50 flex flex-col items-center justify-center text-center">
+                    <span className="font-mono text-[11px] text-admin-text-primary font-medium">image_3.jpg</span>
+                    <span className="text-[10px] text-admin-text-secondary mt-0.5">Lifestyle</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Target Category Selection */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-admin-text-secondary uppercase tracking-wider">
+                  Target Daraz Leaf Category
+                </label>
+                <div className="flex items-center gap-2 p-2.5 rounded-lg border border-admin-border bg-admin-bg/50 text-xs">
+                  <span className="font-semibold text-admin-text-primary">Dresses</span>
+                  <span className="font-mono text-[11px] text-admin-text-secondary ml-auto bg-admin-card px-2 py-0.5 rounded border border-admin-border">
+                    ID: {demoCatId}
+                  </span>
+                </div>
+              </div>
+
+              {/* Editable listing.md */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold text-admin-text-secondary uppercase tracking-wider">
+                    Folder listing.md (Editable)
+                  </label>
+                  <span className="text-[10px] text-admin-text-secondary">Edit values and re-run</span>
+                </div>
+                <textarea
+                  rows={14}
+                  value={demoMarkdown}
+                  onChange={(e) => setDemoMarkdown(e.target.value)}
+                  className="w-full font-mono text-[11px] p-3 rounded-lg border border-admin-border bg-admin-bg text-admin-text-primary focus:outline-none focus:ring-1 focus:ring-orange-500 leading-relaxed"
+                />
+              </div>
+            </div>
+
+            {/* Right Column: Live Compilation & Official XML Preview */}
+            <div className="bg-admin-card rounded-xl border border-admin-border p-5 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-admin-border pb-3">
+                <div className="flex items-center gap-2">
+                  <Code2 className="w-4 h-4 text-orange-600" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-admin-text-primary">
+                    Daraz Nepal API Compilation
+                  </h3>
+                </div>
+
+                {demoResult && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(demoResult.xml)
+                      setDemoCopiedXml(true)
+                      setTimeout(() => setDemoCopiedXml(false), 2000)
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-admin-text-primary hover:text-orange-600 bg-admin-bg px-2.5 py-1 rounded border border-admin-border transition-colors"
+                  >
+                    {demoCopiedXml ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {demoCopiedXml ? "Copied!" : "Copy XML"}
+                  </button>
+                )}
+              </div>
+
+              {demoLoading ? (
+                <div className="py-20 text-center text-xs text-admin-text-secondary space-y-2">
+                  <RefreshCw className="w-8 h-8 animate-spin mx-auto text-orange-600" />
+                  <p>Fetching live category attributes &amp; compiling XML...</p>
+                </div>
+              ) : demoResult ? (
+                <div className="space-y-4 text-xs">
+                  {/* Pre-flight Validation Box */}
+                  <div
+                    className={`p-3.5 rounded-lg border flex items-start gap-3 ${
+                      demoResult.validation.valid
+                        ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                        : "bg-red-50 border-red-200 text-red-900"
+                    }`}
+                  >
+                    {demoResult.validation.valid ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+                    )}
+                    <div>
+                      <div className="font-semibold text-xs">
+                        {demoResult.validation.valid
+                          ? "Pre-Flight Validation: PASSED"
+                          : "Pre-Flight Validation: FAILED"}
+                      </div>
+                      <p className="text-[11px] mt-0.5 text-opacity-90">
+                        Evaluated against {demoResult.totalAttributes} live category attributes for Daraz Category {demoResult.categoryId} ({demoResult.categoryName}).
+                      </p>
+                      {demoResult.validation.errors && demoResult.validation.errors.length > 0 && (
+                        <ul className="list-disc list-inside mt-2 text-[11px] text-red-700 space-y-1">
+                          {demoResult.validation.errors.map((err: string, i: number) => (
+                            <li key={i}>{err}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Field Mapping Overview */}
+                  <div className="p-3 rounded-lg border border-admin-border bg-admin-bg/40 space-y-2 text-[11px]">
+                    <div className="font-semibold text-admin-text-primary text-xs flex items-center gap-1.5">
+                      <PackageCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      Automatic Attribute Mapping
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-[10px]">
+                      <div>title &rarr; &lt;name&gt;</div>
+                      <div className="text-admin-text-secondary truncate">{demoResult.parsed.title}</div>
+                      <div>fabric &rarr; &lt;Fabric_Type&gt;</div>
+                      <div className="text-admin-text-secondary">{demoResult.parsed.fabric || "Linen"}</div>
+                      <div>seller_sku &rarr; &lt;SellerSku&gt;</div>
+                      <div className="text-admin-text-secondary">{demoResult.parsed.sellerSku}</div>
+                      <div>price / special_price</div>
+                      <div className="text-admin-text-secondary">NPR {demoResult.parsed.price} / {demoResult.parsed.specialPrice}</div>
+                      <div>package.weight &rarr; &lt;package_weight&gt;</div>
+                      <div className="text-admin-text-secondary">{demoResult.parsed.package.weight} kg</div>
+                      <div>highlights &rarr; &lt;short_description&gt;</div>
+                      <div className="text-admin-text-secondary">{demoResult.parsed.highlights?.length} bullet points</div>
+                    </div>
+                  </div>
+
+                  {/* Official XML Code Box */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold text-admin-text-secondary uppercase tracking-wider flex items-center justify-between">
+                      <span>Compiled Daraz /product/create XML Payload</span>
+                      <span className="text-[10px] text-emerald-600 font-mono">100% Daraz OpenAPI Compliant</span>
+                    </label>
+                    <pre className="max-h-[300px] overflow-y-auto p-3.5 rounded-lg border border-admin-border bg-gray-950 text-emerald-400 font-mono text-[11px] leading-relaxed select-all">
+                      {demoResult.xml}
+                    </pre>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-20 text-center text-xs text-admin-text-secondary">
+                  Click <strong>&quot;Run Live Simulation &amp; Validation&quot;</strong> above to compile the sample product.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: AUDIT LOGS */}
       {activeTab === "logs" && (
         <div className="bg-admin-card rounded-xl border border-admin-border p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-admin-border pb-3">

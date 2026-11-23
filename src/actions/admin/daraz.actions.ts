@@ -8,6 +8,8 @@ import { db } from "@/db"
 import { darazConnections, darazAuditLogs, darazCategoryTemplates } from "@/db/schema"
 import { eq, desc } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { parseListingMarkdown } from "@/lib/daraz/markdown-parser"
+import { buildDarazProductXml, validateProductPayload, type ProductListingInput } from "@/lib/daraz/payload-builder"
 import crypto from "crypto"
 
 /**
@@ -188,6 +190,82 @@ export async function exchangeDarazCodeAction(codeOrUrl: string) {
     return {
       success: false,
       error: err.message || "Failed to exchange authorization code with Daraz API.",
+    }
+  }
+}
+
+/**
+ * Live Simulation: Parses a sample listing.md, fetches live Daraz category attributes,
+ * runs pre-flight validation, and compiles the exact official XML payload.
+ */
+export async function simulateListingSubmissionAction(data: {
+  categoryId: string | number
+  markdown: string
+  mockImages?: string[]
+}) {
+  await SessionService.requireAdmin()
+
+  try {
+    const parsed = parseListingMarkdown(data.markdown)
+    const targetCatId = data.categoryId || parsed.categoryId
+
+    // Fetch live attributes for this category
+    const attrResult = await DarazService.getCategoryAttributes(targetCatId)
+    const rawAttrs: any[] = (attrResult.attributes as any[]) || []
+
+    const images =
+      data.mockImages && data.mockImages.length > 0
+        ? data.mockImages
+        : [
+            "https://sg-live.slatic.net/original/b731a8098df7d606ab2e56efc650afcb.jpg",
+            "https://sg-live.slatic.net/original/c832b9098df7d606ab2e56efc650afcc.jpg",
+          ]
+
+    const listingInput: ProductListingInput = {
+      primaryCategory: String(targetCatId),
+      title: parsed.title,
+      highlights: parsed.highlights,
+      description: parsed.description,
+      brand: parsed.brand || "XINVORA",
+      normalAttributes: {
+        Fabric_Type: parsed.fabric || "Linen",
+        material: parsed.material || "Linen",
+        size: parsed.size || "Free Size",
+        ...parsed.extraAttributes,
+      },
+      sku: {
+        sellerSku: parsed.sellerSku,
+        price: parsed.price,
+        specialPrice: parsed.specialPrice,
+        quantity: parsed.stock,
+        colorFamily: parsed.color || "Ivory",
+        packageWeight: parsed.package.weight,
+        packageLength: parsed.package.length,
+        packageWidth: parsed.package.width,
+        packageHeight: parsed.package.height,
+        packageContent: parsed.package.content,
+        images,
+      },
+    }
+
+    const validation = validateProductPayload(listingInput, rawAttrs)
+    const generatedXml = buildDarazProductXml(listingInput)
+
+    return {
+      success: true,
+      data: {
+        categoryId: targetCatId,
+        categoryName: attrResult.categoryName,
+        totalAttributes: rawAttrs.length,
+        parsed,
+        validation,
+        xml: generatedXml,
+      },
+    }
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message || "Failed to simulate listing submission.",
     }
   }
 }
