@@ -73,12 +73,13 @@ export function escapeXml(str: any): string {
 export function buildDarazProductXml(input: ProductListingInput): string {
   const brand = input.brand || "XINVORA"
 
-  // Format highlights (short_description) as HTML unordered list if array
+  // Format highlights (short_description) as CDATA HTML unordered list
   let shortDesc = ""
-  if (Array.isArray(input.highlights)) {
-    shortDesc = `<ul>${input.highlights.map((h) => `<li>${escapeXml(h)}</li>`).join("")}</ul>`
+  if (Array.isArray(input.highlights) && input.highlights.length > 0) {
+    const listHtml = `<ul>${input.highlights.map((h) => `<li>${escapeXml(h)}</li>`).join("")}</ul>`
+    shortDesc = `<![CDATA[${listHtml}]]>`
   } else if (input.highlights) {
-    shortDesc = escapeXml(input.highlights)
+    shortDesc = `<![CDATA[${escapeXml(input.highlights)}]]>`
   }
 
   // Assemble Rich Description: Images first (Daraz Lorikeet style), then text description
