@@ -23,6 +23,7 @@ import {
   Globe,
   Archive,
   MessageCircle,
+  Store,
   type LucideIcon,
 } from "lucide-react"
 
@@ -58,6 +59,7 @@ const navItems: NavItem[] = [
       { name: "All Products", href: "/admin/products" },
       { name: "Archive", href: "/admin/products?status=archived" },
       { name: "Master Inventory", href: "/admin/inventory" },
+      { name: "Daraz Listing Studio", href: "/admin/daraz" },
       { name: "AI Photography", href: "/admin/products/ai-photography" },
       { name: "Bulk Import", href: "/admin/products/bulk-upload" },
       { name: "Media Library", href: "/admin/media" },
@@ -69,6 +71,7 @@ const navItems: NavItem[] = [
   },
   { name: "Master Inventory", href: "/admin/inventory", icon: Boxes },
   { name: "Photography Studio", href: "/admin/products/ai-photography", icon: Camera },
+  { name: "Daraz Studio", href: "/admin/daraz", icon: Store },
   { name: "Collections", href: "/admin/collections", icon: Layers },
   { name: "Live Chat Inbox", href: "/admin/inbox", icon: MessageCircle },
   {
