@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useTransition } from "react"
+import React, { useState, useEffect, useTransition } from "react"
 import {
   CheckCircle2,
   AlertCircle,
@@ -48,6 +48,17 @@ export function DarazStudioClient({
   const [isPending, startTransition] = useTransition()
   const [authError, setAuthError] = useState<string | null>(null)
   const [copiedUrl, setCopiedUrl] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return "—"
+    if (!mounted) return new Date(dateStr).toISOString().slice(0, 10)
+    return new Date(dateStr).toLocaleString()
+  }
 
   // Manual code exchange state
   const [manualInput, setManualInput] = useState("")
@@ -302,8 +313,8 @@ export function DarazStudioClient({
                 <span className="text-admin-text-secondary uppercase font-semibold text-[10px] tracking-wider">
                   Access Token Expiry
                 </span>
-                <div className="font-mono text-admin-text-primary">
-                  {status.expiresAt ? new Date(status.expiresAt).toLocaleString() : "—"}
+                <div className="font-mono text-admin-text-primary" suppressHydrationWarning>
+                  {formatDate(status.expiresAt)}
                 </div>
               </div>
 
@@ -311,8 +322,8 @@ export function DarazStudioClient({
                 <span className="text-admin-text-secondary uppercase font-semibold text-[10px] tracking-wider">
                   Refresh Token Expiry
                 </span>
-                <div className="font-mono text-admin-text-primary">
-                  {status.refreshExpiresAt ? new Date(status.refreshExpiresAt).toLocaleString() : "—"}
+                <div className="font-mono text-admin-text-primary" suppressHydrationWarning>
+                  {formatDate(status.refreshExpiresAt)}
                 </div>
               </div>
             </div>
@@ -669,8 +680,8 @@ export function DarazStudioClient({
                 <tbody className="divide-y divide-admin-border/40 font-mono">
                   {logs.map((log) => (
                     <tr key={log.id} className="hover:bg-admin-bg/50">
-                      <td className="py-2.5 text-admin-text-secondary whitespace-nowrap">
-                        {new Date(log.createdAt).toLocaleString()}
+                      <td className="py-2.5 text-admin-text-secondary whitespace-nowrap" suppressHydrationWarning>
+                        {formatDate(log.createdAt)}
                       </td>
                       <td className="py-2.5 text-admin-text-primary font-semibold">
                         {log.action}

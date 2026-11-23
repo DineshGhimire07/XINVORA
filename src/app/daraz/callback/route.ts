@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
   const state = searchParams.get("state")
   const errorParam = searchParams.get("error") || searchParams.get("error_description")
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://xinvora.com.np"
+  // Use the incoming request origin (or production domain) so redirects stay on the correct host
+  const appUrl = request.nextUrl.origin || "https://www.xinvora.com.np"
   const redirectTarget = new URL("/admin/daraz", appUrl)
 
   // 1. Handle Daraz error parameter
