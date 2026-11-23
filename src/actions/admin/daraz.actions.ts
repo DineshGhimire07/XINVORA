@@ -271,13 +271,14 @@ export async function simulateListingSubmissionAction(data: {
         (a.name === "size_chart" || a.name === "sizeChart") &&
         (a.is_mandatory === 1 || a.isMandatory === 1)
     )
-    const effectiveSizeChart =
+    const rawSizeChart =
       cleanExtra.size_chart ||
       parsed.size_chart ||
-      parsed.extraAttributes?.size_chart ||
-      (hasSizeChartReq
-        ? (parsed.size ? `${parsed.size} - Standard Fit (Bust: 32-38 in, Length: 48 in)` : "Free Size - Standard Regular Fit")
-        : undefined)
+      parsed.extraAttributes?.size_chart
+    const isSizeChartUrl = typeof rawSizeChart === "string" && rawSizeChart.startsWith("http")
+    const effectiveSizeChart = isSizeChartUrl
+      ? rawSizeChart
+      : (hasSizeChartReq ? images[0] : undefined)
 
     const listingInput: ProductListingInput = {
       primaryCategory: String(targetCatId),

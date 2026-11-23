@@ -143,11 +143,14 @@ export class DarazQueueService {
         }
       }
 
-      const effectiveSizeChart =
+      // In Daraz API, size_chart requires an uploaded image URL on Daraz CDN.
+      // If a custom URL is provided use it; otherwise use the primary product image from Daraz CDN.
+      const rawSizeChart =
         cleanExtra.size_chart ||
         parsed.size_chart ||
-        parsed.extraAttributes?.size_chart ||
-        (parsed.size ? `${parsed.size} - Standard Fit (Bust: 32-38 in, Length: 48 in)` : "Free Size - Standard Regular Fit")
+        parsed.extraAttributes?.size_chart
+      const isSizeChartUrl = typeof rawSizeChart === "string" && rawSizeChart.startsWith("http")
+      const effectiveSizeChart = isSizeChartUrl ? rawSizeChart : uploadedImageUrls[0]
 
       const listingInput: ProductListingInput = {
         primaryCategory: String(parsed.categoryId),

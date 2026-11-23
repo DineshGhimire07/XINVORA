@@ -135,15 +135,11 @@ export function buildDarazProductXml(input: ProductListingInput): string {
     }
   }
 
-  // Assemble Images (up to 8 slots)
-  const images = (input.sku.images || []).slice(0, 8)
+  // Assemble Images (only valid non-empty URLs, up to 8 slots)
+  const images = (input.sku.images || []).filter(Boolean).slice(0, 8)
   let imagesXml = "          <Images>\n"
-  for (let i = 0; i < 8; i++) {
-    if (i < images.length && images[i]) {
-      imagesXml += `            <Image>${escapeXml(images[i])}</Image>\n`
-    } else {
-      imagesXml += "            <Image />\n"
-    }
+  for (const imgUrl of images) {
+    imagesXml += `            <Image>${escapeXml(imgUrl)}</Image>\n`
   }
   imagesXml += "          </Images>\n"
 
@@ -154,6 +150,10 @@ export function buildDarazProductXml(input: ProductListingInput): string {
   skuXml += `        <price>${sku.price.toFixed(2)}</price>\n`
   if (sku.specialPrice !== undefined && sku.specialPrice !== null) {
     skuXml += `        <special_price>${sku.specialPrice.toFixed(2)}</special_price>\n`
+    const today = new Date().toISOString().slice(0, 10)
+    const nextYear = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    skuXml += `        <special_from_date>${today}</special_from_date>\n`
+    skuXml += `        <special_to_date>${nextYear}</special_to_date>\n`
   }
   skuXml += `        <quantity>${sku.quantity ?? 1}</quantity>\n`
   if (sku.colorFamily) {
