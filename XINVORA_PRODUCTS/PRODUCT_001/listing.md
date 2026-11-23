@@ -1,28 +1,29 @@
 ---
 product_id: PRODUCT_001
-title: "XINVORA Vintage Cottagecore Ivory Floral Maxi Dress"
+title: "XINVORA Handcrafted Vintage Linen Midi Dress - Sage Floral"
 category_id: 1740
-brand: "XINVORA"
+brand: "No Brand"
 seller_sku: "XIN-DRS-001"
-price: 1349
-special_price: 1199
-stock: 12
-color: "Ivory"
+price: 1899
+special_price: 1599
+stock: 15
+color: "Multicolor"
 size: "Free Size"
 fabric: "Linen"
-size_chart: "Free Size (Bust 34-38 in, Length 48 in)"
+size_chart: "Free Size (Bust: 32-38 in, Waist: 26-34 in, Length: 46 in)"
 
 highlights:
-  - Premium breathable pure linen blend fabric
-  - Elegant ruched bodice with adjustable tie back
-  - Designed for warm weather styling in Nepal
+  - 100% Breathable pure linen blend tailored for Nepal warm & humid climate
+  - Subtle floral aesthetic with vintage gathered square neckline
+  - Adjustable back tie for custom flattering silhouette
+  - Premium double-stitch reinforced hemline
 
 package:
   weight: 0.35
   length: 30
   width: 25
   height: 5
-  content: "1x Maxi Dress, 1x Care Tag"
+  content: "1x XINVORA Vintage Linen Midi Dress, 1x Care Guide"
 ---
 
-Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailored from a breathable linen blend, featuring subtle floral detailing and a flattering flowing tiered silhouette.
+Experience effortless artisan craftsmanship with the XINVORA Vintage Linen Midi Dress in Sage Floral. Designed in Kathmandu for modern comfort, this piece is cut from lightweight, breathable linen blend that drapes naturally. Perfect for casual weekend outings, festive dinners, or quiet luxury styling.

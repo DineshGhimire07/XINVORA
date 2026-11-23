@@ -70,6 +70,8 @@ export function DarazStudioClient({
   const [ingestorResults, setIngestorResults] = useState<any[]>([])
   const [ingestorError, setIngestorError] = useState<string | null>(null)
   const folderInputRef = useRef<HTMLInputElement>(null)
+  const filesInputRef = useRef<HTMLInputElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
   const [activeTab, setActiveTab] = useState<"connection" | "categories" | "demo" | "submissions" | "ingestor" | "logs">("connection")
   const [isPending, startTransition] = useTransition()
@@ -241,42 +243,83 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
     }
   }
 
-  const handleFolderPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileList = e.target.files
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const res = reader.result as string
+        const base64 = res.split(",")[1] || ""
+        resolve(base64)
+      }
+      reader.onerror = (err) => reject(err)
+      reader.readAsDataURL(file)
+    })
+
+  const processFilesList = async (fileList: FileList | File[]) => {
     if (!fileList || fileList.length === 0) return
-
-    const folderMap: Record<string, { markdownContent?: string; images: Array<{ filename: string; base64: string }> }> = {}
-
-    await Promise.all(
-      Array.from(fileList).map(async (file) => {
-        const parts = file.webkitRelativePath.split("/")
-        const folderName = parts[0]
-        const fileName = parts[parts.length - 1]
-        if (!folderMap[folderName]) folderMap[folderName] = { images: [] }
-
-        if (fileName === "listing.md") {
-          const text = await file.text()
-          folderMap[folderName].markdownContent = text
-        } else if (/\.(jpg|jpeg|png|webp)$/i.test(fileName)) {
-          const buf = await file.arrayBuffer()
-          const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)))
-          folderMap[folderName].images.push({ filename: fileName, base64 })
-        }
-      })
-    )
-
-    const items = Object.entries(folderMap)
-      .filter(([, v]) => v.markdownContent)
-      .map(([folderName, v]) => ({
-        folderName,
-        markdownContent: v.markdownContent!,
-        images: v.images,
-      }))
-
-    setIngestorFiles(items)
-    setIngestorResults([])
     setIngestorError(null)
-    if (folderInputRef.current) folderInputRef.current.value = ""
+
+    const folderMap: Record<
+      string,
+      { markdownContent?: string; images: Array<{ filename: string; base64: string }> }
+    > = {}
+
+    try {
+      await Promise.all(
+        Array.from(fileList).map(async (file) => {
+          let folderName = "PRODUCT_001"
+          if (file.webkitRelativePath) {
+            const parts = file.webkitRelativePath.split("/")
+            if (parts.length >= 3) {
+              folderName = parts[1]
+            } else if (parts.length === 2) {
+              folderName = parts[0]
+            } else {
+              folderName = parts[0] || "PRODUCT_001"
+            }
+          }
+
+          const fileName = file.name
+          if (!folderMap[folderName]) folderMap[folderName] = { images: [] }
+
+          if (fileName === "listing.md" || fileName.endsWith(".md")) {
+            const text = await file.text()
+            folderMap[folderName].markdownContent = text
+          } else if (/\.(jpg|jpeg|png|webp)$/i.test(fileName)) {
+            const base64 = await fileToBase64(file)
+            folderMap[folderName].images.push({ filename: fileName, base64 })
+          }
+        })
+      )
+
+      const items = Object.entries(folderMap)
+        .filter(([, v]) => v.markdownContent)
+        .map(([folderName, v]) => ({
+          folderName,
+          markdownContent: v.markdownContent!,
+          images: v.images,
+        }))
+
+      if (items.length === 0) {
+        setIngestorError(
+          "No valid product folders detected. Please ensure the selected folder/files contain 'listing.md' and at least one image (.jpg, .png, .webp)."
+        )
+      } else {
+        setIngestorFiles(items)
+        setIngestorResults([])
+      }
+    } catch (err: any) {
+      setIngestorError(`Failed to process files: ${err.message}`)
+    } finally {
+      if (folderInputRef.current) folderInputRef.current.value = ""
+      if (filesInputRef.current) filesInputRef.current.value = ""
+    }
+  }
+
+  const handleFolderPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      await processFilesList(e.target.files)
+    }
   }
 
   const handleRunIngestor = async () => {
@@ -1271,33 +1314,54 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
               ref={folderInputRef}
               type="file"
               // @ts-ignore – webkitdirectory is non-standard
-              webkitdirectory="true"
+              webkitdirectory=""
+              // @ts-ignore
+              directory=""
               multiple
               className="hidden"
               onChange={handleFolderPick}
             />
 
-            <div className="flex gap-3 flex-wrap">
+            {/* Hidden files input fallback */}
+            <input
+              ref={filesInputRef}
+              type="file"
+              multiple
+              accept=".md,.jpg,.jpeg,.png,.webp"
+              className="hidden"
+              onChange={(e) => e.target.files && processFilesList(e.target.files)}
+            />
+
+            <div className="flex gap-3 flex-wrap items-center">
               <button
                 onClick={() => folderInputRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-2.5 bg-admin-bg border border-admin-border hover:border-orange-400 text-admin-text-primary text-sm font-medium rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 bg-admin-bg border border-admin-border hover:border-orange-400 text-admin-text-primary text-sm font-medium rounded-lg transition-colors shadow-sm"
               >
                 <FolderOpen className="w-4 h-4 text-orange-500" />
                 Select Product Folder
+              </button>
+
+              <button
+                onClick={() => filesInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2.5 bg-admin-bg border border-admin-border hover:border-orange-400 text-admin-text-secondary hover:text-admin-text-primary text-sm font-medium rounded-lg transition-colors"
+                title="Select listing.md and image files directly"
+              >
+                <FileText className="w-4 h-4 text-gray-400" />
+                Or Select Files Directly
               </button>
 
               {ingestorFiles.length > 0 && (
                 <button
                   onClick={handleRunIngestor}
                   disabled={ingestorRunning}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
                 >
                   {ingestorRunning ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <Upload className="w-4 h-4" />
                   )}
-                  Submit All to Daraz ({ingestorFiles.length} products)
+                  Submit All to Daraz ({ingestorFiles.length} product{ingestorFiles.length !== 1 ? "s" : ""})
                 </button>
               )}
             </div>
@@ -1366,9 +1430,33 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
             )}
 
             {ingestorFiles.length === 0 && ingestorResults.length === 0 && (
-              <div className="py-12 text-center text-xs text-admin-text-secondary space-y-2">
-                <FolderOpen className="w-10 h-10 mx-auto text-admin-text-secondary/40" />
-                <p>No folder selected yet. Click <strong>Select Product Folder</strong> to begin.</p>
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setIsDragging(true)
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setIsDragging(false)
+                  if (e.dataTransfer.files) {
+                    processFilesList(e.dataTransfer.files)
+                  }
+                }}
+                onClick={() => folderInputRef.current?.click()}
+                className={`py-12 px-6 text-center text-xs rounded-xl border-2 border-dashed transition-colors space-y-2 cursor-pointer ${
+                  isDragging
+                    ? "border-orange-500 bg-orange-500/10 text-orange-600"
+                    : "border-admin-border hover:border-orange-400/60 bg-admin-bg/30 text-admin-text-secondary"
+                }`}
+              >
+                <FolderOpen className="w-10 h-10 mx-auto text-orange-500/60" />
+                <p className="font-medium text-admin-text-primary text-sm">
+                  Drag and drop your product folder or files here
+                </p>
+                <p className="text-[11px] text-admin-text-secondary">
+                  or click to select your folder from computer
+                </p>
               </div>
             )}
           </div>
