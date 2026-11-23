@@ -221,6 +221,43 @@ export async function simulateListingSubmissionAction(data: {
             "https://sg-live.slatic.net/original/c832b9098df7d606ab2e56efc650afcc.jpg",
           ]
 
+    // Filter out internal metadata and SKU-level fields from normalAttributes
+    const excludedFromNormal = new Set([
+      "product_id",
+      "id",
+      "title",
+      "name",
+      "category_id",
+      "category",
+      "seller_sku",
+      "sku",
+      "price",
+      "special_price",
+      "stock",
+      "quantity",
+      "color",
+      "color_family",
+      "package",
+      "package_weight",
+      "package_length",
+      "package_width",
+      "package_height",
+      "package_content",
+      "highlights",
+      "description",
+      "short_description",
+      "brand",
+      "images",
+      "fabric",
+    ])
+
+    const cleanExtra: Record<string, any> = {}
+    for (const [k, v] of Object.entries(parsed.extraAttributes)) {
+      if (!excludedFromNormal.has(k.toLowerCase())) {
+        cleanExtra[k] = v
+      }
+    }
+
     const listingInput: ProductListingInput = {
       primaryCategory: String(targetCatId),
       title: parsed.title,
@@ -231,7 +268,7 @@ export async function simulateListingSubmissionAction(data: {
         Fabric_Type: parsed.fabric || "Linen",
         material: parsed.material || "Linen",
         size: parsed.size || "Free Size",
-        ...parsed.extraAttributes,
+        ...cleanExtra,
       },
       sku: {
         sellerSku: parsed.sellerSku,

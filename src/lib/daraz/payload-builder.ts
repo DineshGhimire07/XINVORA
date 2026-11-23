@@ -95,8 +95,41 @@ export function buildDarazProductXml(input: ProductListingInput): string {
   normalAttrsXml += `      <brand>${escapeXml(brand)}</brand>\n`
 
   if (input.normalAttributes) {
+    const skuKeys = new Set([
+      "product_id",
+      "id",
+      "title",
+      "name",
+      "category_id",
+      "category",
+      "seller_sku",
+      "sku",
+      "price",
+      "special_price",
+      "stock",
+      "quantity",
+      "color",
+      "color_family",
+      "package",
+      "package_weight",
+      "package_length",
+      "package_width",
+      "package_height",
+      "package_content",
+      "highlights",
+      "description",
+      "short_description",
+      "brand",
+      "images",
+      "fabric",
+    ])
+
     for (const [key, val] of Object.entries(input.normalAttributes)) {
-      if (val !== undefined && val !== null && !["name", "short_description", "description", "brand"].includes(key)) {
+      if (
+        val !== undefined &&
+        val !== null &&
+        !skuKeys.has(key.toLowerCase())
+      ) {
         normalAttrsXml += `      <${key}>${escapeXml(val)}</${key}>\n`
       }
     }
