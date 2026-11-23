@@ -143,6 +143,12 @@ export class DarazQueueService {
         }
       }
 
+      const effectiveSizeChart =
+        cleanExtra.size_chart ||
+        parsed.size_chart ||
+        parsed.extraAttributes?.size_chart ||
+        (parsed.size ? `${parsed.size} - Standard Fit (Bust: 32-38 in, Length: 48 in)` : "Free Size - Standard Regular Fit")
+
       const listingInput: ProductListingInput = {
         primaryCategory: String(parsed.categoryId),
         title: parsed.title,
@@ -153,6 +159,7 @@ export class DarazQueueService {
           Fabric_Type: parsed.fabric || "Linen",
           material: parsed.material || "Linen",
           size: parsed.size || "Free Size",
+          ...(effectiveSizeChart ? { size_chart: effectiveSizeChart } : {}),
           ...cleanExtra,
         },
         sku: {

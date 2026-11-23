@@ -9,6 +9,7 @@ export interface ParsedListing {
   stock: number
   color?: string
   size?: string
+  size_chart?: string
   fabric?: string
   material?: string
   description: string
@@ -129,6 +130,7 @@ export function parseListingMarkdown(markdownContent: string): ParsedListing {
     stock: Number(data.stock || data.quantity) || 1,
     color: data.color || data.color_family,
     size: data.size,
+    size_chart: data.size_chart || data.sizechart || data.sizing_chart,
     fabric: data.fabric || data.fabric_type,
     material: data.material,
     description,

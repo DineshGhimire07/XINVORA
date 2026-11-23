@@ -178,6 +178,7 @@ stock: 12
 color: "Ivory"
 size: "Free Size"
 fabric: "Linen"
+size_chart: "Free Size (Bust: 32-38 in, Waist: 26-34 in, Length: 48 in)"
 
 highlights:
   - Premium breathable pure linen blend fabric
@@ -1106,6 +1107,8 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
                       <div className="text-admin-text-secondary">NPR {demoResult.parsed.price} / {demoResult.parsed.specialPrice}</div>
                       <div>package.weight &rarr; &lt;package_weight&gt;</div>
                       <div className="text-admin-text-secondary">{demoResult.parsed.package.weight} kg</div>
+                      <div>size_chart &rarr; &lt;size_chart&gt;</div>
+                      <div className="text-admin-text-secondary truncate">{demoResult.parsed.extraAttributes?.size_chart || demoResult.parsed.size_chart || "Free Size Standard"}</div>
                       <div>highlights &rarr; &lt;short_description&gt;</div>
                       <div className="text-admin-text-secondary">{demoResult.parsed.highlights?.length} bullet points</div>
                     </div>

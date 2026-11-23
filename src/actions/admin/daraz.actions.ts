@@ -265,6 +265,20 @@ export async function simulateListingSubmissionAction(data: {
       }
     }
 
+    // Auto-resolve mandatory size_chart for apparel/fashion categories if not explicitly set
+    const hasSizeChartReq = rawAttrs.some(
+      (a: any) =>
+        (a.name === "size_chart" || a.name === "sizeChart") &&
+        (a.is_mandatory === 1 || a.isMandatory === 1)
+    )
+    const effectiveSizeChart =
+      cleanExtra.size_chart ||
+      parsed.size_chart ||
+      parsed.extraAttributes?.size_chart ||
+      (hasSizeChartReq
+        ? (parsed.size ? `${parsed.size} - Standard Fit (Bust: 32-38 in, Length: 48 in)` : "Free Size - Standard Regular Fit")
+        : undefined)
+
     const listingInput: ProductListingInput = {
       primaryCategory: String(targetCatId),
       title: parsed.title,
@@ -275,6 +289,7 @@ export async function simulateListingSubmissionAction(data: {
         Fabric_Type: parsed.fabric || "Linen",
         material: parsed.material || "Linen",
         size: parsed.size || "Free Size",
+        ...(effectiveSizeChart ? { size_chart: effectiveSizeChart } : {}),
         ...cleanExtra,
       },
       sku: {
