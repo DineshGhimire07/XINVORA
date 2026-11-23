@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
   "installCommand": "npm install",
-  "buildCommand": "npm install --cpu=x64 --os=linux --libc=glibc sharp && npm run build"
+  "buildCommand": "npm run build"
 }

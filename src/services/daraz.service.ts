@@ -10,7 +10,6 @@ import { eq, desc, inArray } from "drizzle-orm"
 import { DarazClient, type DarazTokenResponse } from "@/lib/daraz/client"
 import { encryptDarazToken, decryptDarazToken } from "@/lib/daraz/crypto"
 import { buildDarazProductXml, validateProductPayload, type ProductListingInput } from "@/lib/daraz/payload-builder"
-import sharp from "sharp"
 import crypto from "crypto"
 
 export interface DarazConnectionStatus {
@@ -246,17 +245,25 @@ export class DarazService {
     }
 
     // 2. Normalize and ensure image meets Daraz requirements (min 330x330, max 3MB, JPEG)
-    const metadata = await sharp(fileBuffer).metadata()
+    // Use dynamic import so the native sharp binary is loaded on-demand and
+    // doesn't crash the module on Vercel serverless if the .so is unavailable.
     let readyBuffer = fileBuffer
-
-    if (!metadata.width || !metadata.height || metadata.width < 330 || metadata.height < 330) {
-      readyBuffer = await sharp(fileBuffer)
-        .resize(1000, 1000, { fit: "contain", background: { r: 255, g: 255, b: 255 } })
-        .jpeg({ quality: 90 })
-        .toBuffer()
-    } else if (fileBuffer.length > 3 * 1024 * 1024) {
-      // Compress if larger than 3MB
-      readyBuffer = await sharp(fileBuffer).jpeg({ quality: 85 }).toBuffer()
+    try {
+      const sharpMod = await import("sharp").catch(() => null)
+      if (sharpMod) {
+        const sharp = sharpMod.default || sharpMod
+        const metadata = await sharp(fileBuffer).metadata()
+        if (!metadata.width || !metadata.height || metadata.width < 330 || metadata.height < 330) {
+          readyBuffer = await sharp(fileBuffer)
+            .resize(1000, 1000, { fit: "contain", background: { r: 255, g: 255, b: 255 } })
+            .jpeg({ quality: 90 })
+            .toBuffer()
+        } else if (fileBuffer.length > 3 * 1024 * 1024) {
+          readyBuffer = await sharp(fileBuffer).jpeg({ quality: 85 }).toBuffer()
+        }
+      }
+    } catch (sharpErr: unknown) {
+      console.warn("[DarazService] sharp unavailable, using original buffer:", (sharpErr as Error).message)
     }
 
     // 3. Acquire valid token and upload to Daraz
