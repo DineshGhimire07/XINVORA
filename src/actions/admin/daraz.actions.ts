@@ -466,21 +466,22 @@ export async function processSingleWebFolderAction(item: {
   images: Array<{ filename: string; base64: string }>
   commonImages?: Array<{ filename: string; base64: string }>
   sizeChartImage?: { filename: string; base64: string }
+  whiteBgImage?: { filename: string; base64: string }
 }) {
-  await SessionService.requireAdmin()
-
-  const batchId = `WEB_${new Date().toISOString().slice(0, 10)}_${Date.now().toString().slice(-4)}`
-  const parsed = parseListingMarkdown(item.markdownContent)
-
-  const [job] = await DarazQueueService.createBatch(batchId, [
-    {
-      localProductId: parsed.productId || item.folderName,
-      folderPath: item.folderName,
-      metadata: { title: parsed.title, sellerSku: parsed.sellerSku },
-    },
-  ])
-
   try {
+    await SessionService.requireAdmin()
+
+    const batchId = `WEB_${new Date().toISOString().slice(0, 10)}_${Date.now().toString().slice(-4)}`
+    const parsed = parseListingMarkdown(item.markdownContent)
+
+    const [job] = await DarazQueueService.createBatch(batchId, [
+      {
+        localProductId: parsed.productId || item.folderName,
+        folderPath: item.folderName,
+        metadata: { title: parsed.title, sellerSku: parsed.sellerSku },
+      },
+    ])
+
     // Combine folder's own images first, followed by common guide images at the end
     const combinedImages = [
       ...item.images,
@@ -501,13 +502,26 @@ export async function processSingleWebFolderAction(item: {
         }
       : undefined
 
+    const whiteBgPayload = item.whiteBgImage
+      ? {
+          filename: item.whiteBgImage.filename,
+          buffer: Buffer.from(item.whiteBgImage.base64, "base64"),
+        }
+      : undefined
+
     const processRes = await DarazQueueService.processProductFolder(job.id, {
       markdownContent: item.markdownContent,
       images: imagePayloads,
       sizeChartImage: sizeChartPayload,
+      whiteBgImage: whiteBgPayload,
     })
 
-    revalidatePath("/admin/daraz")
+    try {
+      revalidatePath("/admin/daraz")
+    } catch {
+      // Ignore background revalidation errors if invoked outside render cycle
+    }
+
     return {
       success: processRes.success,
       folderName: item.folderName,

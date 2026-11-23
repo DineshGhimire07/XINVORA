@@ -348,7 +348,7 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
         .map(([folderName, v]) => ({
           folderName,
           markdownContent: v.markdownContent!,
-          images: v.images,
+          images: v.images.sort((a, b) => a.filename.localeCompare(b.filename, undefined, { numeric: true })),
         }))
 
       if (items.length === 0) {
@@ -409,6 +409,37 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
     if (sizeChartInputRef.current) sizeChartInputRef.current.value = ""
   }
 
+  const createWhiteBgSquareFromBase64 = async (base64: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas")
+          canvas.width = 1000
+          canvas.height = 1000
+          const ctx = canvas.getContext("2d")
+          if (ctx) {
+            ctx.fillStyle = "#ffffff"
+            ctx.fillRect(0, 0, 1000, 1000)
+            const scale = Math.min(1000 / img.width, 1000 / img.height)
+            const w = img.width * scale
+            const h = img.height * scale
+            const x = (1000 - w) / 2
+            const y = (1000 - h) / 2
+            ctx.drawImage(img, x, y, w, h)
+            const out = canvas.toDataURL("image/jpeg", 0.9).split(",")[1]
+            if (out) return resolve(out)
+          }
+        } catch {
+          // fallback
+        }
+        resolve(base64)
+      }
+      img.onerror = () => resolve(base64)
+      img.src = `data:image/jpeg;base64,${base64}`
+    })
+  }
+
   const handleRunIngestor = async () => {
     if (ingestorFiles.length === 0) return
     setIngestorRunning(true)
@@ -426,6 +457,19 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
           currentFolder: item.folderName,
         })
 
+        let whiteBgPayload: { filename: string; base64: string } | undefined
+        if (item.images.length > 0) {
+          try {
+            const whiteBgBase64 = await createWhiteBgSquareFromBase64(item.images[0].base64)
+            whiteBgPayload = {
+              filename: `white_bg_${item.images[0].filename.replace(/\.[^/.]+$/, "")}.jpg`,
+              base64: whiteBgBase64,
+            }
+          } catch {
+            // ignore
+          }
+        }
+
         try {
           const res = await processSingleWebFolderAction({
             ...item,
@@ -434,6 +478,7 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
               includeSizeChart && sizeChartImage
                 ? { filename: sizeChartImage.filename, base64: sizeChartImage.base64 }
                 : undefined,
+            whiteBgImage: whiteBgPayload,
           })
           accumulated.push(res)
           setIngestorResults([...accumulated])

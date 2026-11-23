@@ -4,7 +4,6 @@ import { eq, desc, and } from "drizzle-orm"
 import { parseListingMarkdown } from "@/lib/daraz/markdown-parser"
 import { DarazService } from "./daraz.service"
 import type { ProductListingInput } from "@/lib/daraz/payload-builder"
-import sharp from "sharp"
 
 export interface QueueJobInput {
   localProductId: string
@@ -97,6 +96,7 @@ export class DarazQueueService {
       markdownContent: string
       images: Array<{ filename: string; buffer: Buffer }>
       sizeChartImage?: { filename: string; buffer: Buffer }
+      whiteBgImage?: { filename: string; buffer: Buffer }
     }
   ): Promise<{ success: boolean; itemId?: string | number; error?: string }> {
     try {
@@ -127,23 +127,38 @@ export class DarazQueueService {
         )
       }
 
-      // Generate & upload 1:1 square image with pure white background from Photo 1 (Buyer Promotion Image)
+      // Upload White Background Image (Photo 1 formatted 1:1 square on pure white background)
       let whiteBackgroundUrl: string | undefined
-      if (files.images.length > 0) {
+      if (files.whiteBgImage) {
         try {
-          const squareBuf = await sharp(files.images[0].buffer)
-            .resize(1000, 1000, {
-              fit: "contain",
-              background: { r: 255, g: 255, b: 255, alpha: 1 },
-            })
-            .jpeg({ quality: 90 })
-            .toBuffer()
-          const cleanName = files.images[0].filename.replace(/\.[^/.]+$/, "")
           const uploadedWhiteBg = await DarazService.uploadAndCacheImage(
-            squareBuf,
-            `white_bg_${cleanName}.jpg`
+            files.whiteBgImage.buffer,
+            files.whiteBgImage.filename
           )
           whiteBackgroundUrl = uploadedWhiteBg.url
+        } catch (wbErr) {
+          console.warn("Failed to upload client white background image:", wbErr)
+        }
+      } else if (files.images.length > 0) {
+        // Fallback: dynamic import of sharp only if client did not supply whiteBgImage
+        try {
+          const sharpMod = await import("sharp").catch(() => null)
+          if (sharpMod) {
+            const sharp = sharpMod.default || sharpMod
+            const squareBuf = await sharp(files.images[0].buffer)
+              .resize(1000, 1000, {
+                fit: "contain",
+                background: { r: 255, g: 255, b: 255, alpha: 1 },
+              })
+              .jpeg({ quality: 90 })
+              .toBuffer()
+            const cleanName = files.images[0].filename.replace(/\.[^/.]+$/, "")
+            const uploadedWhiteBg = await DarazService.uploadAndCacheImage(
+              squareBuf,
+              `white_bg_${cleanName}.jpg`
+            )
+            whiteBackgroundUrl = uploadedWhiteBg.url
+          }
         } catch (sharpErr) {
           console.warn("Failed to generate square white background image:", sharpErr)
         }
