@@ -252,12 +252,18 @@ export function validateProductPayload(
       }
     }
 
-    // Validate singleSelect options if provided
+    // Validate singleSelect options with case-insensitive auto-matching
     if (attr.input_type === "singleSelect" && attr.options && attr.options.length > 0) {
       const val = input.normalAttributes?.[attr.name] || (input.sku.skuAttributes as any)?.[attr.name]
       if (val) {
         const allowed = attr.options.map((o) => o.name)
-        if (!allowed.includes(String(val))) {
+        const match = allowed.find((opt) => opt.toLowerCase() === String(val).toLowerCase())
+        if (match) {
+          // Normalize to exact official casing
+          if (input.normalAttributes && input.normalAttributes[attr.name] !== undefined) {
+            input.normalAttributes[attr.name] = match
+          }
+        } else {
           errors.push(
             `Invalid option '${val}' for '${attr.label || attr.name}'. Allowed values: ${allowed.slice(0, 5).join(", ")}${allowed.length > 5 ? "..." : ""}`
           )

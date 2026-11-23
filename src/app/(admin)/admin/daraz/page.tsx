@@ -1,7 +1,12 @@
 import { SessionService } from "@/services/session.service"
 import { DarazService } from "@/services/daraz.service"
 import { db } from "@/db"
-import { darazAuditLogs, darazCategoryTemplates } from "@/db/schema"
+import {
+  darazAuditLogs,
+  darazCategoryTemplates,
+  darazProductSubmissions,
+  darazQueueJobs,
+} from "@/db/schema"
 import { desc } from "drizzle-orm"
 import { DarazStudioClient } from "./DarazStudioClient"
 
@@ -36,6 +41,20 @@ export default async function DarazStudioPage() {
     .orderBy(desc(darazCategoryTemplates.updatedAt))
     .limit(20)
 
+  // Fetch recent product submissions
+  const recentSubmissions = await db
+    .select()
+    .from(darazProductSubmissions)
+    .orderBy(desc(darazProductSubmissions.updatedAt))
+    .limit(25)
+
+  // Fetch recent queue jobs
+  const recentQueueJobs = await db
+    .select()
+    .from(darazQueueJobs)
+    .orderBy(desc(darazQueueJobs.updatedAt))
+    .limit(25)
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-admin-border pb-5">
@@ -58,6 +77,8 @@ export default async function DarazStudioPage() {
         initialStatus={connectionStatus}
         initialLogs={recentLogs}
         initialTemplates={cachedTemplates}
+        initialSubmissions={recentSubmissions}
+        initialQueueJobs={recentQueueJobs}
       />
     </div>
   )

@@ -2,10 +2,17 @@
 
 import { SessionService } from "@/services/session.service"
 import { DarazService } from "@/services/daraz.service"
+import { DarazQueueService } from "@/services/daraz-queue.service"
 import { DarazClient } from "@/lib/daraz/client"
 import { cookies } from "next/headers"
 import { db } from "@/db"
-import { darazConnections, darazAuditLogs, darazCategoryTemplates } from "@/db/schema"
+import {
+  darazConnections,
+  darazAuditLogs,
+  darazCategoryTemplates,
+  darazProductSubmissions,
+  darazQueueJobs,
+} from "@/db/schema"
 import { eq, desc } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { parseListingMarkdown } from "@/lib/daraz/markdown-parser"
@@ -305,4 +312,128 @@ export async function simulateListingSubmissionAction(data: {
       error: err.message || "Failed to simulate listing submission.",
     }
   }
+}
+
+/**
+ * Retrieves recent product submissions and their QC status
+ */
+export async function getDarazSubmissionsAction() {
+  await SessionService.requireAdmin()
+
+  try {
+    const list = await DarazService.getRecentSubmissions(50)
+    return { success: true, data: list }
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to load product submissions." }
+  }
+}
+
+/**
+ * Retrieves active batch queue jobs
+ */
+export async function getDarazQueueJobsAction(batchId?: string) {
+  await SessionService.requireAdmin()
+
+  try {
+    const jobs = await db
+      .select()
+      .from(darazQueueJobs)
+      .orderBy(desc(darazQueueJobs.updatedAt))
+      .limit(50)
+    return { success: true, data: jobs }
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to load queue jobs." }
+  }
+}
+
+/**
+ * Refreshes QC review status for pending products
+ */
+export async function refreshDarazQcAction() {
+  await SessionService.requireAdmin()
+
+  try {
+    const pending = await db
+      .select()
+      .from(darazProductSubmissions)
+      .where(eq(darazProductSubmissions.qcStatus, "pending"))
+      .limit(20)
+
+    if (pending.length === 0) {
+      return { success: true, message: "No pending products to check.", count: 0 }
+    }
+
+    const skus = pending.map((p) => p.sellerSku)
+    const qcResults = await DarazService.refreshQcStatuses(skus)
+    revalidatePath("/admin/daraz")
+
+    return { success: true, count: qcResults.length, data: qcResults }
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to refresh QC status." }
+  }
+}
+
+/**
+ * Web Folder Batch Ingestion: processes uploaded product folders directly from the browser
+ */
+export async function processWebFolderBatchAction(
+  items: Array<{
+    folderName: string
+    markdownContent: string
+    images: Array<{ filename: string; base64: string }>
+  }>
+) {
+  await SessionService.requireAdmin()
+
+  if (items.length === 0) {
+    return { success: false, error: "No product folders provided." }
+  }
+
+  const batchId = `WEB_${new Date().toISOString().slice(0, 10)}_${Date.now().toString().slice(-4)}`
+  const results: Array<{ folderName: string; success: boolean; itemId?: string | number; error?: string }> = []
+
+  // Create queue jobs
+  const queueItems = items.map((item) => {
+    const parsed = parseListingMarkdown(item.markdownContent)
+    return {
+      localProductId: parsed.productId || item.folderName,
+      folderPath: item.folderName,
+      metadata: { title: parsed.title, sellerSku: parsed.sellerSku },
+    }
+  })
+
+  const jobs = await DarazQueueService.createBatch(batchId, queueItems)
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    const job = jobs[i]
+
+    try {
+      const imagePayloads = item.images.map((img) => ({
+        filename: img.filename,
+        buffer: Buffer.from(img.base64, "base64"),
+      }))
+
+      const processRes = await DarazQueueService.processProductFolder(job.id, {
+        markdownContent: item.markdownContent,
+        images: imagePayloads,
+      })
+
+      results.push({
+        folderName: item.folderName,
+        success: processRes.success,
+        itemId: processRes.itemId,
+        error: processRes.error,
+      })
+    } catch (err: any) {
+      results.push({
+        folderName: item.folderName,
+        success: false,
+        error: err.message || "Unknown error",
+      })
+    }
+  }
+
+  revalidatePath("/admin/daraz")
+  return { success: true, batchId, results }
 }

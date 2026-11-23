@@ -259,4 +259,122 @@ export class DarazClient {
       { accessToken, method: "GET" }
     )
   }
+
+  /**
+   * Uploads an image binary file to Daraz Image Repository (/image/upload)
+   */
+  public async uploadImage(
+    fileBuffer: Buffer,
+    filename = "image.jpg",
+    accessToken?: string
+  ): Promise<{ url: string; hash_code?: string }> {
+    const { appKey, appSecret, apiUrl } = this.config
+    if (!appKey || !appSecret) {
+      throw new Error("Daraz credentials missing: DARAZ_APP_KEY and DARAZ_APP_SECRET must be set.")
+    }
+
+    const timestamp = Date.now().toString()
+    const requestParams: Record<string, any> = {
+      app_key: appKey,
+      timestamp,
+      sign_method: "sha256",
+    }
+    if (accessToken) {
+      requestParams.access_token = accessToken
+    }
+
+    const sign = this.generateSignature("/image/upload", requestParams)
+    requestParams.sign = sign
+
+    const formData = new FormData()
+    for (const [k, v] of Object.entries(requestParams)) {
+      formData.append(k, String(v))
+    }
+    formData.append("image", new Blob([new Uint8Array(fileBuffer.buffer as ArrayBuffer, fileBuffer.byteOffset, fileBuffer.byteLength)]), filename)
+
+    const endpointUrl = `${apiUrl.replace(/\/+$/, "")}/image/upload`
+    const res = await fetch(endpointUrl, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "XINVORA-Listing-Studio/1.0",
+      },
+      body: formData,
+    })
+
+    const responseText = await res.text()
+    let json: any
+    try {
+      json = JSON.parse(responseText)
+    } catch {
+      throw new Error(`Daraz /image/upload returned non-JSON (HTTP ${res.status}): ${responseText.slice(0, 300)}`)
+    }
+
+    if (json.code && json.code !== "0") {
+      const errMsg = json.message || json.detail?.[0]?.message || `Image upload error ${json.code}`
+      throw new Error(errMsg)
+    }
+
+    return {
+      url: json.data?.image?.url,
+      hash_code: json.data?.image?.hash_code,
+    }
+  }
+
+  /**
+   * Creates a product on Daraz Open Platform (/product/create)
+   */
+  public async createProduct(
+    payloadXml: string,
+    accessToken?: string
+  ): Promise<{ item_id: string | number; sku_list?: any[] }> {
+    const res = await this.execute<{ code: string; data: { item_id: string | number; sku_list?: any[] } }>(
+      "/product/create",
+      { payload: payloadXml },
+      { accessToken, method: "POST" }
+    )
+    return res.data
+  }
+
+  /**
+   * Updates an existing product on Daraz (/product/update)
+   */
+  public async updateProduct(
+    payloadXml: string,
+    accessToken?: string
+  ): Promise<any> {
+    return this.execute(
+      "/product/update",
+      { payload: payloadXml },
+      { accessToken, method: "POST" }
+    )
+  }
+
+  /**
+   * Queries Quality Control status of submitted SKUs (/product/qc/status/get)
+   */
+  public async getQcStatus(
+    sellerSkuList: string[],
+    accessToken?: string
+  ): Promise<any> {
+    return this.execute(
+      "/product/qc/status/get",
+      { seller_sku_list: JSON.stringify(sellerSkuList) },
+      { accessToken, method: "GET" }
+    )
+  }
+
+  /**
+   * Retrieves full product detail by item_id (/product/item/get)
+   */
+  public async getItem(
+    itemId: string | number,
+    accessToken?: string
+  ): Promise<any> {
+    return this.execute(
+      "/product/item/get",
+      { item_id: String(itemId) },
+      { accessToken, method: "GET" }
+    )
+  }
 }

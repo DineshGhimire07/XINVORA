@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "daraz:worker": "tsx --conditions react-server -r dotenv/config scripts/daraz-companion-worker.ts dotenv_config_path=.env.local",
+    "daraz:worker:dry": "tsx --conditions react-server -r dotenv/config scripts/daraz-companion-worker.ts --dry-run dotenv_config_path=.env.local"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useTransition, useMemo } from "react"
+import React, { useState, useEffect, useTransition, useMemo, useRef } from "react"
 import {
   CheckCircle2,
   AlertCircle,
@@ -22,6 +22,11 @@ import {
   PlayCircle,
   Code2,
   PackageCheck,
+  ListChecks,
+  Upload,
+  FolderOpen,
+  XCircle,
+  Loader2,
 } from "lucide-react"
 import {
   startDarazAuthAction,
@@ -30,6 +35,9 @@ import {
   fetchCategoryAttributesAction,
   exchangeDarazCodeAction,
   simulateListingSubmissionAction,
+  refreshDarazQcAction,
+  getDarazSubmissionsAction,
+  processWebFolderBatchAction,
 } from "@/actions/admin/daraz.actions"
 import type { DarazConnectionStatus } from "@/services/daraz.service"
 import type { DarazCategoryNode, DarazAttributeItem } from "@/lib/daraz/client"
@@ -38,18 +46,32 @@ interface DarazStudioClientProps {
   initialStatus: DarazConnectionStatus
   initialLogs: any[]
   initialTemplates: any[]
+  initialSubmissions?: any[]
+  initialQueueJobs?: any[]
 }
 
 export function DarazStudioClient({
   initialStatus,
   initialLogs,
   initialTemplates,
+  initialSubmissions = [],
+  initialQueueJobs = [],
 }: DarazStudioClientProps) {
   const [status, setStatus] = useState<DarazConnectionStatus>(initialStatus)
   const [logs] = useState<any[]>(initialLogs)
   const [templates] = useState<any[]>(initialTemplates)
+  const [submissions, setSubmissions] = useState<any[]>(initialSubmissions)
+  const [refreshingQc, setRefreshingQc] = useState(false)
+  const [qcMessage, setQcMessage] = useState<string | null>(null)
 
-  const [activeTab, setActiveTab] = useState<"connection" | "categories" | "demo" | "logs">("connection")
+  // Web Folder Ingestor state
+  const [ingestorFiles, setIngestorFiles] = useState<Array<{ folderName: string; markdownContent: string; images: Array<{ filename: string; base64: string }> }>>([])
+  const [ingestorRunning, setIngestorRunning] = useState(false)
+  const [ingestorResults, setIngestorResults] = useState<any[]>([])
+  const [ingestorError, setIngestorError] = useState<string | null>(null)
+  const folderInputRef = useRef<HTMLInputElement>(null)
+
+  const [activeTab, setActiveTab] = useState<"connection" | "categories" | "demo" | "submissions" | "ingestor" | "logs">("connection")
   const [isPending, startTransition] = useTransition()
   const [authError, setAuthError] = useState<string | null>(null)
   const [copiedUrl, setCopiedUrl] = useState(false)
@@ -197,6 +219,86 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
     }
   }
 
+  const handleRefreshQc = async () => {
+    setRefreshingQc(true)
+    setQcMessage(null)
+    try {
+      const res = await refreshDarazQcAction()
+      if (res.success) {
+        setQcMessage(`QC refresh complete: checked ${res.count || 0} items.`)
+        const updated = await getDarazSubmissionsAction()
+        if (updated.success && updated.data) {
+          setSubmissions(updated.data)
+        }
+      } else {
+        setQcMessage(res.error || "Failed to refresh QC.")
+      }
+    } catch (err: any) {
+      setQcMessage(err.message || "An error occurred.")
+    } finally {
+      setRefreshingQc(false)
+    }
+  }
+
+  const handleFolderPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = e.target.files
+    if (!fileList || fileList.length === 0) return
+
+    const folderMap: Record<string, { markdownContent?: string; images: Array<{ filename: string; base64: string }> }> = {}
+
+    await Promise.all(
+      Array.from(fileList).map(async (file) => {
+        const parts = file.webkitRelativePath.split("/")
+        const folderName = parts[0]
+        const fileName = parts[parts.length - 1]
+        if (!folderMap[folderName]) folderMap[folderName] = { images: [] }
+
+        if (fileName === "listing.md") {
+          const text = await file.text()
+          folderMap[folderName].markdownContent = text
+        } else if (/\.(jpg|jpeg|png|webp)$/i.test(fileName)) {
+          const buf = await file.arrayBuffer()
+          const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)))
+          folderMap[folderName].images.push({ filename: fileName, base64 })
+        }
+      })
+    )
+
+    const items = Object.entries(folderMap)
+      .filter(([, v]) => v.markdownContent)
+      .map(([folderName, v]) => ({
+        folderName,
+        markdownContent: v.markdownContent!,
+        images: v.images,
+      }))
+
+    setIngestorFiles(items)
+    setIngestorResults([])
+    setIngestorError(null)
+    if (folderInputRef.current) folderInputRef.current.value = ""
+  }
+
+  const handleRunIngestor = async () => {
+    if (ingestorFiles.length === 0) return
+    setIngestorRunning(true)
+    setIngestorError(null)
+    setIngestorResults([])
+    try {
+      const res = await processWebFolderBatchAction(ingestorFiles)
+      if (res.success && res.results) {
+        setIngestorResults(res.results)
+        const updated = await getDarazSubmissionsAction()
+        if (updated.success && updated.data) setSubmissions(updated.data)
+      } else {
+        setIngestorError((res as any).error || "Batch failed.")
+      }
+    } catch (err: any) {
+      setIngestorError(err.message || "Unexpected error during batch.")
+    } finally {
+      setIngestorRunning(false)
+    }
+  }
+
   const handleFetchCategories = async () => {
     setFetchingTree(true)
     setTreeError(null)
@@ -329,6 +431,30 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
         >
           <Sparkles className="w-4 h-4 text-orange-500" />
           Listing Simulator (Live Demo)
+        </button>
+
+        <button
+          onClick={() => setActiveTab("submissions")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "submissions"
+              ? "border-orange-600 text-orange-600 font-semibold"
+              : "border-transparent text-admin-text-secondary hover:text-admin-text-primary"
+          }`}
+        >
+          <ListChecks className="w-4 h-4" />
+          Live Listings &amp; QC Status ({submissions.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab("ingestor")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "ingestor"
+              ? "border-orange-600 text-orange-600 font-semibold"
+              : "border-transparent text-admin-text-secondary hover:text-admin-text-primary"
+          }`}
+        >
+          <Upload className="w-4 h-4" />
+          Web Folder Upload
         </button>
 
         <button
@@ -1006,7 +1132,247 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
         </div>
       )}
 
-      {/* TAB 4: AUDIT LOGS */}
+      {/* TAB 4: LIVE LISTINGS & QC STATUS */}
+      {activeTab === "submissions" && (
+        <div className="space-y-5">
+          <div className="bg-admin-card rounded-xl border border-admin-border p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-admin-border pb-3">
+              <div>
+                <h3 className="text-sm font-semibold text-admin-text-primary flex items-center gap-2">
+                  <ListChecks className="w-4 h-4 text-orange-500" />
+                  Live Listings &amp; QC Review Status
+                </h3>
+                <p className="text-xs text-admin-text-secondary mt-0.5">
+                  Products submitted to Daraz OpenAPI. QC status is polled from Daraz review servers.
+                </p>
+              </div>
+              <button
+                onClick={handleRefreshQc}
+                disabled={refreshingQc}
+                className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white text-xs font-semibold rounded-lg transition-colors"
+              >
+                {refreshingQc ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-3.5 h-3.5" />
+                )}
+                Refresh QC Status
+              </button>
+            </div>
+
+            {qcMessage && (
+              <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-blue-800 text-xs flex items-center gap-2">
+                <Info className="w-4 h-4 text-blue-600 shrink-0" />
+                {qcMessage}
+              </div>
+            )}
+
+            {submissions.length === 0 ? (
+              <div className="py-16 text-center text-xs text-admin-text-secondary space-y-2">
+                <PackageCheck className="w-10 h-10 mx-auto text-admin-text-secondary/40" />
+                <p>No product submissions yet.</p>
+                <p className="text-[11px]">Use the CLI worker (<code className="bg-admin-bg px-1 py-0.5 rounded">npm run daraz:worker</code>) or the Web Folder Upload tab to submit products.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-admin-border text-admin-text-secondary font-medium">
+                      <th className="pb-2 pr-3">SKU</th>
+                      <th className="pb-2 pr-3">Title</th>
+                      <th className="pb-2 pr-3">Category</th>
+                      <th className="pb-2 pr-3">Daraz Item ID</th>
+                      <th className="pb-2 pr-3">Status</th>
+                      <th className="pb-2 pr-3">QC</th>
+                      <th className="pb-2">Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-admin-border/40 font-mono">
+                    {submissions.map((sub) => (
+                      <tr key={sub.id} className="hover:bg-admin-bg/50">
+                        <td className="py-2.5 pr-3 font-semibold text-admin-text-primary">{sub.sellerSku}</td>
+                        <td className="py-2.5 pr-3 max-w-[160px] truncate text-admin-text-primary">{sub.title}</td>
+                        <td className="py-2.5 pr-3 text-admin-text-secondary">{sub.darazCategoryId}</td>
+                        <td className="py-2.5 pr-3 text-admin-text-secondary">{sub.darazItemId || "—"}</td>
+                        <td className="py-2.5 pr-3">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            sub.status === "QC_APPROVED" ? "bg-emerald-100 text-emerald-800"
+                            : sub.status === "QC_REJECTED" ? "bg-red-100 text-red-800"
+                            : sub.status === "SUBMITTED" ? "bg-blue-100 text-blue-800"
+                            : sub.status === "PENDING_QC" ? "bg-amber-100 text-amber-800"
+                            : sub.status === "FAILED" ? "bg-red-100 text-red-700"
+                            : "bg-gray-100 text-gray-700"
+                          }`}>
+                            {sub.status}
+                          </span>
+                        </td>
+                        <td className="py-2.5 pr-3">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            sub.qcStatus === "approved" ? "bg-emerald-100 text-emerald-800"
+                            : sub.qcStatus === "rejected" ? "bg-red-100 text-red-800"
+                            : "bg-gray-100 text-gray-600"
+                          }`}>
+                            {sub.qcStatus || "pending"}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-admin-text-secondary whitespace-nowrap" suppressHydrationWarning>
+                          {formatDate(sub.updatedAt)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {submissions.some((s) => s.status === "QC_REJECTED" && s.qcReason) && (
+              <div className="mt-4 space-y-2">
+                <h4 className="text-xs font-semibold text-red-700 uppercase tracking-wider">QC Rejection Notes</h4>
+                {submissions.filter((s) => s.qcReason).map((s) => (
+                  <div key={s.id} className="rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-800">
+                    <span className="font-semibold">{s.sellerSku}:</span> {s.qcReason}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: WEB FOLDER INGESTOR */}
+      {activeTab === "ingestor" && (
+        <div className="space-y-5">
+          <div className="bg-admin-card rounded-xl border border-admin-border p-5 shadow-sm space-y-5">
+            <div className="border-b border-admin-border pb-3">
+              <h3 className="text-sm font-semibold text-admin-text-primary flex items-center gap-2">
+                <Upload className="w-4 h-4 text-orange-500" />
+                Web Folder Upload — Browser-Based Batch Ingestor
+              </h3>
+              <p className="text-xs text-admin-text-secondary mt-0.5">
+                Select your <code className="bg-admin-bg px-1 rounded">XINVORA_PRODUCTS/</code> folder directly from your browser. Each sub-folder needs a <code className="bg-admin-bg px-1 rounded">listing.md</code> and at least one image.
+              </p>
+            </div>
+
+            {/* How it works */}
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-amber-900 text-xs space-y-1">
+              <div className="font-semibold flex items-center gap-1.5"><Info className="w-3.5 h-3.5" /> How to Use</div>
+              <ol className="list-decimal list-inside space-y-0.5 ml-1">
+                <li>Organise products as: <code>XINVORA_PRODUCTS/PRODUCT_001/listing.md</code> + images</li>
+                <li>Click <strong>Select Product Folder</strong> and choose your <code>XINVORA_PRODUCTS</code> folder</li>
+                <li>Review the detected products below, then click <strong>Submit All to Daraz</strong></li>
+              </ol>
+            </div>
+
+            {/* Hidden folder input */}
+            <input
+              ref={folderInputRef}
+              type="file"
+              // @ts-ignore – webkitdirectory is non-standard
+              webkitdirectory="true"
+              multiple
+              className="hidden"
+              onChange={handleFolderPick}
+            />
+
+            <div className="flex gap-3 flex-wrap">
+              <button
+                onClick={() => folderInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2.5 bg-admin-bg border border-admin-border hover:border-orange-400 text-admin-text-primary text-sm font-medium rounded-lg transition-colors"
+              >
+                <FolderOpen className="w-4 h-4 text-orange-500" />
+                Select Product Folder
+              </button>
+
+              {ingestorFiles.length > 0 && (
+                <button
+                  onClick={handleRunIngestor}
+                  disabled={ingestorRunning}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
+                >
+                  {ingestorRunning ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4" />
+                  )}
+                  Submit All to Daraz ({ingestorFiles.length} products)
+                </button>
+              )}
+            </div>
+
+            {/* Detected Products Preview */}
+            {ingestorFiles.length > 0 && ingestorResults.length === 0 && (
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+                  Detected Products ({ingestorFiles.length})
+                </h4>
+                <div className="divide-y divide-admin-border/40 border border-admin-border rounded-lg overflow-hidden">
+                  {ingestorFiles.map((item, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 text-xs hover:bg-admin-bg/50">
+                      <div className="flex items-center gap-2">
+                        <FolderOpen className="w-4 h-4 text-orange-400 shrink-0" />
+                        <span className="font-semibold text-admin-text-primary">{item.folderName}</span>
+                        <span className="text-admin-text-secondary">({item.images.length} image{item.images.length !== 1 ? "s" : ""})</span>
+                      </div>
+                      <span className="text-admin-text-secondary text-[11px] font-mono">listing.md ✓</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Ingestor Error */}
+            {ingestorError && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-red-800 text-xs flex items-start gap-2">
+                <XCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                {ingestorError}
+              </div>
+            )}
+
+            {/* Batch Results */}
+            {ingestorResults.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+                  Submission Results
+                </h4>
+                <div className="divide-y divide-admin-border/40 border border-admin-border rounded-lg overflow-hidden">
+                  {ingestorResults.map((r, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 text-xs">
+                      <div className="flex items-center gap-2">
+                        {r.success ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-red-600 shrink-0" />
+                        )}
+                        <span className="font-semibold text-admin-text-primary">{r.folderName}</span>
+                      </div>
+                      <div className="text-right">
+                        {r.success ? (
+                          <span className="text-emerald-700 font-mono">Item ID: {r.itemId}</span>
+                        ) : (
+                          <span className="text-red-700 max-w-xs truncate block">{r.error}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-xs text-admin-text-secondary">
+                  ✅ {ingestorResults.filter((r) => r.success).length} succeeded &nbsp;|&nbsp;
+                  ❌ {ingestorResults.filter((r) => !r.success).length} failed
+                </div>
+              </div>
+            )}
+
+            {ingestorFiles.length === 0 && ingestorResults.length === 0 && (
+              <div className="py-12 text-center text-xs text-admin-text-secondary space-y-2">
+                <FolderOpen className="w-10 h-10 mx-auto text-admin-text-secondary/40" />
+                <p>No folder selected yet. Click <strong>Select Product Folder</strong> to begin.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 6: AUDIT LOGS */}
       {activeTab === "logs" && (
         <div className="bg-admin-card rounded-xl border border-admin-border p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-admin-border pb-3">
