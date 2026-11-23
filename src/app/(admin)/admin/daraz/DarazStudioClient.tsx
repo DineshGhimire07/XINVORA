@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useTransition } from "react"
+import React, { useState, useEffect, useTransition, useMemo } from "react"
 import {
   CheckCircle2,
   AlertCircle,
@@ -69,6 +69,7 @@ export function DarazStudioClient({
   // Category Tree State
   const [categoryTree, setCategoryTree] = useState<DarazCategoryNode[]>([])
   const [categorySearch, setCategorySearch] = useState("")
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("ALL")
   const [fetchingTree, setFetchingTree] = useState(false)
   const [treeError, setTreeError] = useState<string | null>(null)
 
@@ -175,30 +176,50 @@ export function DarazStudioClient({
     }
   }
 
-  // Flatten category tree for simple searching
-  const flattenLeaves = (nodes: DarazCategoryNode[], parentPath = ""): Array<{ id: number | string; name: string; path: string; leaf: boolean }> => {
-    let list: Array<{ id: number | string; name: string; path: string; leaf: boolean }> = []
+  // Flatten category tree preserving department and hierarchy path
+  const flattenLeaves = (
+    nodes: DarazCategoryNode[],
+    parentPath = "",
+    rootDept = ""
+  ): Array<{ id: number | string; name: string; path: string; rootDept: string; leaf: boolean }> => {
+    let list: Array<{ id: number | string; name: string; path: string; rootDept: string; leaf: boolean }> = []
     for (const node of nodes) {
       const currentPath = parentPath ? `${parentPath} > ${node.name}` : node.name
+      const dept = rootDept || node.name
       if (node.leaf) {
-        list.push({ id: node.category_id, name: node.name, path: currentPath, leaf: true })
+        list.push({ id: node.category_id, name: node.name, path: currentPath, rootDept: dept, leaf: true })
       }
       if (node.children && node.children.length > 0) {
-        list = list.concat(flattenLeaves(node.children, currentPath))
+        list = list.concat(flattenLeaves(node.children, currentPath, dept))
       }
     }
     return list
   }
 
-  const flatCategories = flattenLeaves(categoryTree)
-  const filteredCategories = categorySearch.trim()
-    ? flatCategories.filter(
+  const rootDepartments = useMemo(() => {
+    return categoryTree.map((c) => ({ id: c.category_id, name: c.name }))
+  }, [categoryTree])
+
+  const allLeaves = useMemo(() => {
+    return flattenLeaves(categoryTree)
+  }, [categoryTree])
+
+  const filteredCategories = useMemo(() => {
+    let list = allLeaves
+    if (selectedDepartment !== "ALL") {
+      list = list.filter((c) => c.rootDept === selectedDepartment)
+    }
+    if (categorySearch.trim()) {
+      const q = categorySearch.toLowerCase().trim()
+      list = list.filter(
         (c) =>
-          c.name.toLowerCase().includes(categorySearch.toLowerCase()) ||
-          c.path.toLowerCase().includes(categorySearch.toLowerCase()) ||
-          String(c.id).includes(categorySearch)
+          c.name.toLowerCase().includes(q) ||
+          c.path.toLowerCase().includes(q) ||
+          String(c.id).includes(q)
       )
-    : flatCategories.slice(0, 50)
+    }
+    return list.slice(0, 300)
+  }, [allLeaves, selectedDepartment, categorySearch])
 
   return (
     <div className="space-y-6">
@@ -505,17 +526,67 @@ export function DarazStudioClient({
               </div>
             )}
 
-            {/* Search Box */}
+            {/* Department Shortcuts & Search */}
             {categoryTree.length > 0 && (
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-admin-text-secondary" />
-                <input
-                  type="text"
-                  placeholder="Search categories (e.g., Dress, Skirt, Poster, Home Decor)..."
-                  value={categorySearch}
-                  onChange={(e) => setCategorySearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-admin-border bg-admin-bg text-admin-text-primary focus:outline-none focus:ring-1 focus:ring-orange-500"
-                />
+              <div className="space-y-3">
+                {/* Department Shortcuts */}
+                <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                  <span className="text-admin-text-secondary font-medium mr-1 text-[11px]">Department:</span>
+                  {[
+                    { label: `All Departments (${allLeaves.length})`, value: "ALL" },
+                    { label: "👗 Fashion", value: "Fashion" },
+                    { label: "🛋️ Furniture & Decor", value: "Furniture & Decor" },
+                    { label: "🍳 Kitchen & Dining", value: "Kitchen & Dining" },
+                    { label: "🎨 Stationery & Craft", value: "Stationery & Craft" },
+                    { label: "💄 Health & Beauty", value: "Health & Beauty" },
+                    { label: "👜 Bags & Travel", value: "Bags and Travel" },
+                  ].map((dept) => (
+                    <button
+                      key={dept.value}
+                      onClick={() => {
+                        setSelectedDepartment(dept.value)
+                        setCategorySearch("")
+                      }}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
+                        selectedDepartment === dept.value
+                          ? "bg-orange-600 text-white font-semibold"
+                          : "bg-admin-bg hover:bg-admin-border text-admin-text-primary border border-admin-border"
+                      }`}
+                    >
+                      {dept.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  {/* All 27 Departments Selector Dropdown */}
+                  <select
+                    value={selectedDepartment}
+                    onChange={(e) => {
+                      setSelectedDepartment(e.target.value)
+                    }}
+                    className="sm:w-64 px-3 py-2 text-xs rounded-lg border border-admin-border bg-admin-bg text-admin-text-primary focus:outline-none focus:ring-1 focus:ring-orange-500 font-medium"
+                  >
+                    <option value="ALL">All Departments ({allLeaves.length} categories)</option>
+                    {rootDepartments.map((dept) => (
+                      <option key={dept.name} value={dept.name}>
+                        {dept.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Search Box */}
+                  <div className="relative flex-1">
+                    <Search className="w-4 h-4 absolute left-3 top-2.5 text-admin-text-secondary" />
+                    <input
+                      type="text"
+                      placeholder={`Search across ${selectedDepartment === "ALL" ? "all 4,200+" : selectedDepartment} categories (e.g., dress, skirt, poster, mug, wall art)...`}
+                      value={categorySearch}
+                      onChange={(e) => setCategorySearch(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-admin-border bg-admin-bg text-admin-text-primary focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    />
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -524,9 +595,15 @@ export function DarazStudioClient({
             {/* Category List */}
             <div className="bg-admin-card rounded-xl border border-admin-border p-5 shadow-sm space-y-3">
               <div className="flex items-center justify-between border-b border-admin-border pb-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-admin-text-primary">
-                  Leaf Categories ({filteredCategories.length})
-                </h3>
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-admin-text-primary">
+                    Leaf Categories ({filteredCategories.length})
+                  </h3>
+                  <span className="text-[11px] text-admin-text-secondary">
+                    {selectedDepartment === "ALL" ? "All Departments" : selectedDepartment}
+                    {categorySearch && ` • Matching "${categorySearch}"`}
+                  </span>
+                </div>
                 <span className="text-[11px] text-admin-text-secondary">
                   Click to inspect required attributes
                 </span>
