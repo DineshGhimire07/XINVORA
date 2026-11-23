@@ -38,6 +38,7 @@ import {
   refreshDarazQcAction,
   getDarazSubmissionsAction,
   processWebFolderBatchAction,
+  processSingleWebFolderAction,
 } from "@/actions/admin/daraz.actions"
 import type { DarazConnectionStatus } from "@/services/daraz.service"
 import type { DarazCategoryNode, DarazAttributeItem } from "@/lib/daraz/client"
@@ -69,6 +70,7 @@ export function DarazStudioClient({
   const [ingestorRunning, setIngestorRunning] = useState(false)
   const [ingestorResults, setIngestorResults] = useState<any[]>([])
   const [ingestorError, setIngestorError] = useState<string | null>(null)
+  const [ingestorProgress, setIngestorProgress] = useState<{ current: number; total: number; currentFolder: string } | null>(null)
   const folderInputRef = useRef<HTMLInputElement>(null)
   const filesInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -245,14 +247,54 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
 
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const res = reader.result as string
-        const base64 = res.split(",")[1] || ""
-        resolve(base64)
+      if (file.type.startsWith("image/") || /\.(jpg|jpeg|png|webp)$/i.test(file.name)) {
+        const img = new Image()
+        img.onload = () => {
+          try {
+            let width = img.width
+            let height = img.height
+            const maxDim = 1200
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width)
+                width = maxDim
+              } else {
+                width = Math.round((width * maxDim) / height)
+                height = maxDim
+              }
+            }
+            const canvas = document.createElement("canvas")
+            canvas.width = width
+            canvas.height = height
+            const ctx = canvas.getContext("2d")
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height)
+              const dataUrl = canvas.toDataURL("image/jpeg", 0.85)
+              const base64 = dataUrl.split(",")[1] || ""
+              resolve(base64)
+              return
+            }
+          } catch {
+            // fallback if canvas error
+          }
+          fallbackReader()
+        }
+        img.onerror = () => fallbackReader()
+        img.src = URL.createObjectURL(file)
+      } else {
+        fallbackReader()
       }
-      reader.onerror = (err) => reject(err)
-      reader.readAsDataURL(file)
+
+      function fallbackReader() {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const res = reader.result as string
+          const base64 = res.split(",")[1] || ""
+          resolve(base64)
+        }
+        reader.onerror = (err) => reject(err)
+        reader.readAsDataURL(file)
+      }
     })
 
   const processFilesList = async (fileList: FileList | File[]) => {
@@ -327,19 +369,39 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
     setIngestorRunning(true)
     setIngestorError(null)
     setIngestorResults([])
+
+    const accumulated: any[] = []
+
     try {
-      const res = await processWebFolderBatchAction(ingestorFiles)
-      if (res.success && res.results) {
-        setIngestorResults(res.results)
-        const updated = await getDarazSubmissionsAction()
-        if (updated.success && updated.data) setSubmissions(updated.data)
-      } else {
-        setIngestorError((res as any).error || "Batch failed.")
+      for (let i = 0; i < ingestorFiles.length; i++) {
+        const item = ingestorFiles[i]
+        setIngestorProgress({
+          current: i + 1,
+          total: ingestorFiles.length,
+          currentFolder: item.folderName,
+        })
+
+        try {
+          const res = await processSingleWebFolderAction(item)
+          accumulated.push(res)
+          setIngestorResults([...accumulated])
+        } catch (itemErr: any) {
+          accumulated.push({
+            folderName: item.folderName,
+            success: false,
+            error: itemErr.message || "Request failed.",
+          })
+          setIngestorResults([...accumulated])
+        }
       }
+
+      const updated = await getDarazSubmissionsAction()
+      if (updated.success && updated.data) setSubmissions(updated.data)
     } catch (err: any) {
-      setIngestorError(err.message || "Unexpected error during batch.")
+      setIngestorError(err.message || "Unexpected error during upload.")
     } finally {
       setIngestorRunning(false)
+      setIngestorProgress(null)
     }
   }
 
@@ -1365,6 +1427,23 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
                 </button>
               )}
             </div>
+
+            {/* Live Progress Banner */}
+            {ingestorProgress && (
+              <div className="rounded-lg bg-orange-50 border border-orange-200 p-3.5 text-orange-900 text-xs flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-2.5">
+                  <Loader2 className="w-4 h-4 animate-spin text-orange-600" />
+                  <span>
+                    Submitting product <strong>{ingestorProgress.current}</strong> of{" "}
+                    <strong>{ingestorProgress.total}</strong>:{" "}
+                    <code className="bg-orange-100 font-semibold px-1.5 py-0.5 rounded text-orange-800">{ingestorProgress.currentFolder}</code>...
+                  </span>
+                </div>
+                <span className="font-mono text-xs font-semibold text-orange-700">
+                  {Math.round((ingestorProgress.current / ingestorProgress.total) * 100)}%
+                </span>
+              </div>
+            )}
 
             {/* Detected Products Preview */}
             {ingestorFiles.length > 0 && ingestorResults.length === 0 && (

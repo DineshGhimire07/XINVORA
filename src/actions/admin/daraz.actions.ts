@@ -453,3 +453,52 @@ export async function processWebFolderBatchAction(
   revalidatePath("/admin/daraz")
   return { success: true, batchId, results }
 }
+
+/**
+ * Processes a single product folder from the browser
+ * Avoids Vercel Serverless Function payload limit (4.5MB) and 15s execution timeouts
+ */
+export async function processSingleWebFolderAction(item: {
+  folderName: string
+  markdownContent: string
+  images: Array<{ filename: string; base64: string }>
+}) {
+  await SessionService.requireAdmin()
+
+  const batchId = `WEB_${new Date().toISOString().slice(0, 10)}_${Date.now().toString().slice(-4)}`
+  const parsed = parseListingMarkdown(item.markdownContent)
+
+  const [job] = await DarazQueueService.createBatch(batchId, [
+    {
+      localProductId: parsed.productId || item.folderName,
+      folderPath: item.folderName,
+      metadata: { title: parsed.title, sellerSku: parsed.sellerSku },
+    },
+  ])
+
+  try {
+    const imagePayloads = item.images.map((img) => ({
+      filename: img.filename,
+      buffer: Buffer.from(img.base64, "base64"),
+    }))
+
+    const processRes = await DarazQueueService.processProductFolder(job.id, {
+      markdownContent: item.markdownContent,
+      images: imagePayloads,
+    })
+
+    revalidatePath("/admin/daraz")
+    return {
+      success: processRes.success,
+      folderName: item.folderName,
+      itemId: processRes.itemId,
+      error: processRes.error,
+    }
+  } catch (err: any) {
+    return {
+      success: false,
+      folderName: item.folderName,
+      error: err.message || "Failed to process folder.",
+    }
+  }
+}
