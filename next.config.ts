@@ -114,6 +114,12 @@ const nextConfig: NextConfig = {
       static: 1800,
     },
   },
+
+  // Disable Turbopack for production builds — Turbopack has a known bug with
+  // next/font/google when multiple weights/styles are specified (it can't
+  // resolve the internal '@vercel/turbopack-next/internal/font/google/font'
+  // module during the production build phase). Webpack handles this correctly.
+  turbopack: undefined,
 };
 
 export default nextConfig;
