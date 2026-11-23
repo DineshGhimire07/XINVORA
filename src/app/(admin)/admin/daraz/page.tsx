@@ -21,39 +21,49 @@ export default async function DarazStudioPage() {
   const connectionStatus = await DarazService.getConnectionStatus()
 
   // Fetch recent audit logs
-  const recentLogs = await db
-    .select()
-    .from(darazAuditLogs)
-    .orderBy(desc(darazAuditLogs.createdAt))
-    .limit(25)
+  let recentLogs: any[] = []
+  let cachedTemplates: any[] = []
+  let recentSubmissions: any[] = []
+  let recentQueueJobs: any[] = []
 
-  // Fetch cached category templates
-  const cachedTemplates = await db
-    .select({
-      id: darazCategoryTemplates.id,
-      darazCategoryId: darazCategoryTemplates.darazCategoryId,
-      categoryName: darazCategoryTemplates.categoryName,
-      isLeaf: darazCategoryTemplates.isLeaf,
-      version: darazCategoryTemplates.version,
-      updatedAt: darazCategoryTemplates.updatedAt,
-    })
-    .from(darazCategoryTemplates)
-    .orderBy(desc(darazCategoryTemplates.updatedAt))
-    .limit(20)
+  try {
+    recentLogs = await db
+      .select()
+      .from(darazAuditLogs)
+      .orderBy(desc(darazAuditLogs.createdAt))
+      .limit(25)
+  } catch { /* table may not exist yet on this environment */ }
 
-  // Fetch recent product submissions
-  const recentSubmissions = await db
-    .select()
-    .from(darazProductSubmissions)
-    .orderBy(desc(darazProductSubmissions.updatedAt))
-    .limit(25)
+  try {
+    cachedTemplates = await db
+      .select({
+        id: darazCategoryTemplates.id,
+        darazCategoryId: darazCategoryTemplates.darazCategoryId,
+        categoryName: darazCategoryTemplates.categoryName,
+        isLeaf: darazCategoryTemplates.isLeaf,
+        version: darazCategoryTemplates.version,
+        updatedAt: darazCategoryTemplates.updatedAt,
+      })
+      .from(darazCategoryTemplates)
+      .orderBy(desc(darazCategoryTemplates.updatedAt))
+      .limit(20)
+  } catch { /* table may not exist yet on this environment */ }
 
-  // Fetch recent queue jobs
-  const recentQueueJobs = await db
-    .select()
-    .from(darazQueueJobs)
-    .orderBy(desc(darazQueueJobs.updatedAt))
-    .limit(25)
+  try {
+    recentSubmissions = await db
+      .select()
+      .from(darazProductSubmissions)
+      .orderBy(desc(darazProductSubmissions.updatedAt))
+      .limit(25)
+  } catch { /* table may not exist yet on this environment */ }
+
+  try {
+    recentQueueJobs = await db
+      .select()
+      .from(darazQueueJobs)
+      .orderBy(desc(darazQueueJobs.updatedAt))
+      .limit(25)
+  } catch { /* table may not exist yet on this environment */ }
 
   return (
     <div className="space-y-6">

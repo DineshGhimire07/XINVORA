@@ -31,6 +31,11 @@ const nextConfig: NextConfig = {
   // React Strict Mode — catches double-invocation bugs in development
   reactStrictMode: true,
 
+  // Native server packages — do NOT bundle these, let Node.js load them natively.
+  // 'sharp' uses platform-specific binaries (darwin vs linux-x64) that break
+  // when Next.js tries to bundle them for edge/serverless functions.
+  serverExternalPackages: ["sharp", "argon2"],
+
   // Image optimization — Direct Cloudinary CDN delivery with AVIF/WebP negotiation
   images: {
     unoptimized: true,
