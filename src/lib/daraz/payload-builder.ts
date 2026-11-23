@@ -81,8 +81,21 @@ export function buildDarazProductXml(input: ProductListingInput): string {
     shortDesc = escapeXml(input.highlights)
   }
 
-  // Format description
-  const description = input.description ? escapeXml(input.description) : ""
+  // Assemble Rich Description: Images first (Daraz Lorikeet style), then text description
+  const allImages = (input.sku.images || []).filter(Boolean)
+  let richDescHtml = ""
+  if (allImages.length > 0) {
+    for (const imgUrl of allImages) {
+      richDescHtml += `<p><img src="${imgUrl}" alt="${escapeXml(input.title)}" /></p>\n`
+    }
+  }
+  if (input.description) {
+    const formattedText = escapeXml(input.description)
+      .replace(/\r?\n\r?\n+/g, "</p><p>")
+      .replace(/\r?\n/g, "<br />")
+    richDescHtml += `<p>${formattedText}</p>`
+  }
+  const description = richDescHtml ? `<![CDATA[${richDescHtml}]]>` : ""
 
   // Assemble Normal Attributes
   let normalAttrsXml = `      <name>${escapeXml(input.title)}</name>\n`
@@ -93,6 +106,11 @@ export function buildDarazProductXml(input: ProductListingInput): string {
     normalAttrsXml += `      <description>${description}</description>\n`
   }
   normalAttrsXml += `      <brand>${escapeXml(brand)}</brand>\n`
+
+  // White Background Image (Photo 1) - Daraz Search & Campaign recommendation
+  if (allImages.length > 0) {
+    normalAttrsXml += `      <promotion_whitebkg_image>${allImages[0]}</promotion_whitebkg_image>\n`
+  }
 
   if (input.normalAttributes) {
     const skuKeys = new Set([
@@ -122,6 +140,7 @@ export function buildDarazProductXml(input: ProductListingInput): string {
       "brand",
       "images",
       "fabric",
+      "promotion_whitebkg_image",
     ])
 
     for (const [key, val] of Object.entries(input.normalAttributes)) {

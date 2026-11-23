@@ -27,6 +27,9 @@ import {
   FolderOpen,
   XCircle,
   Loader2,
+  Plus,
+  X,
+  ImagePlus,
 } from "lucide-react"
 import {
   startDarazAuthAction,
@@ -71,8 +74,10 @@ export function DarazStudioClient({
   const [ingestorResults, setIngestorResults] = useState<any[]>([])
   const [ingestorError, setIngestorError] = useState<string | null>(null)
   const [ingestorProgress, setIngestorProgress] = useState<{ current: number; total: number; currentFolder: string } | null>(null)
+  const [commonImages, setCommonImages] = useState<Array<{ filename: string; base64: string; dataUrl: string }>>([])
   const folderInputRef = useRef<HTMLInputElement>(null)
   const filesInputRef = useRef<HTMLInputElement>(null)
+  const commonInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
 
   const [activeTab, setActiveTab] = useState<"connection" | "categories" | "demo" | "submissions" | "ingestor" | "logs">("connection")
@@ -364,6 +369,28 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
     }
   }
 
+  const handleCommonImagesPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    const newItems: Array<{ filename: string; base64: string; dataUrl: string }> = []
+    for (const f of Array.from(files)) {
+      if (/\.(jpg|jpeg|png|webp)$/i.test(f.name)) {
+        const base64 = await fileToBase64(f)
+        newItems.push({
+          filename: f.name,
+          base64,
+          dataUrl: `data:image/jpeg;base64,${base64}`,
+        })
+      }
+    }
+    setCommonImages((prev) => [...prev, ...newItems])
+    if (commonInputRef.current) commonInputRef.current.value = ""
+  }
+
+  const removeCommonImage = (index: number) => {
+    setCommonImages((prev) => prev.filter((_, i) => i !== index))
+  }
+
   const handleRunIngestor = async () => {
     if (ingestorFiles.length === 0) return
     setIngestorRunning(true)
@@ -382,7 +409,10 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
         })
 
         try {
-          const res = await processSingleWebFolderAction(item)
+          const res = await processSingleWebFolderAction({
+            ...item,
+            commonImages: commonImages.map((c) => ({ filename: c.filename, base64: c.base64 })),
+          })
           accumulated.push(res)
           setIngestorResults([...accumulated])
         } catch (itemErr: any) {
@@ -1393,6 +1423,70 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
               className="hidden"
               onChange={(e) => e.target.files && processFilesList(e.target.files)}
             />
+
+            {/* Hidden common guide images input */}
+            <input
+              ref={commonInputRef}
+              type="file"
+              multiple
+              accept=".jpg,.jpeg,.png,.webp"
+              className="hidden"
+              onChange={handleCommonImagesPick}
+            />
+
+            {/* Shared Guide Images Card */}
+            <div className="rounded-xl border border-dashed border-admin-border bg-admin-bg/40 p-4 space-y-3">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h4 className="text-xs font-semibold text-admin-text-primary flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-orange-500" />
+                    Shared Guide Images (Appended to the End of Every Listing)
+                  </h4>
+                  <p className="text-[11px] text-admin-text-secondary mt-0.5">
+                    Add universal images here (e.g. Frame Size Guide, Hanging Instructions, Care Info). These will automatically be added at the <strong>end</strong> of all product galleries and embedded at the top of your product descriptions!
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => commonInputRef.current?.click()}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-admin-card hover:bg-admin-bg border border-admin-border hover:border-orange-500 text-admin-text-primary text-xs font-medium rounded-lg transition-colors shadow-sm shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5 text-orange-500" />
+                  Add Shared Image
+                </button>
+              </div>
+
+              {commonImages.length > 0 ? (
+                <div className="flex gap-2.5 flex-wrap items-center pt-1">
+                  {commonImages.map((img, idx) => (
+                    <div
+                      key={idx}
+                      className="relative group w-16 h-16 rounded-lg border border-admin-border overflow-hidden bg-admin-card shadow-sm"
+                    >
+                      <img src={img.dataUrl} alt={img.filename} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeCommonImage(idx)}
+                        className="absolute top-1 right-1 bg-red-600/90 hover:bg-red-600 text-white p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Remove"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                      <span className="absolute bottom-0 inset-x-0 bg-black/75 text-[9px] text-white text-center font-mono py-0.5 truncate px-1">
+                        End #{idx + 1}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="text-[11px] text-emerald-600 font-medium ml-1">
+                    ✓ {commonImages.length} shared image{commonImages.length !== 1 ? "s" : ""} will be appended to the end of all listings
+                  </div>
+                </div>
+              ) : (
+                <div className="text-[11px] text-admin-text-secondary/70 italic">
+                  No shared guide images added yet. Click &quot;Add Shared Image&quot; to attach size or frame guides across all listings.
+                </div>
+              )}
+            </div>
 
             <div className="flex gap-3 flex-wrap items-center">
               <button

@@ -463,6 +463,7 @@ export async function processSingleWebFolderAction(item: {
   folderName: string
   markdownContent: string
   images: Array<{ filename: string; base64: string }>
+  commonImages?: Array<{ filename: string; base64: string }>
 }) {
   await SessionService.requireAdmin()
 
@@ -478,7 +479,13 @@ export async function processSingleWebFolderAction(item: {
   ])
 
   try {
-    const imagePayloads = item.images.map((img) => ({
+    // Combine folder's own images first, followed by common guide images at the end
+    const combinedImages = [
+      ...item.images,
+      ...(item.commonImages || []),
+    ]
+
+    const imagePayloads = combinedImages.slice(0, 8).map((img) => ({
       filename: img.filename,
       buffer: Buffer.from(img.base64, "base64"),
     }))
