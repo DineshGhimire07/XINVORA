@@ -159,9 +159,9 @@ export class DarazQueueService {
         description: parsed.description,
         brand: parsed.brand || "XINVORA",
         normalAttributes: {
-          Fabric_Type: parsed.fabric || "Linen",
-          material: parsed.material || "Linen",
-          size: parsed.size || "Free Size",
+          ...(parsed.fabric ? { Fabric_Type: parsed.fabric } : {}),
+          material: parsed.material || cleanExtra.material || "Other",
+          ...(parsed.size ? { size: parsed.size } : {}),
           ...(effectiveSizeChart ? { size_chart: effectiveSizeChart } : {}),
           ...cleanExtra,
         },

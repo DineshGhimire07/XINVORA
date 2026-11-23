@@ -1204,8 +1204,8 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-[10px]">
                       <div>title &rarr; &lt;name&gt;</div>
                       <div className="text-admin-text-secondary truncate">{demoResult.parsed.title}</div>
-                      <div>fabric &rarr; &lt;Fabric_Type&gt;</div>
-                      <div className="text-admin-text-secondary">{demoResult.parsed.fabric || "Linen"}</div>
+                      <div>material &rarr; &lt;material&gt;</div>
+                      <div className="text-admin-text-secondary">{demoResult.parsed.material || demoResult.parsed.fabric || "Other"}</div>
                       <div>seller_sku &rarr; &lt;SellerSku&gt;</div>
                       <div className="text-admin-text-secondary">{demoResult.parsed.sellerSku}</div>
                       <div>price / special_price</div>

@@ -287,9 +287,9 @@ export async function simulateListingSubmissionAction(data: {
       description: parsed.description,
       brand: parsed.brand || "XINVORA",
       normalAttributes: {
-        Fabric_Type: parsed.fabric || "Linen",
-        material: parsed.material || "Linen",
-        size: parsed.size || "Free Size",
+        ...(parsed.fabric ? { Fabric_Type: parsed.fabric } : {}),
+        material: parsed.material || cleanExtra.material || "Other",
+        ...(parsed.size ? { size: parsed.size } : {}),
         ...(effectiveSizeChart ? { size_chart: effectiveSizeChart } : {}),
         ...cleanExtra,
       },
@@ -299,6 +299,7 @@ export async function simulateListingSubmissionAction(data: {
         specialPrice: parsed.specialPrice,
         quantity: parsed.stock,
         colorFamily: parsed.color || "Ivory",
+
         packageWeight: parsed.package.weight,
         packageLength: parsed.package.length,
         packageWidth: parsed.package.width,
