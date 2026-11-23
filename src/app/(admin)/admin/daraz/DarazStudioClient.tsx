@@ -30,6 +30,7 @@ import {
   Plus,
   X,
   ImagePlus,
+  Ruler,
 } from "lucide-react"
 import {
   startDarazAuthAction,
@@ -75,9 +76,12 @@ export function DarazStudioClient({
   const [ingestorError, setIngestorError] = useState<string | null>(null)
   const [ingestorProgress, setIngestorProgress] = useState<{ current: number; total: number; currentFolder: string } | null>(null)
   const [commonImages, setCommonImages] = useState<Array<{ filename: string; base64: string; dataUrl: string }>>([])
+  const [includeSizeChart, setIncludeSizeChart] = useState(false)
+  const [sizeChartImage, setSizeChartImage] = useState<{ filename: string; base64: string; dataUrl: string } | null>(null)
   const folderInputRef = useRef<HTMLInputElement>(null)
   const filesInputRef = useRef<HTMLInputElement>(null)
   const commonInputRef = useRef<HTMLInputElement>(null)
+  const sizeChartInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
 
   const [activeTab, setActiveTab] = useState<"connection" | "categories" | "demo" | "submissions" | "ingestor" | "logs">("connection")
@@ -391,6 +395,20 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
     setCommonImages((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const handleSizeChartPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (/\.(jpg|jpeg|png|webp)$/i.test(file.name)) {
+      const base64 = await fileToBase64(file)
+      setSizeChartImage({
+        filename: file.name,
+        base64,
+        dataUrl: `data:image/jpeg;base64,${base64}`,
+      })
+    }
+    if (sizeChartInputRef.current) sizeChartInputRef.current.value = ""
+  }
+
   const handleRunIngestor = async () => {
     if (ingestorFiles.length === 0) return
     setIngestorRunning(true)
@@ -412,6 +430,10 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
           const res = await processSingleWebFolderAction({
             ...item,
             commonImages: commonImages.map((c) => ({ filename: c.filename, base64: c.base64 })),
+            sizeChartImage:
+              includeSizeChart && sizeChartImage
+                ? { filename: sizeChartImage.filename, base64: sizeChartImage.base64 }
+                : undefined,
           })
           accumulated.push(res)
           setIngestorResults([...accumulated])
@@ -1434,6 +1456,14 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
               onChange={handleCommonImagesPick}
             />
 
+            <input
+              ref={sizeChartInputRef}
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp"
+              className="hidden"
+              onChange={handleSizeChartPick}
+            />
+
             {/* Shared Guide Images Card */}
             <div className="rounded-xl border border-dashed border-admin-border bg-admin-bg/40 p-4 space-y-3">
               <div className="flex items-start justify-between gap-4">
@@ -1484,6 +1514,95 @@ Experience timeless cottagecore elegance with our handcrafted maxi dress. Tailor
               ) : (
                 <div className="text-[11px] text-admin-text-secondary/70 italic">
                   No shared guide images added yet. Click &quot;Add Shared Image&quot; to attach size or frame guides across all listings.
+                </div>
+              )}
+            </div>
+
+            {/* Size Chart Card */}
+            <div className="rounded-xl border border-dashed border-admin-border bg-admin-bg/40 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-xs font-semibold text-admin-text-primary flex items-center gap-1.5">
+                    <Ruler className="w-4 h-4 text-orange-500" />
+                    Include Size Chart?
+                  </h4>
+                  <p className="text-[11px] text-admin-text-secondary mt-0.5">
+                    Upload a size chart image. When enabled, this image will automatically be attached to <strong>3 places</strong>: (1) Category Size Chart attribute, (2) Product description image gallery, and (3) The very last slot of thumbnail photos (after guide images).
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={includeSizeChart}
+                    onChange={(e) => setIncludeSizeChart(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-gray-300 dark:bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
+                  <span className="ml-2 text-xs font-medium text-admin-text-primary">
+                    {includeSizeChart ? "Enabled" : "Off"}
+                  </span>
+                </label>
+              </div>
+
+              {includeSizeChart && (
+                <div className="pt-2 border-t border-admin-border/50">
+                  {sizeChartImage ? (
+                    <div className="flex items-center gap-3">
+                      <div className="relative group w-16 h-16 rounded-lg border border-admin-border overflow-hidden bg-admin-card shadow-sm shrink-0">
+                        <img src={sizeChartImage.dataUrl} alt={sizeChartImage.filename} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setSizeChartImage(null)}
+                          className="absolute top-1 right-1 bg-red-600/90 hover:bg-red-600 text-white p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Remove"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                        <span className="absolute bottom-0 inset-x-0 bg-black/75 text-[8px] text-white text-center font-mono py-0.5 truncate px-1">
+                          Size Chart
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs font-medium text-admin-text-primary truncate max-w-xs">
+                          {sizeChartImage.filename}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => sizeChartInputRef.current?.click()}
+                            className="text-[11px] text-orange-500 hover:text-orange-600 font-medium underline"
+                          >
+                            Replace image
+                          </button>
+                          <span className="text-[11px] text-admin-text-secondary">•</span>
+                          <button
+                            type="button"
+                            onClick={() => setSizeChartImage(null)}
+                            className="text-[11px] text-red-500 hover:text-red-600 font-medium"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <div className="text-[10px] text-emerald-600 font-medium">
+                          ✓ Ready: Will be placed in Size Chart attribute, inside description, and as the last thumbnail photo.
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-3 bg-admin-card p-3 rounded-lg border border-admin-border">
+                      <div className="text-[11px] text-admin-text-secondary">
+                        No size chart image selected yet. Click &quot;Upload Size Chart&quot; to pick an image.
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => sizeChartInputRef.current?.click()}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-admin-bg hover:bg-admin-card border border-admin-border hover:border-orange-500 text-admin-text-primary text-xs font-medium rounded-lg transition-colors shadow-sm shrink-0"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-orange-500" />
+                        Upload Size Chart
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

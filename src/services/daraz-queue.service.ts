@@ -96,6 +96,7 @@ export class DarazQueueService {
     files: {
       markdownContent: string
       images: Array<{ filename: string; buffer: Buffer }>
+      sizeChartImage?: { filename: string; buffer: Buffer }
     }
   ): Promise<{ success: boolean; itemId?: string | number; error?: string }> {
     try {
@@ -148,6 +149,28 @@ export class DarazQueueService {
         }
       }
 
+      // Upload Size Chart image if provided (Area 1, 2, and 3)
+      let sizeChartCdnUrl: string | undefined
+      if (files.sizeChartImage) {
+        try {
+          const cleanName = files.sizeChartImage.filename.replace(/\.[^/.]+$/, "")
+          const uploadedChart = await DarazService.uploadAndCacheImage(
+            files.sizeChartImage.buffer,
+            `size_chart_${cleanName}.jpg`
+          )
+          sizeChartCdnUrl = uploadedChart.url
+
+          // Area 3: Placed at the very end of PDP gallery photos (after common guide images)
+          if (uploadedImageUrls.length >= 8) {
+            uploadedImageUrls[7] = sizeChartCdnUrl
+          } else {
+            uploadedImageUrls.push(sizeChartCdnUrl)
+          }
+        } catch (chartErr) {
+          console.warn("Failed to upload size chart image:", chartErr)
+        }
+      }
+
       // 4. Submit listing to Daraz OpenAPI
       await this.updateJobState(jobId, "SUBMITTING_LISTING", "Submitting to Daraz OpenAPI", 85)
 
@@ -167,9 +190,11 @@ export class DarazQueueService {
       }
 
       // In Daraz API, size_chart requires an uploaded image URL on Daraz CDN.
-      // If a custom URL is provided use it; otherwise use the primary product image from Daraz CDN.
+      // If a custom size chart image is provided use it; otherwise fallback to explicit or primary image.
       const rawSizeChart =
+        sizeChartCdnUrl ||
         cleanExtra.size_chart ||
+        cleanExtra.Size_Chart_Image ||
         parsed.size_chart ||
         parsed.extraAttributes?.size_chart
       const isSizeChartUrl = typeof rawSizeChart === "string" && rawSizeChart.startsWith("http")
@@ -186,7 +211,7 @@ export class DarazQueueService {
           ...(parsed.fabric ? { Fabric_Type: parsed.fabric } : {}),
           material: parsed.material || cleanExtra.material || "Other",
           ...(parsed.size ? { size: parsed.size } : {}),
-          ...(effectiveSizeChart ? { size_chart: effectiveSizeChart } : {}),
+          ...(effectiveSizeChart ? { size_chart: effectiveSizeChart, Size_Chart_Image: effectiveSizeChart } : {}),
           ...cleanExtra,
         },
         sku: {
@@ -201,6 +226,9 @@ export class DarazQueueService {
           packageHeight: parsed.package.height,
           packageContent: parsed.package.content,
           images: uploadedImageUrls,
+          skuAttributes: {
+            ...(effectiveSizeChart ? { Size_Chart_Image: effectiveSizeChart } : {}),
+          },
         },
       }
 

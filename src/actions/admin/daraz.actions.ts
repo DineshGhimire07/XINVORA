@@ -465,6 +465,7 @@ export async function processSingleWebFolderAction(item: {
   markdownContent: string
   images: Array<{ filename: string; base64: string }>
   commonImages?: Array<{ filename: string; base64: string }>
+  sizeChartImage?: { filename: string; base64: string }
 }) {
   await SessionService.requireAdmin()
 
@@ -486,14 +487,24 @@ export async function processSingleWebFolderAction(item: {
       ...(item.commonImages || []),
     ]
 
-    const imagePayloads = combinedImages.slice(0, 8).map((img) => ({
+    // If size chart is provided, reserve 1 slot at the end for it (max 8 PDP images on Daraz)
+    const maxPrimaryImages = item.sizeChartImage ? 7 : 8
+    const imagePayloads = combinedImages.slice(0, maxPrimaryImages).map((img) => ({
       filename: img.filename,
       buffer: Buffer.from(img.base64, "base64"),
     }))
 
+    const sizeChartPayload = item.sizeChartImage
+      ? {
+          filename: item.sizeChartImage.filename,
+          buffer: Buffer.from(item.sizeChartImage.base64, "base64"),
+        }
+      : undefined
+
     const processRes = await DarazQueueService.processProductFolder(job.id, {
       markdownContent: item.markdownContent,
       images: imagePayloads,
+      sizeChartImage: sizeChartPayload,
     })
 
     revalidatePath("/admin/daraz")
