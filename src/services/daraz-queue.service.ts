@@ -4,6 +4,7 @@ import { eq, desc, and } from "drizzle-orm"
 import { parseListingMarkdown } from "@/lib/daraz/markdown-parser"
 import { DarazService } from "./daraz.service"
 import type { ProductListingInput } from "@/lib/daraz/payload-builder"
+import sharp from "sharp"
 
 export interface QueueJobInput {
   localProductId: string
@@ -116,13 +117,35 @@ export class DarazQueueService {
         const img = files.images[i]
         const uploaded = await DarazService.uploadAndCacheImage(img.buffer, img.filename)
         uploadedImageUrls.push(uploaded.url)
-        const uploadProgress = 50 + Math.round(((i + 1) / files.images.length) * 25)
+        const uploadProgress = 50 + Math.round(((i + 1) / files.images.length) * 20)
         await this.updateJobState(
           jobId,
           "UPLOADING_IMAGES",
           `Uploaded ${i + 1}/${files.images.length} images`,
           uploadProgress
         )
+      }
+
+      // Generate & upload 1:1 square image with pure white background from Photo 1 (Buyer Promotion Image)
+      let whiteBackgroundUrl: string | undefined
+      if (files.images.length > 0) {
+        try {
+          const squareBuf = await sharp(files.images[0].buffer)
+            .resize(1000, 1000, {
+              fit: "contain",
+              background: { r: 255, g: 255, b: 255, alpha: 1 },
+            })
+            .jpeg({ quality: 90 })
+            .toBuffer()
+          const cleanName = files.images[0].filename.replace(/\.[^/.]+$/, "")
+          const uploadedWhiteBg = await DarazService.uploadAndCacheImage(
+            squareBuf,
+            `white_bg_${cleanName}.jpg`
+          )
+          whiteBackgroundUrl = uploadedWhiteBg.url
+        } catch (sharpErr) {
+          console.warn("Failed to generate square white background image:", sharpErr)
+        }
       }
 
       // 4. Submit listing to Daraz OpenAPI
@@ -158,6 +181,7 @@ export class DarazQueueService {
         highlights: parsed.highlights,
         description: parsed.description,
         brand: parsed.brand || "XINVORA",
+        whiteBackgroundImage: whiteBackgroundUrl,
         normalAttributes: {
           ...(parsed.fabric ? { Fabric_Type: parsed.fabric } : {}),
           material: parsed.material || cleanExtra.material || "Other",

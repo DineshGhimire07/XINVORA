@@ -6,6 +6,7 @@ export interface ProductListingInput {
   highlights?: string[] | string // maps to Attributes -> short_description
   description?: string // maps to Attributes -> description
   brand?: string // maps to Attributes -> brand (default: "XINVORA" or "No Brand")
+  whiteBackgroundImage?: string // maps to Attributes -> promotion_whitebkg_image (1:1 square)
   normalAttributes?: Record<string, string | number | boolean>
   sku: {
     sellerSku: string // maps to Sku -> SellerSku
@@ -108,9 +109,10 @@ export function buildDarazProductXml(input: ProductListingInput): string {
   }
   normalAttrsXml += `      <brand>${escapeXml(brand)}</brand>\n`
 
-  // White Background Image (Photo 1) - Daraz Search & Campaign recommendation
-  if (allImages.length > 0) {
-    normalAttrsXml += `      <promotion_whitebkg_image>${allImages[0]}</promotion_whitebkg_image>\n`
+  // White Background Image (Photo 1 formatted 1:1 square on pure white background) - Daraz Buyer Promotion Image
+  const whiteBgImage = input.whiteBackgroundImage || (allImages.length > 0 ? allImages[0] : undefined)
+  if (whiteBgImage) {
+    normalAttrsXml += `      <promotion_whitebkg_image>${whiteBgImage}</promotion_whitebkg_image>\n`
   }
 
   if (input.normalAttributes) {

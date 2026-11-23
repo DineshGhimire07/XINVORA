@@ -286,6 +286,7 @@ export async function simulateListingSubmissionAction(data: {
       highlights: parsed.highlights,
       description: parsed.description,
       brand: parsed.brand || "XINVORA",
+      whiteBackgroundImage: images[0],
       normalAttributes: {
         ...(parsed.fabric ? { Fabric_Type: parsed.fabric } : {}),
         material: parsed.material || cleanExtra.material || "Other",
