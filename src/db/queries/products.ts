@@ -38,7 +38,11 @@ import { unstable_cache } from "next/cache"
 async function _findProductBySlugInternal(slug: string): Promise<ProductFull | null> {
   const decodedSlug = decodeURIComponent(slug)
   const result = await db.query.products.findFirst({
-    where: and(eq(products.slug, decodedSlug), eq(products.status, "PUBLISHED")),
+    where: and(
+      eq(products.slug, decodedSlug),
+      eq(products.status, "PUBLISHED"),
+      eq(products.isLegacyArchived, false)
+    ),
     with: {
       category: true,
       brand: true,
@@ -101,7 +105,10 @@ async function _findProductsInternal(
     withCount = false,
   } = params
 
-  const conditions = [eq(products.status, status)]
+  const conditions = [
+    eq(products.status, status),
+    eq(products.isLegacyArchived, false),
+  ]
 
   // ── 1. Taxonomy Filters ───────────────────────────────────────────────────
 

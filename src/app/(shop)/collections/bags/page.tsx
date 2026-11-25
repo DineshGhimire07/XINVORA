@@ -48,7 +48,8 @@ export default async function BagsCollectionPage() {
     .where(
       and(
         eq(collections.slug, "bags"),
-        eq(products.status, "PUBLISHED")
+        eq(products.status, "PUBLISHED"),
+        eq(products.isLegacyArchived, false)
       )
     )
 

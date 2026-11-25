@@ -68,6 +68,7 @@ export async function searchProducts(
 
   const whereConditions = [
     eq(products.status, "PUBLISHED"),
+    eq(products.isLegacyArchived, false),
     or(
       nameMatch,
       descMatch,

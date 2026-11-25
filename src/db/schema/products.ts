@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, timestamp, index } from "drizzle-orm/pg-core"
+import { pgTable, uuid, varchar, text, timestamp, boolean, index } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 import { categories } from "./categories"
 import { brands } from "./brands"
@@ -28,6 +28,10 @@ export const products = pgTable("products", {
   primaryCollectionId: uuid("primary_collection_id"), // Explicit primary collection for photography/SEO mapping
   imageRoleTemplateId: uuid("image_role_template_id"), // Explicit product-level template override
   status: productStatusEnum("status").default("DRAFT").notNull(),
+  /** Flag marking legacy pre-Daraz catalogue items that are permanently archived from storefront */
+  isLegacyArchived: boolean("is_legacy_archived").default(false).notNull(),
+  /** Flag marking active products whose authoritative master source is Daraz */
+  isDarazMaster: boolean("is_daraz_master").default(false).notNull(),
   seoTitle: varchar("seo_title", { length: 255 }),
   seoDescription: text("seo_description"),
   seoKeywords: text("seo_keywords"),
@@ -41,6 +45,8 @@ export const products = pgTable("products", {
   index("products_image_role_template_id_idx").on(table.imageRoleTemplateId),
   // Index on status for admin filtering (only PUBLISHED products in storefront)
   index("products_status_idx").on(table.status),
+  index("products_legacy_archived_idx").on(table.isLegacyArchived),
+  index("products_daraz_master_idx").on(table.isDarazMaster),
   // GIN trigram indexes for performant full-text search
   index("products_name_trgm_idx").using("gin", sql`${table.name} gin_trgm_ops`),
   index("products_desc_trgm_idx").using("gin", sql`${table.description} gin_trgm_ops`),
