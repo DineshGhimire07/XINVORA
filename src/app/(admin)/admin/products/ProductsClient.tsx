@@ -25,6 +25,7 @@ interface ProductsClientProps {
       name: string
       slug: string
       status: string
+      isLegacyArchived?: boolean
       createdAt: Date
       categoryName: string | null
       price: number
@@ -45,6 +46,7 @@ const TABS = [
   { label: "Published", id: "published" },
   { label: "Draft", id: "draft" },
   { label: "Archived", id: "archived" },
+  { label: "Hidden", id: "hidden" },
 ]
 
 function InlineStatusCell({ productId, initialStatus }: { productId: string; initialStatus: string }) {
@@ -441,9 +443,17 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }: any) => (
-        <InlineStatusCell productId={row.original.id} initialStatus={row.getValue("status")} />
-      ),
+      cell: ({ row }: any) => {
+        const item = row.original
+        if (item.isLegacyArchived || currentStatusTab.toLowerCase() === "hidden") {
+          return (
+            <span className="px-2.5 py-0.5 text-[10px] font-bold tracking-wider rounded-full bg-purple-100 text-purple-800 border border-purple-200">
+              HIDDEN (LEGACY)
+            </span>
+          )
+        }
+        return <InlineStatusCell productId={item.id} initialStatus={row.getValue("status")} />
+      },
     },
     {
       accessorKey: "price",
@@ -510,7 +520,7 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
         const item = row.original
         return (
           <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-            {item.status === "ARCHIVED" && (
+            {item.status === "ARCHIVED" && !item.isLegacyArchived && currentStatusTab.toLowerCase() !== "hidden" && (
               <button
                 type="button"
                 onClick={() => handlePublishOne(item.id)}
@@ -628,7 +638,17 @@ export function ProductsClient({ productsData, currentStatusTab, currentSearch }
         <div className="flex items-start md:items-center gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-admin-lg text-amber-900">
           <Archive className="w-5 h-5 shrink-0 text-amber-600 mt-0.5 md:mt-0" />
           <div className="text-admin-xs leading-relaxed">
-            <span className="font-bold">Archive Vault Active:</span> These products are completely hidden from the public storefront, collections, search, and PDP. Only admins can see them. Click <strong className="underline text-emerald-800">Publish</strong> to restore any product back to the live customer storefront at any time.
+            <span className="font-bold">Archive Vault Active:</span> These products are temporarily archived from the public storefront. Click <strong className="underline text-emerald-800">Publish</strong> to restore any product back to the live customer storefront at any time.
+          </div>
+        </div>
+      )}
+
+      {/* Hidden Memory Vault Info Banner */}
+      {currentStatusTab.toLowerCase() === "hidden" && (
+        <div className="flex items-start md:items-center gap-3 p-4 bg-purple-500/10 border border-purple-500/30 rounded-admin-lg text-purple-900">
+          <Archive className="w-5 h-5 shrink-0 text-purple-600 mt-0.5 md:mt-0" />
+          <div className="text-admin-xs leading-relaxed">
+            <span className="font-bold">Hidden Memory Vault:</span> These 47 legacy products are preserved exclusively for memory and historical reference. Their prices, stock counts, and variants are completely isolated and excluded from all active store calculations, storefront listings, and search results.
           </div>
         </div>
       )}

@@ -53,7 +53,14 @@ const _getInventoryStats = async () => {
     })
     .from(inventory)
     .innerJoin(variants, and(eq(inventory.variantId, variants.id), isNull(variants.deletedAt)))
-    .innerJoin(products, and(eq(variants.productId, products.id), isNull(products.deletedAt)))
+    .innerJoin(
+      products,
+      and(
+        eq(variants.productId, products.id),
+        isNull(products.deletedAt),
+        eq(products.isLegacyArchived, false)
+      )
+    )
 
   return {
     totalVariants: Number(stats?.totalVariants || 0),
@@ -91,7 +98,8 @@ export async function findAdminInventoryPaginated(
 
   const conditions: any[] = [
     isNull(products.deletedAt),
-    isNull(variants.deletedAt)
+    isNull(variants.deletedAt),
+    eq(products.isLegacyArchived, false),
   ]
 
   if (options.status) {

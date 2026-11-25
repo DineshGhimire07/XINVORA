@@ -40,10 +40,16 @@ export default async function AdminProductsPage(props: PageProps) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-admin-2xl font-bold font-display text-admin-text-primary tracking-tight">
-            {status === "archived" ? "Product Archive Vault" : "Products"}
+            {status === "hidden"
+              ? "Hidden Legacy Vault"
+              : status === "archived"
+              ? "Product Archive Vault"
+              : "Products"}
           </h1>
           <p className="text-admin-sm text-admin-text-secondary mt-1">
-            {status === "archived"
+            {status === "hidden"
+              ? "Preserved legacy products retained strictly for memory and historical reference. Stock and prices here are isolated and excluded from active store calculations."
+              : status === "archived"
               ? "Archived products hidden from the public storefront. Click 'Publish' to restore any product."
               : "Manage your product inventory, specifications, and variants."}
           </p>

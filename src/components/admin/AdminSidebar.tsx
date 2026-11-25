@@ -57,6 +57,7 @@ const navItems: NavItem[] = [
     icon: ShoppingBag,
     items: [
       { name: "All Products", href: "/admin/products" },
+      { name: "Hidden Memory Vault", href: "/admin/products?status=hidden" },
       { name: "Archive", href: "/admin/products?status=archived" },
       { name: "Daraz Inventory Hub", href: "/admin/daraz/inventory" },
       { name: "Master Inventory", href: "/admin/inventory" },

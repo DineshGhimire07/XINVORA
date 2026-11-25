@@ -519,14 +519,21 @@ export async function findAdminProductsPaginated(
 
   const conditions: any[] = []
 
-  if (options.status === "ARCHIVED") {
-    // Show all archived products (either status is ARCHIVED or marked as soft-deleted)
-    conditions.push(or(eq(products.status, "ARCHIVED"), isNotNull(products.deletedAt)))
+  if (options.status === "HIDDEN") {
+    // Show only legacy hidden products preserved for historical memory
+    conditions.push(eq(products.isLegacyArchived, true))
   } else {
-    // Active tabs only show non-deleted products
-    conditions.push(isNull(products.deletedAt))
-    if (options.status) {
-      conditions.push(eq(products.status, options.status as any))
+    // Active tabs (All, Published, Draft, Archived) ONLY show non-legacy active catalog items
+    conditions.push(eq(products.isLegacyArchived, false))
+    if (options.status === "ARCHIVED") {
+      // Show all archived products (either status is ARCHIVED or marked as soft-deleted)
+      conditions.push(or(eq(products.status, "ARCHIVED"), isNotNull(products.deletedAt)))
+    } else {
+      // Active tabs only show non-deleted products
+      conditions.push(isNull(products.deletedAt))
+      if (options.status) {
+        conditions.push(eq(products.status, options.status as any))
+      }
     }
   }
 
@@ -546,6 +553,7 @@ export async function findAdminProductsPaginated(
       name: products.name,
       slug: products.slug,
       status: products.status,
+      isLegacyArchived: products.isLegacyArchived,
       createdAt: products.createdAt,
       categoryName: categories.name,
       price: sql<number>`coalesce((
