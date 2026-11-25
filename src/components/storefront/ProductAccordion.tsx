@@ -52,7 +52,7 @@ export function ProductAccordion({ description, details, careGuide }: ProductAcc
           return (
             <div
               key={tab.id}
-              className={`col-start-1 row-start-1 text-[13px] text-text-secondary leading-relaxed max-w-[38rem] text-pretty transition-all duration-200 ease-out ${
+              className={`col-start-1 row-start-1 text-[13px] text-text-secondary leading-relaxed max-w-[38rem] text-pretty whitespace-pre-line transition-all duration-200 ease-out ${
                 isActive
                   ? "opacity-100 translate-y-0 pointer-events-auto z-10"
                   : "opacity-0 translate-y-1 pointer-events-none z-0"
