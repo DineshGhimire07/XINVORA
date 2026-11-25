@@ -118,6 +118,10 @@ export function ProductVariantSelector({
   })
 
   const [selectedSizeId, setSelectedSizeId] = useState<string | null>(null)
+  const [selectedVariantId, setSelectedVariantId] = useState<string>(() => {
+    const inStock = variants.find((v) => v.inventory && v.inventory.quantity > 0)
+    return inStock?.id || variants[0]?.id || ""
+  })
   const [validationError, setValidationError] = useState<string | null>(null)
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false)
   const [wishlistIds, setWishlistIds] = useState<string[]>(initialWishlistVariantIds)
@@ -237,13 +241,17 @@ export function ProductVariantSelector({
   }, [sharedWishlistIds])
 
   const activeVariant = useMemo(() => {
+    // If no colors or sizes defined, but multiple variants exist (e.g. Daraz imported SKUs)
+    if (validColors.length === 0 && sizes.length === 0 && variants.length > 1) {
+      return variants.find((v) => v.id === selectedVariantId) || variants[0]
+    }
     if (!selectedSizeId) return variants[0]
     return variants.find((v) => {
       const colorMatches = v.color ? v.color.id === selectedColorId : true
       const sizeMatches = v.size ? v.size.id === selectedSizeId : true
       return colorMatches && sizeMatches
     }) || variants[0]
-  }, [variants, selectedColorId, selectedSizeId])
+  }, [variants, selectedColorId, selectedSizeId, selectedVariantId, validColors.length, sizes.length])
 
   const displayPrice = useMemo(() => {
     const offEnabled = offSection?.isOffEnabled === true
@@ -470,6 +478,48 @@ export function ProductVariantSelector({
                   }`}
                 >
                   <span className="whitespace-nowrap">{sizeText}</span>
+                  {isSoldOut && (
+                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="w-[130%] h-[1.5px] bg-neutral-400/80 -rotate-45" />
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Generic Variations for items with multiple variants but no formal size/color relational tags */}
+      {validColors.length === 0 && sizes.length === 0 && variants.length > 1 && (
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold tracking-widest text-text-secondary uppercase select-none">
+              Option / Style
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap" role="group" aria-label="Select Option">
+            {variants.map((v, idx) => {
+              const isSelected = v.id === activeVariant?.id
+              const isSoldOut = !v.inventory || v.inventory.quantity <= 0
+              const label = `Option ${idx + 1}`
+
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setSelectedVariantId(v.id)}
+                  aria-pressed={isSelected}
+                  title={isSoldOut ? `${label} — Sold Out` : label}
+                  className={`h-11 px-4 flex items-center justify-center text-[11px] font-semibold uppercase rounded-full border transition-all select-none relative overflow-hidden ${
+                    isSelected
+                      ? "border-text-primary bg-text-primary text-surface font-bold"
+                      : isSoldOut
+                        ? "border-border/30 text-text-secondary/50 bg-neutral-100/50 hover:border-neutral-400"
+                        : "border-border/40 text-text-secondary hover:text-text-primary hover:border-text-primary"
+                  }`}
+                >
+                  <span className="whitespace-nowrap">{label}</span>
                   {isSoldOut && (
                     <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <span className="w-[130%] h-[1.5px] bg-neutral-400/80 -rotate-45" />
