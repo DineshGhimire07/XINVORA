@@ -78,7 +78,14 @@ const _findProductBySlugCached = unstable_cache(
 )
 
 export async function findProductBySlug(slug: string): Promise<ProductFull | null> {
-  return _findProductBySlugCached(slug)
+  try {
+    return await _findProductBySlugCached(slug)
+  } catch (err: any) {
+    if (err?.message?.includes("incrementalCache")) {
+      return _findProductBySlugInternal(slug)
+    }
+    throw err
+  }
 }
 
 /**
@@ -394,7 +401,14 @@ const _findProductsCached = unstable_cache(
 export async function findProducts(
   params: CatalogFilterParams = {}
 ): Promise<PaginatedResult<ProductSummaryWithPrice>> {
-  return _findProductsCached(JSON.stringify(params))
+  try {
+    return await _findProductsCached(JSON.stringify(params))
+  } catch (err: any) {
+    if (err?.message?.includes("incrementalCache")) {
+      return _findProductsInternal(params)
+    }
+    throw err
+  }
 }
 
 function emptyResult(withCount: boolean): PaginatedResult<ProductSummaryWithPrice> {
