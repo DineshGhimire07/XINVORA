@@ -39,6 +39,15 @@ import {
 } from "@/actions/admin/daraz-stock.actions"
 import type { DarazInventoryMetrics } from "@/db/queries/daraz-inventory"
 
+function extractImageUrl(asset: any): string | null {
+  if (!asset) return null
+  if (typeof asset === "string") return asset
+  if (typeof asset === "object") {
+    return asset.secureUrl || asset.url || asset.secure_url || null
+  }
+  return null
+}
+
 interface DarazInventoryClientProps {
   initialItems: any[]
   totalItems: number
@@ -573,7 +582,7 @@ export function DarazInventoryClient({
                     initialItems.map((item) => {
                       const primaryImg =
                         Array.isArray(item.cloudinaryImages) && item.cloudinaryImages.length > 0
-                          ? item.cloudinaryImages[0]
+                          ? extractImageUrl(item.cloudinaryImages[0])
                           : null
 
                       const isOutOfStock = item.websiteAvailableStock <= 0
@@ -1093,20 +1102,24 @@ export function DarazInventoryClient({
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {Array.isArray(selectedProduct.item.cloudinaryImages) &&
                   selectedProduct.item.cloudinaryImages.length > 0 ? (
-                    selectedProduct.item.cloudinaryImages.map((imgUrl: string, idx: number) => (
-                      <div
-                        key={idx}
-                        className="w-18 h-18 rounded-lg overflow-hidden border border-admin-border shrink-0 relative bg-neutral-100"
-                      >
-                        <Image
-                          src={imgUrl}
-                          alt={`Asset ${idx + 1}`}
-                          fill
-                          sizes="72px"
-                          className="object-cover"
-                        />
-                      </div>
-                    ))
+                    selectedProduct.item.cloudinaryImages.map((asset: any, idx: number) => {
+                      const imgUrl = extractImageUrl(asset)
+                      if (!imgUrl) return null
+                      return (
+                        <div
+                          key={idx}
+                          className="w-18 h-18 rounded-lg overflow-hidden border border-admin-border shrink-0 relative bg-neutral-100"
+                        >
+                          <Image
+                            src={imgUrl}
+                            alt={`Asset ${idx + 1}`}
+                            fill
+                            sizes="72px"
+                            className="object-cover"
+                          />
+                        </div>
+                      )
+                    })
                   ) : (
                     <div className="text-xs text-admin-text-muted italic">No media assets found.</div>
                   )}
