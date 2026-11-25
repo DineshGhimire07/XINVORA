@@ -58,6 +58,7 @@ const navItems: NavItem[] = [
     items: [
       { name: "All Products", href: "/admin/products" },
       { name: "Archive", href: "/admin/products?status=archived" },
+      { name: "Daraz Inventory Hub", href: "/admin/daraz/inventory" },
       { name: "Master Inventory", href: "/admin/inventory" },
       { name: "Daraz Listing Studio", href: "/admin/daraz" },
       { name: "AI Photography", href: "/admin/products/ai-photography" },
@@ -71,7 +72,15 @@ const navItems: NavItem[] = [
   },
   { name: "Master Inventory", href: "/admin/inventory", icon: Boxes },
   { name: "Photography Studio", href: "/admin/products/ai-photography", icon: Camera },
-  { name: "Daraz Studio", href: "/admin/daraz", icon: Store },
+  {
+    name: "Daraz Hub",
+    href: "/admin/daraz/inventory",
+    icon: Store,
+    items: [
+      { name: "Inventory & Stock", href: "/admin/daraz/inventory" },
+      { name: "Listing Studio", href: "/admin/daraz" },
+    ],
+  },
   { name: "Collections", href: "/admin/collections", icon: Layers },
   { name: "Live Chat Inbox", href: "/admin/inbox", icon: MessageCircle },
   {
