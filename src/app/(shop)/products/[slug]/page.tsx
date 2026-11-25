@@ -28,6 +28,7 @@ import { ProductViewTracker } from "@/features/analytics/components/ProductViewT
 import { ProductChatSync } from "@/components/storefront/ProductChatSync"
 
 import { optimizeCloudinaryUrl } from "@/lib/image-optimizer"
+import { formatPdpDisplayTitle } from "@/lib/utils"
 
 export const revalidate = 3600
 
@@ -127,7 +128,8 @@ export default async function ProductDetailPage({
 
   // Material list extracted dynamically from productMaterials relations
   const materialsList = product.productMaterials?.map((pm: any) => pm.material?.name).filter(Boolean) || []
-  const primaryMaterial = materialsList.length > 0 ? materialsList.join(", ") : "Premium Materials"
+  const primaryMaterial = materialsList.length > 0 ? materialsList.join(", ") : null
+  const displayTitle = formatPdpDisplayTitle(product.name)
 
   printTimingSummary('ProductDetailPage', timings, performance.now() - totalStart)
 
@@ -206,12 +208,14 @@ export default async function ProductDetailPage({
                     />
                   </div>
                   
-                  <h1 className="text-[2.25rem] font-display text-text-primary leading-tight tracking-tight uppercase font-light">
-                    {product.name}
+                  <h1 className="text-[1.65rem] sm:text-[1.85rem] md:text-[2.25rem] font-display text-text-primary leading-tight tracking-tight uppercase font-light">
+                    {displayTitle}
                   </h1>
-                  <span className="text-body-sm text-text-secondary select-none">
-                    {primaryMaterial}
-                  </span>
+                  {primaryMaterial && (
+                    <span className="text-body-sm text-text-secondary select-none">
+                      {primaryMaterial}
+                    </span>
+                  )}
                   <div className="pt-1">
                     <span className="inline-flex items-center text-[10px] font-bold tracking-widest text-text-primary uppercase border border-border rounded-xs px-2.5 py-1 bg-surface-elevated select-none">
                       {availabilityText}
@@ -310,8 +314,8 @@ export default async function ProductDetailPage({
               Current Object
             </span>
             <div className="flex items-center gap-6 overflow-x-auto whitespace-nowrap text-[11px] font-semibold tracking-widest uppercase text-text-secondary">
-              <span className="text-text-primary font-bold cursor-default select-none">
-                {product.name}
+              <span className="text-text-primary font-medium cursor-default select-none text-[12px] tracking-wider">
+                {displayTitle}
               </span>
             </div>
           </div>

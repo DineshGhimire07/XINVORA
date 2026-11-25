@@ -50,6 +50,53 @@ export function formatPrice(
 }
 
 /**
+ * Formats long marketplace/SEO-stuffed product titles into concise, elegant
+ * luxury display titles for the PDP and visual storefront elements, while
+ * keeping the full title untouched in SEO metadata and database records.
+ *
+ * @example
+ * "XINVORA Paisley Print Midi Dress for Women – Ivory Sleeveless A-Line..."
+ * -> "XINVORA Paisley Print Midi Dress for Women"
+ *
+ * "Women’s Faux Leather Rexine Corset Top with Lace Up Front... | Fitted..."
+ * -> "Women’s Faux Leather Rexine Corset Top"
+ */
+export function formatPdpDisplayTitle(rawTitle?: string | null): string {
+  if (!rawTitle) return ""
+  const title = rawTitle.trim()
+
+  // 1. Check for primary delimiter pairs with spaces (' – ', ' — ', ' | ', ' // ', ' - ')
+  const separators = [" – ", " — ", " | ", " // ", " - "]
+  for (const sep of separators) {
+    if (title.includes(sep)) {
+      const candidate = title.split(sep)[0].trim()
+      if (candidate.length >= 15 && candidate.length <= 65) {
+        return candidate
+      }
+    }
+  }
+
+  // 2. If title has ' with ' and is longer than 45 chars, cut at ' with '
+  if (title.length > 45 && /\s+with\s+/i.test(title)) {
+    const candidate = title.split(/\s+with\s+/i)[0].trim()
+    if (candidate.length >= 15) {
+      return candidate
+    }
+  }
+
+  // 3. Fallback: if still > 60 chars, find natural word break around 45-55 chars
+  if (title.length > 60) {
+    const sub = title.slice(0, 55)
+    const lastSpace = sub.lastIndexOf(" ")
+    if (lastSpace > 25) {
+      return title.slice(0, lastSpace).trim()
+    }
+  }
+
+  return title
+}
+
+/**
  * Truncate a string to a maximum length, appending ellipsis.
  *
  * @example truncate("A very long title", 10) → "A very lon..."
