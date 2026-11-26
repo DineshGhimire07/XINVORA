@@ -68,7 +68,7 @@ export function ProductCard({
   return (
     <div
       data-product-card
-      className="group relative flex flex-col w-full rounded-lg md:rounded-xl overflow-hidden bg-[#FAF6F2] shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-[#EDE3DB] hover:shadow-[0_6px_20px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 select-none"
+      className="group relative flex flex-col w-full rounded-2xl md:rounded-[22px] overflow-hidden bg-[#352319] shadow-[0_4px_20px_rgba(40,25,18,0.12)] hover:shadow-[0_8px_30px_rgba(40,25,18,0.22)] transition-all duration-300 hover:-translate-y-1 select-none"
     >
       {/* Click target wrapping the entire card */}
       <Link
@@ -79,7 +79,7 @@ export function ProductCard({
 
       {/* SECTION A — PRODUCT IMAGE (Strict 1:1 Aspect Ratio) */}
       <div
-        className="relative w-full aspect-square overflow-hidden bg-neutral-100"
+        className="relative w-full aspect-square overflow-hidden bg-[#2D1C14]"
         onMouseEnter={() => setIsDesktopHovered(true)}
         onMouseLeave={() => setIsDesktopHovered(false)}
       >
@@ -118,39 +118,49 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Soft, delicate light gradient fading into the soft cream base */}
-        <div className="absolute inset-x-0 bottom-0 h-10 sm:h-12 bg-gradient-to-b from-transparent via-[#FAF6F2]/50 to-[#FAF6F2] pointer-events-none z-10" />
+        {/* 
+          Seamless, warm mocha gradient:
+          Uses identical RGB (53, 35, 25) with smooth alpha progression.
+          This completely prevents greyish-muddy dead zones or harsh banding lines.
+        */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-36 sm:h-44 pointer-events-none z-10"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(53, 35, 25, 0) 0%, rgba(53, 35, 25, 0.08) 25%, rgba(53, 35, 25, 0.45) 55%, rgba(53, 35, 25, 0.85) 85%, #352319 100%)",
+          }}
+        />
       </div>
 
-      {/* SECTION B — GRADIENT + PRODUCT INFORMATION (Extends below 1:1 photo) */}
-      <div className="relative w-full bg-[#FAF6F2] px-3 pb-3.5 pt-0.5 sm:px-4 sm:pb-4 sm:pt-1 z-20 flex flex-col justify-end">
-        {/* Product Name: Elegant serif typography in deep warm espresso */}
-        <h3 className="font-serif text-[#221614] text-[13.5px] sm:text-[15.5px] font-normal leading-snug line-clamp-1">
+      {/* SECTION B — EXTENDED PRODUCT INFORMATION (Warm Mocha Base #352319) */}
+      <div className="relative w-full bg-[#352319] px-3.5 pb-4 pt-1 sm:px-4 sm:pb-4.5 sm:pt-1.5 z-20 flex flex-col justify-end">
+        {/* Product Name: Elegant serif typography in crisp white */}
+        <h3 className="font-serif text-white text-[15px] sm:text-[17px] font-normal leading-snug line-clamp-1 drop-shadow-xs">
           {cardTitle}
         </h3>
 
         {/* Pricing & Status Row */}
-        <div className="flex items-center justify-between gap-2 mt-1 w-full">
-          <div className="flex items-baseline gap-2 min-w-0">
+        <div className="flex items-center justify-between gap-2 mt-1.5 w-full">
+          <div className="flex items-baseline gap-2 sm:gap-2.5 min-w-0">
             {sellingPriceFormatted ? (
               <>
-                <span className="font-bold text-[#1A110F] text-[14.5px] sm:text-[16px] tracking-tight whitespace-nowrap">
+                <span className="font-bold text-white text-[15px] sm:text-[17px] tracking-tight whitespace-nowrap">
                   NPR {sellingPriceFormatted}
                 </span>
                 {originalPriceFormatted && (
-                  <span className="line-through text-[#8C7A72] text-xs sm:text-[12.5px] font-normal whitespace-nowrap">
+                  <span className="line-through text-white/55 text-xs sm:text-[13px] font-normal whitespace-nowrap">
                     NPR {originalPriceFormatted}
                   </span>
                 )}
               </>
             ) : (
-              <span className="text-[#8C7A72] text-xs">Contact for Price</span>
+              <span className="text-white/80 text-xs">Contact for Price</span>
             )}
           </div>
 
-          {/* Sold Out badge: Delicate muted warm blush pill */}
+          {/* Sold Out badge: Delicate warm sand pill from reference mockup */}
           {!inStock && (
-            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium tracking-wide bg-[#EFE3DB] text-[#5C453B] border border-[#DDD0C6] shadow-xs select-none">
+            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium tracking-wide bg-[#D8C7B5] text-[#332219] shadow-xs select-none">
               Sold Out
             </span>
           )}

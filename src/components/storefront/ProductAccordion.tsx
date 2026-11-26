@@ -11,7 +11,7 @@ interface ProductAccordionProps {
 type TabType = "description" | "details" | "shipping" | "care"
 
 export function ProductAccordion({ description, details, careGuide }: ProductAccordionProps) {
-  // Default state: DESCRIPTION per specification
+  // Default state: DESCRIPTION
   const [activeTab, setActiveTab] = React.useState<TabType>("description")
 
   const tabs = [
@@ -44,7 +44,7 @@ export function ProductAccordion({ description, details, careGuide }: ProductAcc
 
   return (
     <div className="flex flex-col w-full border-t border-b border-border/30 py-4 mt-2 select-none">
-      {/* Horizontal Tabs Header — Position locked outside scrollable viewport */}
+      {/* Horizontal Tabs Header */}
       <div className="flex flex-row items-center justify-between select-none border-b border-border/10 w-full overflow-hidden shrink-0">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id
@@ -65,17 +65,17 @@ export function ProductAccordion({ description, details, careGuide }: ProductAcc
         })}
       </div>
 
-      {/* Fixed-Height Content Viewport — Strictly locked height to guarantee zero layout shifts */}
-      <div className="relative w-full h-[175px] md:h-[190px] overflow-hidden shrink-0 mt-3 select-text">
+      {/* Full Content Area — Full text completely visible without truncation or inner scroll traps */}
+      <div className="pt-4 grid grid-cols-1 grid-rows-1 min-h-[140px] select-text">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id
           return (
             <div
               key={tab.id}
               aria-hidden={!isActive}
-              className={`absolute inset-0 overflow-y-auto pr-2 text-[13px] text-text-secondary leading-relaxed text-pretty whitespace-pre-line transition-opacity duration-200 ease-out ${
+              className={`col-start-1 row-start-1 text-[13px] text-text-secondary leading-relaxed text-pretty whitespace-pre-line transition-opacity duration-200 ease-out ${
                 isActive
-                  ? "opacity-100 pointer-events-auto z-10 visible"
+                  ? "opacity-100 pointer-events-auto z-10"
                   : "opacity-0 pointer-events-none z-0 invisible"
               }`}
             >
