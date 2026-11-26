@@ -9,7 +9,6 @@ import {
   Package,
   ShoppingBag,
   Camera,
-  Layers,
   Users,
   Percent,
   BarChart3,
@@ -21,9 +20,8 @@ import {
   ChevronRight,
   Boxes,
   Globe,
-  Archive,
-  MessageCircle,
   Store,
+  ExternalLink,
   type LucideIcon,
 } from "lucide-react"
 
@@ -57,22 +55,22 @@ const navItems: NavItem[] = [
     icon: ShoppingBag,
     items: [
       { name: "All Products", href: "/admin/products" },
-      { name: "Hidden Memory Vault", href: "/admin/products?status=hidden" },
-      { name: "Archive", href: "/admin/products?status=archived" },
-      { name: "Daraz Inventory Hub", href: "/admin/daraz/inventory" },
-      { name: "Master Inventory", href: "/admin/inventory" },
-      { name: "Daraz Listing Studio", href: "/admin/daraz" },
-      { name: "AI Photography", href: "/admin/products/ai-photography" },
-      { name: "Bulk Import", href: "/admin/products/bulk-upload" },
-      { name: "Media Library", href: "/admin/media" },
+      { name: "Collections", href: "/admin/collections" },
       { name: "Categories", href: "/admin/categories" },
       { name: "Tags", href: "/admin/tags" },
       { name: "Brands", href: "/admin/brands" },
       { name: "Attributes", href: "/admin/attributes" },
+      { name: "Media Library", href: "/admin/media" },
+      { name: "Bulk Import", href: "/admin/products/bulk-upload" },
+      { name: "Hidden Memory Vault", href: "/admin/products?status=hidden" },
+      { name: "Archive", href: "/admin/products?status=archived" },
     ],
   },
-  { name: "Master Inventory", href: "/admin/inventory", icon: Boxes },
-  { name: "Photography Studio", href: "/admin/products/ai-photography", icon: Camera },
+  {
+    name: "Inventory",
+    href: "/admin/inventory",
+    icon: Boxes,
+  },
   {
     name: "Daraz Hub",
     href: "/admin/daraz/inventory",
@@ -82,8 +80,11 @@ const navItems: NavItem[] = [
       { name: "Listing Studio", href: "/admin/daraz" },
     ],
   },
-  { name: "Collections", href: "/admin/collections", icon: Layers },
-  { name: "Live Chat Inbox", href: "/admin/inbox", icon: MessageCircle },
+  {
+    name: "AI Photography",
+    href: "/admin/products/ai-photography",
+    icon: Camera,
+  },
   {
     name: "Customers",
     href: "/admin/users",
@@ -347,21 +348,19 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      {/* Quick Settings Shortcut at Bottom */}
+      {/* Quick View Live Store Link at Bottom */}
       <div className="p-3 border-t border-admin-border bg-admin-sidebar-bg flex-shrink-0">
         <Link
-          href="/admin/settings/general"
-          title={collapsed ? "Settings" : undefined}
-          className={`flex items-center gap-3 px-3 py-2 text-admin-sm font-medium rounded-admin-md transition-all ${
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          title={collapsed ? "View Live Store" : undefined}
+          className={`flex items-center gap-3 px-3 py-2 text-admin-sm font-medium rounded-admin-md transition-all hover:bg-admin-sidebar-item-active-bg hover:text-admin-sidebar-text-active text-admin-sidebar-text ${
             collapsed ? "justify-center" : ""
-          } ${
-            isPathActive("/admin/settings")
-              ? "bg-admin-sidebar-item-active-bg text-admin-sidebar-text-active"
-              : "hover:bg-admin-sidebar-item-active-bg hover:text-admin-sidebar-text-active text-admin-sidebar-text"
           }`}
         >
-          <SettingsIcon className="h-4 w-4 flex-shrink-0" />
-          {!collapsed && <span className="whitespace-nowrap truncate">Settings</span>}
+          <ExternalLink className="h-4 w-4 flex-shrink-0 text-admin-text-secondary" />
+          {!collapsed && <span className="whitespace-nowrap truncate text-xs font-medium">View Live Store</span>}
         </Link>
       </div>
     </motion.aside>
