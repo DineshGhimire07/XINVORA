@@ -405,8 +405,8 @@ async function RandomCollectionShowcaseSection() {
         </Link>
       </div>
 
-      {/* Responsive Product Grid: 2 columns on Mobile, 3 on Tablet, 4 on Desktop with premium spacing */}
-      <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 px-3 sm:px-6 md:px-10 pb-16">
+      {/* Responsive Product Grid: 2 columns on Mobile, 3 on Tablet, 4 on Desktop with subtle minimal spacing */}
+      <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-2 sm:gap-x-3 md:gap-x-4 gap-y-2.5 sm:gap-y-3.5 md:gap-y-4 px-2 sm:px-4 md:px-8 pb-16">
         {randomProducts.map((product, index) => {
           const itemColors = Array.from(
             new Map(

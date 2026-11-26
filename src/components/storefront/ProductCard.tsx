@@ -68,7 +68,7 @@ export function ProductCard({
   return (
     <div
       data-product-card
-      className="group relative flex flex-col w-full rounded-2xl md:rounded-[20px] overflow-hidden bg-[#241A15] shadow-[0_4px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.14)] transition-all duration-300 hover:-translate-y-1 select-none"
+      className="group relative flex flex-col w-full rounded-lg md:rounded-xl overflow-hidden bg-[#241A15] shadow-[0_4px_16px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-0.5 select-none"
     >
       {/* Click target wrapping the entire card */}
       <Link
