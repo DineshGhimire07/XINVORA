@@ -68,7 +68,7 @@ export function ProductCard({
   return (
     <div
       data-product-card
-      className="group relative flex flex-col w-full rounded-lg md:rounded-xl overflow-hidden bg-[#2C1921] shadow-[0_4px_16px_rgba(44,25,33,0.08)] hover:shadow-[0_8px_24px_rgba(44,25,33,0.15)] transition-all duration-300 hover:-translate-y-0.5 select-none"
+      className="group relative flex flex-col w-full rounded-lg md:rounded-xl overflow-hidden bg-[#FAF6F2] shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-[#EDE3DB] hover:shadow-[0_6px_20px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 select-none"
     >
       {/* Click target wrapping the entire card */}
       <Link
@@ -79,7 +79,7 @@ export function ProductCard({
 
       {/* SECTION A — PRODUCT IMAGE (Strict 1:1 Aspect Ratio) */}
       <div
-        className="relative w-full aspect-square overflow-hidden bg-neutral-200"
+        className="relative w-full aspect-square overflow-hidden bg-neutral-100"
         onMouseEnter={() => setIsDesktopHovered(true)}
         onMouseLeave={() => setIsDesktopHovered(false)}
       >
@@ -118,14 +118,14 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Soft, gentle gradient: starts lower down (h-14) so the photo stays bright and feminine */}
-        <div className="absolute inset-x-0 bottom-0 h-14 sm:h-16 bg-gradient-to-b from-transparent via-[#2C1921]/40 to-[#2C1921] pointer-events-none z-10" />
+        {/* Soft, delicate light gradient fading into the soft cream base */}
+        <div className="absolute inset-x-0 bottom-0 h-10 sm:h-12 bg-gradient-to-b from-transparent via-[#FAF6F2]/50 to-[#FAF6F2] pointer-events-none z-10" />
       </div>
 
       {/* SECTION B — GRADIENT + PRODUCT INFORMATION (Extends below 1:1 photo) */}
-      <div className="relative w-full bg-[#2C1921] px-3 pb-3.5 pt-0.5 sm:px-4 sm:pb-4 sm:pt-1 z-20 flex flex-col justify-end">
-        {/* Product Name: Delicate serif typography in soft rose-white */}
-        <h3 className="font-serif text-[#FFF5F7] text-[13.5px] sm:text-[15.5px] font-light leading-snug line-clamp-1 drop-shadow-xs">
+      <div className="relative w-full bg-[#FAF6F2] px-3 pb-3.5 pt-0.5 sm:px-4 sm:pb-4 sm:pt-1 z-20 flex flex-col justify-end">
+        {/* Product Name: Elegant serif typography in deep warm espresso */}
+        <h3 className="font-serif text-[#221614] text-[13.5px] sm:text-[15.5px] font-normal leading-snug line-clamp-1">
           {cardTitle}
         </h3>
 
@@ -134,23 +134,23 @@ export function ProductCard({
           <div className="flex items-baseline gap-2 min-w-0">
             {sellingPriceFormatted ? (
               <>
-                <span className="font-semibold text-white text-[14.5px] sm:text-[16px] tracking-tight whitespace-nowrap">
+                <span className="font-bold text-[#1A110F] text-[14.5px] sm:text-[16px] tracking-tight whitespace-nowrap">
                   NPR {sellingPriceFormatted}
                 </span>
                 {originalPriceFormatted && (
-                  <span className="line-through text-[#E8C2CC]/60 text-xs sm:text-[12.5px] font-normal whitespace-nowrap">
+                  <span className="line-through text-[#8C7A72] text-xs sm:text-[12.5px] font-normal whitespace-nowrap">
                     NPR {originalPriceFormatted}
                   </span>
                 )}
               </>
             ) : (
-              <span className="text-[#FFF5F7]/80 text-xs">Contact for Price</span>
+              <span className="text-[#8C7A72] text-xs">Contact for Price</span>
             )}
           </div>
 
-          {/* Sold Out badge: Delicate pastel blush pink pill */}
+          {/* Sold Out badge: Delicate muted warm blush pill */}
           {!inStock && (
-            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium tracking-wide bg-[#FCE5EB] text-[#7A283C] border border-[#F5BAC7]/60 shadow-xs select-none">
+            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium tracking-wide bg-[#EFE3DB] text-[#5C453B] border border-[#DDD0C6] shadow-xs select-none">
               Sold Out
             </span>
           )}
