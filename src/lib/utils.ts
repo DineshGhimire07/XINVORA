@@ -97,6 +97,52 @@ export function formatPdpDisplayTitle(rawTitle?: string | null): string {
 }
 
 /**
+ * Formats product titles specifically for product grid cards,
+ * creating clean, concise editorial titles matching luxury fashion standards.
+ *
+ * @example
+ * "XINVORA Pink Leaf Print Midi Dress for Women – Sleeveless A-Line..."
+ * -> "Pink Leaf Print Midi Dress"
+ */
+export function formatCardDisplayTitle(rawTitle?: string | null): string {
+  if (!rawTitle) return ""
+  let clean = rawTitle.trim()
+
+  // Strip leading brand name if present
+  clean = clean.replace(/^XINVORA\s+/i, "")
+
+  // Primary delimiters
+  const separators = [" – ", " — ", " | ", " // ", " - "]
+  for (const sep of separators) {
+    if (clean.includes(sep)) {
+      clean = clean.split(sep)[0].trim()
+      break
+    }
+  }
+
+  // Strip 'for Women' or 'for Girls' if title is still long
+  if (clean.length > 25) {
+    clean = clean.replace(/\s+(for\s+women|for\s+girls|for\s+ladies)\b/i, "").trim()
+  }
+
+  // If has ' with ' and is still long (> 30 chars), cut before ' with '
+  if (clean.length > 30 && /\s+with\s+/i.test(clean)) {
+    clean = clean.split(/\s+with\s+/i)[0].trim()
+  }
+
+  // Fallback: if still > 38 chars, truncate at word boundary
+  if (clean.length > 38) {
+    const sub = clean.slice(0, 36)
+    const lastSpace = sub.lastIndexOf(" ")
+    if (lastSpace > 15) {
+      clean = clean.slice(0, lastSpace).trim()
+    }
+  }
+
+  return clean
+}
+
+/**
  * Truncate a string to a maximum length, appending ellipsis.
  *
  * @example truncate("A very long title", 10) → "A very lon..."

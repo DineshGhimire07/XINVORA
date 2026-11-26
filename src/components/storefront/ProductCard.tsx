@@ -3,10 +3,8 @@
 import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Heart } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { toggleWishlistByProductIdAction } from "@/actions/wishlist.actions"
-import { useHeaderState } from "@/providers/header-state-provider"
+import { optimizeCloudinaryUrl } from "@/lib/image-optimizer"
+import { formatCardDisplayTitle } from "@/lib/utils"
 
 export interface ProductCardProps {
   product: {
@@ -18,8 +16,8 @@ export interface ProductCardProps {
     offSection?: { originalPrice: number; sellingPrice: number; isOffEnabled: boolean } | null
     productImages: { url: string; altText: string | null }[]
   }
-  itemColors: { id: string; hexCode: string }[]
-  itemSizes: { id: string; name: string }[]
+  itemColors?: { id: string; hexCode: string }[]
+  itemSizes?: { id: string; name: string }[]
   priority?: boolean
   initialIsWishlisted?: boolean
   isFirstInGrid?: boolean
@@ -31,268 +29,133 @@ export interface ProductCardProps {
   disableHover?: boolean
   objectContain?: boolean
   inStock?: boolean
-  /** Hide the dot indicators on the mobile swipe reveal (used in New Arrivals grid) */
   hideDots?: boolean
 }
 
-import { optimizeCloudinaryUrl, SHIMMER_BLUR_DATA_URL } from "@/lib/image-optimizer"
-import { ProductImageReveal } from "./ProductImageReveal"
-
 export function ProductCard({
   product,
-  itemColors,
-  itemSizes,
   priority = false,
-  initialIsWishlisted = false,
-  isFirstInGrid = false,
-  hideWishlist = false,
-  hidePrice = false,
-  hideName = false,
-  hideDiscountBadge = false,
   overrideImage = null,
   disableHover = false,
-  objectContain = false,
   inStock = true,
-  hideDots = false,
 }: ProductCardProps) {
-  const router = useRouter()
-  const { cartItemMap } = useHeaderState()
-  const inCartQty = cartItemMap.get(product.id) || 0
-  const [isWishlisted, setIsWishlisted] = React.useState(initialIsWishlisted)
-  const [isPending, startTransition] = React.useTransition()
-  // We want at least the first image, up to all images
+  const [isDesktopHovered, setIsDesktopHovered] = React.useState(false)
   const images = product.productImages || []
 
-  // Calculate discount percentage for sale badge
-  // Off Section pricing takes priority over compareAtPrice
+  // Pricing calculations
   const offEnabled = product.offSection?.isOffEnabled === true
   const effectiveOriginalPrice = offEnabled ? product.offSection!.originalPrice : product.compareAtPrice
   const effectiveSellingPrice = offEnabled ? product.offSection!.sellingPrice : product.lowestPrice
 
-  const discountPercent = React.useMemo(() => {
-    if (effectiveOriginalPrice && effectiveSellingPrice && effectiveOriginalPrice > effectiveSellingPrice) {
-      return Math.round(((effectiveOriginalPrice - effectiveSellingPrice) / effectiveOriginalPrice) * 100)
-    }
-    return 0
-  }, [effectiveOriginalPrice, effectiveSellingPrice])
+  const sellingPriceFormatted =
+    effectiveSellingPrice !== null && effectiveSellingPrice !== undefined
+      ? Math.round(effectiveSellingPrice / 100).toLocaleString()
+      : null
 
-  const handleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    
-    if (isPending) return
+  const originalPriceFormatted =
+    effectiveOriginalPrice &&
+    effectiveSellingPrice &&
+    effectiveOriginalPrice > effectiveSellingPrice
+      ? Math.round(effectiveOriginalPrice / 100).toLocaleString()
+      : null
 
-    // Optimistic update
-    setIsWishlisted(!isWishlisted)
+  // Editorial concise display title for the card
+  const cardTitle = formatCardDisplayTitle(product.name)
 
-    startTransition(async () => {
-      const res = await toggleWishlistByProductIdAction(product.id)
-      if (!res.success) {
-        // Revert on failure (e.g. not logged in)
-        setIsWishlisted((prev) => !prev)
-      } else if (res.data) {
-        // Sync with server state
-        setIsWishlisted(res.data.wishlisted)
-      }
-    })
-  }
-  
-  const [isDesktopHovered, setIsDesktopHovered] = React.useState(false)
-  
+  const primaryImageSrc = overrideImage || images[0]?.url || null
+  const secondaryImageSrc = !disableHover && images[1]?.url ? images[1].url : null
+
   return (
-    <div data-product-card className={`group flex flex-col text-left w-full relative ${hideName && hidePrice ? "" : "gap-1.5"}`}>
-      {/* Visual Card Image container */}
-      <div className="relative w-full aspect-square bg-[#ECEBE7] overflow-hidden select-none">
-        {/* Desktop Presentation (md+): Smooth hover swap between first and second photo */}
-        <div 
-          className="hidden md:block w-full h-full relative"
-          onMouseEnter={() => setIsDesktopHovered(true)}
-          onMouseLeave={() => setIsDesktopHovered(false)}
-        >
-          <Link 
-            href={`/products/${product.slug}`}
-            className="absolute inset-0 z-[5]"
-            aria-label={product.name}
-          />
-          {overrideImage ? (
-            <Image 
-              src={optimizeCloudinaryUrl(overrideImage, { width: 800 })} 
-              alt={product.name} 
+    <div
+      data-product-card
+      className="group relative flex flex-col w-full rounded-2xl md:rounded-[20px] overflow-hidden bg-[#241A15] shadow-[0_4px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.14)] transition-all duration-300 hover:-translate-y-1 select-none"
+    >
+      {/* Click target wrapping the entire card */}
+      <Link
+        href={`/products/${product.slug}`}
+        className="absolute inset-0 z-30"
+        aria-label={product.name}
+      />
+
+      {/* SECTION A — PRODUCT IMAGE (Strict 1:1 Aspect Ratio) */}
+      <div
+        className="relative w-full aspect-square overflow-hidden bg-neutral-200"
+        onMouseEnter={() => setIsDesktopHovered(true)}
+        onMouseLeave={() => setIsDesktopHovered(false)}
+      >
+        {primaryImageSrc ? (
+          <>
+            <Image
+              src={optimizeCloudinaryUrl(primaryImageSrc, { width: 800 })}
+              alt={images[0]?.altText || product.name}
               fill
-              sizes="(max-width: 1024px) 33vw, 25vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               priority={priority}
               fetchPriority={priority ? "high" : "low"}
               loading={priority ? "eager" : "lazy"}
-              className="object-cover object-center pointer-events-none"
+              className={`object-cover object-center pointer-events-none transition-transform duration-700 ease-out group-hover:scale-105 ${
+                secondaryImageSrc && isDesktopHovered ? "opacity-0" : "opacity-100"
+              }`}
             />
-          ) : images.length > 0 ? (
-            <>
-              <Image 
-                src={optimizeCloudinaryUrl(images[0].url, { width: 800 })} 
-                alt={images[0].altText || product.name} 
+
+            {secondaryImageSrc && (
+              <Image
+                src={optimizeCloudinaryUrl(secondaryImageSrc, { width: 800 })}
+                alt={images[1]?.altText || `${product.name} lifestyle`}
                 fill
-                sizes="(max-width: 1024px) 33vw, 25vw"
-                priority={priority}
-                fetchPriority={priority ? "high" : "low"}
-                loading={priority ? "eager" : "lazy"}
-                className={`object-cover object-center pointer-events-none transition-opacity duration-500 ease-out ${
-                  !disableHover && images[1] && isDesktopHovered ? "opacity-0" : "opacity-100"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                loading="lazy"
+                fetchPriority="low"
+                className={`object-cover object-center pointer-events-none absolute inset-0 transition-all duration-700 ease-out group-hover:scale-105 ${
+                  isDesktopHovered ? "opacity-100" : "opacity-0"
                 }`}
               />
-              {!disableHover && images[1] && (
-                <Image 
-                  src={optimizeCloudinaryUrl(images[1].url, { width: 800 })} 
-                  alt={images[1].altText || `${product.name} lifestyle`} 
-                  fill
-                  sizes="(max-width: 1024px) 33vw, 25vw"
-                  loading="lazy"
-                  fetchPriority="low"
-                  className={`object-cover object-center pointer-events-none absolute inset-0 transition-opacity duration-500 ease-out ${
-                    isDesktopHovered ? "opacity-100" : "opacity-0"
-                  }`}
-                />
-              )}
-            </>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-[10px] text-text-secondary uppercase select-none">
-              No Image
-            </div>
-          )}
-        </div>
-
-        {/* Mobile Presentation (< md): Swipeable gallery for dot-eligible cards, static otherwise */}
-        <div className="block md:hidden w-full h-full relative">
-          {!overrideImage && !disableHover && images.length > 1 ? (
-            <ProductImageReveal
-              productId={product.id}
-              productSlug={product.slug}
-              productName={product.name}
-              images={images}
-              priority={priority}
-              showDots={!hideDots}
-            />
-          ) : (
-            <>
-              <Link 
-                href={`/products/${product.slug}`}
-                className="absolute inset-0 z-[5]"
-                aria-label={product.name}
-              />
-              {overrideImage ? (
-                <Image 
-                  src={optimizeCloudinaryUrl(overrideImage, { width: 640 })} 
-                  alt={product.name} 
-                  fill
-                  sizes="(max-width: 640px) 50vw, 33vw"
-                  priority={priority}
-                  fetchPriority={priority ? "high" : "low"}
-                  loading={priority ? "eager" : "lazy"}
-                  className="object-cover object-center pointer-events-none"
-                />
-              ) : images.length > 0 ? (
-                <Image 
-                  src={optimizeCloudinaryUrl(images[0].url, { width: 640 })} 
-                  alt={images[0].altText || product.name} 
-                  fill
-                  sizes="(max-width: 640px) 50vw, 33vw"
-                  priority={priority}
-                  fetchPriority={priority ? "high" : "low"}
-                  loading={priority ? "eager" : "lazy"}
-                  className="object-cover object-center pointer-events-none"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-[10px] text-text-secondary uppercase select-none">
-                  No Image
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Sold Out / In Bag badge */}
-        {!inStock ? (
-          <span className="absolute top-3 left-3 z-10 px-2 py-0.5 text-[8px] font-bold tracking-[0.25em] uppercase bg-text-primary text-background select-none shadow-xs">
-            SOLD OUT
-          </span>
-        ) : inCartQty > 0 ? (
-          <span className="absolute top-3 left-3 z-10 px-2 py-0.5 text-[8px] font-bold tracking-[0.18em] uppercase bg-white/95 text-text-primary border border-neutral-200 shadow-xs select-none">
-            IN BAG ({inCartQty})
-          </span>
-        ) : null}
-
-        {/* Sale discount badge */}
-        {inStock && discountPercent > 0 && !hideDiscountBadge && (
-          <span className="absolute top-3 right-3 z-10 text-[8px] font-bold tracking-[0.18em] uppercase select-none border border-neutral-300 bg-white/90 text-text-primary px-2 py-0.5 leading-none shadow-xs">
-            -{discountPercent}% OFF
-          </span>
-        )}
-
-        {/* Color dot selectors overlay */}
-        {inStock && itemColors.length > 0 && (
-          <div className="absolute top-3 left-3 flex gap-1 z-10">
-            {itemColors.map((color: any) => (
-              <span 
-                key={color.id} 
-                className="w-2.5 h-2.5 rounded-full border border-white/60 shadow-sm"
-                style={{ backgroundColor: color.hexCode }}
-              />
-            ))}
+            )}
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-xs text-neutral-400 uppercase select-none">
+            No Image
           </div>
         )}
 
-        {/* Wishlist Button (Bottom Right) */}
-        {!hideWishlist && (
-          <button
-            onClick={handleWishlist}
-            disabled={isPending}
-            className="absolute bottom-3 right-3 z-20 flex items-center justify-center text-text-primary hover:scale-110 transition-all disabled:opacity-70 disabled:hover:scale-100"
-            aria-label="Add to Wishlist"
-          >
-            <Heart className={`w-4.5 h-4.5 transition-colors ${isWishlisted ? "fill-accent text-accent" : "text-neutral-800"}`} />
-          </button>
-        )}
+        {/* Seamless gradient overlay: starts subtly near the bottom of the photo and blends downward */}
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent via-[#241A15]/50 to-[#241A15] pointer-events-none z-10" />
       </div>
 
-      {/* Product details row */}
-      {(!hideName || !hidePrice) && (
-        <div className="flex flex-col gap-0.5 px-1 pt-1 pb-0.5">
-          {(!hideName || !hidePrice) && (
-            <div className="flex items-center justify-between text-[10px] tracking-wider text-text-primary">
-              {!hideName && (
-                <Link href={`/products/${product.slug}`} className="lowercase truncate font-sans text-text-primary font-medium max-w-[72%] hover:text-text-secondary transition-colors">
-                  {product.name.toLowerCase()}
-                </Link>
-              )}
-              {!hidePrice && (
-                <span className="flex items-center gap-3.5 select-none whitespace-nowrap font-mono">
-                  {(effectiveSellingPrice !== null && effectiveSellingPrice !== undefined) ? (
-                    effectiveOriginalPrice && discountPercent > 0 ? (
-                      <>
-                        <span className="line-through font-normal text-[10px] text-text-tertiary">
-                          NPR {Math.round(effectiveOriginalPrice / 100).toLocaleString()}
-                        </span>
-                        <span className="font-semibold text-[11px] text-text-primary">
-                          NPR {Math.round(effectiveSellingPrice / 100).toLocaleString()}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="font-semibold text-text-primary">
-                        NPR {Math.round(effectiveSellingPrice / 100).toLocaleString()}
-                      </span>
-                    )
-                  ) : product.lowestPrice !== null && product.lowestPrice !== undefined ? (
-                    <span className="font-semibold text-text-primary">
-                      NPR {Math.round(product.lowestPrice / 100).toLocaleString()}
-                    </span>
-                  ) : (
-                    <span className="text-text-primary">Contact for Price</span>
-                  )}
+      {/* SECTION B — GRADIENT + PRODUCT INFORMATION (Extends below 1:1 photo) */}
+      <div className="relative w-full bg-[#241A15] px-3.5 pb-4 pt-1 sm:px-4 sm:pb-4.5 sm:pt-1.5 z-20 flex flex-col justify-end">
+        {/* Product Name: Elegant serif typography, white */}
+        <h3 className="font-serif text-white text-[15px] sm:text-[17px] font-normal leading-snug line-clamp-1 drop-shadow-xs">
+          {cardTitle}
+        </h3>
+
+        {/* Pricing & Status Row */}
+        <div className="flex items-center justify-between gap-2 mt-1.5 w-full">
+          <div className="flex items-baseline gap-2 sm:gap-2.5 min-w-0">
+            {sellingPriceFormatted ? (
+              <>
+                <span className="font-bold text-white text-[15px] sm:text-[17px] tracking-tight whitespace-nowrap">
+                  NPR {sellingPriceFormatted}
                 </span>
-              )}
-            </div>
+                {originalPriceFormatted && (
+                  <span className="line-through text-white/55 text-xs sm:text-[13px] font-normal whitespace-nowrap">
+                    NPR {originalPriceFormatted}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="text-white/80 text-xs">Contact for Price</span>
+            )}
+          </div>
+
+          {/* Sold Out badge on the right when unavailable */}
+          {!inStock && (
+            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium tracking-wide bg-[#D9C8B4] text-[#3D2C22] shadow-xs select-none">
+              Sold Out
+            </span>
           )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
