@@ -68,7 +68,7 @@ export function ProductCard({
   return (
     <div
       data-product-card
-      className="group relative flex flex-col w-full rounded-lg md:rounded-xl overflow-hidden bg-[#241A15] shadow-[0_4px_16px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-0.5 select-none"
+      className="group relative flex flex-col w-full rounded-lg md:rounded-xl overflow-hidden bg-[#2C1921] shadow-[0_4px_16px_rgba(44,25,33,0.08)] hover:shadow-[0_8px_24px_rgba(44,25,33,0.15)] transition-all duration-300 hover:-translate-y-0.5 select-none"
     >
       {/* Click target wrapping the entire card */}
       <Link
@@ -118,39 +118,39 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Seamless gradient overlay: starts subtly near the bottom of the photo and blends downward */}
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent via-[#241A15]/50 to-[#241A15] pointer-events-none z-10" />
+        {/* Soft, gentle gradient: starts lower down (h-14) so the photo stays bright and feminine */}
+        <div className="absolute inset-x-0 bottom-0 h-14 sm:h-16 bg-gradient-to-b from-transparent via-[#2C1921]/40 to-[#2C1921] pointer-events-none z-10" />
       </div>
 
       {/* SECTION B — GRADIENT + PRODUCT INFORMATION (Extends below 1:1 photo) */}
-      <div className="relative w-full bg-[#241A15] px-3.5 pb-4 pt-1 sm:px-4 sm:pb-4.5 sm:pt-1.5 z-20 flex flex-col justify-end">
-        {/* Product Name: Elegant serif typography, white */}
-        <h3 className="font-serif text-white text-[15px] sm:text-[17px] font-normal leading-snug line-clamp-1 drop-shadow-xs">
+      <div className="relative w-full bg-[#2C1921] px-3 pb-3.5 pt-0.5 sm:px-4 sm:pb-4 sm:pt-1 z-20 flex flex-col justify-end">
+        {/* Product Name: Delicate serif typography in soft rose-white */}
+        <h3 className="font-serif text-[#FFF5F7] text-[13.5px] sm:text-[15.5px] font-light leading-snug line-clamp-1 drop-shadow-xs">
           {cardTitle}
         </h3>
 
         {/* Pricing & Status Row */}
-        <div className="flex items-center justify-between gap-2 mt-1.5 w-full">
-          <div className="flex items-baseline gap-2 sm:gap-2.5 min-w-0">
+        <div className="flex items-center justify-between gap-2 mt-1 w-full">
+          <div className="flex items-baseline gap-2 min-w-0">
             {sellingPriceFormatted ? (
               <>
-                <span className="font-bold text-white text-[15px] sm:text-[17px] tracking-tight whitespace-nowrap">
+                <span className="font-semibold text-white text-[14.5px] sm:text-[16px] tracking-tight whitespace-nowrap">
                   NPR {sellingPriceFormatted}
                 </span>
                 {originalPriceFormatted && (
-                  <span className="line-through text-white/55 text-xs sm:text-[13px] font-normal whitespace-nowrap">
+                  <span className="line-through text-[#E8C2CC]/60 text-xs sm:text-[12.5px] font-normal whitespace-nowrap">
                     NPR {originalPriceFormatted}
                   </span>
                 )}
               </>
             ) : (
-              <span className="text-white/80 text-xs">Contact for Price</span>
+              <span className="text-[#FFF5F7]/80 text-xs">Contact for Price</span>
             )}
           </div>
 
-          {/* Sold Out badge on the right when unavailable */}
+          {/* Sold Out badge: Delicate pastel blush pink pill */}
           {!inStock && (
-            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium tracking-wide bg-[#D9C8B4] text-[#3D2C22] shadow-xs select-none">
+            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium tracking-wide bg-[#FCE5EB] text-[#7A283C] border border-[#F5BAC7]/60 shadow-xs select-none">
               Sold Out
             </span>
           )}

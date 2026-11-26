@@ -120,6 +120,9 @@ export function formatCardDisplayTitle(rawTitle?: string | null): string {
     }
   }
 
+  // Clean redundant technical material tags often stuffed in titles
+  clean = clean.replace(/\bRexine\b/i, "").replace(/\s{2,}/g, " ").trim()
+
   // Strip 'for Women' or 'for Girls' if title is still long
   if (clean.length > 25) {
     clean = clean.replace(/\s+(for\s+women|for\s+girls|for\s+ladies)\b/i, "").trim()
@@ -130,11 +133,11 @@ export function formatCardDisplayTitle(rawTitle?: string | null): string {
     clean = clean.split(/\s+with\s+/i)[0].trim()
   }
 
-  // Fallback: if still > 38 chars, truncate at word boundary
-  if (clean.length > 38) {
-    const sub = clean.slice(0, 36)
+  // Fallback: if still > 42 chars, truncate at word boundary
+  if (clean.length > 42) {
+    const sub = clean.slice(0, 40)
     const lastSpace = sub.lastIndexOf(" ")
-    if (lastSpace > 15) {
+    if (lastSpace > 18) {
       clean = clean.slice(0, lastSpace).trim()
     }
   }
