@@ -109,14 +109,14 @@ export default async function SearchPage({
                       className="group flex flex-col gap-4 text-left"
                     >
                       {/* Visual Card Image */}
-                      <div className="relative w-full aspect-product bg-surface border border-border rounded-sm overflow-hidden select-none">
+                      <div className="relative w-full aspect-square bg-surface border border-border rounded-sm overflow-hidden select-none">
                         {product.productImages?.[0] && (
                            <Image 
                              src={product.productImages[0].url} 
                              alt={product.productImages[0].altText || product.name} 
                              fill
                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                             className="object-cover transition-transform duration-500 group-hover:scale-105"
+                             className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
                            />
                         )}
                         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/[0.02]" />

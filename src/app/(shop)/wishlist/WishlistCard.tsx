@@ -45,7 +45,7 @@ export function WishlistCard({ item, loading, onRemove, onAddToCart }: WishlistC
             <img
               src={displayImage}
               alt={item.variant.product.name}
-              className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-700 ease-out"
+              className="object-cover object-top w-full h-full transform group-hover:scale-105 transition-transform duration-700 ease-out"
               loading="lazy"
             />
           </Link>

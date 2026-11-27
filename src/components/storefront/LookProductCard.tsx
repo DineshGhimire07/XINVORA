@@ -118,7 +118,7 @@ export function LookProductCard({ product, compact = false }: LookProductCardPro
               fetchPriority="low"
               placeholder="blur"
               blurDataURL={SHIMMER_BLUR_DATA_URL}
-              className="object-cover object-center transition-opacity duration-700 ease-out"
+              className="object-cover object-top transition-opacity duration-700 ease-out"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-[10px] text-text-tertiary uppercase select-none tracking-widest">

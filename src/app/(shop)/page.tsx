@@ -373,7 +373,7 @@ function NewArrivalsSection({ settings }: { settings?: any }) {
                     alt={item.name}
                     fill
                     sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                    className="object-cover object-center select-none pointer-events-none transition-transform duration-700 ease-out group-hover:scale-105"
+                    className="object-cover object-top select-none pointer-events-none transition-transform duration-700 ease-out group-hover:scale-105"
                   />
                 </div>
               </Link>

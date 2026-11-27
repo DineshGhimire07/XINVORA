@@ -41,7 +41,7 @@ export function WishlistRecommendations({ products }: WishlistRecommendationsPro
                     alt={p.productImages?.[0]?.altText || p.name}
                     fill
                     sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 15vw"
-                    className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                    className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
                   />
                 </Link>
                 
