@@ -179,8 +179,8 @@ async function _findRandomCatalogProductsInternal(limit = 24) {
 
 const _findRandomCatalogProductsCached = unstable_cache(
   async (limit: number) => _findRandomCatalogProductsInternal(limit),
-  ["random-catalog-products-v2"],
-  { tags: ["products"], revalidate: 3600 }
+  ["random-catalog-products-v3"],
+  { tags: ["products"], revalidate: 60 }
 )
 
 export async function findRandomCatalogProducts(limit = 24) {

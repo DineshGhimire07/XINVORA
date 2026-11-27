@@ -26,11 +26,12 @@ export const metadata = buildMetadata({
   description: "XINVORA is a premium lifestyle brand creating considered objects for modern living. Elevate everyday living with thoughtful design, exceptional materials, and timeless craft.",
 })
 
-export const revalidate = 3600
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 import { getHomepageCMS, getHomepageSettings } from "@/db/queries/cms"
 import { CMSBlockRenderer } from "@/components/cms/BlockRenderer"
-import { findProductsByIds, findCollectionsByIds, findLookbookSlides, findRandomCatalogProducts } from "@/db/queries"
+import { findProductsByIds, findCollectionsByIds, findLookbookSlides, findRandomCatalogProducts, findProducts, findHomepageCollections } from "@/db/queries"
 import { ShopTheLookCarousel } from "@/components/storefront/ShopTheLookCarousel"
 import { ProductCard } from "@/components/storefront/ProductCard"
 import { optimizeCloudinaryUrl } from "@/lib/image-optimizer"
@@ -185,23 +186,57 @@ async function ArrivalsSectionWrapper({ productGridBlock, settings }: { productG
           customImageUrl: item.customImageUrl,
         }
       }).filter(Boolean) as any[]
-      return <CMSBlockRenderer block={productGridBlock} products={productsWithOverrides} />
+      if (productsWithOverrides.length > 0) {
+        return <CMSBlockRenderer block={productGridBlock} products={productsWithOverrides} />
+      }
     } else if (productIds.length > 0) {
       const liveProducts = await findProductsByIds(productIds)
-      return <CMSBlockRenderer block={productGridBlock} products={liveProducts} />
+      if (liveProducts.length > 0) {
+        return <CMSBlockRenderer block={productGridBlock} products={liveProducts} />
+      }
     }
   }
+
+  // Live fallback: Render latest published products from catalogue
+  const latestResult = await findProducts({ limit: 8, sort: "newest" })
+  if (latestResult.items.length > 0) {
+    return (
+      <CMSBlockRenderer
+        block={{
+          type: "PRODUCT_GRID",
+          data: {
+            title: "New Arrivals",
+            subtitle: "Curated Editions",
+            linkText: "Explore All Arrivals",
+            linkUrl: "/collections",
+          },
+        }}
+        products={latestResult.items}
+      />
+    )
+  }
+
   return <NewArrivalsSection settings={settings} />
 }
 
 async function FeaturedSectionWrapper({ collectionGridBlock, settings }: { collectionGridBlock: any; settings?: any }) {
+  let liveCollections: any[] = []
   if (collectionGridBlock) {
     const collectionIds = collectionGridBlock.data?.collectionIds || []
     if (collectionIds.length > 0) {
-      const liveCollections = await findCollectionsByIds(collectionIds)
-      return <CMSBlockRenderer block={collectionGridBlock} collections={liveCollections} />
+      liveCollections = await findCollectionsByIds(collectionIds)
     }
   }
+
+  // If no CMS block collections configured, dynamically show seeded active collections
+  if (liveCollections.length === 0) {
+    liveCollections = await findHomepageCollections(4)
+  }
+
+  if (liveCollections.length > 0) {
+    return <CMSBlockRenderer block={{ type: "COLLECTION_GRID", data: {} }} collections={liveCollections} />
+  }
+
   return null
 }
 
@@ -381,7 +416,7 @@ function NewsletterSection() {
 
 // ── 7. Mixed Collection Showcase Section (At Last of Homepage) ───────────────
 async function RandomCollectionShowcaseSection() {
-  const randomProducts = await findRandomCatalogProducts(24)
+  const randomProducts = await findRandomCatalogProducts(48)
   if (!randomProducts || randomProducts.length === 0) return null
 
   return (

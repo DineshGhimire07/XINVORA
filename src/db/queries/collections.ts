@@ -97,8 +97,8 @@ async function _findActiveCollectionsInternal() {
 
 const _findActiveCollectionsCached = unstable_cache(
   async () => _findActiveCollectionsInternal(),
-  ["active-collections"],
-  { tags: ["collections"], revalidate: 1800 }
+  ["active-collections-v2"],
+  { tags: ["collections"], revalidate: 60 }
 )
 
 export async function findActiveCollections() {
@@ -124,8 +124,8 @@ const _findHierarchicalCollectionsCached = unstable_cache(
       children: childCollections.filter(c => c.parentId === root.id),
     }))
   },
-  ["hierarchical-collections"],
-  { tags: ["collections"], revalidate: 1800 }
+  ["hierarchical-collections-v2"],
+  { tags: ["collections"], revalidate: 60 }
 )
 
 /**
@@ -270,8 +270,8 @@ const _findHomepageCollectionsCached = unstable_cache(
       orderBy: [desc(collections.publishedAt)],
     })
   },
-  ["homepage-collections"],
-  { tags: ["collections"], revalidate: 1800 }
+  ["homepage-collections-v2"],
+  { tags: ["collections"], revalidate: 60 }
 )
 
 export async function findHomepageCollections(limit = 4) {

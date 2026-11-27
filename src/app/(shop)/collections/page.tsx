@@ -25,7 +25,8 @@ export const metadata = buildMetadata({
   description: "Browse the XINVORA catalogue. Refined objects, garment collections, and meticulous accessories designed for everyday permanence.",
 })
 
-export const revalidate = 3600
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 export default async function CollectionsPage({
   searchParams,
@@ -49,7 +50,7 @@ export default async function CollectionsPage({
     materialSlugs: material ? [material] : undefined,
     cursor,
     sort,
-    limit: 48,
+    limit: 250,
   }
 
   // Fetch Data concurrently

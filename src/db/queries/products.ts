@@ -394,8 +394,8 @@ const _findProductsCached = unstable_cache(
     const params = JSON.parse(paramsStr) as CatalogFilterParams
     return _findProductsInternal(params)
   },
-  ["products-catalog-v3"],
-  { tags: ["products"], revalidate: 1800 }
+  ["products-catalog-v4"],
+  { tags: ["products"], revalidate: 60 }
 )
 
 export async function findProducts(
