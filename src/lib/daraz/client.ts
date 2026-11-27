@@ -377,4 +377,77 @@ export class DarazClient {
       { accessToken, method: "GET" }
     )
   }
+
+  /**
+   * Retrieves payout status and settlement statements (/finance/payout/status/get)
+   */
+  public async getPayoutStatus(
+    createdAfter?: string,
+    accessToken?: string
+  ): Promise<any> {
+    const params: Record<string, any> = {}
+    if (createdAfter) {
+      params.created_after = createdAfter
+    }
+    return this.execute("/finance/payout/status/get", params, { accessToken, method: "GET" })
+  }
+
+  /**
+   * Retrieves detailed transaction fees and item-level deductions (/finance/transaction/detail/get)
+   */
+  public async getTransactionDetails(
+    options: {
+      startTime: string
+      endTime: string
+      transType?: number | string
+      tradeOrderId?: string
+      limit?: number
+      offset?: number
+    },
+    accessToken?: string
+  ): Promise<any> {
+    const params: Record<string, any> = {
+      start_time: options.startTime,
+      end_time: options.endTime,
+    }
+    if (options.transType !== undefined) params.trans_type = String(options.transType)
+    if (options.tradeOrderId) params.trade_order_id = options.tradeOrderId
+    if (options.limit) params.limit = options.limit
+    if (options.offset) params.offset = options.offset
+
+    return this.execute("/finance/transaction/detail/get", params, { accessToken, method: "GET" })
+  }
+
+  /**
+   * Retrieves order list with financial and status fields (/orders/get)
+   */
+  public async getOrders(
+    options: {
+      createdAfter?: string
+      updateAfter?: string
+      status?: string
+      limit?: number
+      offset?: number
+    } = {},
+    accessToken?: string
+  ): Promise<any> {
+    const params: Record<string, any> = {}
+    if (options.createdAfter) params.created_after = options.createdAfter
+    if (options.updateAfter) params.update_after = options.updateAfter
+    if (options.status) params.status = options.status
+    if (options.limit) params.limit = options.limit
+    if (options.offset) params.offset = options.offset
+
+    return this.execute("/orders/get", params, { accessToken, method: "GET" })
+  }
+
+  /**
+   * Retrieves individual line items and fee components for an order (/order/items/get)
+   */
+  public async getOrderItems(
+    orderId: string | number,
+    accessToken?: string
+  ): Promise<any> {
+    return this.execute("/order/items/get", { order_id: String(orderId) }, { accessToken, method: "GET" })
+  }
 }

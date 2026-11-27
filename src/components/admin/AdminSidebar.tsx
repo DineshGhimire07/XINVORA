@@ -78,6 +78,7 @@ const navItems: NavItem[] = [
     items: [
       { name: "Inventory & Stock", href: "/admin/daraz/inventory" },
       { name: "Listing Studio", href: "/admin/daraz" },
+      { name: "Finance & Payouts", href: "/admin/daraz/finance" },
     ],
   },
   {
