@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { 
   createCollectionAction, 
@@ -10,8 +10,9 @@ import {
   saveCollectionTemplateAction 
 } from "@/actions/admin/collections.actions"
 import { SUPPORTED_IMAGE_ROLES } from "@/db/schema/collection-image-templates"
-import { Search, Image as ImageIcon, Plus, Trash2, ArrowUp, ArrowDown, Sparkles, Camera } from "lucide-react"
+import { Search, Image as ImageIcon, Plus, Trash2, ArrowUp, ArrowDown, Sparkles, Camera, Maximize2, Minimize2, Check, X } from "lucide-react"
 import { uploadImage } from "@/lib/upload"
+import { optimizeCloudinaryUrl } from "@/lib/image-optimizer"
 import ImageCropperModal from "./ImageCropperModal"
 
 export default function CollectionEditor({
@@ -32,6 +33,31 @@ export default function CollectionEditor({
   const [error, setError] = useState<string | null>(null)
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>(initialProductIds)
   const [searchQuery, setSearchQuery] = useState("")
+  const [isFullscreenProducts, setIsFullscreenProducts] = useState(false)
+  const [filterTab, setFilterTab] = useState<"all" | "selected" | "unselected">("all")
+
+  // ESC key to exit fullscreen
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isFullscreenProducts) {
+        setIsFullscreenProducts(false)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isFullscreenProducts])
+
+  // Prevent background scroll when product picker is fullscreen
+  useEffect(() => {
+    if (isFullscreenProducts) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = "unset"
+    }
+    return () => {
+      document.body.style.overflow = "unset"
+    }
+  }, [isFullscreenProducts])
 
   // Photography Sequence Template State
   const [templateName, setTemplateName] = useState(
@@ -205,11 +231,33 @@ export default function CollectionEditor({
     }
   }
 
-  const filteredProducts = allProducts.filter(
-    (p) =>
+  const filteredProducts = allProducts.filter((p) => {
+    const matchesSearch =
+      !searchQuery.trim() ||
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.slug.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+
+    if (!matchesSearch) return false
+
+    if (filterTab === "selected") {
+      return selectedProductIds.includes(p.id)
+    }
+    if (filterTab === "unselected") {
+      return !selectedProductIds.includes(p.id)
+    }
+    return true
+  })
+
+  const handleSelectAllFiltered = () => {
+    const idsToAdd = filteredProducts.map((p) => p.id)
+    const newSet = new Set([...selectedProductIds, ...idsToAdd])
+    setSelectedProductIds(Array.from(newSet))
+  }
+
+  const handleDeselectAllFiltered = () => {
+    const idsToRemove = new Set(filteredProducts.map((p) => p.id))
+    setSelectedProductIds(selectedProductIds.filter((id) => !idsToRemove.has(id)))
+  }
 
   return (
     <div className="space-y-6">
@@ -1219,65 +1267,319 @@ export default function CollectionEditor({
         )}
 
         {/* Section 2: Product Assignment */}
-        <div className="bg-admin-surface border border-admin-border rounded-admin-lg p-6 space-y-5 shadow-xs">
-          <div className="flex justify-between items-center border-b border-admin-border pb-3">
-            <h3 className="text-admin-base font-bold text-admin-text-primary">
-              Product Assignment
-            </h3>
-            <span className="text-admin-xs text-admin-text-secondary font-semibold">
-              {selectedProductIds.length} product(s) selected
-            </span>
+        <div className="bg-admin-surface border border-admin-border rounded-admin-lg p-6 space-y-4 shadow-xs">
+          <div className="flex flex-wrap justify-between items-center gap-3 border-b border-admin-border pb-3">
+            <div className="flex items-center gap-2.5">
+              <h3 className="text-admin-base font-bold text-admin-text-primary">
+                Product Assignment
+              </h3>
+              <span className="px-2.5 py-0.5 rounded-full text-admin-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/25">
+                {selectedProductIds.length} of {allProducts.length} selected
+              </span>
+            </div>
+
+            {/* Expand Fullscreen Button */}
+            <button
+              type="button"
+              onClick={() => setIsFullscreenProducts(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-admin-md bg-admin-content hover:bg-admin-content-hover border border-admin-border hover:border-admin-border-strong text-admin-xs font-bold text-admin-text-primary transition-all shadow-2xs group"
+              title="Expand to Fullscreen Grid (100+ products)"
+            >
+              <Maximize2 className="h-3.5 w-3.5 text-blue-400 group-hover:scale-110 transition-transform" />
+              <span>Expand Fullscreen</span>
+            </button>
           </div>
 
-          {/* Search box */}
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-admin-text-secondary" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products to add..."
-              className="w-full bg-admin-content border border-admin-border rounded-admin-md pl-10 pr-4 py-1.5 text-admin-sm text-admin-text-primary placeholder:text-admin-text-secondary focus:outline-none focus:border-admin-border-strong focus:ring-1 focus:ring-admin-border-strong transition-all"
-            />
+          {/* Search box & filter toolbar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-admin-text-secondary" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products by title or slug..."
+                className="w-full bg-admin-content border border-admin-border rounded-admin-md pl-9 pr-7 py-1.5 text-admin-xs text-admin-text-primary placeholder:text-admin-text-secondary focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-text-secondary hover:text-admin-text-primary"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Filter Tabs */}
+              <div className="flex items-center bg-admin-content border border-admin-border rounded-admin-md p-0.5 text-admin-xs">
+                <button
+                  type="button"
+                  onClick={() => setFilterTab("all")}
+                  className={`px-2.5 py-1 rounded transition-colors ${
+                    filterTab === "all" ? "bg-admin-surface text-admin-text-primary font-bold shadow-xs" : "text-admin-text-secondary hover:text-admin-text-primary"
+                  }`}
+                >
+                  All ({allProducts.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterTab("selected")}
+                  className={`px-2.5 py-1 rounded transition-colors ${
+                    filterTab === "selected" ? "bg-blue-600 text-white font-bold shadow-xs" : "text-admin-text-secondary hover:text-admin-text-primary"
+                  }`}
+                >
+                  Selected ({selectedProductIds.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterTab("unselected")}
+                  className={`px-2.5 py-1 rounded transition-colors ${
+                    filterTab === "unselected" ? "bg-admin-surface text-admin-text-primary font-bold shadow-xs" : "text-admin-text-secondary hover:text-admin-text-primary"
+                  }`}
+                >
+                  Unselected ({allProducts.length - selectedProductIds.length})
+                </button>
+              </div>
+
+              {/* Bulk actions */}
+              <button
+                type="button"
+                onClick={handleSelectAllFiltered}
+                className="px-2.5 py-1 rounded bg-admin-content hover:bg-admin-content-hover border border-admin-border text-[11px] font-semibold text-admin-text-primary transition-colors whitespace-nowrap"
+              >
+                Select All
+              </button>
+              <button
+                type="button"
+                onClick={handleDeselectAllFiltered}
+                className="px-2.5 py-1 rounded bg-admin-content hover:bg-admin-content-hover border border-admin-border text-[11px] font-semibold text-admin-text-secondary hover:text-admin-text-primary transition-colors whitespace-nowrap"
+              >
+                Deselect
+              </button>
+            </div>
           </div>
 
-          {/* Product checklist */}
-          <div className="max-h-60 overflow-y-auto border border-admin-border p-2 bg-admin-content rounded-admin-md divide-y divide-admin-border/50">
+          {/* Visual Thumbnail Grid - No Name, Pure Thumbnail + Selection Indicator */}
+          <div className="max-h-[420px] overflow-y-auto border border-admin-border p-3 bg-admin-content rounded-admin-md">
             {filteredProducts.length > 0 ? (
-              filteredProducts.map((p) => {
-                const isSelected = selectedProductIds.includes(p.id)
-                return (
-                  <label
-                    key={p.id}
-                    className="flex items-center gap-2.5 p-2.5 text-admin-sm text-admin-text-primary cursor-pointer hover:bg-admin-content-hover/40 transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => handleToggleProduct(p.id)}
-                      className="rounded border-admin-border text-admin-primary focus:ring-admin-primary"
-                    />
-                    <div className="h-10 w-8 bg-admin-content border border-admin-border rounded-sm overflow-hidden flex-shrink-0 flex items-center justify-center">
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2.5">
+                {filteredProducts.map((p) => {
+                  const isSelected = selectedProductIds.includes(p.id)
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => handleToggleProduct(p.id)}
+                      title={`${p.name}\n${p.slug}`}
+                      className={`group relative aspect-square rounded-admin-md overflow-hidden cursor-pointer select-none transition-all duration-150 border-2 ${
+                        isSelected
+                          ? "border-blue-500 ring-2 ring-blue-500/40 shadow-sm scale-[0.98] bg-blue-950/20"
+                          : "border-admin-border/70 hover:border-admin-border-strong hover:scale-[1.02] bg-admin-surface"
+                      }`}
+                    >
                       {p.imageUrl ? (
-                        <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover object-top" />
+                        <img
+                          src={optimizeCloudinaryUrl(p.imageUrl, { width: 220 })}
+                          alt={p.name}
+                          loading="lazy"
+                          className={`w-full h-full object-cover object-top transition-opacity duration-150 ${
+                            isSelected ? "opacity-100" : "opacity-80 group-hover:opacity-100"
+                          }`}
+                        />
                       ) : (
-                        <div className="text-[7px] uppercase font-bold text-admin-text-secondary">XINV</div>
+                        <div className="w-full h-full flex items-center justify-center bg-admin-surface text-[8px] uppercase font-bold text-admin-text-secondary">
+                          No Img
+                        </div>
+                      )}
+
+                      {/* Selection Checkmark Badge */}
+                      <div className="absolute top-1 right-1 z-10">
+                        <div
+                          className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                            isSelected
+                              ? "bg-blue-600 text-white shadow-xs scale-100"
+                              : "bg-black/50 text-transparent border border-white/60 group-hover:border-white"
+                          }`}
+                        >
+                          <Check className={`w-3 h-3 stroke-[3] ${isSelected ? "opacity-100" : "opacity-0"}`} />
+                        </div>
+                      </div>
+
+                      {/* Selected tint */}
+                      {isSelected && (
+                        <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
                       )}
                     </div>
-                    <div className="flex flex-col">
-                      <span className="font-semibold leading-tight">{p.name}</span>
-                      <span className="text-[10px] text-admin-text-secondary font-mono mt-0.5">{p.slug}</span>
-                    </div>
-                  </label>
-                )
-              })
+                  )
+                })}
+              </div>
             ) : (
-              <div className="p-6 text-center text-admin-sm text-admin-text-secondary italic">
+              <div className="p-8 text-center text-admin-sm text-admin-text-secondary italic">
                 No active products found matching your search.
               </div>
             )}
           </div>
         </div>
+
+        {/* Fullscreen Expandable Modal: See 100s of products at once */}
+        {isFullscreenProducts && (
+          <div className="fixed inset-0 z-50 bg-[#101012] text-admin-text-primary flex flex-col p-4 sm:p-6 backdrop-blur-xl animate-in fade-in duration-150">
+            {/* Top Toolbar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-admin-border flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <h2 className="text-admin-lg font-bold text-admin-text-primary flex items-center gap-2">
+                  Product Assignment — Fullscreen Grid
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full text-admin-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                  {selectedProductIds.length} of {allProducts.length} selected
+                </span>
+              </div>
+
+              {/* Controls */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* Search */}
+                <div className="relative min-w-[220px] max-w-xs">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-admin-text-secondary" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by title or slug..."
+                    className="w-full bg-admin-content border border-admin-border rounded-admin-md pl-9 pr-7 py-1.5 text-admin-xs text-admin-text-primary placeholder:text-admin-text-secondary focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-admin-text-secondary hover:text-admin-text-primary"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Filter Tabs */}
+                <div className="flex items-center bg-admin-content border border-admin-border rounded-admin-md p-0.5 text-admin-xs">
+                  <button
+                    type="button"
+                    onClick={() => setFilterTab("all")}
+                    className={`px-2.5 py-1 rounded transition-colors ${
+                      filterTab === "all" ? "bg-admin-surface text-admin-text-primary font-bold shadow-xs" : "text-admin-text-secondary hover:text-admin-text-primary"
+                    }`}
+                  >
+                    All ({allProducts.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFilterTab("selected")}
+                    className={`px-2.5 py-1 rounded transition-colors ${
+                      filterTab === "selected" ? "bg-blue-600 text-white font-bold shadow-xs" : "text-admin-text-secondary hover:text-admin-text-primary"
+                    }`}
+                  >
+                    Selected ({selectedProductIds.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFilterTab("unselected")}
+                    className={`px-2.5 py-1 rounded transition-colors ${
+                      filterTab === "unselected" ? "bg-admin-surface text-admin-text-primary font-bold shadow-xs" : "text-admin-text-secondary hover:text-admin-text-primary"
+                    }`}
+                  >
+                    Unselected ({allProducts.length - selectedProductIds.length})
+                  </button>
+                </div>
+
+                {/* Bulk Select Buttons */}
+                <button
+                  type="button"
+                  onClick={handleSelectAllFiltered}
+                  className="px-2.5 py-1.5 rounded-admin-md bg-admin-content hover:bg-admin-content-hover border border-admin-border text-admin-xs font-semibold text-admin-text-primary transition-colors"
+                >
+                  Select All Filtered
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeselectAllFiltered}
+                  className="px-2.5 py-1.5 rounded-admin-md bg-admin-content hover:bg-admin-content-hover border border-admin-border text-admin-xs font-semibold text-admin-text-secondary hover:text-admin-text-primary transition-colors"
+                >
+                  Deselect Filtered
+                </button>
+
+                {/* Done / Close Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsFullscreenProducts(false)}
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-admin-md bg-blue-600 hover:bg-blue-500 text-white text-admin-xs font-bold transition-all shadow-sm ml-auto"
+                >
+                  <Minimize2 className="h-3.5 w-3.5" />
+                  <span>Done (Esc)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Fullscreen Grid: 100+ items displayed at once */}
+            <div className="flex-1 overflow-y-auto pt-4 pb-12 min-h-0">
+              {filteredProducts.length > 0 ? (
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 2xl:grid-cols-14 gap-2.5">
+                  {filteredProducts.map((p) => {
+                    const isSelected = selectedProductIds.includes(p.id)
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => handleToggleProduct(p.id)}
+                        title={`${p.name}\n${p.slug}`}
+                        className={`group relative aspect-square rounded-admin-md overflow-hidden cursor-pointer select-none transition-all duration-150 border-2 ${
+                          isSelected
+                            ? "border-blue-500 ring-2 ring-blue-500/40 shadow-sm scale-[0.98] bg-blue-950/20"
+                            : "border-admin-border/70 hover:border-admin-border-strong hover:scale-[1.02] bg-admin-content"
+                        }`}
+                      >
+                        {p.imageUrl ? (
+                          <img
+                            src={optimizeCloudinaryUrl(p.imageUrl, { width: 220 })}
+                            alt={p.name}
+                            loading="lazy"
+                            className={`w-full h-full object-cover object-top transition-opacity duration-150 ${
+                              isSelected ? "opacity-100" : "opacity-80 group-hover:opacity-100"
+                            }`}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-admin-content text-[8px] uppercase font-bold text-admin-text-secondary">
+                            No Img
+                          </div>
+                        )}
+
+                        {/* Selection Checkmark Badge */}
+                        <div className="absolute top-1 right-1 z-10">
+                          <div
+                            className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                              isSelected
+                                ? "bg-blue-600 text-white shadow-xs scale-100"
+                                : "bg-black/50 text-transparent border border-white/60 group-hover:border-white"
+                            }`}
+                          >
+                            <Check className={`w-3 h-3 stroke-[3] ${isSelected ? "opacity-100" : "opacity-0"}`} />
+                          </div>
+                        </div>
+
+                        {/* Selected tint */}
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="h-64 flex flex-col items-center justify-center text-admin-text-secondary text-admin-sm italic">
+                  No active products found matching your search.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Section 3: SEO settings */}
         <div className="bg-admin-surface border border-admin-border rounded-admin-lg p-6 space-y-5 shadow-xs">
