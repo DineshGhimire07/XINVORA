@@ -1,12 +1,12 @@
 "use server"
 
 import { SessionService } from "@/services/session.service"
-import { DarazFinanceService, type DarazFinanceSummary } from "@/services/daraz-finance.service"
+import { DarazFinanceService, type DarazIncomeSummary } from "@/services/daraz-finance.service"
 import { revalidatePath } from "next/cache"
 
 export async function getDarazFinanceDataAction(days: number = 30): Promise<{
   success: boolean
-  data?: DarazFinanceSummary
+  data?: DarazIncomeSummary
   error?: string
 }> {
   try {
