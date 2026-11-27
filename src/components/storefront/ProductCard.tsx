@@ -77,9 +77,9 @@ export function ProductCard({
         aria-label={product.name}
       />
 
-      {/* SECTION A — PRODUCT IMAGE (Strict 1:1 Aspect Ratio) */}
+      {/* SECTION A — PRODUCT IMAGE (3:4 Editorial Portrait Ratio, Top-Aligned so model faces appear) */}
       <div
-        className="relative w-full aspect-square overflow-hidden bg-neutral-100"
+        className="relative w-full aspect-[3/4] overflow-hidden bg-neutral-100"
         onMouseEnter={() => setIsDesktopHovered(true)}
         onMouseLeave={() => setIsDesktopHovered(false)}
       >
@@ -93,7 +93,7 @@ export function ProductCard({
               priority={priority}
               fetchPriority={priority ? "high" : "low"}
               loading={priority ? "eager" : "lazy"}
-              className={`object-cover object-center pointer-events-none transition-transform duration-700 ease-out group-hover:scale-105 ${
+              className={`object-cover object-top pointer-events-none transition-transform duration-700 ease-out group-hover:scale-105 ${
                 secondaryImageSrc && isDesktopHovered ? "opacity-0" : "opacity-100"
               }`}
             />
@@ -106,7 +106,7 @@ export function ProductCard({
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 loading="lazy"
                 fetchPriority="low"
-                className={`object-cover object-center pointer-events-none absolute inset-0 transition-all duration-700 ease-out group-hover:scale-105 ${
+                className={`object-cover object-top pointer-events-none absolute inset-0 transition-all duration-700 ease-out group-hover:scale-105 ${
                   isDesktopHovered ? "opacity-100" : "opacity-0"
                 }`}
               />
