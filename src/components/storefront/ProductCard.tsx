@@ -77,9 +77,9 @@ export function ProductCard({
         aria-label={product.name}
       />
 
-      {/* SECTION A — PRODUCT IMAGE (3:4 Editorial Portrait Ratio, Top-Aligned so model faces appear) */}
+      {/* SECTION A — PRODUCT IMAGE (1:1 Square, Top-Aligned so model face appears) */}
       <div
-        className="relative w-full aspect-[3/4] overflow-hidden bg-neutral-100"
+        className="relative w-full aspect-square overflow-hidden bg-neutral-100"
         onMouseEnter={() => setIsDesktopHovered(true)}
         onMouseLeave={() => setIsDesktopHovered(false)}
       >
