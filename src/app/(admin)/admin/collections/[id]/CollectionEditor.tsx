@@ -1413,7 +1413,8 @@ export default function CollectionEditor({
               <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2.5">
                 {filteredProducts.map((p) => {
                   const isSelected = selectedProductIds.includes(p.id)
-                  const formattedPrice = p.price > 0 ? Math.round(p.price / 100).toLocaleString() : null
+                  const numericPrice = Number(p.price) || 0
+                  const formattedPrice = numericPrice > 0 ? Math.round(numericPrice / 100).toLocaleString() : null
                   return (
                     <div
                       key={p.id}
@@ -1596,7 +1597,8 @@ export default function CollectionEditor({
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 2xl:grid-cols-14 gap-2.5">
                   {filteredProducts.map((p) => {
                     const isSelected = selectedProductIds.includes(p.id)
-                    const formattedPrice = p.price > 0 ? Math.round(p.price / 100).toLocaleString() : null
+                    const numericPrice = Number(p.price) || 0
+                    const formattedPrice = numericPrice > 0 ? Math.round(numericPrice / 100).toLocaleString() : null
                     return (
                       <div
                         key={p.id}

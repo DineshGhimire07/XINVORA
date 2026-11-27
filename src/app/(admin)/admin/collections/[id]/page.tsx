@@ -44,31 +44,47 @@ export default async function AdminCollectionEditorPage(props: PageProps) {
     selectedProductIds = associated.map((a: any) => a.productId)
   }
 
-  // Fetch all active products for the assignment picker with price, createdAt, and thumbnail
-  const activeProducts = await db
-    .select({
-      id: products.id,
-      name: products.name,
-      slug: products.slug,
-      createdAt: products.createdAt,
-      price: sql<number>`coalesce((
-        select min(${priceBookEntries.price}) 
-        from ${variants} 
-        inner join ${priceBookEntries} on ${variants.id} = ${priceBookEntries.variantId}
-        inner join ${priceBooks} on ${priceBookEntries.priceBookId} = ${priceBooks.id}
-        where ${variants.productId} = ${products.id} and ${priceBooks.isDefault} = true
-      ), 0)`,
-      imageUrl: sql<string | null>`(
-        select ${productImages.url}
-        from ${productImages}
-        where ${productImages.productId} = ${products.id}
-        order by ${productImages.position} asc
-        limit 1
-      )`,
-    })
-    .from(products)
-    .where(isNull(products.deletedAt))
-    .orderBy(sql`${products.createdAt} desc`)
+  // Fetch all active products and their prices in parallel
+  const [activeProductsRaw, allPrices] = await Promise.all([
+    db.query.products.findMany({
+      where: isNull(products.deletedAt),
+      with: {
+        productImages: {
+          orderBy: (img, { asc }) => [asc(img.position)],
+          columns: { url: true },
+          limit: 1,
+        },
+      },
+      columns: { id: true, name: true, slug: true, createdAt: true },
+      orderBy: (p, { desc }) => [desc(p.createdAt)],
+    }),
+    db
+      .select({
+        productId: variants.productId,
+        price: priceBookEntries.price,
+      })
+      .from(variants)
+      .innerJoin(priceBookEntries, eq(variants.id, priceBookEntries.variantId))
+      .innerJoin(priceBooks, and(eq(priceBookEntries.priceBookId, priceBooks.id), eq(priceBooks.isDefault, true)))
+      .catch(() => [] as { productId: string; price: number }[]),
+  ])
+
+  const priceMap = new Map<string, number>()
+  for (const item of allPrices) {
+    const existing = priceMap.get(item.productId)
+    if (existing === undefined || item.price < existing) {
+      priceMap.set(item.productId, item.price)
+    }
+  }
+
+  const activeProducts = activeProductsRaw.map((p) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    createdAt: p.createdAt ? p.createdAt.toISOString() : null,
+    price: priceMap.get(p.id) || 0,
+    imageUrl: p.productImages?.[0]?.url || null,
+  }))
 
   // Fetch all collections for parent hierarchy dropdown
   const collectionsQuery = collection
