@@ -53,7 +53,7 @@ export default async function CollectionDetailPage(props: {
     color: searchParams.color,
     size: searchParams.size,
     material: searchParams.material,
-    limit: 48,
+    limit: 250,
   })
 
   const attributesPromise = getFilterAttributes()

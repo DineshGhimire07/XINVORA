@@ -203,7 +203,8 @@ const _findCollectionDetailCached = unstable_cache(
         sizeSlugs: size ? [size] : undefined,
         materialSlugs: material ? [material] : undefined,
         sort: sort as any,
-        limit: limit || 24,
+        limit: limit || 250,
+        withCount: true,
       }),
     ])
 
@@ -218,8 +219,8 @@ const _findCollectionDetailCached = unstable_cache(
       variantCardMap,
     }
   },
-  ["collection-detail-v6"],
-  { tags: ["collections", "products"], revalidate: 1800 }
+  ["collection-detail-v8"],
+  { tags: ["collections", "products"], revalidate: 60 }
 )
 
 const cachedCollectionDetail = cache(

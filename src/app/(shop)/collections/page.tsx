@@ -51,6 +51,7 @@ export default async function CollectionsPage({
     cursor,
     sort,
     limit: 250,
+    withCount: true,
   }
 
   // Fetch Data concurrently
