@@ -106,9 +106,16 @@ export function DarazFinanceClient({ initialData }: DarazFinanceClientProps) {
             <h1 className="text-admin-2xl font-bold font-display text-admin-text-primary tracking-tight">
               Daraz Financial Ledger & Bank Settlement
             </h1>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-green-500/15 text-green-400 border border-green-500/25">
-              Live Bank Sync
-            </span>
+            {data.isLiveData ? (
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-green-500/15 text-green-400 border border-green-500/25 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                Live Daraz Store Account: {data.connection.account}
+              </span>
+            ) : (
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                Modeled Preview
+              </span>
+            )}
           </div>
           <p className="text-admin-sm text-admin-text-secondary mt-1">
             Real-time accounting breakdown of customer receipts, commission charges, courier fees, return reversals, and net deposits.
