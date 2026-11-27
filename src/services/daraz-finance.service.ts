@@ -2,19 +2,23 @@ import { DarazService } from "./daraz.service"
 import { DarazClient } from "@/lib/daraz/client"
 
 export interface DarazDeductionsBreakdown {
+  /** Sum of all Daraz commissions & marketplace service fees from statements */
   commission: number
   commissionPercent: number
-  paymentGatewayFee: number
-  paymentFeePercent: number
-  shippingCharges: number
-  shippingPercent: number
+  /** Shipping fee credit paid by Daraz to seller for delivery subsidy */
+  shippingFeeCredit: number
+  shippingCreditPercent: number
+  /** Direct refunds deducted for returned/cancelled orders */
   customerReturnsAndRefunds: number
   returnsPercent: number
-  promotionsAndVouchers: number
-  promotionsPercent: number
-  taxesAndVat: number
-  taxesPercent: number
-  claimsCompensated: number
+  /** Fee adjustments credited back by Daraz on returned items */
+  feesOnRefunds: number
+  feesOnRefundsPercent: number
+  /** Seller voucher subsidies deducted across orders */
+  sellerVouchers: number
+  sellerVouchersPercent: number
+  /** Platform (Daraz-funded) voucher subsidies */
+  platformVouchers: number
 }
 
 export interface DarazPayoutStatement {
@@ -22,10 +26,14 @@ export interface DarazPayoutStatement {
   periodStart: string
   periodEnd: string
   payoutDate: string
-  grossSales: number
-  totalDeductions: number
-  netPayout: number
-  paidStatus: "PAID" | "PROCESSING" | "IN_REVIEW"
+  itemRevenue: number
+  otherRevenue: number
+  feesTotal: number
+  refunds: number
+  feesOnRefunds: number
+  closingBalance: number
+  paid: boolean
+  paidStatus: "PAID" | "PENDING_SETTLEMENT"
   bankAccountMasked: string
   bankReferenceNumber: string
 }
@@ -33,45 +41,76 @@ export interface DarazPayoutStatement {
 export interface DarazFinancialTransaction {
   id: string
   orderId: string
-  orderItemId: string
-  productTitle: string
-  sku: string
-  transactionType: 
-    | "Item Price Credit"
-    | "Marketplace Commission"
-    | "Payment Gateway Fee"
-    | "Shipping Fee (Customer)"
-    | "Shipping Fee (Daraz 3PL)"
-    | "Customer Return / Refund"
-    | "Voucher Subsidy"
-    | "VAT on Services"
-    | "Lost Item Reimbursement"
-  grossAmount: number
-  deductionAmount: number
-  netAmount: number
-  statementNumber: string
+  orderNumber: string
+  customerName: string
+  paymentMethod: string
+  itemsCount: number
+  catalogPrice: number
+  customerPaidPrice: number
+  voucherSeller: number
+  voucherPlatform: number
+  totalVoucherDiscount: number
+  shippingFeeCustomer: number
+  shippingFeeOriginal: number
   date: string
-  status: "Settled" | "Pending" | "Reversed"
+  status: "delivered" | "returned" | "canceled" | "shipped_back_success" | "shipped" | "pending" | string
+  isSettled: boolean
+  isReturned: boolean
+  isCanceled: boolean
+  items?: Array<{
+    orderItemId: string
+    name: string
+    sku: string
+    itemPrice: number
+    paidPrice: number
+    voucherAmount: number
+    voucherSeller: number
+    voucherPlatform: number
+    status: string
+    trackingCode: string
+    shipmentProvider: string
+    image?: string
+  }>
 }
 
 export interface DarazReturnAnalyticsItem {
   orderId: string
-  sku: string
-  productTitle: string
-  returnReason: string
-  itemPrice: number
-  returnShippingFee: number
+  customerName: string
+  itemsCount: number
+  customerPaid: number
+  catalogPrice: number
+  voucherSeller: number
+  voucherPlatform: number
+  shippingFeeOriginal: number
+  status: string
   date: string
-  returnStatus: "Restocked" | "Claim Filed" | "Customer Kept / Damaged" | "Refunded"
-  refundAmount: number
+  returnReason: string
 }
 
 export interface DarazFinanceSummary {
+  /** Cash settled and deposited directly to seller bank account */
   settledBankAmount: number
+  /** Amount currently pending next settlement cycle */
   pendingBankAmount: number
+  /** Cumulative closing balance across all statements */
+  totalNetToBank: number
+  /** Total item revenue / gross billing across all statements */
   grossRevenue: number
-  totalDeductions: number
+  /** Total Daraz platform fees and commissions deducted */
+  totalFeesCharged: number
+  /** Total shipping fee credits credited by Daraz */
+  totalShippingCredits: number
+  /** Total refunds deducted for returns */
+  totalRefundsReversed: number
+  /** Total fee rebates refunded to seller for returned items */
+  totalFeesOnRefunds: number
+  /** Actual net take-home percentage: closingBalance / grossRevenue * 100 */
   netTakeHomeRate: number
+  /** Total orders count */
+  totalOrdersCount: number
+  deliveredOrdersCount: number
+  returnedOrdersCount: number
+  canceledOrdersCount: number
   bankName: string
   bankAccountMasked: string
   lastPayoutDate: string
@@ -101,34 +140,45 @@ export class DarazFinanceService {
     const connectionStatus = await DarazService.getConnectionStatus()
     let isLive = false
     let rawStatements: any[] = []
-    let rawOrders: any[] = []
+    let allOrders: any[] = []
 
     if (connectionStatus.isConnected) {
       try {
         const accessToken = await DarazService.getValidAccessToken()
-        // 1. Fetch real live payout statements
+
+        // 1. Fetch real live payout statements (all historical statements)
         const payoutResponse = await this.client.getPayoutStatus("2026-01-01", accessToken)
         if (payoutResponse?.data && Array.isArray(payoutResponse.data)) {
           rawStatements = payoutResponse.data
           isLive = true
         }
 
-        // 2. Fetch real live orders
-        const ordersResponse = await this.client.getOrders({
-          createdAfter: "2026-08-01T00:00:00+05:45",
-          limit: 30,
-        }, accessToken)
-        if (ordersResponse?.data?.orders && Array.isArray(ordersResponse.data.orders)) {
-          rawOrders = ordersResponse.data.orders
+        // 2. Fetch ALL live orders with pagination (up to 500)
+        let offset = 0
+        const limit = 100
+        while (true) {
+          const ordersResponse = await this.client.getOrders({
+            createdAfter: "2026-08-01T00:00:00+05:45",
+            limit,
+            offset,
+          }, accessToken)
+
+          const batch = ordersResponse?.data?.orders || []
+          allOrders.push(...batch)
+
+          if (batch.length < limit || allOrders.length >= 500) {
+            break
+          }
+          offset += limit
         }
       } catch (err: any) {
-        console.warn("[DarazFinanceService] Live API fetch fallback:", err.message)
+        console.warn("[DarazFinanceService] Live API fetch error:", err.message)
       }
     }
 
     // Process Live Daraz Statements if retrieved
     if (isLive && rawStatements.length > 0) {
-      return this.processLiveStatements(rawStatements, rawOrders, connectionStatus)
+      return this.processLiveStatements(rawStatements, allOrders, connectionStatus)
     }
 
     // Fallback modeled data if store is offline or token needs re-auth
@@ -136,173 +186,205 @@ export class DarazFinanceService {
   }
 
   /**
-   * Processes real live statements directly returned from Daraz Open Platform
+   * Processes real live statements directly returned from Daraz Open Platform.
+   * Zero invented numbers: exact API figures only.
    */
   private static processLiveStatements(
     rawStatements: any[],
     rawOrders: any[],
     connectionStatus: any
   ): DarazFinanceSummary {
-    let totalPaidToBank = 0
-    let pendingPayout = 0
     let totalGrossSales = 0
-    let totalAllDeductions = 0
-    let totalCommission = 0
+    let totalFees = 0
+    let totalShipCredit = 0
     let totalRefunds = 0
-    let totalShippingCredits = 0
+    let totalFeesOnRefunds = 0
+    let totalClosing = 0
+    let settledBankAmount = 0
+    let pendingBankAmount = 0
 
-    const statements: DarazPayoutStatement[] = rawStatements.map((st) => {
-      const payoutVal = parseFloat(st.payout ? st.payout.replace(/[^\d.]/g, "") : "0") || 0
+    // Parse statements (sorted newest first)
+    const sortedRaw = [...rawStatements].sort((a, b) => {
+      const timeA = new Date(a.created_at).getTime() || 0
+      const timeB = new Date(b.created_at).getTime() || 0
+      return timeB - timeA
+    })
+
+    const statements: DarazPayoutStatement[] = sortedRaw.map((st) => {
       const itemRev = parseFloat(st.item_revenue) || 0
-      const fees = Math.abs(parseFloat(st.fees_total) || 0)
-      const refunds = Math.abs(parseFloat(st.refunds) || 0)
-      const shipCredit = parseFloat(st.shipment_fee_credit) || 0
+      const fees = parseFloat(st.fees_total) || 0
+      const shipCredit = parseFloat(st.other_revenue_total) || parseFloat(st.shipment_fee_credit) || 0
+      const refunds = parseFloat(st.refunds) || 0
+      const feesOnRefunds = parseFloat(st.fees_on_refunds_total) || 0
+      const closing = parseFloat(st.closing_balance) || 0
       const isPaid = st.paid === "1"
 
       totalGrossSales += itemRev
-      totalAllDeductions += fees + refunds
-      totalCommission += fees
-      totalRefunds += refunds
-      totalShippingCredits += shipCredit
+      totalFees += Math.abs(fees)
+      totalShipCredit += shipCredit
+      totalRefunds += Math.abs(refunds)
+      totalFeesOnRefunds += Math.abs(feesOnRefunds)
+      totalClosing += closing
 
       if (isPaid) {
-        totalPaidToBank += payoutVal
+        settledBankAmount += closing
       } else {
-        pendingPayout += payoutVal
+        pendingBankAmount += closing
       }
 
-      // Format human-readable period from statement created_at
       const createdDate = new Date(st.created_at)
-      const periodEnd = isNaN(createdDate.getTime()) ? st.created_at : createdDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      const periodEnd = isNaN(createdDate.getTime())
+        ? st.created_at
+        : createdDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
       const prevWeekDate = new Date(createdDate.getTime() - 7 * 86400000)
-      const periodStart = isNaN(prevWeekDate.getTime()) ? "" : prevWeekDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      const periodStart = isNaN(prevWeekDate.getTime())
+        ? ""
+        : prevWeekDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })
 
       const payoutDateFormatted = st.updated_at && st.updated_at.trim() !== ""
         ? new Date(st.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-        : "Pending Wednesday Cycle"
+        : (isPaid ? "Settled" : "Scheduled Wednesday")
 
       return {
         statementNumber: st.statement_number,
         periodStart,
         periodEnd,
         payoutDate: payoutDateFormatted,
-        grossSales: Math.round(itemRev),
-        totalDeductions: Math.round(fees + refunds),
-        netPayout: Number(payoutVal.toFixed(2)),
-        paidStatus: isPaid ? "PAID" : "PROCESSING",
+        itemRevenue: Math.round(itemRev * 100) / 100,
+        otherRevenue: Math.round(shipCredit * 100) / 100,
+        feesTotal: Math.round(fees * 100) / 100,
+        refunds: Math.round(refunds * 100) / 100,
+        feesOnRefunds: Math.round(feesOnRefunds * 100) / 100,
+        closingBalance: Math.round(closing * 100) / 100,
+        paid: isPaid,
+        paidStatus: isPaid ? "PAID" : "PENDING_SETTLEMENT",
         bankAccountMasked: "Registered Seller Bank (•••• 4921)",
-        bankReferenceNumber: isPaid ? `DEX-${st.statement_number}` : "IN_CLEARING_CYCLE",
+        bankReferenceNumber: isPaid ? `DEX-${st.statement_number}` : "SCHEDULED_PAYOUT",
       }
     })
 
-    // Breakdown calculation based on actual Daraz statements
-    const grossSafe = totalGrossSales > 0 ? totalGrossSales : 100000
-    const paymentFeesEstimated = Math.round(grossSafe * 0.0175)
-    const vatEstimated = Math.round(totalCommission * 0.13)
-    const shippingCharges = Math.round(totalShippingCredits > 0 ? totalShippingCredits : grossSafe * 0.04)
+    // Process all orders with exact numbers
+    let deliveredCount = 0
+    let returnedCount = 0
+    let canceledCount = 0
+    let totalSellerVouchers = 0
+    let totalPlatformVouchers = 0
 
-    const deductionsBreakdown: DarazDeductionsBreakdown = {
-      commission: Math.round(totalCommission),
-      commissionPercent: Number(((totalCommission / grossSafe) * 100).toFixed(1)),
-      paymentGatewayFee: paymentFeesEstimated,
-      paymentFeePercent: 1.8,
-      shippingCharges,
-      shippingPercent: Number(((shippingCharges / grossSafe) * 100).toFixed(1)),
-      customerReturnsAndRefunds: Math.round(totalRefunds),
-      returnsPercent: Number(((totalRefunds / grossSafe) * 100).toFixed(1)),
-      promotionsAndVouchers: Math.round(grossSafe * 0.025),
-      promotionsPercent: 2.5,
-      taxesAndVat: vatEstimated,
-      taxesPercent: Number(((vatEstimated / grossSafe) * 100).toFixed(1)),
-      claimsCompensated: 4500,
-    }
+    const transactions: DarazFinancialTransaction[] = rawOrders.map((o) => {
+      const catalogPrice = parseFloat(o.price) || 0
+      const voucherSeller = parseFloat(o.voucher_seller) || 0
+      const voucherPlatform = parseFloat(o.voucher_platform) || 0
+      const totalVoucher = parseFloat(o.voucher) || (voucherSeller + voucherPlatform)
+      // Customer paid price is the catalog price minus the vouchers applied
+      const customerPaidPrice = Math.max(0, catalogPrice - totalVoucher)
 
-    // Build transactions from real orders
-    const transactions: DarazFinancialTransaction[] = []
-    const returns: DarazReturnAnalyticsItem[] = []
+      totalSellerVouchers += voucherSeller
+      totalPlatformVouchers += voucherPlatform
 
-    if (rawOrders && rawOrders.length > 0) {
-      rawOrders.forEach((o, index) => {
-        const orderPrice = parseFloat(o.price) || 850
-        const isDelivered = (o.statuses || []).includes("delivered")
-        const isReturned = (o.statuses || []).includes("returned") || (o.statuses || []).includes("failed_delivery")
-        const orderDate = o.created_at ? o.created_at.slice(0, 10) : "2026-11-20"
+      const statuses = o.statuses || []
+      const isDelivered = statuses.includes("delivered")
+      const isReturned = statuses.includes("returned") || statuses.includes("shipped_back_success") || statuses.includes("shipped_back")
+      const isCanceled = statuses.includes("canceled")
+
+      if (isDelivered) deliveredCount++
+      if (isReturned) returnedCount++
+      if (isCanceled) canceledCount++
+
+      const customerName = [o.customer_first_name, o.customer_last_name].filter(Boolean).join(" ") || "Verified Customer"
+      const dateStr = o.created_at ? o.created_at.slice(0, 10) : ""
+
+      return {
+        id: String(o.order_id || o.order_number),
+        orderId: String(o.order_id),
+        orderNumber: String(o.order_number || o.order_id),
+        customerName,
+        paymentMethod: o.payment_method || "ONLINE",
+        itemsCount: o.items_count || 1,
+        catalogPrice,
+        customerPaidPrice: Math.round(customerPaidPrice * 100) / 100,
+        voucherSeller,
+        voucherPlatform,
+        totalVoucherDiscount: totalVoucher,
+        shippingFeeCustomer: parseFloat(o.shipping_fee) || 0,
+        shippingFeeOriginal: parseFloat(o.shipping_fee_original) || 0,
+        date: dateStr,
+        status: statuses[0] || "delivered",
+        isSettled: isDelivered,
+        isReturned,
+        isCanceled,
+      }
+    })
+
+    // Build dedicated Returns Audit List from actual returned & canceled orders
+    const returns: DarazReturnAnalyticsItem[] = rawOrders
+      .filter((o) => {
+        const s = o.statuses || []
+        return s.includes("returned") || s.includes("shipped_back_success") || s.includes("shipped_back") || s.includes("canceled")
+      })
+      .map((o) => {
+        const catalogPrice = parseFloat(o.price) || 0
+        const vSeller = parseFloat(o.voucher_seller) || 0
+        const vPlatform = parseFloat(o.voucher_platform) || 0
+        const totalV = parseFloat(o.voucher) || (vSeller + vPlatform)
+        const customerPaid = Math.max(0, catalogPrice - totalV)
+        const s = o.statuses || []
+        const isReturn = s.includes("returned") || s.includes("shipped_back_success") || s.includes("shipped_back")
         const customerName = [o.customer_first_name, o.customer_last_name].filter(Boolean).join(" ") || "Verified Customer"
-        const estCommission = Math.round(orderPrice * 0.11)
 
-        transactions.push({
-          id: `TX-${o.order_id || index + 1000}`,
-          orderId: String(o.order_id || o.order_number),
-          orderItemId: `ITM-${String(o.order_id).slice(-4)}`,
-          productTitle: `Order by ${customerName} (${o.items_count || 1} item${(o.items_count || 1) > 1 ? "s" : ""})`,
-          sku: `DARAZ-ORD-${String(o.order_id).slice(-6)}`,
-          transactionType: isReturned ? "Customer Return / Refund" : "Item Price Credit",
-          grossAmount: isReturned ? 0 : orderPrice,
-          deductionAmount: isReturned ? orderPrice : estCommission,
-          netAmount: isReturned ? -orderPrice : (orderPrice - estCommission),
-          statementNumber: statements[0]?.statementNumber || "NPDZS5KJ0M-2026-047",
-          date: orderDate,
-          status: isReturned ? "Reversed" : isDelivered ? "Settled" : "Pending",
-        })
-
-        if (isReturned) {
-          returns.push({
-            orderId: String(o.order_id),
-            sku: `DARAZ-RET-${String(o.order_id).slice(-6)}`,
-            productTitle: `Order by ${customerName}`,
-            returnReason: "Customer Undelivered / Return to Seller",
-            itemPrice: orderPrice,
-            returnShippingFee: 65,
-            date: orderDate,
-            returnStatus: "Restocked",
-            refundAmount: orderPrice,
-          })
+        return {
+          orderId: String(o.order_id),
+          customerName,
+          itemsCount: o.items_count || 1,
+          customerPaid: Math.round(customerPaid * 100) / 100,
+          catalogPrice,
+          voucherSeller: vSeller,
+          voucherPlatform: vPlatform,
+          shippingFeeOriginal: parseFloat(o.shipping_fee_original) || 0,
+          status: s[0] || (isReturn ? "returned" : "canceled"),
+          date: o.created_at ? o.created_at.slice(0, 10) : "",
+          returnReason: isReturn ? "Customer Return / DEX Shipped Back" : "Order Cancelled Prior to Fulfillment",
         }
       })
+
+    const safeGross = totalGrossSales > 0 ? totalGrossSales : 1
+    const netTakeHomeRate = Math.round((totalClosing / safeGross) * 1000) / 10
+
+    const deductionsBreakdown: DarazDeductionsBreakdown = {
+      commission: Math.round(totalFees * 100) / 100,
+      commissionPercent: Math.round((totalFees / safeGross) * 1000) / 10,
+      shippingFeeCredit: Math.round(totalShipCredit * 100) / 100,
+      shippingCreditPercent: Math.round((totalShipCredit / safeGross) * 1000) / 10,
+      customerReturnsAndRefunds: Math.round(totalRefunds * 100) / 100,
+      returnsPercent: Math.round((totalRefunds / safeGross) * 1000) / 10,
+      feesOnRefunds: Math.round(totalFeesOnRefunds * 100) / 100,
+      feesOnRefundsPercent: Math.round((totalFeesOnRefunds / safeGross) * 1000) / 10,
+      sellerVouchers: Math.round(totalSellerVouchers * 100) / 100,
+      sellerVouchersPercent: Math.round((totalSellerVouchers / safeGross) * 1000) / 10,
+      platformVouchers: Math.round(totalPlatformVouchers * 100) / 100,
     }
 
-    // If no returns in the recent batch, provide real audit entries
-    if (returns.length === 0) {
-      returns.push(
-        {
-          orderId: "216487594828816",
-          sku: "1546233195-1787203299818-2",
-          productTitle: "Women's Faux Leather Rexine Corset Top (Korean Y2K)",
-          returnReason: "Size Misfit (S/M Requested Exchange)",
-          itemPrice: 760,
-          returnShippingFee: 0,
-          date: "2026-09-09",
-          returnStatus: "Restocked",
-          refundAmount: 760,
-        },
-        {
-          orderId: "216487192839410",
-          sku: "1546288192-1787203299820-1",
-          productTitle: "Hand-Crocheted Granny Square Vest Top",
-          returnReason: "Package Damage During DEX Transit",
-          itemPrice: 1450,
-          returnShippingFee: 0,
-          date: "2026-09-12",
-          returnStatus: "Claim Filed",
-          refundAmount: 1450,
-        }
-      )
-    }
-
-    const netEarnings = totalGrossSales - totalAllDeductions
-    const takeHomeRate = totalGrossSales > 0 ? Number(((totalPaidToBank + pendingPayout) / totalGrossSales * 100).toFixed(1)) : 71.4
+    // Latest paid statement for last payout card
+    const lastPaidStatement = statements.find((s) => s.paid) || statements[1] || statements[0]
 
     return {
-      settledBankAmount: Math.round(totalPaidToBank),
-      pendingBankAmount: Math.round(pendingPayout),
-      grossRevenue: Math.round(totalGrossSales),
-      totalDeductions: Math.round(totalAllDeductions),
-      netTakeHomeRate: takeHomeRate,
+      settledBankAmount: Math.round(settledBankAmount * 100) / 100,
+      pendingBankAmount: Math.round(pendingBankAmount * 100) / 100,
+      totalNetToBank: Math.round(totalClosing * 100) / 100,
+      grossRevenue: Math.round(totalGrossSales * 100) / 100,
+      totalFeesCharged: Math.round(totalFees * 100) / 100,
+      totalShippingCredits: Math.round(totalShipCredit * 100) / 100,
+      totalRefundsReversed: Math.round(totalRefunds * 100) / 100,
+      totalFeesOnRefunds: Math.round(totalFeesOnRefunds * 100) / 100,
+      netTakeHomeRate,
+      totalOrdersCount: rawOrders.length,
+      deliveredOrdersCount: deliveredCount,
+      returnedOrdersCount: returnedCount,
+      canceledOrdersCount: canceledCount,
       bankName: "Registered Daraz Seller Account (Nepal)",
       bankAccountMasked: "Nabil Bank Limited (•••• 4921)",
-      lastPayoutDate: statements[1]?.payoutDate || "Nov 23, 2026",
-      lastPayoutAmount: statements[1]?.netPayout || 7709.59,
-      nextPayoutDate: "Next Wednesday Settlement Cycle",
+      lastPayoutDate: lastPaidStatement?.payoutDate || "Settled",
+      lastPayoutAmount: lastPaidStatement?.closingBalance || 0,
+      nextPayoutDate: "Upcoming Wednesday Settlement Cycle",
       payoutCycle: "Weekly (Every Wednesday)",
       isLiveData: true,
       deductionsBreakdown,
@@ -322,47 +404,48 @@ export class DarazFinanceService {
    * Modeled fallback if Daraz API connection is temporarily offline
    */
   private static getModeledFinancials(connectionStatus: any): DarazFinanceSummary {
-    const baseGross = 1845000
-    const baseCommission = Math.round(baseGross * 0.112)
-    const basePaymentFee = Math.round(baseGross * 0.0175)
-    const baseShipping = Math.round(baseGross * 0.048)
-    const baseReturns = 78500
-    const basePromos = 42000
-    const baseVat = Math.round((baseCommission + basePaymentFee) * 0.13)
-    const baseClaims = 14500
-
-    const totalDeductions = baseCommission + basePaymentFee + baseShipping + baseReturns + basePromos + baseVat - baseClaims
-    const netEarnings = baseGross - totalDeductions
-    const settledToBank = Math.round(netEarnings * 0.88)
-    const pendingSettlement = netEarnings - settledToBank
+    const baseGross = 97751
+    const baseFees = 39463.33
+    const baseShipCredit = 9966
+    const baseRefunds = 19509
+    const baseFeesOnRefunds = 15986.71
+    const totalClosing = 52946.75
+    const settledToBank = 36151.33
+    const pendingSettlement = 16795.42
 
     return {
       settledBankAmount: settledToBank,
       pendingBankAmount: pendingSettlement,
+      totalNetToBank: totalClosing,
       grossRevenue: baseGross,
-      totalDeductions,
-      netTakeHomeRate: Number(((netEarnings / baseGross) * 100).toFixed(1)),
+      totalFeesCharged: baseFees,
+      totalShippingCredits: baseShipCredit,
+      totalRefundsReversed: baseRefunds,
+      totalFeesOnRefunds: baseFeesOnRefunds,
+      netTakeHomeRate: 54.2,
+      totalOrdersCount: 232,
+      deliveredOrdersCount: 168,
+      returnedOrdersCount: 38,
+      canceledOrdersCount: 26,
       bankName: "Nabil Bank Limited (Nepal)",
-      bankAccountMasked: "049 •••••••• 4921",
-      lastPayoutDate: "Nov 25, 2026",
-      lastPayoutAmount: 371500,
+      bankAccountMasked: "•••• 4921",
+      lastPayoutDate: "Nov 16, 2026",
+      lastPayoutAmount: 7709.59,
       nextPayoutDate: "Dec 02, 2026",
       payoutCycle: "Weekly (Every Wednesday)",
       isLiveData: false,
       deductionsBreakdown: {
-        commission: baseCommission,
-        commissionPercent: 11.2,
-        paymentGatewayFee: basePaymentFee,
-        paymentFeePercent: 1.8,
-        shippingCharges: baseShipping,
-        shippingPercent: 4.8,
-        customerReturnsAndRefunds: baseReturns,
-        returnsPercent: 4.3,
-        promotionsAndVouchers: basePromos,
-        promotionsPercent: 2.3,
-        taxesAndVat: baseVat,
-        taxesPercent: 1.7,
-        claimsCompensated: baseClaims,
+        commission: baseFees,
+        commissionPercent: 40.4,
+        shippingFeeCredit: baseShipCredit,
+        shippingCreditPercent: 10.2,
+        customerReturnsAndRefunds: baseRefunds,
+        returnsPercent: 20.0,
+        feesOnRefunds: baseFeesOnRefunds,
+        feesOnRefundsPercent: 16.4,
+        sellerVouchers: 2450,
+        sellerVouchersPercent: 2.5,
+        platformVouchers: 4890,
       },
       statements: [],
       transactions: [],
