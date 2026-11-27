@@ -6,6 +6,10 @@ import { db } from "@/db/client"
 import { collections } from "@/db/schema/collections"
 import { products } from "@/db/schema/products"
 import { productCollections } from "@/db/schema/product-collections"
+import { productImages } from "@/db/schema/product-images"
+import { variants } from "@/db/schema/variants"
+import { priceBooks } from "@/db/schema/price-books"
+import { priceBookEntries } from "@/db/schema/price-book-entries"
 import { eq, isNull, ne, and, sql } from "drizzle-orm"
 
 export const metadata = {
@@ -40,26 +44,31 @@ export default async function AdminCollectionEditorPage(props: PageProps) {
     selectedProductIds = associated.map((a: any) => a.productId)
   }
 
-  // Fetch all active products for the assignment picker
-  const activeProductsRaw = await db.query.products.findMany({
-    where: isNull(products.deletedAt),
-    with: {
-      productImages: {
-        orderBy: (img, { asc }) => [asc(img.position)],
-        columns: { url: true },
-        limit: 1,
-      },
-    },
-    columns: { id: true, name: true, slug: true },
-    orderBy: (p, { asc }) => [asc(p.name)],
-  })
-
-  const activeProducts = activeProductsRaw.map((p) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    imageUrl: p.productImages?.[0]?.url || null,
-  }))
+  // Fetch all active products for the assignment picker with price, createdAt, and thumbnail
+  const activeProducts = await db
+    .select({
+      id: products.id,
+      name: products.name,
+      slug: products.slug,
+      createdAt: products.createdAt,
+      price: sql<number>`coalesce((
+        select min(${priceBookEntries.price}) 
+        from ${variants} 
+        inner join ${priceBookEntries} on ${variants.id} = ${priceBookEntries.variantId}
+        inner join ${priceBooks} on ${priceBookEntries.priceBookId} = ${priceBooks.id}
+        where ${variants.productId} = ${products.id} and ${priceBooks.isDefault} = true
+      ), 0)`,
+      imageUrl: sql<string | null>`(
+        select ${productImages.url}
+        from ${productImages}
+        where ${productImages.productId} = ${products.id}
+        order by ${productImages.position} asc
+        limit 1
+      )`,
+    })
+    .from(products)
+    .where(isNull(products.deletedAt))
+    .orderBy(sql`${products.createdAt} desc`)
 
   // Fetch all collections for parent hierarchy dropdown
   const collectionsQuery = collection

@@ -10,7 +10,7 @@ import {
   saveCollectionTemplateAction 
 } from "@/actions/admin/collections.actions"
 import { SUPPORTED_IMAGE_ROLES } from "@/db/schema/collection-image-templates"
-import { Search, Image as ImageIcon, Plus, Trash2, ArrowUp, ArrowDown, Sparkles, Camera, Maximize2, Minimize2, Check, X } from "lucide-react"
+import { Search, Image as ImageIcon, Plus, Trash2, ArrowUp, ArrowDown, Sparkles, Camera, Maximize2, Minimize2, Check, X, ArrowUpDown } from "lucide-react"
 import { uploadImage } from "@/lib/upload"
 import { optimizeCloudinaryUrl } from "@/lib/image-optimizer"
 import ImageCropperModal from "./ImageCropperModal"
@@ -35,6 +35,8 @@ export default function CollectionEditor({
   const [searchQuery, setSearchQuery] = useState("")
   const [isFullscreenProducts, setIsFullscreenProducts] = useState(false)
   const [filterTab, setFilterTab] = useState<"all" | "selected" | "unselected">("all")
+  type SortOption = "newest" | "oldest" | "price_asc" | "price_desc" | "name_asc" | "name_desc"
+  const [sortBy, setSortBy] = useState<SortOption>("newest")
 
   // ESC key to exit fullscreen
   useEffect(() => {
@@ -231,22 +233,47 @@ export default function CollectionEditor({
     }
   }
 
-  const filteredProducts = allProducts.filter((p) => {
-    const matchesSearch =
-      !searchQuery.trim() ||
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.slug.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredProducts = allProducts
+    .filter((p) => {
+      const matchesSearch =
+        !searchQuery.trim() ||
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.slug.toLowerCase().includes(searchQuery.toLowerCase())
 
-    if (!matchesSearch) return false
+      if (!matchesSearch) return false
 
-    if (filterTab === "selected") {
-      return selectedProductIds.includes(p.id)
-    }
-    if (filterTab === "unselected") {
-      return !selectedProductIds.includes(p.id)
-    }
-    return true
-  })
+      if (filterTab === "selected") {
+        return selectedProductIds.includes(p.id)
+      }
+      if (filterTab === "unselected") {
+        return !selectedProductIds.includes(p.id)
+      }
+      return true
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "newest": {
+          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return timeB - timeA
+        }
+        case "oldest": {
+          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return timeA - timeB
+        }
+        case "price_asc":
+          return (Number(a.price) || 0) - (Number(b.price) || 0)
+        case "price_desc":
+          return (Number(b.price) || 0) - (Number(a.price) || 0)
+        case "name_asc":
+          return a.name.localeCompare(b.name)
+        case "name_desc":
+          return b.name.localeCompare(a.name)
+        default:
+          return 0
+      }
+    })
 
   const handleSelectAllFiltered = () => {
     const idsToAdd = filteredProducts.map((p) => p.id)
@@ -1344,6 +1371,24 @@ export default function CollectionEditor({
                 </button>
               </div>
 
+              {/* Sort Dropdown */}
+              <div className="flex items-center gap-1.5 bg-admin-content border border-admin-border rounded-admin-md px-2 py-1 text-admin-xs">
+                <ArrowUpDown className="h-3 w-3 text-admin-text-secondary" />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="bg-transparent text-admin-text-primary text-[11px] font-semibold focus:outline-none cursor-pointer"
+                  title="Sort products"
+                >
+                  <option value="newest" className="bg-[#18181b] text-white">Newest First (New to Old)</option>
+                  <option value="oldest" className="bg-[#18181b] text-white">Oldest First (Old to New)</option>
+                  <option value="price_asc" className="bg-[#18181b] text-white">Price: Low to High</option>
+                  <option value="price_desc" className="bg-[#18181b] text-white">Price: High to Low</option>
+                  <option value="name_asc" className="bg-[#18181b] text-white">Name: A to Z</option>
+                  <option value="name_desc" className="bg-[#18181b] text-white">Name: Z to A</option>
+                </select>
+              </div>
+
               {/* Bulk actions */}
               <button
                 type="button"
@@ -1368,11 +1413,12 @@ export default function CollectionEditor({
               <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2.5">
                 {filteredProducts.map((p) => {
                   const isSelected = selectedProductIds.includes(p.id)
+                  const formattedPrice = p.price > 0 ? Math.round(p.price / 100).toLocaleString() : null
                   return (
                     <div
                       key={p.id}
                       onClick={() => handleToggleProduct(p.id)}
-                      title={`${p.name}\n${p.slug}`}
+                      title={`${p.name}\n${p.slug}${formattedPrice ? `\nPrice: NPR ${formattedPrice}` : ""}${p.createdAt ? `\nAdded: ${new Date(p.createdAt).toLocaleDateString()}` : ""}`}
                       className={`group relative aspect-square rounded-admin-md overflow-hidden cursor-pointer select-none transition-all duration-150 border-2 ${
                         isSelected
                           ? "border-blue-500 ring-2 ring-blue-500/40 shadow-sm scale-[0.98] bg-blue-950/20"
@@ -1392,6 +1438,13 @@ export default function CollectionEditor({
                         <div className="w-full h-full flex items-center justify-center bg-admin-surface text-[8px] uppercase font-bold text-admin-text-secondary">
                           No Img
                         </div>
+                      )}
+
+                      {/* Subtle Price Tag in bottom-left */}
+                      {formattedPrice && (
+                        <span className="absolute bottom-1 left-1 px-1 py-0.5 text-[8.5px] font-mono font-bold bg-black/70 backdrop-blur-xs text-white/95 rounded-xs pointer-events-none select-none">
+                          NPR {formattedPrice}
+                        </span>
                       )}
 
                       {/* Selection Checkmark Badge */}
@@ -1491,6 +1544,24 @@ export default function CollectionEditor({
                   </button>
                 </div>
 
+                {/* Sort Dropdown */}
+                <div className="flex items-center gap-1.5 bg-admin-content border border-admin-border rounded-admin-md px-2 py-1 text-admin-xs">
+                  <ArrowUpDown className="h-3 w-3 text-admin-text-secondary" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="bg-transparent text-admin-text-primary text-[11px] font-semibold focus:outline-none cursor-pointer"
+                    title="Sort products"
+                  >
+                    <option value="newest" className="bg-[#18181b] text-white">Newest First (New to Old)</option>
+                    <option value="oldest" className="bg-[#18181b] text-white">Oldest First (Old to New)</option>
+                    <option value="price_asc" className="bg-[#18181b] text-white">Price: Low to High</option>
+                    <option value="price_desc" className="bg-[#18181b] text-white">Price: High to Low</option>
+                    <option value="name_asc" className="bg-[#18181b] text-white">Name: A to Z</option>
+                    <option value="name_desc" className="bg-[#18181b] text-white">Name: Z to A</option>
+                  </select>
+                </div>
+
                 {/* Bulk Select Buttons */}
                 <button
                   type="button"
@@ -1525,11 +1596,12 @@ export default function CollectionEditor({
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 2xl:grid-cols-14 gap-2.5">
                   {filteredProducts.map((p) => {
                     const isSelected = selectedProductIds.includes(p.id)
+                    const formattedPrice = p.price > 0 ? Math.round(p.price / 100).toLocaleString() : null
                     return (
                       <div
                         key={p.id}
                         onClick={() => handleToggleProduct(p.id)}
-                        title={`${p.name}\n${p.slug}`}
+                        title={`${p.name}\n${p.slug}${formattedPrice ? `\nPrice: NPR ${formattedPrice}` : ""}${p.createdAt ? `\nAdded: ${new Date(p.createdAt).toLocaleDateString()}` : ""}`}
                         className={`group relative aspect-square rounded-admin-md overflow-hidden cursor-pointer select-none transition-all duration-150 border-2 ${
                           isSelected
                             ? "border-blue-500 ring-2 ring-blue-500/40 shadow-sm scale-[0.98] bg-blue-950/20"
@@ -1549,6 +1621,13 @@ export default function CollectionEditor({
                           <div className="w-full h-full flex items-center justify-center bg-admin-content text-[8px] uppercase font-bold text-admin-text-secondary">
                             No Img
                           </div>
+                        )}
+
+                        {/* Subtle Price Tag in bottom-left */}
+                        {formattedPrice && (
+                          <span className="absolute bottom-1 left-1 px-1 py-0.5 text-[8.5px] font-mono font-bold bg-black/70 backdrop-blur-xs text-white/95 rounded-xs pointer-events-none select-none">
+                            NPR {formattedPrice}
+                          </span>
                         )}
 
                         {/* Selection Checkmark Badge */}
