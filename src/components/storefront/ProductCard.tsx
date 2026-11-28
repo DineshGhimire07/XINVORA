@@ -130,15 +130,15 @@ export function ProductCard({
         </h3>
 
         {/* Pricing & Status Row */}
-        <div className="flex items-center justify-between gap-2 mt-1 w-full">
-          <div className="flex items-baseline gap-2 min-w-0">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 mt-1 w-full">
+          <div className="flex items-baseline gap-1.5 sm:gap-2 min-w-0 flex-wrap">
             {sellingPriceFormatted ? (
               <>
-                <span className="font-bold text-[#1A110F] text-[14.5px] sm:text-[16px] tracking-tight whitespace-nowrap">
+                <span className="font-bold text-[#1A110F] text-[13.5px] sm:text-[15.5px] tracking-tight whitespace-nowrap">
                   NPR {sellingPriceFormatted}
                 </span>
                 {originalPriceFormatted && (
-                  <span className="line-through text-[#8C7A72] text-xs sm:text-[12.5px] font-normal whitespace-nowrap">
+                  <span className="line-through text-[#8C7A72] text-[11px] sm:text-[12px] font-normal whitespace-nowrap">
                     NPR {originalPriceFormatted}
                   </span>
                 )}
@@ -148,9 +148,9 @@ export function ProductCard({
             )}
           </div>
 
-          {/* Sold Out badge: Delicate muted warm blush pill */}
+          {/* Sold Out: Subtle, responsive text in delicate soft red */}
           {!inStock && (
-            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium tracking-wide bg-[#EFE3DB] text-[#5C453B] border border-[#DDD0C6] shadow-xs select-none">
+            <span className="shrink-0 text-[10.5px] sm:text-[12px] font-medium tracking-tight text-rose-600/90 whitespace-nowrap select-none">
               Sold Out
             </span>
           )}
