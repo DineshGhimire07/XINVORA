@@ -117,6 +117,7 @@ export function NepalDeliveryForm({
     control,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<NepalDeliveryFormValues>({
     resolver: zodResolver(NepalDeliverySchema as any),
@@ -306,6 +307,41 @@ export function NepalDeliveryForm({
     setIsSubmitting(false)
   }
 
+  // Deliver to different address -> Reset every input to completely BLANK!
+  const handleDeliverToDifferentAddress = () => {
+    reset({
+      fullName: "",
+      phone: "",
+      provinceId: "",
+      districtId: "",
+      municipalityId: "",
+      wardNumber: 1,
+      tole: "",
+      street: "",
+      landmark: "",
+      deliveryNote: "",
+      saveAddress: false,
+      provinceName: "",
+      districtName: "",
+      municipalityName: "",
+    })
+    setProvinceName("")
+    setDistrictName("")
+    setMunicipalityName("")
+    setDistricts([])
+    setMunicipalities([])
+    prevProvinceIdRef.current = ""
+    prevDistrictIdRef.current = ""
+    prevMunicipalityIdRef.current = ""
+    setShowNote(false)
+    setShowManualForm(true)
+  }
+
+  const handleEditSavedAddress = () => {
+    // Open form keeping pre-filled saved values so user can fix a typo
+    setShowManualForm(true)
+  }
+
   const provinceOptions = provinces.map((p) => ({ id: p.id, label: p.name }))
   const districtOptions = districts.map((d) => ({ id: d.id, label: d.name }))
   const municipalityOptions = municipalities.map((m) => ({ id: m.id, label: m.name }))
@@ -334,10 +370,10 @@ export function NepalDeliveryForm({
             </div>
             <button
               type="button"
-              onClick={() => setShowManualForm(true)}
+              onClick={handleEditSavedAddress}
               className="text-xs font-semibold text-[#1A110F] underline hover:text-[#B89563] transition-colors"
             >
-              Change
+              Edit
             </button>
           </div>
 
@@ -383,8 +419,8 @@ export function NepalDeliveryForm({
           <div className="pt-1 text-center">
             <button
               type="button"
-              onClick={() => setShowManualForm(true)}
-              className="text-xs text-[#8C7A72] hover:text-[#1A110F] transition-colors"
+              onClick={handleDeliverToDifferentAddress}
+              className="text-xs font-medium text-[#8C7A72] hover:text-[#1A110F] hover:underline transition-colors"
             >
               + Deliver to a different address
             </button>
@@ -402,7 +438,7 @@ export function NepalDeliveryForm({
               className="inline-flex items-center gap-1.5 text-xs text-[#8C7A72] hover:text-[#1A110F] transition-colors pb-1"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Use saved address</span>
+              <span>Back to saved address</span>
             </button>
           )}
 
