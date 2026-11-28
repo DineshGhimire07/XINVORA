@@ -1,13 +1,10 @@
 export class PricingService {
   /**
-   * Calculates shipping cost based on a tiered item count system.
-   * - 200 NPR base for 1-3 items.
-   * - +100 NPR per additional group of 3 items.
+   * Calculates delivery charge: flat 170 NPR.
    */
   static calculateTieredShipping(totalItems: number): number {
     if (totalItems <= 0) return 0
-    const groups = Math.ceil(totalItems / 3)
-    return 20000 + ((groups - 1) * 10000)
+    return 17000
   }
 
   /**

@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button"
 interface CartSummaryProps {
   subtotal: number
   total: number
+  shipping?: number
   isEstimate?: boolean
 }
 
-export function CartSummary({ subtotal, total }: CartSummaryProps) {
+export function CartSummary({ subtotal, total, shipping = 17000 }: CartSummaryProps) {
   const [clearState, clearAction, isClearing] = useActionState<any, FormData>(clearCartAction, null)
+  const finalTotal = subtotal > 0 ? subtotal + shipping : 0
 
   return (
     <div className="p-6 bg-surface border border-border rounded-lg">
@@ -28,18 +30,18 @@ export function CartSummary({ subtotal, total }: CartSummaryProps) {
             <span className="font-semibold">NPR {Math.round(subtotal / 100).toLocaleString()}</span>
           </div>
           <div className="flex justify-between items-center text-body-sm text-text-primary">
-            <span className="font-medium">Shipping</span>
-            <span className="text-text-secondary text-body-xs">Calculated at checkout</span>
+            <span className="font-medium">Delivery</span>
+            <span className="font-semibold text-text-primary">NPR {Math.round(shipping / 100).toLocaleString()}</span>
           </div>
         </div>
         
         <div className="pt-6 border-t border-border flex flex-col">
           <div className="flex justify-between items-baseline">
             <span className="text-heading-xs font-semibold text-text-primary uppercase tracking-wider">Total</span>
-            <span className="text-heading-xs font-semibold text-text-primary">NPR {Math.round(total / 100).toLocaleString()}</span>
+            <span className="text-heading-xs font-semibold text-text-primary">NPR {Math.round(finalTotal / 100).toLocaleString()}</span>
           </div>
           <p className="text-caption text-text-secondary text-center mt-3">
-            Taxes and shipping calculated at checkout
+            Inclusive of NPR 170 nationwide delivery
           </p>
         </div>
         

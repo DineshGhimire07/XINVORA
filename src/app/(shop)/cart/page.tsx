@@ -88,7 +88,8 @@ export default async function CartPage() {
             <div className="sticky top-32">
               <CartSummary 
                 subtotal={totals.subtotal}
-                total={totals.subtotal}
+                total={totals.total}
+                shipping={totals.shipping}
                 isEstimate={totals.isEstimate}
               />
             </div>

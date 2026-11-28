@@ -156,6 +156,28 @@ export function CheckoutFlow({
                   </div>
                 ))}
               </div>
+
+              {/* Delivery & Total breakdown */}
+              <div className="pt-3.5 border-t border-[#F2EFEA] space-y-1.5 text-xs">
+                <div className="flex justify-between text-[#8C7A72]">
+                  <span>Subtotal</span>
+                  <span className="text-[#1A110F]">NPR {Math.round(totals.subtotal / 100).toLocaleString()}</span>
+                </div>
+                {totals.discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-700">
+                    <span>Discount</span>
+                    <span>− NPR {Math.round(totals.discountAmount / 100).toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-[#8C7A72]">
+                  <span>Delivery</span>
+                  <span className="text-[#1A110F]">NPR {Math.round(totals.shippingCost / 100).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between pt-1.5 border-t border-[#F2EFEA] font-semibold text-sm text-[#1A110F]">
+                  <span>Total</span>
+                  <span>NPR {finalTotal.toLocaleString()}</span>
+                </div>
+              </div>
             </div>
 
             <AnimatePresence mode="wait">
