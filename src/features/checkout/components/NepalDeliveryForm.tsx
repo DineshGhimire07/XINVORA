@@ -61,11 +61,11 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
 
 // ─── Input ────────────────────────────────────────────────────────────────────
 const inputClass = cn(
-  "w-full h-[52px] px-4 rounded border border-[#E8DED2] bg-white",
+  "w-full h-[54px] px-4 rounded-lg border border-[#E8DED2] bg-white",
   "text-sm font-normal text-[#1E1E1E] placeholder:text-[#9A9087] placeholder:font-light",
   "transition-all duration-200 outline-none",
-  "hover:border-[#D6CFB4]",
-  "focus:border-[#B89563] focus:ring-4 focus:ring-[#B89563]/15",
+  "hover:border-[#C8BBA6]",
+  "focus:border-[#B89563] focus:ring-4 focus:ring-[#B89563]/12",
   "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-[#F2EFEA]"
 )
 
@@ -324,18 +324,18 @@ export function NepalDeliveryForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit as any)} noValidate>
-      <div className="space-y-6">
+      <div className="space-y-5">
 
         {/* ─── Section 1: Recipient ─────────────────────────────────────────── */}
-        <div className="space-y-5">
+        <div className="space-y-4">
           <SectionHeader title="Recipient Information" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Full Name */}
               <FormField label="Full Name" required error={errors.fullName?.message}>
                 <input
                   id="fullName"
                   {...register("fullName")}
-                  placeholder="Your Name"
+                  placeholder="Your full name"
                   autoComplete="name"
                   className={cn(inputClass, errors.fullName && "border-error focus:border-error focus:ring-error/20")}
                 />
@@ -346,10 +346,10 @@ export function NepalDeliveryForm({
                 label="Phone Number"
                 required
                 error={errors.phone?.message}
-                hint="Nepal mobile numbers starting with 98, 97, or 96"
+                hint="Nepal mobile: 98/97/96xxxxxxxx"
               >
                 <div className="flex">
-                  <div className="flex items-center px-3 h-12 rounded-l-lg border border-r-0 border-border bg-surface-secondary text-sm text-text-secondary font-medium select-none">
+                  <div className="flex items-center px-3 h-[54px] rounded-l-lg border border-r-0 border-[#E8DED2] bg-[#F5F0EB] text-sm text-[#8C7A72] font-medium select-none">
                     +977
                   </div>
                   <input
@@ -371,13 +371,13 @@ export function NepalDeliveryForm({
         </div>
 
         {/* ─── Section 2: Address ───────────────────────────────────────────── */}
-        <div className="space-y-5 pt-4">
+        <div className="space-y-4 pt-2">
           <SectionHeader
             title="Delivery Address"
             subtitle="Select your province, district, and municipality"
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Province */}
               <FormField label="Province" required error={errors.provinceId?.message}>
                 <Controller
@@ -581,8 +581,8 @@ export function NepalDeliveryForm({
           disabled={isSubmitting}
           id="place-order-btn"
           className={cn(
-            "w-full h-[54px] rounded font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300",
-            "bg-[#1E1E1E] hover:bg-[#B89563] hover:-translate-y-0.5 text-white shadow-sm",
+            "w-full h-[56px] rounded-lg font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300",
+            "bg-[#1A110F] hover:bg-[#B89563] active:scale-[0.99] text-white shadow-sm",
             "flex items-center justify-center gap-2",
             "disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           )}
@@ -601,7 +601,7 @@ export function NepalDeliveryForm({
         </button>
 
         {/* ─── Luxury Reassurance Trust Badges ───────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+        <div className="grid grid-cols-3 gap-2 pt-1">
           <div className="flex items-center justify-center gap-2 p-3 bg-white border border-[#E8DED2] rounded text-[11px] font-medium text-[#1E1E1E] shadow-2xs">
             <span className="text-[#B89563] font-bold">✓</span>
             <span>Complimentary Packaging</span>
