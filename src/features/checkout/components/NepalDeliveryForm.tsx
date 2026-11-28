@@ -1,24 +1,20 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertCircle, ChevronRight, Loader2 } from "lucide-react"
+import { AlertCircle, ChevronRight, Loader2, ArrowLeft, CheckCircle2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { NepalDeliverySchema, type NepalDeliveryFormValues } from "@/validations/checkout"
 import { SearchableSelect } from "./SearchableSelect"
-import { GeolocationCapture } from "./GeolocationCapture"
-import { PaymentMethodSelector } from "./PaymentMethodSelector"
-import { AddressPreview } from "./AddressPreview"
 import { cn } from "@/lib/utils"
 
 import type { NepalProvince, NepalDistrict, NepalMunicipality } from "@/db/queries/nepal"
 
-// ─── Form Field ──────────────────────────────────────────────────────────────
+// ─── Minimal Form Field ──────────────────────────────────────────────────────
 function FormField({
   label,
   required,
@@ -33,36 +29,29 @@ function FormField({
   hint?: string
 }) {
   return (
-    <div className="space-y-1.5">
-      <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary">
-        {label}
-        {required && <span className="text-accent ml-1">*</span>}
-      </label>
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+          {label}
+          {required && <span className="text-[#B89563] ml-0.5">*</span>}
+        </label>
+        {hint && !error && <span className="text-[11px] text-[#A69890]">{hint}</span>}
+      </div>
       {children}
-      {hint && !error && <p className="text-xs text-text-tertiary">{hint}</p>}
       {error && (
-        <div className="flex items-center gap-1.5">
-          <AlertCircle className="w-3 h-3 text-error shrink-0" />
-          <p className="text-xs text-error">{error}</p>
+        <div className="flex items-center gap-1.5 pt-0.5">
+          <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+          <p className="text-xs text-rose-600">{error}</p>
         </div>
       )}
     </div>
   )
 }
 
-function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
-  return (
-    <div className="mb-6 space-y-1 pb-4 border-b border-border/50">
-      <h2 className="text-xl font-display font-medium tracking-wide text-text-primary">{title}</h2>
-      {subtitle && <p className="text-sm text-text-tertiary">{subtitle}</p>}
-    </div>
-  )
-}
-
-// ─── Input ────────────────────────────────────────────────────────────────────
+// ─── Input Styling ────────────────────────────────────────────────────────────
 const inputClass = cn(
-  "w-full h-[54px] px-4 rounded-lg border border-[#E8DED2] bg-white",
-  "text-sm font-normal text-[#1E1E1E] placeholder:text-[#9A9087] placeholder:font-light",
+  "w-full h-[52px] px-4 rounded-lg border border-[#E8DED2] bg-white",
+  "text-sm font-normal text-[#1A110F] placeholder:text-[#A69890] placeholder:font-light",
   "transition-all duration-200 outline-none",
   "hover:border-[#C8BBA6]",
   "focus:border-[#B89563] focus:ring-4 focus:ring-[#B89563]/12",
@@ -89,7 +78,18 @@ export function NepalDeliveryForm({
   onSuccess,
   initialData,
 }: NepalDeliveryFormProps) {
-  const router = useRouter()
+  const hasSavedAddress = Boolean(
+    savedAddress?.fullName &&
+    savedAddress?.phone &&
+    savedAddress?.provinceId &&
+    savedAddress?.districtId &&
+    savedAddress?.municipalityId &&
+    (savedAddress?.tole || savedAddress?.street)
+  )
+
+  const [showManualForm, setShowManualForm] = useState(!hasSavedAddress)
+  const [showNote, setShowNote] = useState(Boolean(savedAddress?.deliveryNote || initialData?.deliveryNote))
+
   const [districts, setDistricts] = useState<NepalDistrict[]>(
     initialDistricts.length > 0
       ? initialDistricts
@@ -102,20 +102,12 @@ export function NepalDeliveryForm({
   const [loadingMunicipalities, setLoadingMunicipalities] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const idempotencyKeyRef = React.useRef<string | null>(null)
-  
-  if (!idempotencyKeyRef.current) {
-    idempotencyKeyRef.current = typeof crypto !== "undefined" && crypto.randomUUID
-      ? crypto.randomUUID()
-      : Math.random().toString(36).substring(2) + Date.now().toString(36)
-  }
 
-  // Display names for preview (initial values based on savedAddress names if available)
+  // Display names for preview / passing down
   const [provinceName, setProvinceName] = useState(savedAddress?.province?.name || savedAddress?.provinceName || "")
   const [districtName, setDistrictName] = useState(savedAddress?.district?.name || savedAddress?.districtName || "")
   const [municipalityName, setMunicipalityName] = useState(savedAddress?.municipality?.name || savedAddress?.municipalityName || "")
 
-  // Ward count from selected municipality (pre-seed if initialMunicipalities has it)
   const matchedMuni = initialMunicipalities.find((m) => m.id === savedAddress?.municipalityId)
   const [totalWards, setTotalWards] = useState(matchedMuni?.totalWards || savedAddress?.municipality?.totalWards || 9)
 
@@ -129,36 +121,32 @@ export function NepalDeliveryForm({
   } = useForm<NepalDeliveryFormValues>({
     resolver: zodResolver(NepalDeliverySchema as any),
     defaultValues: {
-      fullName: savedAddress?.fullName || "",
-      phone: savedAddress?.phone || "",
-      provinceId: savedAddress?.provinceId || "",
-      districtId: savedAddress?.districtId || "",
-      municipalityId: savedAddress?.municipalityId || "",
-      wardNumber: savedAddress?.wardNumber || undefined,
-      tole: savedAddress?.tole || "",
-      street: savedAddress?.street || "",
-      landmark: savedAddress?.landmark || "",
-      deliveryNote: "",
-      latitude: savedAddress?.latitude || undefined,
-      longitude: savedAddress?.longitude || undefined,
+      fullName: initialData?.fullName || savedAddress?.fullName || "",
+      phone: initialData?.phone || savedAddress?.phone || "",
+      provinceId: initialData?.provinceId || savedAddress?.provinceId || "",
+      districtId: initialData?.districtId || savedAddress?.districtId || "",
+      municipalityId: initialData?.municipalityId || savedAddress?.municipalityId || "",
+      wardNumber: initialData?.wardNumber || savedAddress?.wardNumber || 1,
+      tole: initialData?.tole || savedAddress?.tole || savedAddress?.street || "",
+      street: initialData?.street || savedAddress?.street || "",
+      landmark: initialData?.landmark || savedAddress?.landmark || "",
+      deliveryNote: initialData?.deliveryNote || savedAddress?.deliveryNote || "",
       saveAddress: false,
-      provinceName: savedAddress?.province?.name || savedAddress?.provinceName || "",
-      districtName: savedAddress?.district?.name || savedAddress?.districtName || "",
-      municipalityName: savedAddress?.municipality?.name || savedAddress?.municipalityName || "",
+      provinceName: initialData?.provinceName || savedAddress?.province?.name || savedAddress?.provinceName || "",
+      districtName: initialData?.districtName || savedAddress?.district?.name || savedAddress?.districtName || "",
+      municipalityName: initialData?.municipalityName || savedAddress?.municipality?.name || savedAddress?.municipalityName || "",
     },
   })
 
-  const watchedValues = watch()
   const selectedProvinceId = watch("provinceId")
   const selectedDistrictId = watch("districtId")
   const selectedMunicipalityId = watch("municipalityId")
 
-  // Track previous selections using refs to avoid wiping preloaded values on mount
   const prevProvinceIdRef = React.useRef(savedAddress?.provinceId || "")
   const prevDistrictIdRef = React.useRef(savedAddress?.districtId || "")
   const prevMunicipalityIdRef = React.useRef(savedAddress?.municipalityId || "")
 
-  // Auto-set default province (Bagmati Province) if none selected and no saved address
+  // Auto-set default province (Bagmati Province) if none selected
   useEffect(() => {
     if (!selectedProvinceId && provinces.length > 0 && !savedAddress?.provinceId) {
       const defaultProvince = provinces.find((p) => p.name.includes("Bagmati")) || provinces[0]
@@ -174,7 +162,7 @@ export function NepalDeliveryForm({
     }
   }, [selectedProvinceId, provinces, savedAddress, allDistricts, setValue])
 
-  // Instant in-memory filter for districts when province changes (0ms delay)
+  // Instant in-memory filter for districts when province changes
   useEffect(() => {
     if (!selectedProvinceId) {
       if (prevProvinceIdRef.current !== "") {
@@ -182,7 +170,7 @@ export function NepalDeliveryForm({
         setMunicipalities([])
         setValue("districtId", "")
         setValue("municipalityId", "")
-        setValue("wardNumber", undefined as any)
+        setValue("wardNumber", 1 as any)
         setDistrictName("")
         setMunicipalityName("")
         prevProvinceIdRef.current = ""
@@ -190,7 +178,6 @@ export function NepalDeliveryForm({
       return
     }
 
-    // If province hasn't changed from saved/initial state, do not wipe preloaded child values!
     if (selectedProvinceId === prevProvinceIdRef.current && districts.length > 0) {
       return
     }
@@ -198,7 +185,6 @@ export function NepalDeliveryForm({
     const provinceChanged = selectedProvinceId !== prevProvinceIdRef.current
     prevProvinceIdRef.current = selectedProvinceId
 
-    // 0ms Instant In-Memory Filter if allDistricts is available
     if (allDistricts.length > 0) {
       const matchedDistricts = allDistricts.filter((d) => d.provinceId === selectedProvinceId)
       setDistricts(matchedDistricts)
@@ -206,14 +192,13 @@ export function NepalDeliveryForm({
         setMunicipalities([])
         setValue("districtId", "")
         setValue("municipalityId", "")
-        setValue("wardNumber", undefined as any)
+        setValue("wardNumber", 1 as any)
         setDistrictName("")
         setMunicipalityName("")
       }
       return
     }
 
-    // Fallback to fetch if allDistricts wasn't provided
     setLoadingDistricts(true)
     fetch(`/api/nepal/districts?provinceId=${selectedProvinceId}`)
       .then((r) => r.json())
@@ -223,7 +208,7 @@ export function NepalDeliveryForm({
           setMunicipalities([])
           setValue("districtId", "")
           setValue("municipalityId", "")
-          setValue("wardNumber", undefined as any)
+          setValue("wardNumber", 1 as any)
           setDistrictName("")
           setMunicipalityName("")
         }
@@ -231,20 +216,19 @@ export function NepalDeliveryForm({
       .finally(() => setLoadingDistricts(false))
   }, [selectedProvinceId, allDistricts, districts.length, setValue])
 
-  // Fetch municipalities when district genuinely changes
+  // Fetch municipalities when district changes
   useEffect(() => {
     if (!selectedDistrictId) {
       if (prevDistrictIdRef.current !== "") {
         setMunicipalities([])
         setValue("municipalityId", "")
-        setValue("wardNumber", undefined as any)
+        setValue("wardNumber", 1 as any)
         setMunicipalityName("")
         prevDistrictIdRef.current = ""
       }
       return
     }
 
-    // If district hasn't changed from saved/initial state, do not wipe preloaded child values!
     if (selectedDistrictId === prevDistrictIdRef.current && municipalities.length > 0) {
       return
     }
@@ -259,7 +243,7 @@ export function NepalDeliveryForm({
         setMunicipalities(data)
         if (districtChanged) {
           setValue("municipalityId", "")
-          setValue("wardNumber", undefined as any)
+          setValue("wardNumber", 1 as any)
           setMunicipalityName("")
         }
       })
@@ -271,31 +255,18 @@ export function NepalDeliveryForm({
     if (!selectedMunicipalityId) return
     const muni = municipalities.find((m) => m.id === selectedMunicipalityId)
     if (muni) {
-      setTotalWards(muni.totalWards)
+      setTotalWards(muni.totalWards || 9)
       const muniChanged = selectedMunicipalityId !== prevMunicipalityIdRef.current
       prevMunicipalityIdRef.current = selectedMunicipalityId
 
       if (muniChanged) {
-        setValue("wardNumber", undefined as any)
+        setValue("wardNumber", 1 as any)
       }
       setValue("municipalityName", muni.name)
       setValue("municipalityType", muni.type)
       setMunicipalityName(muni.name)
     }
   }, [selectedMunicipalityId, municipalities, setValue])
-
-  const handleGeoCapture = useCallback(
-    (lat: number, lng: number) => {
-      setValue("latitude", lat)
-      setValue("longitude", lng)
-    },
-    [setValue]
-  )
-
-  const handleGeoClear = useCallback(() => {
-    setValue("latitude", undefined)
-    setValue("longitude", undefined)
-  }, [setValue])
 
   const onSubmit = async (data: NepalDeliveryFormValues) => {
     setIsSubmitting(true)
@@ -304,15 +275,36 @@ export function NepalDeliveryForm({
     if (onSuccess) {
       onSuccess({
         ...data,
-        provinceName,
-        districtName,
-        municipalityName,
+        provinceName: data.provinceName || provinceName,
+        districtName: data.districtName || districtName,
+        municipalityName: data.municipalityName || municipalityName,
       })
       setIsSubmitting(false)
       return
     }
   }
 
+  const handleUseSavedAddress = () => {
+    if (!savedAddress || !onSuccess) return
+    setIsSubmitting(true)
+    onSuccess({
+      fullName: savedAddress.fullName,
+      phone: savedAddress.phone,
+      provinceId: savedAddress.provinceId,
+      districtId: savedAddress.districtId,
+      municipalityId: savedAddress.municipalityId,
+      wardNumber: Number(savedAddress.wardNumber) || 1,
+      tole: savedAddress.tole || savedAddress.street || "Main Road",
+      street: savedAddress.street || "",
+      landmark: savedAddress.landmark || "",
+      deliveryNote: savedAddress.deliveryNote || "",
+      saveAddress: false,
+      provinceName: savedAddress.province?.name || savedAddress.provinceName || "",
+      districtName: savedAddress.district?.name || savedAddress.districtName || "",
+      municipalityName: savedAddress.municipality?.name || savedAddress.municipalityName || "",
+    })
+    setIsSubmitting(false)
+  }
 
   const provinceOptions = provinces.map((p) => ({ id: p.id, label: p.name }))
   const districtOptions = districts.map((d) => ({ id: d.id, label: d.name }))
@@ -323,314 +315,329 @@ export function NepalDeliveryForm({
   }))
 
   return (
-    <form onSubmit={handleSubmit(onSubmit as any)} noValidate>
-      <div className="space-y-5">
+    <div className="space-y-6">
+      {/* ─── OPTION 1: Saved Address Card (One-Tap Checkout) ────────────────── */}
+      {hasSavedAddress && !showManualForm && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl border border-[#EDE3DB] p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-5"
+        >
+          <div className="flex items-center justify-between pb-3.5 border-b border-[#F2EFEA]">
+            <div className="flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-[#1A110F] text-white flex items-center justify-center text-[10px]">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#B89563]">
+                Saved Delivery Address
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowManualForm(true)}
+              className="text-xs font-semibold text-[#1A110F] underline hover:text-[#B89563] transition-colors"
+            >
+              Change
+            </button>
+          </div>
 
-        {/* ─── Section 1: Recipient ─────────────────────────────────────────── */}
-        <div className="space-y-4">
-          <SectionHeader title="Recipient Information" />
+          <div className="space-y-1">
+            <div className="flex items-baseline justify-between gap-2 flex-wrap">
+              <h3 className="font-serif text-lg text-[#1A110F] font-normal">
+                {savedAddress.fullName}
+              </h3>
+              <span className="text-xs text-[#8C7A72] font-mono">
+                +977 {savedAddress.phone}
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-[#5C4D44] leading-relaxed pt-1">
+              {[
+                savedAddress.tole,
+                savedAddress.street,
+                savedAddress.wardNumber ? `Ward ${savedAddress.wardNumber}` : null,
+                savedAddress.municipality?.name || savedAddress.municipalityName,
+                savedAddress.district?.name || savedAddress.districtName,
+                savedAddress.province?.name || savedAddress.provinceName,
+              ]
+                .filter(Boolean)
+                .join(", ")}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleUseSavedAddress}
+            disabled={isSubmitting}
+            className="w-full h-[54px] rounded-lg font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300 bg-[#1A110F] hover:bg-[#B89563] text-white flex items-center justify-center gap-2 shadow-sm active:scale-[0.99]"
+          >
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <span>Continue to Payment</span>
+                <ChevronRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+
+          <div className="pt-1 text-center">
+            <button
+              type="button"
+              onClick={() => setShowManualForm(true)}
+              className="text-xs text-[#8C7A72] hover:text-[#1A110F] transition-colors"
+            >
+              + Deliver to a different address
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ─── OPTION 2: Streamlined Minimal Delivery Form ─────────────────────── */}
+      {showManualForm && (
+        <form onSubmit={handleSubmit(onSubmit as any)} noValidate className="space-y-5">
+          {hasSavedAddress && (
+            <button
+              type="button"
+              onClick={() => setShowManualForm(false)}
+              className="inline-flex items-center gap-1.5 text-xs text-[#8C7A72] hover:text-[#1A110F] transition-colors pb-1"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Use saved address</span>
+            </button>
+          )}
+
+          {/* Contact Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Full Name */}
-              <FormField label="Full Name" required error={errors.fullName?.message}>
-                <input
-                  id="fullName"
-                  {...register("fullName")}
-                  placeholder="Your full name"
-                  autoComplete="name"
-                  className={cn(inputClass, errors.fullName && "border-error focus:border-error focus:ring-error/20")}
-                />
-              </FormField>
+            <FormField label="Full Name" required error={errors.fullName?.message}>
+              <input
+                id="fullName"
+                {...register("fullName")}
+                placeholder="Receiver name"
+                autoComplete="name"
+                className={cn(inputClass, errors.fullName && "border-rose-600 focus:border-rose-600 focus:ring-rose-600/10")}
+              />
+            </FormField>
 
-              {/* Phone */}
-              <FormField
-                label="Phone Number"
-                required
-                error={errors.phone?.message}
-                hint="Nepal mobile: 98/97/96xxxxxxxx"
-              >
-                <div className="flex">
-                  <div className="flex items-center px-3 h-[54px] rounded-l-lg border border-r-0 border-[#E8DED2] bg-[#F5F0EB] text-sm text-[#8C7A72] font-medium select-none">
-                    +977
-                  </div>
-                  <input
-                    id="phone"
-                    {...register("phone")}
-                    placeholder="9812345678"
-                    inputMode="numeric"
-                    maxLength={10}
-                    autoComplete="tel"
-                    className={cn(
-                      inputClass,
-                      "rounded-l-none",
-                      errors.phone && "border-error focus:border-error focus:ring-error/20"
-                    )}
-                  />
+            <FormField
+              label="Phone Number"
+              required
+              error={errors.phone?.message}
+              hint="98/97/96xxxxxxxx"
+            >
+              <div className="flex">
+                <div className="flex items-center px-3 h-[52px] rounded-l-lg border border-r-0 border-[#E8DED2] bg-[#F5F0EB] text-xs text-[#8C7A72] font-semibold select-none">
+                  +977
                 </div>
-              </FormField>
+                <input
+                  id="phone"
+                  {...register("phone")}
+                  placeholder="9812345678"
+                  inputMode="numeric"
+                  maxLength={10}
+                  autoComplete="tel"
+                  className={cn(
+                    inputClass,
+                    "rounded-l-none",
+                    errors.phone && "border-rose-600 focus:border-rose-600 focus:ring-rose-600/10"
+                  )}
+                />
+              </div>
+            </FormField>
           </div>
-        </div>
 
-        {/* ─── Section 2: Address ───────────────────────────────────────────── */}
-        <div className="space-y-4 pt-2">
-          <SectionHeader
-            title="Delivery Address"
-            subtitle="Select your province, district, and municipality"
-          />
-
+          {/* Province & District */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Province */}
-              <FormField label="Province" required error={errors.provinceId?.message}>
-                <Controller
-                  name="provinceId"
-                  control={control}
-                  render={({ field }) => (
-                    <SearchableSelect
-                      id="province-select"
-                      options={provinceOptions}
-                      value={field.value}
-                      onChange={(id, label) => {
-                        field.onChange(id)
-                        setValue("provinceName", label)
-                        setProvinceName(label)
-                      }}
-                      placeholder="Select Province"
-                      error={errors.provinceId?.message}
-                    />
-                  )}
-                />
-              </FormField>
+            <FormField label="Province" required error={errors.provinceId?.message}>
+              <Controller
+                name="provinceId"
+                control={control}
+                render={({ field }) => (
+                  <SearchableSelect
+                    id="province-select"
+                    options={provinceOptions}
+                    value={field.value}
+                    onChange={(id, label) => {
+                      field.onChange(id)
+                      setValue("provinceName", label)
+                      setProvinceName(label)
+                    }}
+                    placeholder="Select Province"
+                    error={errors.provinceId?.message}
+                  />
+                )}
+              />
+            </FormField>
 
-              {/* District */}
-              <FormField label="District" required error={errors.districtId?.message}>
-                <Controller
-                  name="districtId"
-                  control={control}
-                  render={({ field }) => (
-                    <SearchableSelect
-                      id="district-select"
-                      options={districtOptions}
-                      value={field.value}
-                      onChange={(id, label) => {
-                        field.onChange(id)
-                        setValue("districtName", label)
-                        setDistrictName(label)
-                      }}
-                      placeholder={selectedProvinceId ? "Select District" : "Select a Province first"}
-                      disabled={!selectedProvinceId}
-                      loading={loadingDistricts}
-                      error={errors.districtId?.message}
-                    />
-                  )}
-                />
-              </FormField>
-
-              {/* Municipality */}
-              <FormField label="Municipality / Rural Municipality" required error={errors.municipalityId?.message}>
-                <Controller
-                  name="municipalityId"
-                  control={control}
-                  render={({ field }) => (
-                    <SearchableSelect
-                      id="municipality-select"
-                      options={municipalityOptions}
-                      value={field.value}
-                      onChange={(id, label) => {
-                        field.onChange(id)
-                      }}
-                      placeholder={selectedDistrictId ? "Select Municipality" : "Select a District first"}
-                      disabled={!selectedDistrictId}
-                      loading={loadingMunicipalities}
-                      error={errors.municipalityId?.message}
-                    />
-                  )}
-                />
-              </FormField>
-
-              {/* Ward */}
-              <FormField label="Ward" required error={errors.wardNumber?.message}>
-                <Controller
-                  name="wardNumber"
-                  control={control}
-                  render={({ field }) => (
-                    <SearchableSelect
-                      id="ward-select"
-                      options={wardOptions}
-                      value={field.value ? String(field.value) : ""}
-                      onChange={(id) => field.onChange(parseInt(id))}
-                      placeholder={selectedMunicipalityId ? "Select Ward" : "Select a Municipality first"}
-                      disabled={!selectedMunicipalityId}
-                      error={errors.wardNumber?.message}
-                    />
-                  )}
-                />
-              </FormField>
-
-              {/* Tole */}
-              <FormField label="Tole / Area / Village" required error={errors.tole?.message}>
-                <input
-                  id="tole"
-                  {...register("tole")}
-                  placeholder="e.g. Golpark, Traffic Chowk, Deepnagar"
-                  className={cn(inputClass, errors.tole && "border-error focus:border-error focus:ring-error/20")}
-                />
-              </FormField>
-
-              {/* Street */}
-              <FormField label="Street / House Number" error={errors.street?.message}>
-                <input
-                  id="street"
-                  {...register("street")}
-                  placeholder="House Number, Building Name, Street"
-                  className={cn(inputClass, errors.street && "border-error focus:border-error focus:ring-error/20")}
-                />
-              </FormField>
+            <FormField label="District" required error={errors.districtId?.message}>
+              <Controller
+                name="districtId"
+                control={control}
+                render={({ field }) => (
+                  <SearchableSelect
+                    id="district-select"
+                    options={districtOptions}
+                    value={field.value}
+                    onChange={(id, label) => {
+                      field.onChange(id)
+                      setValue("districtName", label)
+                      setDistrictName(label)
+                    }}
+                    placeholder={selectedProvinceId ? "Select District" : "Choose Province first"}
+                    disabled={!selectedProvinceId}
+                    loading={loadingDistricts}
+                    error={errors.districtId?.message}
+                  />
+                )}
+              />
+            </FormField>
           </div>
-          
-          <div className="grid grid-cols-1 gap-5">
 
-              {/* Landmark */}
-              <FormField label="Landmark" error={errors.landmark?.message}>
-                <input
-                  id="landmark"
-                  {...register("landmark")}
-                  placeholder="Near Bhatbhateni, Opposite Laxmi Bank…"
-                  className={cn(inputClass, errors.landmark && "border-error focus:border-error focus:ring-error/20")}
-                />
-              </FormField>
+          {/* Municipality & Ward */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Municipality" required error={errors.municipalityId?.message}>
+              <Controller
+                name="municipalityId"
+                control={control}
+                render={({ field }) => (
+                  <SearchableSelect
+                    id="municipality-select"
+                    options={municipalityOptions}
+                    value={field.value}
+                    onChange={(id, label) => {
+                      field.onChange(id)
+                    }}
+                    placeholder={selectedDistrictId ? "Select Municipality" : "Choose District first"}
+                    disabled={!selectedDistrictId}
+                    loading={loadingMunicipalities}
+                    error={errors.municipalityId?.message}
+                  />
+                )}
+              />
+            </FormField>
 
-              {/* Delivery Note */}
-              <FormField label="Delivery Instructions">
+            <FormField label="Ward" required error={errors.wardNumber?.message}>
+              <Controller
+                name="wardNumber"
+                control={control}
+                render={({ field }) => (
+                  <SearchableSelect
+                    id="ward-select"
+                    options={wardOptions}
+                    value={field.value ? String(field.value) : "1"}
+                    onChange={(id) => field.onChange(parseInt(id))}
+                    placeholder="Select Ward"
+                    disabled={!selectedMunicipalityId}
+                    error={errors.wardNumber?.message}
+                  />
+                )}
+              />
+            </FormField>
+          </div>
+
+          {/* Street / Tole / Area (Single clean address line) */}
+          <FormField label="Street Address / Area" required error={errors.tole?.message}>
+            <input
+              id="tole"
+              {...register("tole")}
+              placeholder="e.g. Lazimpat, House #12, near Radisson Hotel"
+              className={cn(inputClass, errors.tole && "border-rose-600 focus:border-rose-600 focus:ring-rose-600/10")}
+            />
+          </FormField>
+
+          {/* Optional Delivery Instructions toggle */}
+          <div className="pt-1">
+            {!showNote ? (
+              <button
+                type="button"
+                onClick={() => setShowNote(true)}
+                className="text-xs text-[#B89563] hover:underline transition-all"
+              >
+                + Add delivery instructions (optional)
+              </button>
+            ) : (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+                    Delivery Instructions (Optional)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setValue("deliveryNote", "")
+                      setShowNote(false)
+                    }}
+                    className="text-[11px] text-[#A69890] hover:text-[#1A110F]"
+                  >
+                    Hide
+                  </button>
+                </div>
                 <textarea
                   id="deliveryNote"
                   {...register("deliveryNote")}
-                  rows={3}
-                  placeholder="Anything our delivery partner should know? Ring the bell · Call before arriving · Leave with security…"
-                  className={cn(
-                    inputClass,
-                    "h-auto py-3 resize-none leading-relaxed",
-                  )}
+                  rows={2}
+                  placeholder="Ring bell · Call before arriving · Leave with reception"
+                  className={cn(inputClass, "h-auto py-2.5 resize-none leading-relaxed")}
                 />
-              </FormField>
-            </div>
-        </div>
+              </div>
+            )}
+          </div>
 
-        {/* ─── Section 3: Location ──────────────────────────────────────────── */}
-        <div className="space-y-5 pt-4">
-          <SectionHeader
-            title="Location"
-            subtitle="Help our delivery partner locate your address more accurately."
-          />
-          <GeolocationCapture
-            onCapture={handleGeoCapture}
-            onClear={handleGeoClear}
-            latitude={watchedValues.latitude}
-            longitude={watchedValues.longitude}
-          />
-        </div>
-
-        {/* ─── Save Address ─────────────────────────────────────────────────── */}
-        <div className="px-1">
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <div className="relative">
+          {/* Save Address Toggle */}
+          <div className="pt-2">
+            <label className="flex items-center gap-2.5 cursor-pointer select-none group">
               <input
                 type="checkbox"
                 id="saveAddress"
                 {...register("saveAddress")}
-                className="peer sr-only"
+                className="w-4 h-4 rounded border-[#DDD0C6] text-[#1A110F] focus:ring-[#B89563]/20 cursor-pointer"
               />
-              <div className={cn(
-                "w-5 h-5 rounded border-2 border-border transition-all",
-                "peer-checked:border-accent peer-checked:bg-accent",
-                "group-hover:border-accent/60"
-              )}>
-                <svg
-                  className="w-full h-full text-white opacity-0 peer-checked:opacity-100 transition-opacity p-0.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={3}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            </div>
-            <span className="text-sm text-text-secondary group-hover:text-text-primary transition-colors">
-              Save this address for future orders
-            </span>
-          </label>
-        </div>
-
-        {/* ─── Server Error ─────────────────────────────────────────────────── */}
-        <AnimatePresence>
-          {serverError && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="flex items-start gap-3 px-4 py-3 rounded-lg bg-error-muted border border-error/20 text-error"
-            >
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <p className="text-sm">{serverError}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ─── Submit Button ────────────────────────────────────────────────── */}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          id="place-order-btn"
-          className={cn(
-            "w-full h-[56px] rounded-lg font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300",
-            "bg-[#1A110F] hover:bg-[#B89563] active:scale-[0.99] text-white shadow-sm",
-            "flex items-center justify-center gap-2",
-            "disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-          )}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Proceeding…</span>
-            </>
-          ) : (
-            <>
-              <span>Proceed to Payment</span>
-              <ChevronRight className="w-4 h-4" />
-            </>
-          )}
-        </button>
-
-        {/* ─── Luxury Reassurance Trust Badges ───────────────────────────── */}
-        <div className="grid grid-cols-3 gap-2 pt-1">
-          <div className="flex items-center justify-center gap-2 p-3 bg-white border border-[#E8DED2] rounded text-[11px] font-medium text-[#1E1E1E] shadow-2xs">
-            <span className="text-[#B89563] font-bold">✓</span>
-            <span>Complimentary Packaging</span>
+              <span className="text-xs text-[#73645D] group-hover:text-[#1A110F] transition-colors">
+                Save this address for future orders
+              </span>
+            </label>
           </div>
-          <div className="flex items-center justify-center gap-2 p-3 bg-white border border-[#E8DED2] rounded text-[11px] font-medium text-[#1E1E1E] shadow-2xs">
-            <span className="text-[#B89563] font-bold">✓</span>
-            <span>Quality Inspection</span>
-          </div>
-          <div className="flex items-center justify-center gap-2 p-3 bg-white border border-[#E8DED2] rounded text-[11px] font-medium text-[#1E1E1E] shadow-2xs">
-            <span className="text-[#B89563] font-bold">✓</span>
-            <span>Carbon-Neutral Delivery</span>
-          </div>
-        </div>
 
-        <p className="text-center text-xs text-text-tertiary pt-2">
-          By placing your order, you agree to our{" "}
-          <Link href="/terms" className="underline hover:text-text-secondary transition-colors">
-            Terms of Service
-          </Link>{" "}
-          and{" "}
-          <Link href="/privacy" className="underline hover:text-text-secondary transition-colors">
-            Privacy Policy
-          </Link>
-        </p>
-      </div>
+          {/* Server Error */}
+          <AnimatePresence>
+            {serverError && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                className="flex items-start gap-2.5 px-4 py-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs"
+              >
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <p>{serverError}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-      {/* ─── Live Preview sidebar (rendered by parent in sticky panel) ─────── */}
-      {/* Address preview data is passed via the form's watch() in the parent */}
-    </form>
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full h-[54px] rounded-lg font-bold text-xs uppercase tracking-[0.2em] transition-all duration-300 bg-[#1A110F] hover:bg-[#B89563] active:scale-[0.99] text-white flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Processing…</span>
+              </>
+            ) : (
+              <>
+                <span>Proceed to Payment</span>
+                <ChevronRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+
+          <p className="text-center text-[11px] text-[#A69890] pt-1">
+            By proceeding, you agree to XINVORA&apos;s{" "}
+            <Link href="/terms" className="underline hover:text-[#1A110F]">Terms</Link> &{" "}
+            <Link href="/privacy" className="underline hover:text-[#1A110F]">Privacy</Link>
+          </p>
+        </form>
+      )}
+    </div>
   )
 }
-
