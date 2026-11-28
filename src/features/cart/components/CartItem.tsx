@@ -63,7 +63,7 @@ export function CartItem({ item }: CartItemProps) {
 
   return (
     <div
-      className={`border-b border-border py-6 transition-opacity ${
+      className={`border-b border-border py-4 sm:py-6 transition-opacity ${
         isPending ? "opacity-50" : "opacity-100"
       }`}
     >

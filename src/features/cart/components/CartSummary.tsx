@@ -18,13 +18,13 @@ export function CartSummary({ subtotal, total, shipping = 17000 }: CartSummaryPr
   const finalTotal = subtotal > 0 ? subtotal + shipping : 0
 
   return (
-    <div className="p-6 bg-surface border border-border rounded-lg">
-      <div className="flex flex-col gap-6">
+    <div className="p-5 sm:p-6 bg-surface border border-border rounded-lg">
+      <div className="flex flex-col gap-4 sm:gap-6">
         <h2 className="text-body-md font-bold text-text-primary uppercase tracking-wider">
           Order Summary
         </h2>
         
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5 sm:gap-3">
           <div className="flex justify-between items-center text-body-sm text-text-primary">
             <span className="font-medium">Subtotal</span>
             <span className="font-semibold">NPR {Math.round(subtotal / 100).toLocaleString()}</span>
@@ -35,17 +35,17 @@ export function CartSummary({ subtotal, total, shipping = 17000 }: CartSummaryPr
           </div>
         </div>
         
-        <div className="pt-6 border-t border-border flex flex-col">
+        <div className="pt-4 sm:pt-6 border-t border-border flex flex-col">
           <div className="flex justify-between items-baseline">
             <span className="text-heading-xs font-semibold text-text-primary uppercase tracking-wider">Total</span>
             <span className="text-heading-xs font-semibold text-text-primary">NPR {Math.round(finalTotal / 100).toLocaleString()}</span>
           </div>
-          <p className="text-caption text-text-secondary text-center mt-3">
+          <p className="text-caption text-text-secondary text-center mt-2 sm:mt-3">
             Inclusive of NPR 170 nationwide delivery
           </p>
         </div>
         
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5 sm:gap-3">
           <Link href="/checkout" className="w-full block">
             <Button className="w-full bg-ink border-ink text-white hover:bg-ink-soft hover:border-ink-soft h-12 uppercase tracking-widest text-[11px]" rightIcon={<ArrowRight className="w-4 h-4 ml-1 inline" />}>
               Proceed to Checkout
@@ -60,7 +60,7 @@ export function CartSummary({ subtotal, total, shipping = 17000 }: CartSummaryPr
         </div>
 
         {/* Estimated Delivery */}
-        <div className="pt-6 border-t border-border">
+        <div className="pt-4 sm:pt-6 border-t border-border">
           <div className="flex items-center gap-2 text-body-sm font-medium text-text-primary mb-3">
             <Truck className="w-4 h-4" />
             <span>Estimated delivery</span>

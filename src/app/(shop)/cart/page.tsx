@@ -12,7 +12,6 @@ import { findProducts } from "@/db/queries/products"
 import { SessionService } from "@/services/session.service"
 import { CartService } from "@/services/cart.service"
 import { ArrowRight } from "lucide-react"
-import { ProductTrustGrid } from "@/components/storefront/ProductTrustGrid"
 import { ProductCard } from "@/components/storefront/ProductCard"
 
 export const metadata: Metadata = {
@@ -51,9 +50,9 @@ export default async function CartPage() {
   const totalItems = cart.items.reduce((acc, item) => acc + item.quantity, 0)
 
   return (
-    <Section className="pt-28 pb-12 md:pt-32 md:pb-24">
+    <Section className="pt-20 pb-8 md:pt-28 md:pb-16">
       <Container size="full" className="px-6 sm:px-12 md:px-16 lg:px-20">
-        <div className="mb-12">
+        <div className="mb-6 md:mb-8">
           <h1 className="text-display-md font-display uppercase tracking-wide">
             Shopping Cart
           </h1>
@@ -62,7 +61,7 @@ export default async function CartPage() {
           </p>
         </div>
 
-        <Grid cols={{ base: 1, lg: 12 }} gap={12}>
+        <Grid cols={{ base: 1, lg: 12 }} className="gap-6 lg:gap-12">
           <div className="lg:col-span-8 flex flex-col order-1">
             <div className="hidden md:grid grid-cols-12 gap-4 pb-4 border-b border-border text-caption text-text-secondary uppercase tracking-widest font-semibold">
               <div className="col-span-6">Product</div>
@@ -76,12 +75,6 @@ export default async function CartPage() {
                 <CartItem key={item.id} item={item} />
               ))}
             </div>
-
-            {/* Trust Badges */}
-            <div className="mt-8">
-              <ProductTrustGrid />
-            </div>
-
           </div>
 
           <div className="lg:col-span-4 order-2 mt-4 lg:mt-0">
@@ -98,8 +91,8 @@ export default async function CartPage() {
           {/* Recommendations */}
           {recommendedProducts.length > 0 && (
             <div className="lg:col-span-8 order-3 lg:col-start-1">
-              <div className="mt-16 lg:mt-12 border-t border-border/20 pt-10">
-                <div className="flex justify-between items-baseline mb-8 select-none">
+              <div className="mt-8 md:mt-12 border-t border-border/20 pt-6 md:pt-8">
+                <div className="flex justify-between items-baseline mb-6 md:mb-8 select-none">
                   <h2 className="text-[10px] font-bold tracking-[0.25em] text-accent uppercase">
                     YOU MAY ALSO LOVE
                   </h2>
