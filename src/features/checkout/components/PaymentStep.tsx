@@ -180,6 +180,28 @@ export function PaymentStep({ addressData, totals, paymentQrs, onBack }: any) {
           </div>
         </div>
 
+        {/* Bill Summary in Payment */}
+        <div className="bg-[#FAF6F2] rounded-lg p-3.5 border border-[#EDE3DB]/60 space-y-1.5 text-xs text-[#73645D]">
+          <div className="flex justify-between">
+            <span>Items Subtotal</span>
+            <span className="font-medium text-[#1A110F]">NPR {Math.round(totals.subtotal / 100).toLocaleString()}</span>
+          </div>
+          {totals.discountAmount > 0 && (
+            <div className="flex justify-between text-emerald-700">
+              <span>Discount</span>
+              <span className="font-medium">− NPR {Math.round(totals.discountAmount / 100).toLocaleString()}</span>
+            </div>
+          )}
+          <div className="flex justify-between">
+            <span>Delivery Fee</span>
+            <span className="font-medium text-[#1A110F]">NPR {Math.round(totals.shippingCost / 100).toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between pt-1.5 border-t border-[#EDE3DB] text-sm font-semibold text-[#1A110F]">
+            <span>Amount to Transfer</span>
+            <span className="font-bold">NPR {finalTotalFormatted}</span>
+          </div>
+        </div>
+
         {/* QR Code Presentation */}
         <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-[#FAF6F2] rounded-xl border border-[#EDE3DB]/70">
           <div className="bg-white p-3 rounded-lg border border-[#EDE3DB] shadow-xs mb-3">

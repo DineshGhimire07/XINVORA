@@ -157,25 +157,28 @@ export function CheckoutFlow({
                 ))}
               </div>
 
-              {/* Delivery & Total breakdown */}
-              <div className="pt-3.5 border-t border-[#F2EFEA] space-y-1.5 text-xs">
-                <div className="flex justify-between text-[#8C7A72]">
-                  <span>Subtotal</span>
-                  <span className="text-[#1A110F]">NPR {Math.round(totals.subtotal / 100).toLocaleString()}</span>
+              {/* Order Bill Breakdown */}
+              <div className="pt-4 border-t border-[#F2EFEA] space-y-2 text-xs">
+                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#B89563] pb-0.5">
+                  Bill Summary
+                </div>
+                <div className="flex justify-between text-[#73645D]">
+                  <span>Items Subtotal</span>
+                  <span className="font-medium text-[#1A110F]">NPR {Math.round(totals.subtotal / 100).toLocaleString()}</span>
                 </div>
                 {totals.discountAmount > 0 && (
                   <div className="flex justify-between text-emerald-700">
-                    <span>Discount</span>
-                    <span>− NPR {Math.round(totals.discountAmount / 100).toLocaleString()}</span>
+                    <span>Coupon Discount</span>
+                    <span className="font-medium">− NPR {Math.round(totals.discountAmount / 100).toLocaleString()}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-[#8C7A72]">
-                  <span>Delivery</span>
-                  <span className="text-[#1A110F]">NPR {Math.round(totals.shippingCost / 100).toLocaleString()}</span>
+                <div className="flex justify-between text-[#73645D]">
+                  <span>Delivery Charge</span>
+                  <span className="font-medium text-[#1A110F]">NPR {Math.round(totals.shippingCost / 100).toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between pt-1.5 border-t border-[#F2EFEA] font-semibold text-sm text-[#1A110F]">
-                  <span>Total</span>
-                  <span>NPR {finalTotal.toLocaleString()}</span>
+                <div className="flex justify-between pt-2 border-t border-[#EDE3DB] text-sm">
+                  <span className="font-semibold text-[#1A110F]">Total Payable</span>
+                  <span className="font-bold text-[#1A110F]">NPR {finalTotal.toLocaleString()}</span>
                 </div>
               </div>
             </div>
