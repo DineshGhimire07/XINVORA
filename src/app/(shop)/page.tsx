@@ -459,9 +459,11 @@ async function RandomCollectionShowcaseSection() {
             ).values()
           ).sort((a: any, b: any) => a.name.localeCompare(b.name, undefined, { numeric: true })) as any[]
 
-          const inStock = (product.variants || []).length > 0
-            ? (product.variants || []).some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)
-            : false
+          const inStock = (product as any).inStock !== undefined
+            ? (product as any).inStock
+            : (product.variants || []).length > 0
+              ? (product.variants || []).some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)
+              : true
 
           return (
             <div key={product.id} className="w-full">

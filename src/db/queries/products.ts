@@ -349,33 +349,38 @@ async function _findProductsInternal(
 
   const { findOffSectionByProductIds } = await import("./off-section")
 
-  const [prices, offSectionMap] = await Promise.all([
+  const [variantRows, offSectionMap] = await Promise.all([
     productIds.length > 0
       ? db
           .select({
             productId: variants.productId,
+            variantId: variants.id,
             price: priceBookEntries.price,
             compareAtPrice: priceBookEntries.compareAtPrice,
+            inventoryQuantity: inventory.quantity,
           })
           .from(variants)
           .innerJoin(priceBookEntries, eq(variants.id, priceBookEntries.variantId))
           .innerJoin(priceBooks, and(eq(priceBookEntries.priceBookId, priceBooks.id), eq(priceBooks.isDefault, true)))
+          .leftJoin(inventory, eq(variants.id, inventory.variantId))
           .where(and(inArray(variants.productId, productIds), isNull(variants.deletedAt), eq(variants.isActive, true)))
       : Promise.resolve([] as any[]),
     productIds.length > 0 ? findOffSectionByProductIds(productIds) : Promise.resolve(new Map()),
   ])
 
   const itemsWithPrices = items.map(item => {
-    const itemPrices = prices.filter(p => p.productId === item.id)
-    const lowestPrice = itemPrices.length > 0 ? Math.min(...itemPrices.map(p => p.price)) : null
-    const compareAtPrice = itemPrices.length > 0 ? Math.min(...itemPrices.map(p => p.compareAtPrice).filter((p): p is number => p !== null)) : null
+    const itemVariants = variantRows.filter(p => p.productId === item.id)
+    const lowestPrice = itemVariants.length > 0 ? Math.min(...itemVariants.map(p => p.price)) : null
+    const compareAtPrice = itemVariants.length > 0 ? Math.min(...itemVariants.map(p => p.compareAtPrice).filter((p): p is number => p !== null)) : null
     const offData = offSectionMap.get(item.id)
+    const inStock = itemVariants.length === 0 || itemVariants.some(v => v.inventoryQuantity === null || v.inventoryQuantity > 0)
     
     return {
       ...item,
       lowestPrice,
       compareAtPrice: compareAtPrice === Infinity || compareAtPrice === null ? null : compareAtPrice,
       offSection: offData ?? null,
+      inStock,
     }
   })
 

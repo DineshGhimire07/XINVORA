@@ -15,6 +15,7 @@ export interface ProductCardProps {
     compareAtPrice?: number | null
     offSection?: { originalPrice: number; sellingPrice: number; isOffEnabled: boolean } | null
     productImages: { url: string; altText: string | null }[]
+    inStock?: boolean
   }
   itemColors?: { id: string; hexCode: string }[]
   itemSizes?: { id: string; name: string }[]
@@ -37,9 +38,10 @@ export function ProductCard({
   priority = false,
   overrideImage = null,
   disableHover = false,
-  inStock = true,
+  inStock,
 }: ProductCardProps) {
   const [isDesktopHovered, setIsDesktopHovered] = React.useState(false)
+  const isAvailable = inStock !== undefined ? inStock : (product.inStock ?? true)
   const images = product.productImages || []
 
   // Pricing calculations
@@ -149,7 +151,7 @@ export function ProductCard({
           </div>
 
           {/* Sold Out: Subtle, responsive text in delicate soft red */}
-          {!inStock && (
+          {!isAvailable && (
             <span className="shrink-0 text-[10.5px] sm:text-[12px] font-medium tracking-tight text-rose-600/90 whitespace-nowrap select-none">
               Sold Out
             </span>

@@ -173,9 +173,11 @@ function CMSProductGrid({ block, products = [] }: { block: any; products?: any[]
             ).values()
           ).sort((a: any, b: any) => a.name.localeCompare(b.name, undefined, { numeric: true })) as any[]
 
-          const inStock = (product.variants || []).length > 0
-            ? (product.variants || []).some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)
-            : false
+          const inStock = (product as any).inStock !== undefined
+            ? (product as any).inStock
+            : (product.variants || []).length > 0
+              ? (product.variants || []).some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)
+              : true
 
           // On mobile (< md), only show first 6 items. Items 7-12 are visible on md+
           const isHiddenOnMobile = index >= 6

@@ -54,12 +54,14 @@ async function _findProductsByIdsInternal(ids: string[]) {
     const lowestPrice = itemPrices.length > 0 ? Math.min(...itemPrices.map(p => p.price)) : null
     const compareAtPrice = itemPrices.length > 0 ? Math.min(...itemPrices.map(p => p.compareAtPrice).filter((p): p is number => p !== null)) : null
     const offData = offSectionMap.get(item.id)
+    const inStock = (item.variants || []).length === 0 || (item.variants || []).some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)
     
     return {
       ...item,
       lowestPrice,
       compareAtPrice: compareAtPrice === Infinity || compareAtPrice === null ? null : compareAtPrice,
       offSection: offData ?? null,
+      inStock,
     }
   })
 
@@ -155,6 +157,7 @@ async function _findRandomCatalogProductsInternal(limit = 24) {
           )
         : null
     const offData = offSectionMap.get(item.id)
+    const inStock = (item.variants || []).length === 0 || (item.variants || []).some((v: any) => v.inventory ? v.inventory.quantity > 0 : true)
 
     return {
       ...item,
@@ -162,6 +165,7 @@ async function _findRandomCatalogProductsInternal(limit = 24) {
       compareAtPrice:
         compareAtPrice === Infinity || compareAtPrice === null ? null : compareAtPrice,
       offSection: offData ?? null,
+      inStock,
     }
   })
 

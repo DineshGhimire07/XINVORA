@@ -71,6 +71,8 @@ export type ProductFull = RawProduct & {
     sellingPrice: number
     isOffEnabled: boolean
   } | null
+  /** Availability status based on active variant inventory. */
+  inStock?: boolean
 }
 
 /** A lightweight product used for listing pages (PLP). */
@@ -94,6 +96,8 @@ export type ProductSummaryWithPrice = ProductSummary & {
     sellingPrice: number
     isOffEnabled: boolean
   } | null
+  /** Availability status based on active variant inventory. */
+  inStock?: boolean
 }
 
 /** A single Category node, optionally with its children. */

@@ -114,6 +114,7 @@ export default async function CartPage() {
                       product={product}
                       itemColors={[]}
                       itemSizes={[]}
+                      inStock={product.inStock}
                       hideWishlist={false}
                     />
                   ))}
