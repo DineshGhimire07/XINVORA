@@ -104,14 +104,12 @@ export function CheckoutFlow({
               {/* Step indicator */}
               <div className="flex items-center gap-1.5 mt-3">
                 <div
-                  className={`h-[3px] rounded-full transition-all duration-300 ${
-                    step >= 1 ? "w-8 bg-[#B89563]" : "w-4 bg-[#DDD0C6]"
-                  }`}
+                  className={`h-[3px] rounded-full transition-all duration-300 ${step >= 1 ? "w-8 bg-[#B89563]" : "w-4 bg-[#DDD0C6]"
+                    }`}
                 />
                 <div
-                  className={`h-[3px] rounded-full transition-all duration-300 ${
-                    step >= 2 ? "w-8 bg-[#B89563]" : "w-4 bg-[#DDD0C6]"
-                  }`}
+                  className={`h-[3px] rounded-full transition-all duration-300 ${step >= 2 ? "w-8 bg-[#B89563]" : "w-4 bg-[#DDD0C6]"
+                    }`}
                 />
               </div>
             </div>

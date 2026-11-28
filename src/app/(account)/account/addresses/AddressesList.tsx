@@ -2,11 +2,7 @@
 
 import { useState } from "react"
 import { createAddressAction, updateAddressAction, deleteAddressAction } from "@/actions/address.actions"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Grid } from "@/components/shared/grid"
-import { Stack } from "@/components/shared/stack"
+import { MapPin, Plus, Edit2, Trash2, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
 
 interface Address {
   id: string
@@ -42,18 +38,18 @@ export function AddressesList({ initialAddresses }: AddressesListProps) {
 
   const handleAddNew = () => {
     setEditingAddress({
-      label: "",
+      label: "Home",
       firstName: "",
       lastName: "",
       line1: "",
       line2: "",
       city: "",
       state: "",
-      country: "US",
-      postalCode: "",
+      country: "NP",
+      postalCode: "44600",
       phone: "",
-      isDefaultShipping: false,
-      isDefaultBilling: false,
+      isDefaultShipping: addresses.length === 0,
+      isDefaultBilling: addresses.length === 0,
     })
     setIsEditing(true)
   }
@@ -86,8 +82,8 @@ export function AddressesList({ initialAddresses }: AddressesListProps) {
       line2: editingAddress.line2 || undefined,
       city: editingAddress.city || "",
       state: editingAddress.state || undefined,
-      country: editingAddress.country || "US",
-      postalCode: editingAddress.postalCode || "",
+      country: editingAddress.country || "NP",
+      postalCode: editingAddress.postalCode || "44600",
       phone: editingAddress.phone || undefined,
       isDefaultShipping: !!editingAddress.isDefaultShipping,
       isDefaultBilling: !!editingAddress.isDefaultBilling,
@@ -101,7 +97,6 @@ export function AddressesList({ initialAddresses }: AddressesListProps) {
     }
 
     if (result.success) {
-      // Reload page or update local state
       window.location.reload()
     } else {
       setError(result.error?.message || "Failed to save address details.")
@@ -112,214 +107,221 @@ export function AddressesList({ initialAddresses }: AddressesListProps) {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-          {error}
+        <div className="p-4 text-xs text-rose-800 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
       {isEditing && editingAddress ? (
-        <Card className="rounded-none border-border-primary/40 shadow-sm">
-          <CardHeader className="border-b border-border-primary/20 bg-surface-secondary/50">
-            <CardTitle className="text-xs font-light tracking-widest uppercase">
-              {editingAddress.id ? "Edit Address" : "Add New Address"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <form onSubmit={handleSave} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Address Label (e.g. Home, Work)</label>
-                  <Input
-                    value={editingAddress.label || ""}
-                    onChange={(e) => setEditingAddress({ ...editingAddress, label: e.target.value })}
-                    placeholder="Home"
-                    className="rounded-none"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Phone Number</label>
-                  <Input
-                    value={editingAddress.phone || ""}
-                    onChange={(e) => setEditingAddress({ ...editingAddress, phone: e.target.value })}
-                    className="rounded-none"
-                  />
-                </div>
-              </div>
+        <div className="bg-white rounded-2xl border border-[#EDE3DB] p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+          <div className="pb-4 border-b border-[#F2EFEA] mb-5">
+            <h2 className="text-xs font-bold tracking-[0.15em] text-[#1A110F] uppercase">
+              {editingAddress.id ? "Edit Delivery Address" : "Add New Delivery Address"}
+            </h2>
+          </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">First Name</label>
-                  <Input
-                    value={editingAddress.firstName || ""}
-                    onChange={(e) => setEditingAddress({ ...editingAddress, firstName: e.target.value })}
-                    required
-                    className="rounded-none"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Last Name</label>
-                  <Input
-                    value={editingAddress.lastName || ""}
-                    onChange={(e) => setEditingAddress({ ...editingAddress, lastName: e.target.value })}
-                    required
-                    className="rounded-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Address Line 1</label>
-                  <Input
-                    value={editingAddress.line1 || ""}
-                    onChange={(e) => setEditingAddress({ ...editingAddress, line1: e.target.value })}
-                    required
-                    className="rounded-none"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Address Line 2 (Optional)</label>
-                  <Input
-                    value={editingAddress.line2 || ""}
-                    onChange={(e) => setEditingAddress({ ...editingAddress, line2: e.target.value })}
-                    className="rounded-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">City</label>
-                  <Input
-                    value={editingAddress.city || ""}
-                    onChange={(e) => setEditingAddress({ ...editingAddress, city: e.target.value })}
-                    required
-                    className="rounded-none"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">State/Province</label>
-                  <Input
-                    value={editingAddress.state || ""}
-                    onChange={(e) => setEditingAddress({ ...editingAddress, state: e.target.value })}
-                    className="rounded-none"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Postal Code</label>
-                  <Input
-                    value={editingAddress.postalCode || ""}
-                    onChange={(e) => setEditingAddress({ ...editingAddress, postalCode: e.target.value })}
-                    required
-                    className="rounded-none"
-                  />
-                </div>
-              </div>
-
+          <form onSubmit={handleSave} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Country</label>
-                <Input
-                  value={editingAddress.country || ""}
-                  onChange={(e) => setEditingAddress({ ...editingAddress, country: e.target.value })}
-                  placeholder="US"
-                  maxLength={2}
-                  required
-                  className="rounded-none"
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+                  Address Label (e.g. Home, Office)
+                </label>
+                <input
+                  value={editingAddress.label || ""}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, label: e.target.value })}
+                  placeholder="Home"
+                  className="w-full h-11 px-4 bg-[#FAF6F2] border border-[#EDE3DB] rounded-xl text-xs text-[#1A110F] focus:outline-none focus:border-[#B89563] transition-colors"
                 />
               </div>
 
-              <div className="flex flex-col gap-3 border-t border-border/40 pt-4">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={!!editingAddress.isDefaultShipping}
-                    onChange={(e) => setEditingAddress({ ...editingAddress, isDefaultShipping: e.target.checked })}
-                    className="text-accent focus:ring-accent"
-                  />
-                  <span className="text-body-sm text-text-secondary">Set as Default Shipping Address</span>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+                  Contact Phone Number *
                 </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={!!editingAddress.isDefaultBilling}
-                    onChange={(e) => setEditingAddress({ ...editingAddress, isDefaultBilling: e.target.checked })}
-                    className="text-accent focus:ring-accent"
-                  />
-                  <span className="text-body-sm text-text-secondary">Set as Default Billing Address</span>
-                </label>
+                <input
+                  value={editingAddress.phone || ""}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, phone: e.target.value })}
+                  placeholder="98XXXXXXXX"
+                  required
+                  className="w-full h-11 px-4 bg-[#FAF6F2] border border-[#EDE3DB] rounded-xl text-xs text-[#1A110F] focus:outline-none focus:border-[#B89563] transition-colors"
+                />
               </div>
 
-              <div className="flex gap-4 pt-4">
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="px-6 py-2.5 rounded-none uppercase tracking-widest text-[11px] font-semibold"
-                >
-                  {loading ? "Saving..." : "Save Address"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsEditing(false)}
-                  className="px-6 py-2.5 rounded-none uppercase tracking-widest text-[11px] font-semibold"
-                >
-                  Cancel
-                </Button>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+                  First Name *
+                </label>
+                <input
+                  value={editingAddress.firstName || ""}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, firstName: e.target.value })}
+                  required
+                  className="w-full h-11 px-4 bg-[#FAF6F2] border border-[#EDE3DB] rounded-xl text-xs text-[#1A110F] focus:outline-none focus:border-[#B89563] transition-colors"
+                />
               </div>
-            </form>
-          </CardContent>
-        </Card>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+                  Last Name *
+                </label>
+                <input
+                  value={editingAddress.lastName || ""}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, lastName: e.target.value })}
+                  required
+                  className="w-full h-11 px-4 bg-[#FAF6F2] border border-[#EDE3DB] rounded-xl text-xs text-[#1A110F] focus:outline-none focus:border-[#B89563] transition-colors"
+                />
+              </div>
+
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+                  Street Address / Tole / Landmark *
+                </label>
+                <input
+                  value={editingAddress.line1 || ""}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, line1: e.target.value })}
+                  placeholder="e.g. New Baneshwor, Near Chowk"
+                  required
+                  className="w-full h-11 px-4 bg-[#FAF6F2] border border-[#EDE3DB] rounded-xl text-xs text-[#1A110F] focus:outline-none focus:border-[#B89563] transition-colors"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+                  Municipality / City *
+                </label>
+                <input
+                  value={editingAddress.city || ""}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, city: e.target.value })}
+                  placeholder="e.g. Kathmandu"
+                  required
+                  className="w-full h-11 px-4 bg-[#FAF6F2] border border-[#EDE3DB] rounded-xl text-xs text-[#1A110F] focus:outline-none focus:border-[#B89563] transition-colors"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+                  District / Province
+                </label>
+                <input
+                  value={editingAddress.state || ""}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, state: e.target.value })}
+                  placeholder="e.g. Bagmati Province"
+                  className="w-full h-11 px-4 bg-[#FAF6F2] border border-[#EDE3DB] rounded-xl text-xs text-[#1A110F] focus:outline-none focus:border-[#B89563] transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-[#F2EFEA] space-y-2">
+              <label className="flex items-center gap-2.5 cursor-pointer text-xs text-[#73645D]">
+                <input
+                  type="checkbox"
+                  checked={!!editingAddress.isDefaultShipping}
+                  onChange={(e) => setEditingAddress({ ...editingAddress, isDefaultShipping: e.target.checked })}
+                  className="accent-[#1A110F] w-4 h-4 rounded cursor-pointer"
+                />
+                <span>Set as default shipping address</span>
+              </label>
+            </div>
+
+            <div className="flex items-center gap-3 pt-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-6 h-11 bg-[#1A110F] hover:bg-[#33221E] text-white rounded-xl text-xs uppercase tracking-wider font-semibold transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>{loading ? "Saving..." : "Save Address"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className="px-6 h-11 border border-[#EDE3DB] hover:bg-[#FAF6F2] text-[#1A110F] rounded-xl text-xs uppercase tracking-wider font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       ) : (
         <div className="space-y-6">
-          <Button
-            onClick={handleAddNew}
-            className="rounded-none px-6 py-3 uppercase tracking-widest text-[11px] font-semibold"
-          >
-            + Add New Address
-          </Button>
+          <div className="flex justify-between items-center">
+            <button
+              onClick={handleAddNew}
+              className="px-5 h-11 bg-[#1A110F] hover:bg-[#33221E] text-white rounded-xl text-xs uppercase tracking-wider font-semibold transition-colors inline-flex items-center gap-2 shadow-xs"
+            >
+              <Plus className="w-4 h-4 text-[#E6D5C3]" />
+              <span>Add New Address</span>
+            </button>
+          </div>
 
           {addresses.length === 0 ? (
-            <Card className="rounded-none border-dashed border-border-primary/60 text-center p-8 bg-surface-secondary/5">
-              <p className="text-body-sm text-text-secondary">You have no saved addresses yet.</p>
-            </Card>
+            <div className="bg-white rounded-2xl border border-dashed border-[#EDE3DB] p-12 text-center flex flex-col items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-[#FAF6F2] border border-[#EDE3DB] flex items-center justify-center text-[#B89563] mb-3">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <p className="text-sm font-medium text-[#1A110F]">No saved addresses</p>
+              <p className="text-xs text-[#8C7A72] mt-1">
+                You haven't saved any addresses yet. Add an address for rapid checkout.
+              </p>
+            </div>
           ) : (
-            <Grid cols={{ base: 1, md: 2 }} gap={6}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {addresses.map((a) => (
-                <Card key={a.id} className="rounded-none border-border-primary/40 shadow-xs">
-                  <CardHeader className="border-b border-border-primary/20 bg-surface-secondary/20 flex flex-row items-center justify-between py-3">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">{a.label || "Saved Address"}</span>
-                    <div className="flex gap-1.5">
-                      {a.isDefaultShipping && <span className="text-[8px] bg-accent/10 border border-accent/20 text-accent px-1.5 py-0.5 tracking-wider uppercase font-semibold">Shipping</span>}
-                      {a.isDefaultBilling && <span className="text-[8px] bg-surface-secondary border border-border text-text-secondary px-1.5 py-0.5 tracking-wider uppercase font-semibold">Billing</span>}
+                <div
+                  key={a.id}
+                  className="bg-white rounded-2xl border border-[#EDE3DB] p-5 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex justify-between items-center pb-3 border-b border-[#F2EFEA] mb-3">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-3.5 h-3.5 text-[#B89563]" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-[#1A110F]">
+                          {a.label || "Saved Address"}
+                        </span>
+                      </div>
+                      {a.isDefaultShipping && (
+                        <span className="text-[9px] font-bold uppercase tracking-wider bg-[#FAF6F2] border border-[#EDE3DB] text-[#B89563] px-2 py-0.5 rounded-full">
+                          Default
+                        </span>
+                      )}
                     </div>
-                  </CardHeader>
-                  <CardContent className="pt-4 space-y-4">
-                    <div className="text-body-sm text-text-secondary space-y-0.5">
-                      <p className="text-text-primary font-medium">{a.firstName} {a.lastName}</p>
+
+                    <div className="space-y-1 text-xs text-[#73645D] leading-relaxed">
+                      <p className="font-semibold text-[#1A110F]">
+                        {a.firstName} {a.lastName}
+                      </p>
                       <p>{a.line1}</p>
                       {a.line2 && <p>{a.line2}</p>}
-                      <p>{a.city}, {a.state} {a.postalCode}</p>
-                      <p>{a.country}</p>
-                      {a.phone && <p className="font-mono pt-1 text-[11px]">Tel: {a.phone}</p>}
+                      <p>
+                        {[a.city, a.state].filter(Boolean).join(", ")}
+                      </p>
+                      {a.phone && (
+                        <p className="pt-1 text-[#8C7A72]">
+                          Phone: {a.phone}
+                        </p>
+                      )}
                     </div>
-                    <div className="flex gap-4 border-t border-border/40 pt-4">
-                      <button
-                        onClick={() => handleEdit(a)}
-                        className="text-body-xs uppercase tracking-wider underline hover:text-accent font-medium"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(a.id)}
-                        className="text-body-xs uppercase tracking-wider underline text-red-600 hover:text-red-700 font-medium"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </div>
+
+                  <div className="pt-4 border-t border-[#F2EFEA] mt-4 flex items-center gap-3">
+                    <button
+                      onClick={() => handleEdit(a)}
+                      className="px-3 py-1.5 rounded-lg border border-[#EDE3DB] text-xs font-medium text-[#1A110F] hover:bg-[#FAF6F2] transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <Edit2 className="w-3 h-3 text-[#8C7A72]" />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(a.id)}
+                      className="px-3 py-1.5 rounded-lg border border-rose-200 text-xs font-medium text-rose-700 hover:bg-rose-50 transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </div>
               ))}
-            </Grid>
+            </div>
           )}
         </div>
       )}

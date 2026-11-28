@@ -2,9 +2,7 @@
 
 import { useState } from "react"
 import { changePasswordAction } from "@/actions/security.actions"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { CheckCircle2, AlertCircle, Loader2, Lock } from "lucide-react"
 
 export function PasswordForm() {
   const [newPassword, setNewPassword] = useState("")
@@ -38,58 +36,65 @@ export function PasswordForm() {
   }
 
   return (
-    <Card className="rounded-none border-border-primary/40 shadow-sm">
-      <CardHeader className="border-b border-border-primary/20 bg-surface-secondary/50">
-        <CardTitle className="text-xs font-light tracking-widest uppercase">Change Password</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="p-4 text-sm text-green-600 bg-green-50 border border-green-200 rounded-md">
-              Password updated successfully!
-            </div>
-          )}
+    <div className="bg-white rounded-2xl border border-[#EDE3DB] p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+      <form onSubmit={handleSubmit} className="space-y-6 max-w-lg">
+        {error && (
+          <div className="p-4 text-xs text-rose-800 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+        {success && (
+          <div className="p-4 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>Password updated successfully!</span>
+          </div>
+        )}
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">New Password</label>
-            <Input
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+            New Password *
+          </label>
+          <div className="relative">
+            <input
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="Minimum 8 characters"
               required
               minLength={8}
-              className="rounded-none"
+              className="w-full h-11 px-4 bg-[#FAF6F2] border border-[#EDE3DB] rounded-xl text-xs text-[#1A110F] focus:outline-none focus:border-[#B89563] transition-colors"
             />
           </div>
+        </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Confirm New Password</label>
-            <Input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Re-enter new password"
-              required
-              minLength={8}
-              className="rounded-none"
-            />
-          </div>
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+            Confirm New Password *
+          </label>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Re-enter new password"
+            required
+            minLength={8}
+            className="w-full h-11 px-4 bg-[#FAF6F2] border border-[#EDE3DB] rounded-xl text-xs text-[#1A110F] focus:outline-none focus:border-[#B89563] transition-colors"
+          />
+        </div>
 
-          <Button
+        <div className="pt-2">
+          <button
             type="submit"
             disabled={loading}
-            className="w-full md:w-auto px-8 py-3 rounded-none uppercase tracking-widest text-[11px] font-semibold"
+            className="w-full sm:w-auto px-6 h-11 bg-[#1A110F] hover:bg-[#33221E] text-white rounded-xl text-xs uppercase tracking-wider font-semibold transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
           >
-            {loading ? "Updating..." : "Update Password"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            <Lock className="w-3.5 h-3.5 text-[#E6D5C3]" />
+            <span>{loading ? "Updating..." : "Update Password"}</span>
+          </button>
+        </div>
+      </form>
+    </div>
   )
 }

@@ -2,10 +2,7 @@
 
 import { useState } from "react"
 import { updateProfileAction } from "@/actions/profile.actions"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Stack } from "@/components/shared/stack"
+import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
 
 interface ProfileFormProps {
   initialProfile: {
@@ -60,118 +57,89 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
   }
 
   return (
-    <Card className="rounded-none border-border-primary/40 shadow-sm">
-      <CardHeader className="border-b border-border-primary/20 bg-surface-secondary/50">
-        <CardTitle className="text-xs font-light tracking-widest uppercase">Profile Settings</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="p-4 text-sm text-green-600 bg-green-50 border border-green-200 rounded-md">
-              Profile details updated successfully!
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">First Name</label>
-              <Input
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-                className="rounded-none"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Last Name</label>
-              <Input
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-                className="rounded-none"
-              />
-            </div>
+    <div className="bg-white rounded-2xl border border-[#EDE3DB] p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="p-4 text-xs text-rose-800 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Email (Read Only)</label>
-              <Input
-                name="email"
-                value={formData.email}
-                disabled
-                className="rounded-none bg-surface-secondary/20 cursor-not-allowed opacity-80"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Phone Number</label>
-              <Input
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="rounded-none"
-              />
-            </div>
+        )}
+        {success && (
+          <div className="p-4 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>Profile details updated successfully!</span>
           </div>
+        )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Date of Birth</label>
-              <Input
-                type="date"
-                name="dateOfBirth"
-                value={formData.dateOfBirth ? formData.dateOfBirth.split("T")[0] : ""}
-                onChange={handleChange}
-                className="rounded-none"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Timezone</label>
-              <select
-                name="timezone"
-                value={formData.timezone}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-input bg-surface text-text-primary rounded-none focus:outline-none focus:ring-1 focus:ring-accent text-body-sm h-10"
-              >
-                <option value="UTC">UTC (GMT+0)</option>
-                <option value="EST">EST (GMT-5)</option>
-                <option value="PST">PST (GMT-8)</option>
-                <option value="NPT">NPT (GMT+5:45)</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="border-t border-border/40 pt-4">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                name="newsletterPreference"
-                checked={formData.newsletterPreference}
-                onChange={handleChange}
-                className="mt-1 text-accent focus:ring-accent"
-              />
-              <span className="text-body-sm text-text-secondary">
-                Yes, I wish to subscribe to the XINVORA Newsletter for exclusive updates, curated launches, and runway schedules.
-              </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+              First Name *
             </label>
+            <input
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              required
+              className="w-full h-11 px-4 bg-[#FAF6F2] border border-[#EDE3DB] rounded-xl text-xs text-[#1A110F] focus:outline-none focus:border-[#B89563] transition-colors"
+            />
           </div>
 
-          <Button
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+              Last Name *
+            </label>
+            <input
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              required
+              className="w-full h-11 px-4 bg-[#FAF6F2] border border-[#EDE3DB] rounded-xl text-xs text-[#1A110F] focus:outline-none focus:border-[#B89563] transition-colors"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+              Email Address
+            </label>
+            <input
+              type="email"
+              value={formData.email}
+              disabled
+              className="w-full h-11 px-4 bg-[#F2EFEA]/60 border border-[#EDE3DB] rounded-xl text-xs text-[#8C7A72] cursor-not-allowed"
+            />
+            <p className="text-[10px] text-[#8C7A72]">
+              Email address is linked to your account authentication.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-[#73645D]">
+              Contact Phone (Nepal)
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone || ""}
+              onChange={handleChange}
+              placeholder="e.g. 9812345678"
+              className="w-full h-11 px-4 bg-[#FAF6F2] border border-[#EDE3DB] rounded-xl text-xs text-[#1A110F] focus:outline-none focus:border-[#B89563] transition-colors"
+            />
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-[#F2EFEA] flex justify-end">
+          <button
             type="submit"
             disabled={loading}
-            className="w-full md:w-auto px-8 py-3 rounded-none uppercase tracking-widest text-[11px] font-semibold"
+            className="w-full sm:w-auto px-6 h-11 bg-[#1A110F] hover:bg-[#33221E] text-white rounded-xl text-xs uppercase tracking-wider font-semibold transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
           >
-            {loading ? "Saving Changes..." : "Save Preferences"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            <span>{loading ? "Saving..." : "Save Changes"}</span>
+          </button>
+        </div>
+      </form>
+    </div>
   )
 }

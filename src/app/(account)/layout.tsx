@@ -28,16 +28,16 @@ export default async function AccountLayout({ children }: AccountLayoutProps) {
     <HeaderStateProvider>
       <CookieScriptLoader />
       <HeaderServer />
-      <Section className="pt-[120px] md:pt-32 pb-12 md:pb-20 bg-background min-h-screen">
-        <Container size="full" className="px-6 sm:px-12 md:px-16 lg:px-20">
-          <Grid cols={{ base: 1, lg: 12 }} gap={8} className="items-start">
+      <Section className="pt-20 md:pt-28 pb-12 md:pb-20 bg-[#FAF6F2] min-h-screen">
+        <Container size="full" className="px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20">
+          <Grid cols={{ base: 1, lg: 12 }} className="gap-6 lg:gap-10 items-start">
             {/* Account Sidebar Navigation */}
             <aside className="lg:col-span-3">
-              <DashboardSidebar />
+              <DashboardSidebar user={session} />
             </aside>
 
             {/* Main Account View Content */}
-            <main className="lg:col-span-9">
+            <main className="lg:col-span-9 min-w-0">
               {children}
             </main>
           </Grid>
